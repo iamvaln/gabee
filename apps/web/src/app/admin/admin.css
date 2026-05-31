@@ -82,11 +82,15 @@
   text-decoration: none;
   z-index: 1000;
   transition: transform var(--fast) var(--ease);
+  /* a11y: see parent.css for context — pointer-events:none at rest stops
+     the off-screen link from silently swallowing clicks. */
+  pointer-events: none;
 }
 .skip-link:focus {
   transform: translateY(0);
   outline: 3px solid var(--brand);
   outline-offset: 2px;
+  pointer-events: auto;
 }
 #main:focus { outline: none; }
 

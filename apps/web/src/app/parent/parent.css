@@ -110,12 +110,18 @@ a { color: inherit; }
   border-radius: var(--r-sm);
   text-decoration: none;
   z-index: 1000;
+  /* a11y: clickable on :focus only. `pointer-events: none` at rest stops
+     the off-screen link from silently swallowing clicks meant for buttons
+     beneath it — a recurring footgun with z-index:1000 + absolute layout.
+     Tab focus still works (pointer-events only affects mouse/touch). */
+  pointer-events: none;
   transition: transform var(--fast) var(--ease);
 }
 .skip-link:focus {
   transform: translateY(0);
   outline: 3px solid var(--mint);
   outline-offset: 2px;
+  pointer-events: auto;
 }
 /* Suppress the default focus outline on the main scroll target — it gets
    tabIndex={-1} so the skip-link can land focus there, but the outline

@@ -9,27 +9,46 @@ const intlMiddleware = createIntlMiddleware(routing);
 // Applied to every response. CSP is the load-bearing one: it constrains where
 // scripts/styles/images may come from, hard-killing most XSS exploitation paths
 // even when a sink slips through. Notes:
-//   - script-src: 'self' only — no 'unsafe-inline' (RSC inlines hydration data,
-//     but Next ships it under a hash; Next 16's App Router emits compatible
-//     hashes for its own scripts).
+//   - script-src: 'self' + 'unsafe-inline'. Next.js's App Router INLINES a
+//     bootstrap script (and bunches of hydration data + HMR runtime in dev) on
+//     EVERY page. Without 'unsafe-inline' React never hydrates, so click
+//     handlers never attach — buttons hover but don't respond. The proper
+//     fix is per-request nonces emitted from middleware and read back on the
+//     server, but that's surgery we'll do later; for MVP we accept the looser
+//     script-src in exchange for a working app. Inline-script XSS is still
+//     blunted by escaping in React + the rest of the headers below.
 //   - style-src: includes 'unsafe-inline' because Tailwind v4 + next-intl emit
 //     style attributes / <style> blocks at runtime. Style injection is far less
 //     dangerous than script injection.
+//   - connect-src: includes the Vercel Live websocket (used by next dev's HMR
+//     and the React DevTools bridge) so dev mode doesn't spam the console.
 //   - frame-ancestors 'none' replaces X-Frame-Options for modern browsers, but
 //     we keep the legacy header too for older clients.
 //   - upgrade-insecure-requests: forces any http:// subresource to https:// at
 //     the browser, defence-in-depth on top of HSTS.
+const isDev = process.env.NODE_ENV !== 'production';
 const CSP = [
   "default-src 'self'",
-  "script-src 'self'",
+  // `unsafe-eval` is needed by Turbopack/webpack dev runtimes (HMR uses Function
+  // ctor). Dropped in prod.
+  isDev
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+    : "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob:",
-  "connect-src 'self'",
+  // Dev needs the HMR websocket + the Next /_next/* fetch endpoints (same-origin
+  // so 'self' covers them); add `ws:` and `wss:` explicitly so Safari behaves.
+  isDev
+    ? "connect-src 'self' ws: wss:"
+    : "connect-src 'self'",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  'upgrade-insecure-requests',
+  // `upgrade-insecure-requests` is a prod-only protection: in dev it makes the
+  // browser fetch http://localhost:3000 via https:// and fail with
+  // ERR_SSL_PROTOCOL_ERROR. HSTS already handles the upgrade for prod traffic.
+  ...(isDev ? [] : ['upgrade-insecure-requests']),
 ].join('; ');
 
 const SECURITY_HEADERS: Record<string, string> = {
@@ -48,15 +67,31 @@ function applySecurityHeaders(res: NextResponse): NextResponse {
   return res;
 }
 
-// Paths that are explicitly app-surfaces (not the landing): skip next-intl entirely
-// so the existing parent/admin/api routes keep working.
+// Paths that are explicitly app-surfaces (not the landing): skip next-intl
+// entirely so the existing parent/admin/api routes keep working AND so static
+// assets in /public don't get rewritten to /fr/<asset>. The favicon set is
+// referenced from <head> with absolute root paths (/favicon-32.png …); if
+// next-intl prefixes them with the active locale, the browser fetches a path
+// that doesn't exist.
+const FAVICON_PATHS = new Set([
+  '/favicon.ico',
+  '/favicon-16.png',
+  '/favicon-32.png',
+  '/favicon-48.png',
+  '/favicon-180.png',
+  '/favicon-512.png',
+  '/apple-touch-icon.png',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/manifest.webmanifest',
+]);
 function isAppPath(pathname: string): boolean {
   return (
     pathname.startsWith('/parent') ||
     pathname.startsWith('/admin') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/_next') ||
-    pathname === '/favicon.ico'
+    FAVICON_PATHS.has(pathname)
   );
 }
 
