@@ -10,6 +10,7 @@ import {
 import type { Prisma } from '@gabee/db';
 import { prisma } from '../db';
 import { HttpError } from '../http';
+import { assertParentCanAccessKid } from '../kid-access';
 
 // Service for parent → kid messages (changes-v1 §1, parent spec §8). All DB shaping
 // lives here; routes are thin Zod-validated wrappers. The kid app sees ONLY the
@@ -60,12 +61,9 @@ export async function createMessage(
   parentId: string,
   input: CreateMessageRequest,
 ): Promise<KidMessage> {
-  // Verify the child belongs to this parent (privacy boundary).
-  const child = await prisma.childProfile.findFirst({
-    where: { id: input.to_child_id, parentId },
-    select: { id: true },
-  });
-  if (!child) throw new HttpError(404, 'child_not_found', 'Child not found');
+  // Privacy boundary: the parent must be the primary parent OR a linked
+  // co-parent of this kid. Throws 404 (matches the legacy error shape).
+  await assertParentCanAccessKid(parentId, input.to_child_id);
 
   const row = await prisma.kidMessage.create({
     data: {
@@ -173,11 +171,7 @@ export async function listPendingForChild(
   parentId: string,
   childId: string,
 ): Promise<KidPendingMessage[]> {
-  const child = await prisma.childProfile.findFirst({
-    where: { id: childId, parentId },
-    select: { id: true },
-  });
-  if (!child) throw new HttpError(404, 'child_not_found', 'Child not found');
+  await assertParentCanAccessKid(parentId, childId);
   const rows = await prisma.kidMessage.findMany({
     where: { toChildId: childId, status: 'unread' },
     include: { fromParent: { select: { displayNameForKids: true, email: true } } },

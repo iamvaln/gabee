@@ -225,7 +225,7 @@ html.landing-html {
   gap: 4px;
   margin-left: 8px;
 }
-.ltop-links button {
+.ltop-links a {
   border: none;
   background: transparent;
   font-weight: 700;
@@ -233,11 +233,12 @@ html.landing-html {
   color: var(--landing-txt-2);
   padding: 9px 14px;
   border-radius: var(--l-r-sm);
+  text-decoration: none;
   transition:
     color var(--l-fast) var(--l-ease),
     background var(--l-fast) var(--l-ease);
 }
-.ltop-links button:hover {
+.ltop-links a:hover {
   color: var(--landing-cta-ink);
   background: var(--landing-cta-soft);
 }
@@ -1013,30 +1014,6 @@ html.landing-html {
   color: var(--landing-txt-3);
   font-weight: 700;
 }
-.legal-disclaimer {
-  display: flex;
-  gap: 14px;
-  margin: 36px 0;
-  padding: 22px 24px;
-  border-radius: var(--l-r-md);
-  background: #fff8e8;
-  border: 1px solid #f0dda8;
-}
-.legal-disc-ic {
-  color: #c99a0e;
-  flex-shrink: 0;
-}
-.legal-disclaimer strong {
-  font-size: 16px;
-  font-weight: 800;
-  color: #8a6a08;
-}
-.legal-disclaimer p {
-  margin-top: 6px;
-  font-size: 15px;
-  color: #6e5a1e;
-  line-height: 1.55;
-}
 .legal-framework {
   margin: 0 0 44px;
   padding: 24px 26px;
@@ -1303,7 +1280,6 @@ html.landing-html {
   .legal-toc {
     display: none;
   }
-  .legal-disclaimer,
   .legal-framework {
     break-inside: avoid;
   }

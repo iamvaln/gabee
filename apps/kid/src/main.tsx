@@ -5,7 +5,14 @@ import './index.css';
 import './i18n';
 import { App } from './App';
 import { consumePairToken, hasPairTokenInUrl } from './lib/pair';
+import * as bundles from './lib/bundles';
 import { refreshIfNewer, startBackgroundRefresh } from './lib/bundles';
+import { bindBundlesModule } from './lib/api';
+
+// Late-bind bundles into api so getBundle() can reach getCachedBundle /
+// fetchAndCacheBundle without a dynamic import (which would defeat chunk
+// splitting). Both modules are on the launch path so this runs early.
+bindBundlesModule(bundles);
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');

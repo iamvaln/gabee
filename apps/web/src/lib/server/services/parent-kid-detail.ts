@@ -1,5 +1,6 @@
 import type { Module } from '@gabee/types';
 import { prisma } from '../db';
+import { assertParentCanAccessKid } from '../kid-access';
 
 /**
  * Parent → Kid detail data (parent spec §7.3). Owns the per-kid queries that back
@@ -56,13 +57,14 @@ export interface FamilyActivityItem {
   detail: string;
 }
 
-/** Throws when the kid isn't owned by this parent — keeps the service layer honest. */
+/**
+ * Throws when the kid isn't accessible to this parent — keeps the service
+ * layer honest. Accepts BOTH the primary parent (direct ChildProfile.parentId)
+ * and co-parents linked via ParentChildLink, so a co-parent sees the same
+ * read views as the primary.
+ */
 async function assertOwned(parentId: string, kidId: string): Promise<void> {
-  const owned = await prisma.childProfile.findFirst({
-    where: { id: kidId, parentId },
-    select: { id: true },
-  });
-  if (!owned) throw new Error('profile_not_found');
+  await assertParentCanAccessKid(parentId, kidId);
 }
 
 /** Sessions for one kid, newest first. Used by K2 Activity tab. */
@@ -147,9 +149,13 @@ export async function listKidSummaries(parentId: string): Promise<KidSummary[]> 
   }));
 }
 
-/** Single-kid version of {@link listKidSummaries}. Throws if the kid isn't owned. */
+/**
+ * Single-kid version of {@link listKidSummaries}. Throws if the kid isn't
+ * accessible (primary parent OR linked co-parent).
+ */
 export async function getKidSummary(parentId: string, kidId: string): Promise<KidSummary> {
-  const r = await prisma.childProfile.findFirst({ where: { id: kidId, parentId } });
+  await assertParentCanAccessKid(parentId, kidId);
+  const r = await prisma.childProfile.findUnique({ where: { id: kidId } });
   if (!r) throw new Error('profile_not_found');
   return {
     id: r.id,

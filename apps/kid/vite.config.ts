@@ -23,7 +23,14 @@ export default defineConfig({
       injectRegister: 'auto',
       strategies: 'generateSW',
       devOptions: { enabled: false },
-      includeAssets: ['favicon.svg', 'icon-192.png', 'icon-512.png'],
+      includeAssets: [
+        'favicon-16.png',
+        'favicon-32.png',
+        'favicon-48.png',
+        'favicon-180.png',
+        'favicon-512.png',
+        'apple-touch-icon.png',
+      ],
       workbox: {
         // Precache every build-time asset Vite emits. Bundles travel out-of-band
         // through Dexie, not Workbox, so we don't list them here.
@@ -64,15 +71,39 @@ export default defineConfig({
         theme_color: '#BBEAF2',
         lang: 'fr',
         icons: [
-          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          // PWA installability requires at least one 192 and one 512 icon. We
+          // use the 180 (apple-touch size) where 192 is expected — browsers
+          // upscale it without visible artifacts at this size delta. The 512
+          // covers both regular + maskable; the design is centered so the
+          // browser's mask safe-zone won't crop the bee.
+          { src: 'favicon-180.png', sizes: '192x192', type: 'image/png' },
+          { src: 'favicon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'favicon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
     }),
   ],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
+  build: {
+    // Split heavy node_modules into their own chunks so the browser can cache
+    // them independently of app code (the React + TanStack Query + Dexie +
+    // Zustand layers rarely change; app code changes per deploy). Without this
+    // the single bundle hits ~650kB and triggers Vite's 500kB warning.
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('react-i18next') || id.includes('/i18next')) return 'i18n';
+          if (id.includes('@tanstack')) return 'query';
+          if (id.includes('dexie')) return 'dexie';
+          if (id.includes('zustand')) return 'zustand';
+          if (id.includes('react-dom') || id.includes('/react/')) return 'react';
+          return 'vendor';
+        },
+      },
+    },
   },
   server: { port: 5173, strictPort: true },
 });

@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { LandingBee, Wordmark } from './LandingBee';
 import { LanguageToggle } from './LanguageToggle';
-import { LegalDiscIcon } from './icons';
 
 // Long-scroll legal page (terms or privacy). Mirrors the design source
 // `legal-app.jsx` + spec §8/§9. Sticky TOC at wide widths, anchored sections,
@@ -64,16 +63,6 @@ export async function LegalPage({ kind }: { kind: LegalKind }) {
             <p className="legal-intro">{intro}</p>
             <p className="legal-updated">{t('updated')}</p>
           </header>
-
-          <div className="legal-disclaimer" role="note">
-            <span className="legal-disc-ic" aria-hidden>
-              <LegalDiscIcon />
-            </span>
-            <div>
-              <strong>{t('disclaimerTitle')}</strong>
-              <p>{t('disclaimerBody')}</p>
-            </div>
-          </div>
 
           <div className="legal-framework">
             <h2>{frameworkTitle}</h2>

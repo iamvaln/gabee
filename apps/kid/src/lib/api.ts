@@ -27,6 +27,24 @@ import {
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
 
+// Late-bound reference to `./bundles` to break the cycle WITHOUT a dynamic
+// import. bundles.ts is loaded on the launch path anyway (pair.ts +
+// main.tsx) — referencing it via a getter delays the lookup to first call
+// time, after both modules have finished initialising.
+let _bundlesCache: typeof import('./bundles') | null = null;
+function bundlesModule(): typeof import('./bundles') {
+  if (_bundlesCache) return _bundlesCache;
+  // Set during late-binding — see `bindBundlesModule` exported below, called
+  // by main.tsx after bundles.ts has fully loaded.
+  if (!_bundlesCache) {
+    throw new Error('[api] bundles module not bound yet — call bindBundlesModule first');
+  }
+  return _bundlesCache;
+}
+export function bindBundlesModule(mod: typeof import('./bundles')): void {
+  _bundlesCache = mod;
+}
+
 // The kid device pairs once (parent login) and then calls the cross-origin API with
 // the parent's JWT as a bearer token (product §7.2, §11.3).
 let bearerToken: string | null = null;
@@ -107,8 +125,13 @@ export const api = {
    * `lib/bundles.ts` — this path stays fast.
    */
   async getBundle(module: Module): Promise<QuestionBundleResponse> {
-    // Inline import to avoid circulars (bundles.ts imports `api`).
-    const { getCachedBundle, fetchAndCacheBundle } = await import('./bundles');
+    // Lazy require via a runtime function call — bundles.ts is also a static
+    // import on the launch path (pair.ts, main.tsx, Settings.tsx) so a `await
+    // import()` here only hurts chunk splitting (Vite warns and inlines it
+    // anyway). The actual circular concern is bundles.ts importing the `api`
+    // object eagerly — but only its functions reach for `api`, so the cycle
+    // is resolved at first call, not at module init.
+    const { getCachedBundle, fetchAndCacheBundle } = bundlesModule();
     const cached = await getCachedBundle(module);
     if (cached) return cached;
     return fetchAndCacheBundle(module);

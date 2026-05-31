@@ -255,13 +255,23 @@ function ParentRow({
         </div>
         <div className="sr-sub">
           {link.email} · {L ? 'depuis' : 'joined'} {joinedLabel}
-          {link.children.length > 0 && (
-            <>
-              {' · '}
-              {link.children.map((c) => c.name).join(', ')}
-            </>
-          )}
         </div>
+        {link.children.length > 0 && (
+          <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {link.children.map((c) => (
+              <KidChip
+                key={c.id}
+                kidId={c.id}
+                kidName={c.name}
+                coparentId={link.parent_id}
+                role={link.role}
+                isMe={isMe}
+                L={L}
+                onRemoved={onRemoved}
+              />
+            ))}
+          </div>
+        )}
       </div>
       <div
         className="sr-action"
@@ -283,6 +293,86 @@ function ParentRow({
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Per-kid chip in the family panel. For a co-parent row (not myself), the
+ * chip carries a small × button that calls DELETE
+ * /api/profiles/[id]/coparents/[coparentId] — removing just this kid from
+ * the co-parent's access without breaking the whole link. Primary rows
+ * render plain chips (no × because the primary parent must always have
+ * every kid; revoke happens via account deletion).
+ */
+function KidChip({
+  kidId,
+  kidName,
+  coparentId,
+  role,
+  isMe,
+  L,
+  onRemoved,
+}: {
+  kidId: string;
+  kidName: string;
+  coparentId: string;
+  role: 'primary' | 'coparent';
+  isMe: boolean;
+  L: boolean;
+  onRemoved: (msg: string) => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const canRemove = !isMe && role === 'coparent';
+
+  async function remove() {
+    if (!window.confirm(L
+      ? `Retirer ${kidName} de l’accès de ce co-parent ?`
+      : `Remove ${kidName} from this co-parent's access?`)) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/profiles/${kidId}/coparents/${coparentId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const msg = await readErrorMessage(res, L);
+        window.alert(msg);
+        setBusy(false);
+        return;
+      }
+      await onRemoved(L ? `${kidName} retiré de la coparence.` : `${kidName} removed from co-parenting.`);
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : String(e));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <span
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: '4px 10px', borderRadius: 999,
+        background: 'var(--surface-2, #F8FAFC)', border: '1px solid var(--border, #E2E8F0)',
+        fontSize: 12, fontWeight: 700,
+      }}
+    >
+      {kidName}
+      {canRemove && (
+        <button
+          type="button"
+          onClick={remove}
+          disabled={busy}
+          aria-label={L ? `Retirer ${kidName}` : `Remove ${kidName}`}
+          style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 16, height: 16, borderRadius: '50%',
+            background: 'var(--bad-bg, #fee2e2)', color: 'var(--bad, #7f1d1d)',
+            border: 'none', fontSize: 12, fontWeight: 800, lineHeight: 1, cursor: 'pointer',
+            padding: 0,
+          }}
+          title={L ? `Retirer ${kidName} de ce co-parent` : `Remove ${kidName} from this co-parent`}
+        >
+          ×
+        </button>
+      )}
+    </span>
   );
 }
 
