@@ -147,9 +147,30 @@ export function CodeFindPathSession({
   const wallHitsRef = useRef(0);
   const totalAttemptsRef = useRef(0);
 
+  // Responsive grid cell — shrinks the cell size to fit within the available
+  // session-stage width. 56px on tablet (the design intent), down to ~32px on
+  // small viewports. ResizeObserver keeps it in sync on rotation/resize.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [cell, setCell] = useState(56);
+
   const q = session?.questions[qIdx];
   const puzzle = useMemo(() => (q ? parsePuzzle(q) : null), [q]);
   const ctx = { profileId: profile?.id ?? null, sessionId: play?.id ?? null };
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el || !puzzle) return;
+    function recompute() {
+      if (!el || !puzzle) return;
+      const w = el.clientWidth;
+      const fitted = Math.floor((w - 16) / puzzle.grid.cols);
+      setCell(Math.max(32, Math.min(56, fitted)));
+    }
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [puzzle?.grid.cols]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // lesson_started — once per session.
   useEffect(() => {
@@ -361,7 +382,6 @@ export function CodeFindPathSession({
     );
   }
 
-  const CELL = 56;
   const arrows: Record<Direction, string> = { up: '↑', down: '↓', left: '←', right: '→' };
 
   return (
@@ -379,16 +399,16 @@ export function CodeFindPathSession({
         </div>
       </div>
       <div className="session-body">
-        <div className="session-stage">
+        <div className="session-stage" ref={stageRef}>
           {/* Grid */}
           <div
             style={{
               position: 'relative',
-              width: puzzle.grid.cols * CELL,
-              height: puzzle.grid.rows * CELL,
+              width: puzzle.grid.cols * cell,
+              height: puzzle.grid.rows * cell,
               display: 'grid',
-              gridTemplateColumns: `repeat(${puzzle.grid.cols}, ${CELL}px)`,
-              gridTemplateRows: `repeat(${puzzle.grid.rows}, ${CELL}px)`,
+              gridTemplateColumns: `repeat(${puzzle.grid.cols}, ${cell}px)`,
+              gridTemplateRows: `repeat(${puzzle.grid.rows}, ${cell}px)`,
               background: '#FFFBEC',
               border: '3px solid #FCD34D',
               borderRadius: 12,
@@ -423,10 +443,10 @@ export function CodeFindPathSession({
             <div
               style={{
                 position: 'absolute',
-                top: beePos.y * CELL,
-                left: beePos.x * CELL,
-                width: CELL,
-                height: CELL,
+                top: beePos.y * cell,
+                left: beePos.x * cell,
+                width: cell,
+                height: cell,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -434,7 +454,7 @@ export function CodeFindPathSession({
                 pointerEvents: 'none',
               }}
             >
-              <Bee size={CELL - 8} expression={beeExpr} wings bob={!running} />
+              <Bee size={Math.max(24, cell - 8)} expression={beeExpr} wings bob={!running} />
             </div>
           </div>
 
@@ -478,7 +498,7 @@ export function CodeFindPathSession({
           </div>
 
           {/* Block bank */}
-          <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
             {(['up', 'left', 'right', 'down'] as Direction[]).map((d) => (
               <button
                 key={d}
@@ -497,7 +517,7 @@ export function CodeFindPathSession({
             ))}
           </div>
 
-          <div style={{ marginTop: 16, display: 'flex', gap: 12, justifyContent: 'center' }}>
+          <div style={{ marginTop: 16, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
               className="btn"
               onClick={() => void run()}

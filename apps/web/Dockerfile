@@ -25,7 +25,10 @@ ENV npm_config_fetch_retries=5 \
     npm_config_network_concurrency=4
 RUN pnpm install --frozen-lockfile
 # Prisma 7 client → packages/db/src/generated/prisma (consumed via transpilePackages).
-RUN pnpm --filter @gabee/db run db:generate
+# prisma.config.ts resolves env('DIRECT_URL') at load time, even though `generate`
+# never connects — pass a throwaway URL just to satisfy config loading.
+RUN DIRECT_URL="postgresql://prisma:prisma@localhost:5432/prisma" \
+    pnpm --filter @gabee/db run db:generate
 # NEXT_PUBLIC_* values are inlined at build time, so they must be present here.
 ARG NEXT_PUBLIC_KID_APP_URL
 ENV NEXT_PUBLIC_KID_APP_URL=$NEXT_PUBLIC_KID_APP_URL

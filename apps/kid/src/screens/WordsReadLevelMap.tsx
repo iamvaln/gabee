@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Bee } from '../components/Bee';
+import { SkeletonLevelGrid } from '../components/Skeleton';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { MODULES } from '../content/modules';
@@ -65,7 +66,7 @@ export function WordsReadLevelMap({
       </div>
       <div className="level-body">
         {isLoading ? (
-          <div className="skeleton" style={{ width: 420, height: 140 }} />
+          <SkeletonLevelGrid />
         ) : (
           <div className="level-grid">
             {configuredLevels.map((lvl, i) => {

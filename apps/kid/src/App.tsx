@@ -196,9 +196,12 @@ export function App() {
     return first ? { level: nextLvl, lesson: first.lesson, isRevision: first.isRevision } : null;
   }
 
-  // Keep i18next in sync with the chosen language.
+  // Keep i18next AND the document's lang attribute in sync with the chosen
+  // language. Screen readers + search engines + spell-checkers honor lang for
+  // accessibility (a11y) so it must reflect the visible UI.
   useEffect(() => {
     void i18n.changeLanguage(lang);
+    if (typeof document !== 'undefined') document.documentElement.lang = lang;
   }, [lang]);
 
   // Start the sync manager (wires online/offline + visibility/pagehide flush triggers,

@@ -100,9 +100,25 @@ export function Chrome({
               <span>{profile.name}</span>
             </div>
           ))}
-        <div className="lang-toggle" role="group" aria-label="language">
-          <button className={lang === 'fr' ? 'on' : ''} onClick={() => setLang('fr')}>FR</button>
-          <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
+        <div className="lang-toggle" role="group" aria-label={lang === 'fr' ? 'langue' : 'language'}>
+          <button
+            type="button"
+            className={lang === 'fr' ? 'on' : ''}
+            aria-pressed={lang === 'fr'}
+            aria-label={lang === 'fr' ? 'Français' : 'Switch to French'}
+            onClick={() => setLang('fr')}
+          >
+            FR
+          </button>
+          <button
+            type="button"
+            className={lang === 'en' ? 'on' : ''}
+            aria-pressed={lang === 'en'}
+            aria-label={lang === 'fr' ? 'Anglais' : 'English'}
+            onClick={() => setLang('en')}
+          >
+            EN
+          </button>
         </div>
         {onHome && !hideHome && (
           <button className="icon-btn" onClick={onHome} aria-label="home">

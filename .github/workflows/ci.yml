@@ -14,6 +14,11 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # prisma.config.ts resolves env('DIRECT_URL') at load time, and turbo re-runs
+    # `prisma generate` (the @gabee/db build) as a ^build dependency of typecheck
+    # and test. `generate` never connects, so a throwaway URL satisfies all steps.
+    env:
+      DIRECT_URL: postgresql://prisma:prisma@localhost:5432/prisma
     steps:
       - uses: actions/checkout@v4
 

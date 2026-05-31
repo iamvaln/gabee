@@ -164,8 +164,18 @@ function LinkedParentsCard({
         </div>
       </div>
       {data.links.length === 0 ? (
-        <div className="card-pad" style={{ color: 'var(--text-3)', fontWeight: 700 }}>
-          {L ? 'Aucun parent lié.' : 'No linked parents.'}
+        <div className="card-pad" style={{ textAlign: 'center', padding: '32px 24px' }}>
+          <div style={{ fontSize: 36, lineHeight: 1, opacity: 0.6, marginBottom: 8 }} aria-hidden>
+            👪
+          </div>
+          <h3 style={{ margin: '8px 0 4px', fontSize: 17, fontWeight: 800 }}>
+            {L ? 'Pas encore de co-parent' : 'No co-parent yet'}
+          </h3>
+          <p style={{ margin: 0, color: 'var(--text-2)', fontWeight: 600, fontSize: 14 }}>
+            {L
+              ? 'Invitez un co-parent pour partager le suivi et les sessions avec un autre adulte de la famille.'
+              : 'Invite a co-parent to share session reviews and family activity with another adult.'}
+          </p>
         </div>
       ) : (
         data.links.map((p) => (

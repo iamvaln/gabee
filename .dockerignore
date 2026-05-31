@@ -22,10 +22,9 @@ out
 .vscode
 **/.DS_Store
 
-# Secrets — never bake into an image
-.env
-.env.*
-!.env.example
+# Secrets — never bake into an image (matches nested too, e.g. packages/db/.env)
+**/.env
+**/.env.*
 
 # Logs, coverage
 *.log
