@@ -21,17 +21,11 @@ import { MintBee, MintBeeGlyph } from '../_components/mint-bee';
  * in milestone-5.
  */
 
-// ISO-3166 short list used by the country select. France comes first (default,
-// product-spec: parent app is FR-first).
+// Country list — Cameroun only at launch (primary market). New countries get
+// appended here as Gabee opens up; the rest of the form (country select,
+// phone country picker) reads this single source of truth.
 const COUNTRIES = [
-  { code: 'FR', name: { fr: 'France', en: 'France' } },
-  { code: 'BE', name: { fr: 'Belgique', en: 'Belgium' } },
-  { code: 'CH', name: { fr: 'Suisse', en: 'Switzerland' } },
-  { code: 'CA', name: { fr: 'Canada', en: 'Canada' } },
-  { code: 'LU', name: { fr: 'Luxembourg', en: 'Luxembourg' } },
-  { code: 'US', name: { fr: 'États-Unis', en: 'United States' } },
-  { code: 'GB', name: { fr: 'Royaume-Uni', en: 'United Kingdom' } },
-  { code: 'OTHER', name: { fr: 'Autre', en: 'Other' } },
+  { code: 'CM', name: { fr: 'Cameroun', en: 'Cameroon' } },
 ];
 
 export default function SignupPage() {
@@ -57,11 +51,11 @@ function SignupInner() {
   const [email, setEmail] = useState(inviteEmail ?? '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [country, setCountry] = useState('FR');
+  const [country, setCountry] = useState('CM');
   // Phone is OPTIONAL on signup (parent spec §12.1). When the field is
   // non-empty it MUST validate via libphonenumber-js — we send a canonical
   // E.164 string to the API or null when empty.
-  const [phoneCountry, setPhoneCountry] = useState<CountryCode>('FR');
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>('CM');
   const [phoneNational, setPhoneNational] = useState('');
   const [accept, setAccept] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -278,7 +272,7 @@ function SignupInner() {
                   className={'input' + (phoneNational && !phoneOk ? ' bad' : '')}
                   type="tel"
                   autoComplete="tel-national"
-                  placeholder={L ? '6 12 34 56 78' : '6 12 34 56 78'}
+                  placeholder="6 75 12 34 56"
                   value={phoneNational}
                   onChange={(e) => setPhoneNational(e.target.value)}
                   aria-invalid={!!phoneNational && !phoneOk}
