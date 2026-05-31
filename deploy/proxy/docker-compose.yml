@@ -1,0 +1,45 @@
+# Shared reverse proxy for the whole VPS — ONE instance, many projects.
+# Every project's compose stack joins the external `web` network and declares
+# Traefik labels; Traefik discovers them via the Docker socket and issues a
+# Let's Encrypt certificate per hostname automatically.
+#
+# First-time setup (run once on the VPS):
+#   docker network create web
+#   cd deploy/proxy && cp .env.example .env   # set ACME_EMAIL
+#   docker compose up -d
+name: proxy
+
+services:
+  traefik:
+    image: traefik:v3.3
+    restart: unless-stopped
+    command:
+      # Discover containers via Docker labels (opt-in per container).
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=web
+      # HTTP :80 → redirect everything to HTTPS.
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      # HTTPS :443
+      - --entrypoints.websecure.address=:443
+      # Let's Encrypt via TLS-ALPN challenge (no extra ports needed).
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.tlschallenge=true
+      # - --api.dashboard=true   # uncomment + add a router if you want the dashboard
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-acme:/letsencrypt
+    networks: [web]
+
+volumes:
+  traefik-acme:
+
+networks:
+  web:
+    external: true

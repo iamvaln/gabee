@@ -1,0 +1,35 @@
+# Deps & build artifacts (reinstalled/rebuilt inside the image)
+node_modules
+**/node_modules
+.pnpm-store
+.next
+**/.next
+dist
+**/dist
+out
+**/out
+.turbo
+**/.turbo
+*.tsbuildinfo
+
+# Generated Prisma client (regenerated in the build stage)
+**/src/generated/prisma
+
+# VCS / editor / OS
+.git
+.gitignore
+.idea
+.vscode
+**/.DS_Store
+
+# Secrets — never bake into an image
+.env
+.env.*
+!.env.example
+
+# Logs, coverage
+*.log
+coverage
+
+# Heavy design assets not needed at runtime
+docs/Gabee-handoff.zip

@@ -1,0 +1,100 @@
+name: Release
+
+# Tag-driven production deploy. Create a tag to ship:
+#   git tag v1.0.0 && git push origin v1.0.0
+on:
+  push:
+    tags: ['v*']
+
+env:
+  REGISTRY: ghcr.io/iamvaln
+
+jobs:
+  # ── Build & push the web image (Next.js) ────────────────────────────────────
+  build-web:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build & push web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          build-args: |
+            NEXT_PUBLIC_KID_APP_URL=${{ vars.NEXT_PUBLIC_KID_APP_URL }}
+          tags: |
+            ${{ env.REGISTRY }}/gabee-web:${{ github.ref_name }}
+            ${{ env.REGISTRY }}/gabee-web:latest
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+  # ── Build & push the kid image (static PWA) ─────────────────────────────────
+  build-kid:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build & push kid
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/kid/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL }}
+          tags: |
+            ${{ env.REGISTRY }}/gabee-kid:${{ github.ref_name }}
+            ${{ env.REGISTRY }}/gabee-kid:latest
+          cache-from: type=gha,scope=kid
+          cache-to: type=gha,scope=kid,mode=max
+
+  # ── Deploy: SSH to the VPS, pull the freshly-pushed tag, restart ────────────
+  deploy:
+    needs: [build-web, build-kid]
+    runs-on: ubuntu-latest
+    environment: production # optional manual-approval gate (configure in repo settings)
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          envs: IMAGE_TAG,GHCR_USER,GHCR_TOKEN,APP_DIR
+          script: |
+            set -euo pipefail
+            cd "${APP_DIR:-$HOME/gabee}"
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            export IMAGE_TAG
+            git fetch --tags origin
+            git checkout "$IMAGE_TAG"   # sync docker-compose.yml to the released tag
+            docker compose --env-file .env.production pull
+            docker compose --env-file .env.production up -d
+            docker logout ghcr.io
+            docker image prune -f
+        env:
+          IMAGE_TAG: ${{ github.ref_name }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APP_DIR: ${{ secrets.VPS_APP_DIR }}
