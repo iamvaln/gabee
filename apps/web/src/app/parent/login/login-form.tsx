@@ -113,14 +113,13 @@ export function LoginForm({ lang: initialLang, next }: { lang: Language; next?: 
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-3)' }}>
                 {L ? 'Restez connecté en sécurité.' : "Stay signed in securely."}
               </span>
-              <button
-                type="button"
+              <Link
+                href="/parent/forgot-password"
                 className="btn link"
                 style={{ marginLeft: 'auto' }}
-                onClick={() => { /* forgot password — wired in milestone-5 */ }}
               >
                 {L ? 'Mot de passe oublié ?' : 'Forgot password?'}
-              </button>
+              </Link>
             </div>
 
             <button
@@ -148,7 +147,7 @@ export function LoginForm({ lang: initialLang, next }: { lang: Language; next?: 
 function AuthAside({ lang }: { lang: Language }) {
   const L = lang === 'fr';
   const points: { icon: 'classify' | 'kids' | 'users'; fr: string; en: string }[] = [
-    { icon: 'classify', fr: 'Classez les sessions en un geste', en: 'Classify sessions in one tap' },
+    { icon: 'classify', fr: 'Revoyez les sessions en un geste', en: 'Review sessions in one tap' },
     { icon: 'kids', fr: 'Suivez chaque enfant en détail', en: 'Follow each kid in detail' },
     { icon: 'users', fr: 'Co-parentez à deux, en confiance', en: 'Co-parent together, in sync' },
   ];
@@ -167,8 +166,12 @@ function AuthAside({ lang }: { lang: Language }) {
         ))}
       </div>
       <h2>
+        {/* Non-breaking spaces ( ) inside the guillemets keep the
+            closing » from orphaning to its own line when the column wraps —
+            French typography convention; stays prettier than swapping to
+            straight quotes which would clash with the brand voice. */}
         {L
-          ? '« Restez proche de leur apprentissage. »'
+          ? '« Restez proche de leur apprentissage. »'
           : 'Stay close to their learning.'}
       </h2>
       <p>{L ? "L'espace parent de Gabee." : 'The Gabee parent space.'}</p>

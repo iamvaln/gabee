@@ -7,7 +7,11 @@ import { mapParentAccount } from '../mappers';
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
 /** Create a parent account + its first (active) credential. */
-export async function signup(email: string, password: string): Promise<ParentAccount> {
+export async function signup(
+  email: string,
+  password: string,
+  opts: { phone?: string | null } = {},
+): Promise<ParentAccount> {
   const normalized = normalizeEmail(email);
   const existing = await prisma.parentAccount.findUnique({ where: { email: normalized } });
   if (existing) throw new HttpError(409, 'email_taken', 'An account with this email already exists');
@@ -16,6 +20,7 @@ export async function signup(email: string, password: string): Promise<ParentAcc
   const account = await prisma.parentAccount.create({
     data: {
       email: normalized,
+      ...(opts.phone ? { phone: opts.phone } : {}),
       credentials: { create: { hash, salt, algorithm: 'scrypt' } },
     },
     include: { children: true },

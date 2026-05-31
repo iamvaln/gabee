@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { parsePhoneNumberFromString, getCountryCallingCode, type CountryCode } from 'libphonenumber-js';
 import { MintBee, MintBeeGlyph } from '../_components/mint-bee';
 
 /**
@@ -55,11 +56,29 @@ function SignupInner() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState(inviteEmail ?? '');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [country, setCountry] = useState('FR');
+  // Phone is OPTIONAL on signup (parent spec §12.1). When the field is
+  // non-empty it MUST validate via libphonenumber-js — we send a canonical
+  // E.164 string to the API or null when empty.
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>('FR');
+  const [phoneNational, setPhoneNational] = useState('');
   const [accept, setAccept] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const L = lang === 'fr';
+
+  // E.164 phone (or null when empty). Memoised so we don't re-parse on every
+  // render; the parser is non-trivial for international numbers.
+  const phoneE164 = useMemo<string | null>(() => {
+    const raw = phoneNational.trim();
+    if (!raw) return null;
+    const parsed = parsePhoneNumberFromString(raw, phoneCountry);
+    if (!parsed || !parsed.isValid()) return null;
+    return parsed.number; // E.164: '+33612345678'
+  }, [phoneNational, phoneCountry]);
+  const phoneOk = phoneNational.trim() === '' || phoneE164 !== null;
+  const passwordMatch = password.length > 0 && password === confirmPassword;
 
   function setLangCookie(l: 'fr' | 'en') {
     document.cookie = `parent_lang=${l}; path=/; max-age=31536000`;
@@ -75,6 +94,8 @@ function SignupInner() {
     lastName.trim().length >= 1 &&
     emailOk &&
     passwordOk &&
+    passwordMatch &&
+    phoneOk &&
     !!country &&
     accept;
 
@@ -89,7 +110,11 @@ function SignupInner() {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email,
+        password,
+        ...(phoneE164 ? { phone: phoneE164 } : {}),
+      }),
     });
     if (res.ok) {
       // Co-parent flow: auto-accept the invite with the freshly-set session.
@@ -209,6 +234,71 @@ function SignupInner() {
             </div>
 
             <div className="field">
+              <label htmlFor="pp2">{L ? 'Confirmer le mot de passe' : 'Confirm password'}</label>
+              <input
+                id="pp2"
+                className={'input' + (confirmPassword && !passwordMatch ? ' bad' : '')}
+                type="password"
+                required
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                aria-invalid={!!confirmPassword && !passwordMatch}
+              />
+              {confirmPassword && !passwordMatch && (
+                <span className="hint" style={{ color: 'var(--bad)' }}>
+                  {L ? 'Les mots de passe ne correspondent pas.' : 'Passwords do not match.'}
+                </span>
+              )}
+            </div>
+
+            <div className="field">
+              <label htmlFor="pph">
+                {L ? 'Téléphone' : 'Phone'}{' '}
+                <span style={{ color: 'var(--text-3)', fontWeight: 600, fontSize: 12 }}>
+                  {L ? '(optionnel)' : '(optional)'}
+                </span>
+              </label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <select
+                  aria-label={L ? 'Indicatif pays' : 'Country code'}
+                  className="select"
+                  value={phoneCountry}
+                  onChange={(e) => setPhoneCountry(e.target.value as CountryCode)}
+                  style={{ width: 140, flexShrink: 0 }}
+                >
+                  {(COUNTRIES.filter((c) => c.code !== 'OTHER') as { code: CountryCode; name: { fr: string; en: string } }[]).map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.name[lang]} (+{getCountryCallingCode(c.code)})
+                    </option>
+                  ))}
+                </select>
+                <input
+                  id="pph"
+                  className={'input' + (phoneNational && !phoneOk ? ' bad' : '')}
+                  type="tel"
+                  autoComplete="tel-national"
+                  placeholder={L ? '6 12 34 56 78' : '6 12 34 56 78'}
+                  value={phoneNational}
+                  onChange={(e) => setPhoneNational(e.target.value)}
+                  aria-invalid={!!phoneNational && !phoneOk}
+                />
+              </div>
+              {phoneNational && !phoneOk && (
+                <span className="hint" style={{ color: 'var(--bad)' }}>
+                  {L ? 'Numéro de téléphone invalide.' : 'Phone number is not valid.'}
+                </span>
+              )}
+              {!phoneNational && (
+                <span className="hint">
+                  {L
+                    ? 'Pour la récupération de compte plus tard. Pas de SMS aujourd’hui.'
+                    : 'For account recovery later. No SMS today.'}
+                </span>
+              )}
+            </div>
+
+            <div className="field">
               <label htmlFor="pc">{L ? 'Pays' : 'Country'}</label>
               <select
                 id="pc"
@@ -280,7 +370,7 @@ function SignupInner() {
 function AuthAside({ lang }: { lang: 'fr' | 'en' }) {
   const L = lang === 'fr';
   const points: { icon: 'classify' | 'kids' | 'users'; fr: string; en: string }[] = [
-    { icon: 'classify', fr: 'Classez les sessions en un geste', en: 'Classify sessions in one tap' },
+    { icon: 'classify', fr: 'Revoyez les sessions en un geste', en: 'Review sessions in one tap' },
     { icon: 'kids', fr: 'Suivez chaque enfant en détail', en: 'Follow each kid in detail' },
     { icon: 'users', fr: 'Co-parentez à deux, en confiance', en: 'Co-parent together, in sync' },
   ];
@@ -299,6 +389,8 @@ function AuthAside({ lang }: { lang: 'fr' | 'en' }) {
         ))}
       </div>
       <h2>
+        {/* Non-breaking spaces ( ) inside the guillemets so the closing »
+            doesn't orphan to its own line when the column wraps. */}
         {L
           ? '« Restez proche de leur apprentissage. »'
           : 'Stay close to their learning.'}

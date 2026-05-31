@@ -111,6 +111,11 @@ enum FeedbackStatus {
 model ParentAccount {
   id                 String             @id @default(uuid()) @db.Uuid
   email              String             @unique
+  /// E.164 phone number (e.g. +33612345678). Optional today; collected at
+  /// signup behind a country picker, validated client- and server-side via
+  /// libphonenumber-js. Reserved for SMS recovery + future account-recovery
+  /// flows where email alone isn't safe (compromised mailbox).
+  phone              String?
   // Single auth system: admins are accounts with an elevated role (admin spec D1).
   role               AccountRole        @default(parent)
   displayNameForKids String             @default("") @map("display_name_for_kids") @db.VarChar(50)
@@ -125,8 +130,84 @@ model ParentAccount {
   devices            DeviceLink[]
   notificationPrefs  NotificationPrefs?
   familyActions      FamilyActivityLog[]
+  passwordResets     PasswordReset[]
+  emailConfirmations EmailConfirmation[]
+  authEvents         AuthEventLog[]
+  /// Timestamp set when the email confirmation link is opened. While null,
+  /// the account exists but the email is "unverified" — some flows (e.g.
+  /// sending kid messages) will gate on this in a future iteration. Today
+  /// everything works pre-confirmation; the field exists to enable the gate
+  /// without another migration.
+  emailConfirmedAt   DateTime?          @map("email_confirmed_at")
 
   @@map("parent_accounts")
+}
+
+/// Email-confirmation tokens (parent spec §12.2). Same shape as PasswordReset
+/// — token in the email, sha-256 hash in the DB, single-use, expiring. A new
+/// signup creates one row + sends the confirmation email; clicking the link
+/// stamps ParentAccount.emailConfirmedAt and marks the row consumed.
+model EmailConfirmation {
+  id         String        @id @default(uuid()) @db.Uuid
+  parentId   String        @map("parent_id") @db.Uuid
+  tokenHash  String        @unique @map("token_hash")
+  expiresAt  DateTime      @map("expires_at")
+  consumedAt DateTime?     @map("consumed_at")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  parent     ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([parentId])
+  @@map("email_confirmations")
+}
+
+enum AuthEventKind {
+  signup
+  login_success
+  login_failure
+  logout
+  forgot_password_requested
+  password_reset_consumed
+  email_confirmation_sent
+  email_confirmed
+  password_changed
+}
+
+/// Audit trail for auth-touching activities (parent spec §12.4 + security
+/// hardening). Captures: kind, optional parentId (null for failed login by
+/// unknown email), client IP from x-forwarded-for, user-agent, an optional
+/// `detail` JSON for extra context (e.g. `{ email: '...' }` on failed login).
+/// Append-only; consumed by /admin/ops/audit dashboards.
+model AuthEventLog {
+  id        String         @id @default(uuid()) @db.Uuid
+  kind      AuthEventKind
+  parentId  String?        @map("parent_id") @db.Uuid
+  ip        String?
+  userAgent String?        @map("user_agent")
+  detail    Json?
+  createdAt DateTime       @default(now()) @map("created_at")
+  parent    ParentAccount? @relation(fields: [parentId], references: [id], onDelete: SetNull)
+
+  @@index([parentId])
+  @@index([kind, createdAt])
+  @@map("auth_event_logs")
+}
+
+/// Password reset tokens (parent spec §12.2). One row per reset attempt: the
+/// raw token goes ONLY in the email, the DB keeps a sha-256 hash so a DB leak
+/// doesn't grant resets. `consumedAt` flips on successful reset; tokens are
+/// bounded by `expiresAt` (30 min). Multiple pending tokens per account are
+/// allowed — the latest one wins, older ones expire harmlessly.
+model PasswordReset {
+  id         String        @id @default(uuid()) @db.Uuid
+  parentId   String        @map("parent_id") @db.Uuid
+  tokenHash  String        @unique @map("token_hash")
+  expiresAt  DateTime      @map("expires_at")
+  consumedAt DateTime?     @map("consumed_at")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  parent     ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([parentId])
+  @@map("password_resets")
 }
 
 // Password credentials, kept OUT of the accounts table and history-capable:
