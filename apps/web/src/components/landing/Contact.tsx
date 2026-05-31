@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { SectionHead } from './SectionHead';
 import { LandingBee } from './LandingBee';
@@ -26,6 +26,17 @@ export function Contact() {
   const [company, setCompany] = useState(''); // honeypot
   const [state, setState] = useState<'default' | 'sending' | 'done'>('default');
   const [err, setErr] = useState<'' | 'email' | 'min' | 'send'>('');
+  const sectionRef = useRef<HTMLElement | null>(null);
+
+  // After a successful submit the form (tall, many fields) is replaced by the
+  // ack panel (short: bee + heading + button). Without scrolling, the
+  // viewport often ends up showing the footer below — the user thinks
+  // nothing happened. Scroll the section back into view on every transition
+  // INTO the done state. `block: 'start'` aligns the ack heading at the top.
+  useEffect(() => {
+    if (state !== 'done') return;
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [state]);
 
   const reset = () => {
     setState('default');
@@ -70,7 +81,15 @@ export function Contact() {
 
   if (state === 'done') {
     return (
-      <section className="section section-contact sec-tint sec-tint-coral" id="contact">
+      <section
+        className="section section-contact sec-tint sec-tint-coral"
+        id="contact"
+        ref={sectionRef}
+        // Polite live region: assistive tech announces the heading change
+        // without interrupting whatever the user is doing.
+        aria-live="polite"
+        aria-atomic="true"
+      >
         <div className="contact-ack">
           <LandingBee size={120} expression="celebrate" wings />
           <h2>{t('ackTitle')}</h2>
@@ -84,7 +103,7 @@ export function Contact() {
   }
 
   return (
-    <section className="section section-contact sec-tint sec-tint-coral" id="contact">
+    <section className="section section-contact sec-tint sec-tint-coral" id="contact" ref={sectionRef}>
       <SectionHead title={t('h')} />
       <form className="contact-form" onSubmit={submit} noValidate>
         <div className="cf-field">
