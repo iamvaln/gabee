@@ -13,6 +13,10 @@ services:
   traefik:
     image: traefik:v3.3
     restart: unless-stopped
+    # Docker 29+ rejects the legacy API version Traefik's client negotiates to by
+    # default ("client version 1.24 is too old"). Pin a supported API version.
+    environment:
+      - DOCKER_API_VERSION=1.44
     command:
       # Discover containers via Docker labels (opt-in per container).
       - --providers.docker=true
