@@ -240,12 +240,74 @@ button.profile-chip:hover {
   transform-origin: center;
 }
 
-/* Subtle bee bob */
+/* Subtle bee bob — vertical sway when `bob` is on. */
 @keyframes bee-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
 }
 .bee-bob { animation: bee-bob 3s ease-in-out infinite; }
+
+/* Wing flap — small scaleY squash + opacity flicker, alternates fast so it
+   reads as fluttering. Plays on every bee instance that has wings; no opt-in
+   required because the visual is core to the mascot. transform-box keeps the
+   scale anchored to the wings' visual center rather than the SVG origin. */
+.bee-wings {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: wing-flap 0.32s ease-in-out infinite alternate;
+}
+@keyframes wing-flap {
+  0%   { transform: scaleY(1);    opacity: 0.95; }
+  100% { transform: scaleY(0.88); opacity: 0.72; }
+}
+
+/* Antenna sway — gentle rotation around the head. Slower than the wings so
+   the two motions don't beat in lockstep. */
+.bee-antennae {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: antenna-sway 2.4s ease-in-out infinite;
+}
+@keyframes antenna-sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50%      { transform: rotate(2deg);  }
+}
+
+/* Celebrate glow — a soft yellow drop-shadow ring while the visor stars are
+   showing. Adds energy on the Summary celebrate moment. */
+.bee[data-expression="celebrate"] {
+  filter: drop-shadow(0 0 12px rgba(252, 211, 77, 0.7));
+  animation: celebrate-pulse 1.4s ease-in-out infinite;
+}
+@keyframes celebrate-pulse {
+  0%, 100% { filter: drop-shadow(0 0 8px  rgba(252, 211, 77, 0.55)); }
+  50%      { filter: drop-shadow(0 0 18px rgba(252, 211, 77, 0.85)); }
+}
+
+/* Encourage shake — small lateral nudge on the bee when the visor is winking,
+   reinforcing the "try again, you got this" coach moment. One-shot per state
+   so it doesn't loop and distract. */
+.bee[data-expression="encourage"] {
+  animation: encourage-nudge 0.7s ease-out 1;
+}
+@keyframes encourage-nudge {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-4px); }
+  75%  { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+
+/* Honor the user's OS-level reduced-motion preference (a11y). Disabling these
+   ambient loops removes vestibular triggers without killing the structure. */
+@media (prefers-reduced-motion: reduce) {
+  .bee-bob,
+  .bee-wings,
+  .bee-antennae,
+  .bee[data-expression="celebrate"],
+  .bee[data-expression="encourage"] {
+    animation: none !important;
+  }
+}
 
 /* Global keyboard focus ring (a11y). Uses `:focus-visible` so mouse clicks
    don't trigger the ring — only Tab/arrow navigation does. The mint color

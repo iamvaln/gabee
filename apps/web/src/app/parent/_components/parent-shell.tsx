@@ -71,6 +71,11 @@ export function ParentShell({
 
   return (
     <div className="parent">
+      {/* a11y: skip-to-content link — first focusable element on every
+          page so keyboard users can bypass the top nav. */}
+      <a href="#main" className="skip-link">
+        {initialLang === 'fr' ? 'Aller au contenu' : 'Skip to content'}
+      </a>
       {/* ── Top bar (desktop) ───────────────────────────────────────── */}
       <header className="topbar">
         <Link href="/parent" className="brand" aria-label="Gabee">
@@ -116,7 +121,7 @@ export function ParentShell({
       </header>
 
       {/* ── Scroll body ─────────────────────────────────────────────── */}
-      <div className="scroll">{children}</div>
+      <main id="main" tabIndex={-1} className="scroll">{children}</main>
 
       {/* ── Bottom tab bar (phone only — CSS-gated at <= 760px) ────── */}
       <nav className="tabbar" aria-label="primary (mobile)">

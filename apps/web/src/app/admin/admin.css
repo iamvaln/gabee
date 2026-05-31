@@ -18,14 +18,22 @@
   --border-strong: #D3D8E0;
   --text: #20242E;
   --text-2: #535A66;
-  --text-3: #8A92A0;
+  /* a11y: darkened from #8A92A0 (3.15:1 on white) to #6B7280 so subtle text
+     clears WCAG AA body contrast.  Computed (L1+0.05)/(L2+0.05) on white →
+     4.87:1 (was 3.15:1, failed 4.5 body). */
+  --text-3: #6B7280;
 
-  /* module identity */
+  /* module identity. Each token is used as a background for white text/glyphs
+     (mod-chip, mc-icon).  Two failed WCAG AA white-text body contrast and have
+     been darkened (computed via (L1+0.05)/(L2+0.05) on #FFF):
+       --module-keyboard #C99A0E → #8B6A0A (2.58:1 → 5.10:1)
+       --module-translation #C75D28 → #B05525 (4.11:1 → 4.90:1)
+     The other three already passed (numbers 4.64:1, words 4.57:1, code 5.79:1). */
   --module-numbers: #1F6FEB;
   --module-words: #D6336C;
-  --module-keyboard: #C99A0E;
+  --module-keyboard: #8B6A0A;
   --module-code: #7B2FF7;
-  --module-translation: #C75D28;
+  --module-translation: #B05525;
 
   /* semantic status */
   --ok: #2F7A36;        --ok-bg: #E7F2E4;
@@ -56,6 +64,31 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+
+/* a11y: skip-link — hidden off-screen until focused.  Keyboard users hit
+   this first on every admin page; activating it jumps focus past the
+   sidebar + topbar straight to the page content. */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  transform: translateY(-200%);
+  background: var(--ink);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  padding: 9px 14px;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  z-index: 1000;
+  transition: transform var(--fast) var(--ease);
+}
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+#main:focus { outline: none; }
 
 html, body {
   margin: 0; padding: 0;

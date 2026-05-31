@@ -75,6 +75,11 @@ export function AdminShell({
 
   return (
     <div className="admin">
+      {/* a11y: skip-to-content — focusable, hits before the sidebar so
+          keyboard users can jump past the nav on every page. */}
+      <a href="#main" className="skip-link">
+        {lang === 'fr' ? 'Aller au contenu' : 'Skip to content'}
+      </a>
       <aside className="side">
         <div className="side-brand">
           <BeeLogo size={28} />
@@ -153,7 +158,7 @@ export function AdminShell({
         </div>
       </aside>
 
-      <div className="main">
+      <main id="main" tabIndex={-1} className="main">
         <header className="topbar">
           <Breadcrumbs lang={lang} />
 
@@ -171,7 +176,7 @@ export function AdminShell({
           </div>
         </header>
         {children}
-      </div>
+      </main>
     </div>
   );
 }

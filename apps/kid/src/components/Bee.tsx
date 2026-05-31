@@ -79,6 +79,7 @@ export function Bee({
   return (
     <svg
       className={'bee' + (bob ? ' bee-bob' : '')}
+      data-expression={expression}
       width={size}
       height={size * 1.6}
       viewBox="0 0 100 160"
@@ -86,12 +87,12 @@ export function Bee({
       aria-label={`bee ${expression}`}
     >
       {wings && (
-        <g opacity="0.95">
+        <g className="bee-wings" opacity="0.95">
           <ellipse cx="22" cy="78" rx="22" ry="14" fill="#BBEAF2" stroke="#20242E" strokeWidth="1.5" transform="rotate(-22 22 78)" />
           <ellipse cx="78" cy="78" rx="22" ry="14" fill="#BBEAF2" stroke="#20242E" strokeWidth="1.5" transform="rotate(22 78 78)" />
         </g>
       )}
-      <g stroke="#20242E" strokeWidth="2.5" fill="none" strokeLinecap="round">
+      <g className="bee-antennae" stroke="#20242E" strokeWidth="2.5" fill="none" strokeLinecap="round">
         <path d="M 38 25 Q 32 14 30 8" />
         <path d="M 62 25 Q 68 14 70 8" />
       </g>

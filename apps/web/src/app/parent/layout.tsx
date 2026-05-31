@@ -1,10 +1,18 @@
 import './parent.css';
+import type { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import type { Language } from '@gabee/types';
 import { getServerSession } from '@/lib/server/auth';
 import { prisma } from '@/lib/server/db';
 import { countUnreadFromParent } from '@/lib/server/services/messages';
 import { ParentShell } from './_components/parent-shell';
+
+// The parent app (incl. /parent/login + /parent/signup) is account-only — keep
+// the whole subtree out of search engines. Also blocked in robots.ts as a
+// belt-and-braces signal for crawlers that ignore meta robots.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
+};
 
 // Parent shell — 5-item top nav per parent spec §3 (Home / Classification /
 // Kids / Messages / Settings). Detects /parent/login + /parent/signup via the

@@ -25,14 +25,23 @@
   --border-strong: #D8CEBA;
   --text: #20242E;
   --text-2: #5E5A50;
-  --text-3: #938D80;
+  /* a11y: darkened from #938D80 (3.31:1 on white) to #6F6A5C so subtle text
+     clears WCAG AA body contrast on the warm surfaces.  Computed
+     (L1+0.05)/(L2+0.05) on white → 5.43:1 (was 3.31:1, failed 4.5 body). */
+  --text-3: #6F6A5C;
 
-  /* module identity (system) */
+  /* module identity (system). Used as background for white text on the
+     .mod-chip badges (e.g. kid card "Mots N4").  Two failed WCAG AA white-text
+     body contrast and have been darkened (computed via (L1+0.05)/(L2+0.05)
+     on #FFF):
+       --module-keyboard #C99A0E → #8B6A0A (2.58:1 → 5.10:1)
+       --module-translation #C75D28 → #B05525 (4.11:1 → 4.90:1)
+     The other three already passed (numbers 4.64:1, words 4.57:1, code 5.79:1). */
   --module-numbers: #1F6FEB;
   --module-words: #D6336C;
-  --module-keyboard: #C99A0E;
+  --module-keyboard: #8B6A0A;
   --module-code: #7B2FF7;
-  --module-translation: #C75D28;
+  --module-translation: #B05525;
 
   /* semantic */
   --ok: #2F7A4F;       --ok-bg: #E4F2E9;
@@ -84,6 +93,35 @@ html, body {
 }
 button { font-family: inherit; }
 a { color: inherit; }
+
+/* a11y: skip-link — hidden off-screen until focused (keyboard users land
+   on it as the very first focusable element).  Renders as a mint pill in
+   the upper-left when active. */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  transform: translateY(-200%);
+  background: var(--ink);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13.5px;
+  padding: 10px 16px;
+  border-radius: var(--r-sm);
+  text-decoration: none;
+  z-index: 1000;
+  transition: transform var(--fast) var(--ease);
+}
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 3px solid var(--mint);
+  outline-offset: 2px;
+}
+/* Suppress the default focus outline on the main scroll target — it gets
+   tabIndex={-1} so the skip-link can land focus there, but the outline
+   would visually distract.  Keyboard users will still see focus on the
+   first real interactive element they Tab into. */
+#main:focus { outline: none; }
 
 /* ===================== APP SHELL ===================== */
 .parent {

@@ -22,9 +22,9 @@ interface Props {
 const MOD_COLOR: Record<string, string> = {
   numbers: '#1F6FEB',
   words: '#D6336C',
-  keyboard: '#C99A0E',
+  keyboard: '#8B6A0A',
   code: '#7B2FF7',
-  translation: '#C75D28',
+  translation: '#B05525',
 };
 const MOD_NAME: Record<string, { fr: string; en: string }> = {
   numbers: { fr: 'Nombres', en: 'Numbers' },

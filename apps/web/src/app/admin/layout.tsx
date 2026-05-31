@@ -1,8 +1,15 @@
 import './admin.css';
+import type { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import type { Language } from '@gabee/types';
 import { requireAdminPage } from '@/lib/server/auth';
 import { AdminShell } from './_shell/nav';
+
+// Admin shell (incl. /admin/login) is staff-only — keep the whole subtree out
+// of search engines. Also blocked in robots.ts as a belt-and-braces signal.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
+};
 
 /**
  * Admin shell layout. Gates every admin route through `requireAdminPage` and
