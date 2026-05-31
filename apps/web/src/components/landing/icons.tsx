@@ -213,21 +213,3 @@ export function ValueIcon({ kind, size = 30 }: { kind: ValueIconKind; size?: num
       );
   }
 }
-
-export function LegalDiscIcon() {
-  return (
-    <svg
-      width={22}
-      height={22}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 3l9 16H3z" />
-      <path d="M12 10v4M12 17h.01" />
-    </svg>
-  );
-}
