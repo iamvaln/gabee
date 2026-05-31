@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+/* Gabee design tokens (design-spec §6) — shared across the web surfaces. */
+:root {
+  --color-brand: #ffb400;
+  --color-ink: #20242e;
+  --color-accent: #2bd4e6;
+  --color-wing: #bbeaf2;
+  --surface: #ffffff;
+  --surface-muted: #f7f8fa;
+  --border: #e6e8ee;
+  --text: #20242e;
+  --text-muted: #6b7280;
+  --module-numbers: #1f6feb;
+  --module-words: #d6336c;
+  --module-keyboard: #c99a0e;
+  --module-code: #7b2ff7;
+  --module-translation: #c75d28;
+  --feedback-correct: #3f7a2e;
+  --feedback-retry: #e5322b;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 9999px;
+}
+
+html,
+body {
+  background: var(--surface-muted);
+  color: var(--text);
+  font-family: 'Mulish', system-ui, sans-serif;
+}

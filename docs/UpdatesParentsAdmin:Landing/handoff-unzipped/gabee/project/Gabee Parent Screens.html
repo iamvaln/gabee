@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gabee — Parents · Écrans</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800;900&display=swap" />
+  <style>
+    body { margin: 0; font-family: 'Mulish', system-ui, sans-serif; background: #F3EEE4; }
+    .screen-iframe { border: 0; display: block; background: #F3EEE4; }
+    .phone-iframe { border: 0; display: block; background: #F3EEE4; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+
+  <script type="text/babel">
+    const { DesignCanvas, DCSection, DCArtboard } = window;
+    const DW = 1280, DH = 840, PW = 390, PH = 844;
+
+    function D({ hash, w = DW, h = DH }) {
+      return <iframe className="screen-iframe" style={{ width: w, height: h }} src={`Gabee Parent.html#${hash}`} title={hash} />;
+    }
+    function P({ hash }) {
+      return <iframe className="phone-iframe" style={{ width: PW, height: PH }} src={`Gabee Parent.html#${hash}`} title={hash} />;
+    }
+
+    function App() {
+      return (
+        <DesignCanvas
+          title="Gabee — Espace parent"
+          subtitle="Application parent · responsive · FR / EN · tous les états"
+        >
+          {/* ───────── ONBOARDING ───────── */}
+          <DCSection id="onboarding" title="Inscription & connexion" subtitle="Création de compte, vérification, première installation (desktop)">
+            <DCArtboard id="signup" label="01 · Inscription (S1)" width={DW} height={DH}><D hash="signup" /></DCArtboard>
+            <DCArtboard id="checkemail" label="02 · Vérifiez vos emails (S2)" width={DW} height={DH}><D hash="checkemail" /></DCArtboard>
+            <DCArtboard id="verify" label="03 · Email vérifié" width={DW} height={DH}><D hash="verify" /></DCArtboard>
+            <DCArtboard id="verify-exp" label="04 · Lien expiré" width={DW} height={DH}><D hash="verify-expired" /></DCArtboard>
+            <DCArtboard id="firstkid" label="05 · Premier enfant (P8)" width={DW} height={DH}><D hash="firstkid" /></DCArtboard>
+            <DCArtboard id="pairdevice" label="06 · Connecter l'appareil (P9)" width={DW} height={DH}><D hash="pairdevice" /></DCArtboard>
+            <DCArtboard id="allset" label="07 · Tout est prêt (P10)" width={DW} height={DH}><D hash="allset" /></DCArtboard>
+            <DCArtboard id="login" label="08 · Connexion (P11)" width={DW} height={DH}><D hash="login" /></DCArtboard>
+            <DCArtboard id="login-err" label="09 · Connexion — erreur" width={DW} height={DH}><D hash="login:error" /></DCArtboard>
+            <DCArtboard id="forgot" label="10 · Mot de passe oublié (P12)" width={DW} height={DH}><D hash="forgot" /></DCArtboard>
+          </DCSection>
+
+          {/* ───────── HOME ───────── */}
+          <DCSection id="home" title="Accueil (H1)" subtitle="Carte de classement · pouls des enfants · agrégats — et tous ses états">
+            <DCArtboard id="home-default" label="11 · Accueil — défaut" width={DW} height={DH}><D hash="home" /></DCArtboard>
+            <DCArtboard id="home-allcaught" label="12 · Accueil — tout à jour" width={DW} height={DH}><D hash="home:allcaught" /></DCArtboard>
+            <DCArtboard id="home-loading" label="13 · Accueil — chargement" width={DW} height={DH}><D hash="home:loading" /></DCArtboard>
+            <DCArtboard id="home-empty" label="14 · Vide — aucun enfant" width={DW} height={DH}><D hash="home:empty" /></DCArtboard>
+            <DCArtboard id="home-nodev" label="15 · Vide — aucun appareil" width={DW} height={DH}><D hash="home:empty-nodevices" /></DCArtboard>
+            <DCArtboard id="home-offline" label="16 · Accueil — hors-ligne" width={DW} height={DH}><D hash="home:offline" /></DCArtboard>
+            <DCArtboard id="home-error" label="17 · Accueil — erreur" width={DW} height={DH}><D hash="home:error" /></DCArtboard>
+            <DCArtboard id="session" label="18 · Détail de session (H2)" width={DW} height={DH}><D hash="session" /></DCArtboard>
+            <DCArtboard id="session-load" label="19 · Détail — chargement" width={DW} height={DH}><D hash="session-loading" /></DCArtboard>
+          </DCSection>
+
+          {/* ───────── CLASSIFICATION ───────── */}
+          <DCSection id="classify" title="Classement (C1)" subtitle="Le flux quotidien · une session à la fois">
+            <DCArtboard id="cls-default" label="20 · Classer — défaut" width={DW} height={DH}><D hash="classify" /></DCArtboard>
+            <DCArtboard id="cls-why" label="21 · Pourquoi on demande" width={DW} height={DH}><D hash="why" /></DCArtboard>
+            <DCArtboard id="cls-done" label="22 · Tout est classé" width={DW} height={DH}><D hash="classify-done" /></DCArtboard>
+            <DCArtboard id="cls-offline" label="23 · Hors-ligne" width={DW} height={DH}><D hash="classify-offline" /></DCArtboard>
+            <DCArtboard id="cls-error" label="24 · Erreur (sélection conservée)" width={DW} height={DH}><D hash="classify-error" /></DCArtboard>
+          </DCSection>
+
+          {/* ───────── KIDS ───────── */}
+          <DCSection id="kids" title="Enfants (K1 · K2)" subtitle="Liste, fiche détaillée par onglet, ajout / modif / retrait">
+            <DCArtboard id="kids-list" label="25 · Liste des enfants" width={DW} height={DH}><D hash="kids" /></DCArtboard>
+            <DCArtboard id="kids-loading" label="26 · Liste — chargement" width={DW} height={DH}><D hash="kids:loading" /></DCArtboard>
+            <DCArtboard id="kids-empty" label="27 · Liste — vide" width={DW} height={DH}><D hash="kids:empty" /></DCArtboard>
+            <DCArtboard id="kid-overview" label="28 · Fiche — Aperçu" width={DW} height={DH}><D hash="kid:overview" /></DCArtboard>
+            <DCArtboard id="kid-activity" label="29 · Fiche — Activité" width={DW} height={DH}><D hash="kid:activity" /></DCArtboard>
+            <DCArtboard id="kid-perf" label="30 · Fiche — Performance" width={DW} height={DH}><D hash="kid:performance" /></DCArtboard>
+            <DCArtboard id="kid-strengths" label="31 · Fiche — Forces & faiblesses" width={DW} height={DH}><D hash="kid:strengths" /></DCArtboard>
+            <DCArtboard id="kid-feedback" label="32 · Fiche — Retours" width={DW} height={DH}><D hash="kid:feedback" /></DCArtboard>
+            <DCArtboard id="kid-empty" label="33 · Fiche — pas de sessions" width={DW} height={DH}><D hash="kid:empty" /></DCArtboard>
+            <DCArtboard id="addkid" label="34 · Ajouter un enfant (P1)" width={DW} height={DH}><D hash="addkid" /></DCArtboard>
+            <DCArtboard id="editkid" label="35 · Modifier l'enfant (K3)" width={DW} height={DH}><D hash="editkid" /></DCArtboard>
+            <DCArtboard id="removekid" label="36 · Retirer l'enfant (P2)" width={DW} height={DH}><D hash="removekid" /></DCArtboard>
+            <DCArtboard id="feedbackmodal" label="37 · Noter le contenu (F1)" width={DW} height={DH}><D hash="feedbackmodal" /></DCArtboard>
+          </DCSection>
+
+          {/* ───────── SETTINGS & FAMILY ───────── */}
+          <DCSection id="settings" title="Réglages & Famille" subtitle="Profil, mot de passe, co-parents, appareils, notifications, retours, suppression">
+            <DCArtboard id="set-profile" label="38 · Profil (ST1)" width={DW} height={DH}><D hash="settings:profile" /></DCArtboard>
+            <DCArtboard id="set-password" label="39 · Mot de passe (ST2)" width={DW} height={DH}><D hash="settings:password" /></DCArtboard>
+            <DCArtboard id="set-family" label="40 · Famille / co-parents (FAM1)" width={DW} height={DH}><D hash="settings:family" /></DCArtboard>
+            <DCArtboard id="set-invite" label="41 · Inviter un co-parent (P3)" width={DW} height={DH}><D hash="invite" /></DCArtboard>
+            <DCArtboard id="set-accept" label="42 · Accepter l'invitation (FAM2)" width={DW} height={DH}><D hash="acceptinvite" /></DCArtboard>
+            <DCArtboard id="set-devices" label="43 · Appareils (ST3)" width={DW} height={DH}><D hash="settings:devices" /></DCArtboard>
+            <DCArtboard id="set-pair" label="44 · Envoyer le lien (P9.4)" width={DW} height={DH}><D hash="pairmodal" /></DCArtboard>
+            <DCArtboard id="set-notif" label="45 · Notifications (ST4)" width={DW} height={DH}><D hash="settings:notifications" /></DCArtboard>
+            <DCArtboard id="set-feedback" label="46 · Mes retours (F2)" width={DW} height={DH}><D hash="settings:feedback" /></DCArtboard>
+            <DCArtboard id="set-delete" label="47 · Supprimer le compte (ST5)" width={DW} height={DH}><D hash="settings:delete" /></DCArtboard>
+          </DCSection>
+
+          {/* ───────── BILINGUAL (EN) ───────── */}
+          <DCSection id="english" title="English UI" subtitle="The interface is bilingual FR / EN — key surfaces in English">
+            <DCArtboard id="en-home" label="48 · Home" width={DW} height={DH}><D hash="home::en" /></DCArtboard>
+            <DCArtboard id="en-classify" label="49 · Classification" width={DW} height={DH}><D hash="classify::en" /></DCArtboard>
+            <DCArtboard id="en-kid" label="50 · Kid detail" width={DW} height={DH}><D hash="kid:overview:en" /></DCArtboard>
+            <DCArtboard id="en-signup" label="51 · Sign up" width={DW} height={DH}><D hash="signup::en" /></DCArtboard>
+          </DCSection>
+
+          {/* ───────── PHONE ───────── */}
+          <DCSection id="phone" title="Téléphone (responsive)" subtitle="Barre d'onglets en bas · classement adapté au pouce · 390×844">
+            <DCArtboard id="ph-home" label="52 · Accueil" width={PW} height={PH}><P hash="home" /></DCArtboard>
+            <DCArtboard id="ph-classify" label="53 · Classement" width={PW} height={PH}><P hash="classify" /></DCArtboard>
+            <DCArtboard id="ph-kids" label="54 · Enfants" width={PW} height={PH}><P hash="kids" /></DCArtboard>
+            <DCArtboard id="ph-kid" label="55 · Fiche enfant" width={PW} height={PH}><P hash="kid:overview" /></DCArtboard>
+            <DCArtboard id="ph-settings" label="56 · Réglages" width={PW} height={PH}><P hash="settings:profile" /></DCArtboard>
+            <DCArtboard id="ph-signup" label="57 · Inscription" width={PW} height={PH}><P hash="signup" /></DCArtboard>
+            <DCArtboard id="ph-session" label="58 · Détail de session" width={PW} height={PH}><P hash="session" /></DCArtboard>
+            <DCArtboard id="ph-addkid" label="59 · Ajouter un enfant" width={PW} height={PH}><P hash="addkid" /></DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

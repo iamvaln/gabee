@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gabee — Screens</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&display=swap" />
+  <style>
+    body { margin: 0; font-family: 'Mulish', system-ui, sans-serif; background: #F1ECE0; }
+    .screen-iframe {
+      width: 1280px;
+      height: 800px;
+      border: 0;
+      display: block;
+      background: #FAF7F0;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+
+  <script type="text/babel">
+    const { DesignCanvas, DCSection, DCArtboard } = window;
+
+    function Screen({ hash }) {
+      return (
+        <iframe
+          className="screen-iframe"
+          src={`Gabee Prototype.html#${hash}`}
+          title={hash}
+        />
+      );
+    }
+
+    function App() {
+      return (
+        <DesignCanvas
+          title="Gabee — Tous les écrans"
+          subtitle="Application enfant · Phase 1 · format desktop 1280×800"
+        >
+          <DCSection
+            id="onboarding"
+            title="Démarrage"
+            subtitle="Premier lancement et tableau de bord enfant"
+          >
+            <DCArtboard id="welcome" label="01 · Accueil — prénom + avatar" width={1280} height={800}>
+              <Screen hash="welcome" />
+            </DCArtboard>
+            <DCArtboard id="home" label="02 · Hub — choix du module" width={1280} height={800}>
+              <Screen hash="home" />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="modules"
+            title="Entrée d'un module"
+            subtitle="Carte des niveaux · sous-modes pour les mots"
+          >
+            <DCArtboard id="lm-numbers" label="03 · Niveaux — Nombres" width={1280} height={800}>
+              <Screen hash="levelmap:numbers" />
+            </DCArtboard>
+            <DCArtboard id="lm-code" label="04 · Niveaux — Code" width={1280} height={800}>
+              <Screen hash="levelmap:code" />
+            </DCArtboard>
+            <DCArtboard id="lm-translation" label="05 · Niveaux — Traduction" width={1280} height={800}>
+              <Screen hash="levelmap:translation" />
+            </DCArtboard>
+            <DCArtboard id="words-sub" label="06 · Mots — choix du mini-jeu" width={1280} height={800}>
+              <Screen hash="words-sub" />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="sessions"
+            title="Sessions de jeu"
+            subtitle="Un écran de question par module et sous-mode"
+          >
+            <DCArtboard id="sess-numbers" label="07 · Nombres" width={1280} height={800}>
+              <Screen hash="session-numbers" />
+            </DCArtboard>
+            <DCArtboard id="sess-words-pic" label="08 · Mots — Image vers mot" width={1280} height={800}>
+              <Screen hash="words-pic" />
+            </DCArtboard>
+            <DCArtboard id="sess-words-fill" label="09 · Mots — Trouve le mot" width={1280} height={800}>
+              <Screen hash="words-fill" />
+            </DCArtboard>
+            <DCArtboard id="sess-words-build" label="10 · Mots — Construis la phrase" width={1280} height={800}>
+              <Screen hash="words-build" />
+            </DCArtboard>
+            <DCArtboard id="sess-keyboard" label="11 · Clavier" width={1280} height={800}>
+              <Screen hash="session-keyboard" />
+            </DCArtboard>
+            <DCArtboard id="sess-code" label="12 · Code" width={1280} height={800}>
+              <Screen hash="session-code" />
+            </DCArtboard>
+            <DCArtboard id="sess-translation" label="13 · Traduction" width={1280} height={800}>
+              <Screen hash="session-translation" />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="outcomes"
+            title="Fin de session"
+            subtitle="Récapitulatif et célébration de niveau"
+          >
+            <DCArtboard id="summary" label="14 · Récap session" width={1280} height={800}>
+              <Screen hash="summary:numbers" />
+            </DCArtboard>
+            <DCArtboard id="celebrate" label="15 · Niveau terminé" width={1280} height={800}>
+              <Screen hash="celebrate:numbers:5" />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="healthy"
+            title="Usage et réglages"
+            subtitle="Plafond quotidien et préférences enfant"
+          >
+            <DCArtboard id="daycap" label="16 · Limite quotidienne" width={1280} height={800}>
+              <Screen hash="daycap" />
+            </DCArtboard>
+            <DCArtboard id="settings" label="17 · Réglages enfant" width={1280} height={800}>
+              <Screen hash="settings" />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

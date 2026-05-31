@@ -1,0 +1,155 @@
+import { z } from 'zod';
+
+/**
+ * Enumerations and shared primitive schemas.
+ * Zod schemas are the single source of truth; TS types are inferred from them.
+ */
+
+// ─── Modules ─────────────────────────────────────────────────────────────────
+
+/** The five learning modules (product §4). */
+export const ModuleSchema = z.enum(['numbers', 'words', 'keyboard', 'code', 'translation']);
+export type Module = z.infer<typeof ModuleSchema>;
+
+/**
+ * Sub-mode key — the dotted-id form `<module>.<key>` from the SubMode registry,
+ * e.g. `"numbers.arithmetic"`, `"words.picture"`. Phase 2A makes sub-modes a
+ * first-class authoring dimension across every module (not just Words).
+ *
+ * The registry is in the DB (`sub_modes` table, seeded by `prisma/seed.ts`); see
+ * `packages/types/src/sub-mode.ts` for the per-row shape.
+ */
+export const SubModeKeySchema = z
+  .string()
+  .regex(/^[a-z_]+\.[a-z_]+$/, 'subMode must be `<module>.<key>`');
+export type SubModeKey = z.infer<typeof SubModeKeySchema>;
+
+/**
+ * The four Words exercise types (product §4.2). Phase 2A switches Words sub-modes
+ * to the dotted-id form (`words.picture` etc.), but the kid PWA still consumes the
+ * short keys — kept here for back-compat shims and event payloads.
+ */
+export const LEGACY_WORDS_SUB_MODES = ['picture', 'fill', 'build', 'read'] as const;
+export const WordsSubModeSchema = z.enum(LEGACY_WORDS_SUB_MODES);
+export type WordsSubMode = z.infer<typeof WordsSubModeSchema>;
+
+/**
+ * Language-AGNOSTIC modules: one progress track each; switching language only
+ * changes presentation (product §7.3).
+ */
+export const AgnosticModuleSchema = z.enum(['numbers', 'keyboard', 'code']);
+export type AgnosticModule = z.infer<typeof AgnosticModuleSchema>;
+
+/**
+ * Language-DEPENDENT tracks: progress is stored separately per language because
+ * fr and en are distinct skills (product §7.3). Keys mirror
+ * `progress_by_module_per_language`.
+ */
+export const TrackSchema = z.enum([
+  'words_picture',
+  'words_fill',
+  'words_build',
+  'words_read',
+  'translation',
+]);
+export type Track = z.infer<typeof TrackSchema>;
+
+// ─── Language ────────────────────────────────────────────────────────────────
+
+/** Active UI/content language; switchable anytime, no locked primary (product §2). */
+export const LanguageSchema = z.enum(['fr', 'en']);
+export type Language = z.infer<typeof LanguageSchema>;
+
+/**
+ * A question's language disposition (product §5, Appendix B.4):
+ * - `null`  → language-agnostic (e.g. bare arithmetic `23 + 14`), no `{ fr, en }` pairs
+ * - `'both'`→ language-dependent; both FR and EN must be present to be confirmed
+ */
+export const QuestionLangSchema = z.enum(['both']).nullable();
+export type QuestionLang = z.infer<typeof QuestionLangSchema>;
+
+/** FR↔EN direction for the Translation module (product §4.5, both ways per level). */
+export const TranslationDirectionSchema = z.enum(['fr_to_en', 'en_to_fr']);
+export type TranslationDirection = z.infer<typeof TranslationDirectionSchema>;
+
+// ─── Question metadata ───────────────────────────────────────────────────────
+
+/** Rendering/interaction type of a question (drives the kid-app input pattern). */
+export const QuestionTypeSchema = z.enum([
+  'mcq-number', // Numbers: pick a numeral
+  'mcq-word', // Words fill-the-blank / picture→word: pick a word
+  'mcq-image', // Picture→word: image prompt, pick the word
+  'build-sentence', // Words build-a-sentence (word cloud)
+  'read-answer', // Words read & answer (passage + comprehension)
+  'typing', // Keyboard: type the target text
+  'code-grid', // Code: arrange blocks on a grid
+  'translation', // Translation: produce/pick in the other language
+]);
+export type QuestionType = z.infer<typeof QuestionTypeSchema>;
+
+/** Curation lifecycle of a question (admin spec §6.1): candidate → confirmed; or rejected/demoted. */
+export const QuestionStatusSchema = z.enum(['candidate', 'confirmed', 'rejected', 'demoted']);
+export type QuestionStatus = z.infer<typeof QuestionStatusSchema>;
+
+/**
+ * Diagnostic tag on a wrong answer (distractor) — the highest-leverage analytics
+ * win (product §9.2). Open-ended on purpose; the spec's examples are conventions,
+ * not an exhaustive set.
+ */
+export const ErrorTypeSchema = z.string().min(1);
+export type ErrorType = z.infer<typeof ErrorTypeSchema>;
+
+/** Canonical `error_type` values from the spec (product §9.2) — for reference/seeding. */
+export const KNOWN_ERROR_TYPES = [
+  'off-by-one',
+  'place-value',
+  'semantic-neighbor',
+  'false-cognate',
+] as const;
+
+// ─── Profile / avatar ────────────────────────────────────────────────────────
+
+/** Four fixed avatar looks at MVP; visual identity only, no behavioral effect (product §3). */
+export const AvatarSchema = z.enum(['avatar_1', 'avatar_2', 'avatar_3', 'avatar_4']);
+export type Avatar = z.infer<typeof AvatarSchema>;
+
+// ─── Session / lesson ────────────────────────────────────────────────────────
+
+/**
+ * Why a lesson session started — powers the adherence/volition read (product §13.2).
+ * Do not drop this field.
+ */
+export const LessonTriggerSchema = z.enum(['new', 'retry', 'replay']);
+export type LessonTrigger = z.infer<typeof LessonTriggerSchema>;
+
+/** Who initiated a session — set by the parent in the classification queue (product §9.3). */
+export const InitiationLabelSchema = z.enum(['child_initiated', 'prompted', 'unsure']);
+export type InitiationLabel = z.infer<typeof InitiationLabelSchema>;
+
+// ─── Module-specific enums ───────────────────────────────────────────────────
+
+/** Keyboard typing mode (product §9.2). */
+export const TypingModeSchema = z.enum(['static', 'scrolling']);
+export type TypingMode = z.infer<typeof TypingModeSchema>;
+
+/** Outcome of a Code run attempt (product §9.2). */
+export const CodeRunResultSchema = z.enum(['success', 'hit_wall', 'wrong_position']);
+export type CodeRunResult = z.infer<typeof CodeRunResultSchema>;
+
+// ─── Shared numeric primitives ───────────────────────────────────────────────
+
+/** Difficulty tier (1-10). Phase 1 ships a 3-level slice but the schema allows the full range. */
+export const LevelSchema = z.number().int().min(1).max(10);
+export type Level = z.infer<typeof LevelSchema>;
+
+/** Lesson index within a level: 1-3 are lessons, 4 is the revision (product §4.0). */
+export const LessonSchema = z.number().int().min(1).max(4);
+export type Lesson = z.infer<typeof LessonSchema>;
+
+/** Difficulty rating of a question within its level (product §5). */
+export const DifficultySchema = z.number().int().min(1).max(5);
+export type Difficulty = z.infer<typeof DifficultySchema>;
+
+/** Stars awarded (0-3 per lesson is typical; not hard-capped here). */
+export const StarsSchema = z.number().int().min(0);
+export type Stars = z.infer<typeof StarsSchema>;

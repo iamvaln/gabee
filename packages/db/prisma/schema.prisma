@@ -1,0 +1,690 @@
+// Gabee — Prisma schema (Phase 1). Source of truth for the data model is product §7.3
+// and the coding-agent brief. Prisma 7: `prisma-client` generator + driver adapters.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  // Prisma 7: connection URLs live in prisma.config.ts, not here. The app runtime
+  // connects via the pg driver adapter (DATABASE_URL) in src/client.ts; migrations
+  // use the direct connection configured in prisma.config.ts.
+  provider = "postgresql"
+}
+
+// ─── Enums ─────────────────────────────────────────────────────────────────
+
+enum Language {
+  fr
+  en
+}
+
+enum Avatar {
+  avatar_1
+  avatar_2
+  avatar_3
+  avatar_4
+}
+
+enum Module {
+  numbers
+  words
+  keyboard
+  code
+  translation
+}
+
+enum QuestionStatus {
+  candidate
+  confirmed
+  rejected
+  demoted
+}
+
+enum InitiationLabel {
+  child_initiated
+  prompted
+  unsure
+}
+
+// ─── Admin enums (admin spec §12) ────────────────────────────────────────────
+
+enum AccountRole {
+  parent
+  admin
+  super_admin
+}
+
+enum ModuleStatus {
+  active
+  disabled
+}
+
+enum ContentPlanStatus {
+  pending
+  ai_draft
+  accepted
+}
+
+enum InboxStatus {
+  new
+  read
+  replied
+  archived
+}
+
+enum GdprKind {
+  access
+  export
+  erase
+}
+
+enum GdprStatus {
+  new
+  verifying
+  in_progress
+  done
+}
+
+enum FeedbackScope {
+  module
+  level
+  lesson
+}
+
+enum FeedbackStatus {
+  new
+  triaged
+  closed
+}
+
+// ─── Accounts & profiles (product §7.1, §7.3) ────────────────────────────────
+
+// One parent account per household. Auth is our own (scrypt + jose); credentials live
+// in the history-capable `ParentCredential` table, never here. `isAdmin` grants access
+// to the admin back office (product §10.2/§10.3) — the only role flag in Phase 1.
+//
+// `displayNameForKids` is how the kid sees the sender on a parent → kid message
+// (changes-v1 §4.1, parent spec §8.2 / §10.1). Defaults to first part of email; the
+// parent can customise it in Settings → Profile.
+model ParentAccount {
+  id                 String             @id @default(uuid()) @db.Uuid
+  email              String             @unique
+  // Single auth system: admins are accounts with an elevated role (admin spec D1).
+  role               AccountRole        @default(parent)
+  displayNameForKids String             @default("") @map("display_name_for_kids") @db.VarChar(50)
+  createdAt          DateTime           @default(now()) @map("created_at")
+  lastLoginAt        DateTime?          @map("last_login_at")
+  children           ChildProfile[]
+  credentials        ParentCredential[]
+  feedback           Feedback[]
+  sentMessages       KidMessage[]
+  childLinks         ParentChildLink[]     @relation("ParentChildLinkParent")
+  sentInvites        CoparentInvite[]      @relation("CoparentInviteInviter")
+  devices            DeviceLink[]
+  notificationPrefs  NotificationPrefs?
+  familyActions      FamilyActivityLog[]
+
+  @@map("parent_accounts")
+}
+
+// Password credentials, kept OUT of the accounts table and history-capable:
+// many rows per parent, the active one has `retiredAt = null`. A password change
+// retires the current row and inserts a new active one, preserving old hashes for
+// reuse-checks/audit. Hash + salt are produced by Node's scrypt (see lib/server/auth).
+model ParentCredential {
+  id        String    @id @default(uuid()) @db.Uuid
+  parentId  String    @map("parent_id") @db.Uuid
+  hash      String
+  salt      String
+  algorithm String    @default("scrypt")
+  createdAt DateTime  @default(now()) @map("created_at")
+  retiredAt DateTime? @map("retired_at")
+
+  parent ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([parentId, retiredAt])
+  @@map("parent_credentials")
+}
+
+// A child profile has no login of its own; the parent's auth gates the kid device.
+// `name` is the child's real first name. Progress is stored as JSON matching the Zod
+// shapes in @gabee/types (language-agnostic vs per-language tracks, product §7.3).
+model ChildProfile {
+  id                          String                  @id @default(uuid()) @db.Uuid
+  parentId                    String                  @map("parent_id") @db.Uuid
+  name                        String
+  avatar                      Avatar
+  language                    Language
+  audioEnabled                Boolean                 @default(true) @map("audio_enabled")
+  createdAt                   DateTime                @default(now()) @map("created_at")
+  lastActiveAt                DateTime?               @map("last_active_at")
+  totalStars                  Int                     @default(0) @map("total_stars")
+  badges                      String[]                @default([])
+  progressByModule            Json                    @default("{}") @map("progress_by_module")
+  progressByModulePerLanguage Json                    @default("{}") @map("progress_by_module_per_language")
+
+  // Healthy-use overrides (product §6.3). Each is nullable — null = inherit
+  // the admin default from `HealthyUseLimits`. The parent UI surfaces sliders
+  // bounded by the admin's min/max so a parent can never go above the cap.
+  dailyLessonTargetOverride   Int?                    @map("daily_lesson_target_override")
+  sessionSoftLimitMinOverride Int?                    @map("session_soft_limit_min_override")
+  sessionHardCapMinOverride   Int?                    @map("session_hard_cap_min_override")
+  dailyTotalCapMinOverride    Int?                    @map("daily_total_cap_min_override")
+  lookAwayEnabledOverride     Boolean?                @map("look_away_enabled_override")
+
+  // Streak tracking (product §6.3 + decisions: consistency, not pressure).
+  // Streak is incremented at most once per local day on `lesson_completed`.
+  streakDays                  Int                     @default(0) @map("streak_days")
+  longestStreakDays           Int                     @default(0) @map("longest_streak_days")
+  lastLessonDate              DateTime?               @map("last_lesson_date") @db.Date
+
+  parent           ParentAccount           @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  events           Event[]
+  classifications  SessionClassification[]
+  observations     WeeklyObservation[]
+  receivedMessages KidMessage[]
+  parentLinks      ParentChildLink[]
+  familyActions    FamilyActivityLog[]
+
+  @@index([parentId])
+  @@map("child_profiles")
+}
+
+// ─── Content (product §5, Appendix B.4) ──────────────────────────────────────
+
+// Questions live here and are exposed to the kid app as versioned per-module bundles.
+// Polymorphic text fields (prompt/answer/distractors) are JSON so they can be a bare
+// value or a bilingual { fr, en } pair; bilingual parity is validated in @gabee/types
+// before a question is seeded/confirmed.
+model Question {
+  id           String         @id
+  curriculumId String         @map("curriculum_id") @db.Uuid
+  module       Module
+  // Sub-modes are a generic, first-class dimension per (module, key) — see SubMode.
+  // Stored as the registry id (e.g. "words.picture") OR the legacy short key
+  // ("picture", "fill"...) for back-compat with the kid app while it migrates.
+  subMode      String         @default("default") @map("sub_mode")
+  level        Int
+  lesson       Int
+  theme        String
+  type         String
+  objectiveRef String?        @map("objective_ref")
+  prompt       Json
+  answer       Json
+  distractors  Json           @default("[]")
+  difficulty   Int
+  conceptTags  String[]       @default([]) @map("concept_tags")
+  // null = language-agnostic; 'both' = language-dependent (FR+EN present).
+  lang         String?
+  config       Json?
+  createdBy    String         @map("created_by")
+  ratings      Json           @default("[]")
+  avgRating    Float?         @map("avg_rating")
+  status       QuestionStatus @default(candidate)
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  curriculum Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+
+  @@index([module, level, lesson, status])
+  @@index([status])
+  @@index([curriculumId])
+  @@map("questions")
+}
+
+// A published, versioned snapshot of a module's confirmed pool (product §5, §8).
+model ContentBundleVersion {
+  id            String   @id @default(uuid()) @db.Uuid
+  module        Module
+  version       Int
+  publishedAt   DateTime @default(now()) @map("published_at")
+  questionCount Int      @map("question_count")
+  questionIds   String[] @default([]) @map("question_ids")
+
+  @@unique([module, version])
+  @@index([module])
+  @@map("content_bundle_versions")
+}
+
+// ─── Telemetry (product §9) ──────────────────────────────────────────────────
+
+// Append-only event log. `eventId` is the client-generated UUID from the ingestion
+// envelope — unique, so offline replays are idempotent. `payload` holds the validated
+// event object; `profileId` is null for parent-side events (§9.5).
+model Event {
+  id            String    @id @default(uuid()) @db.Uuid
+  eventId       String    @unique @map("event_id") @db.Uuid
+  profileId     String?   @map("profile_id") @db.Uuid
+  sessionId     String?   @map("session_id") @db.Uuid
+  name          String
+  clientTs      DateTime  @map("client_ts")
+  serverTs      DateTime  @default(now()) @map("server_ts")
+  schemaVersion Int       @default(1) @map("schema_version")
+  payload       Json
+
+  profile ChildProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, name])
+  @@index([sessionId])
+  @@index([name, serverTs])
+  @@map("events")
+}
+
+// One row per play session, surfaced to the parent for labelling (product §9.3, §13.2).
+// `label` null = pending in the classification queue.
+model SessionClassification {
+  id           String           @id @default(uuid()) @db.Uuid
+  sessionId    String           @unique @map("session_id") @db.Uuid
+  profileId    String           @map("profile_id") @db.Uuid
+  startedAt    DateTime         @map("started_at")
+  firstModule  Module?          @map("first_module")
+  durationS    Float?           @map("duration_s")
+  label        InitiationLabel?
+  classifiedAt DateTime?        @map("classified_at")
+  nudgeSentAt  DateTime?        @map("nudge_sent_at")
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  profile ChildProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, label])
+  @@map("session_classifications")
+}
+
+// Free-text per-child, per-week observation for the pilot data view (product §13.4).
+model WeeklyObservation {
+  id        String   @id @default(uuid()) @db.Uuid
+  profileId String   @map("profile_id") @db.Uuid
+  weekStart DateTime @map("week_start") @db.Date
+  text      String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  profile ChildProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, weekStart])
+  @@map("weekly_observations")
+}
+
+// ─── Admin / authoring (admin spec §12) ──────────────────────────────────────
+
+// Phase-3-ready: a single seeded `default` row in MVP; the admin UI doesn't expose
+// curriculum management yet. Every content row references a curriculum.
+model Curriculum {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  plans     ContentPlan[]
+  questions Question[]
+
+  @@map("curricula")
+}
+
+// The 5 fixed module identities + ops metadata (admin spec §5). `id` is the Module enum.
+model ModuleDef {
+  id              Module       @id
+  slug            String       @unique
+  name            Json
+  description     Json
+  colorToken      String       @map("color_token")
+  icon            String
+  characteristics Json
+  status          ModuleStatus @default(active)
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@map("modules")
+}
+
+// Per (curriculum, module, level): scope + objectives + validation (admin spec §6.1).
+model ContentPlan {
+  id                    String            @id @default(uuid()) @db.Uuid
+  curriculumId          String            @map("curriculum_id") @db.Uuid
+  moduleId              Module            @map("module_id")
+  // Plans are now scoped to (module, sub-mode, level) so each authoring track has
+  // its own scope/objectives. Non-sub-moded modules use "default".
+  subMode               String            @default("default") @map("sub_mode")
+  level                 Int
+  scope                 Json
+  pedagogicalObjectives Json              @default("[]") @map("pedagogical_objectives")
+  validationCriteria    Json              @map("validation_criteria")
+  notes                 String?
+  status                ContentPlanStatus @default(pending)
+  aiMeta                Json?             @map("ai_meta")
+  acceptedBy            String?           @map("accepted_by")
+  acceptedAt            DateTime?         @map("accepted_at")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+
+  curriculum Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+
+  @@unique([curriculumId, moduleId, subMode, level])
+  @@map("content_plans")
+}
+
+// Sub-mode registry (Phase 2A). A first-class authoring dimension across every
+// module: each row owns a `(module, key)` slot — e.g. `numbers.arithmetic`,
+// `words.picture`. The `mechanicHint` is fed verbatim into the AI prompt to keep
+// generated questions on-pattern. `languageDependent` mirrors the per-language
+// progress split (product §7.3).
+model SubMode {
+  id                String   @id // "numbers.arithmetic" etc.
+  module            Module
+  key               String   // "arithmetic"
+  name              Json     // {fr, en}
+  languageDependent Boolean  @map("language_dependent")
+  displayOrder      Int      @map("display_order")
+  mechanicHint      String   @map("mechanic_hint") @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@unique([module, key])
+  @@map("sub_modes")
+}
+
+// Trail of sensitive actions (admin spec §4.4).
+model AuditLog {
+  id         String      @id @default(uuid()) @db.Uuid
+  actorId    String      @map("actor_id") @db.Uuid
+  actorRole  AccountRole @map("actor_role")
+  kind       String
+  targetKind String      @map("target_kind")
+  targetId   String      @map("target_id")
+  diff       Json?
+  ip         String?
+  createdAt  DateTime    @default(now()) @map("created_at")
+
+  @@index([actorId])
+  @@index([kind, createdAt])
+  @@map("audit_logs")
+}
+
+// Landing contact-form submissions (admin spec §8).
+model InboxMessage {
+  id        String      @id @default(uuid()) @db.Uuid
+  name      String
+  email     String
+  subject   String?
+  message   String
+  status    InboxStatus @default(new)
+  source    String      @default("landing_contact")
+  readBy    String?     @map("read_by")
+  readAt    DateTime?   @map("read_at")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@index([status, createdAt])
+  @@map("inbox_messages")
+}
+
+// GDPR request queue with a manual 3-step checklist in `steps` (admin spec §9).
+model GdprRequest {
+  id        String     @id @default(uuid()) @db.Uuid
+  kind      GdprKind
+  parentId  String?    @map("parent_id") @db.Uuid
+  email     String
+  notes     String     @default("")
+  status    GdprStatus @default(new)
+  steps     Json       @default("{}")
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  @@index([status, createdAt])
+  @@map("gdpr_requests")
+}
+
+// Parent ratings/comments on a module/level/lesson (admin spec §10).
+model Feedback {
+  id           String         @id @default(uuid()) @db.Uuid
+  parentId     String         @map("parent_id") @db.Uuid
+  childId      String?        @map("child_id") @db.Uuid
+  scope        FeedbackScope
+  target       Json
+  curriculumId String         @map("curriculum_id") @db.Uuid
+  rating       Int
+  comment      String?
+  status       FeedbackStatus @default(new)
+  tags         String[]       @default([])
+  notes        String?
+  closedBy     String?        @map("closed_by")
+  closedAt     DateTime?      @map("closed_at")
+  createdAt    DateTime       @default(now()) @map("created_at")
+
+  parent ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@map("feedback")
+}
+
+// One row per AI generation call — powers the AI usage metric (admin spec §11.3).
+model AiUsage {
+  id           String   @id @default(uuid()) @db.Uuid
+  provider     String
+  model        String
+  purpose      String
+  inputTokens  Int      @default(0) @map("input_tokens")
+  outputTokens Int      @default(0) @map("output_tokens")
+  costUsd      Float?   @map("cost_usd")
+  actorId      String?  @map("actor_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([provider, model, createdAt])
+  @@index([purpose, createdAt])
+  @@map("ai_usage")
+}
+
+// ─── Parent → kid messages (changes-v1 §1, parent spec §8) ───────────────────
+
+enum KidMessageStatus {
+  unread
+  read
+  deleted_by_sender
+}
+
+// A short text a parent leaves their kid; surfaced as a bandeau between lessons
+// in the kid app (parent spec §8.4). Immutable once read. Deletable while unread.
+// Text is private to family + the parent app — never surfaced in admin queries
+// (admin Messages dashboard reads only counts/timestamps, see changes-v1 §1.5).
+model KidMessage {
+  id           String           @id @default(uuid()) @db.Uuid
+  fromParentId String           @map("from_parent_id") @db.Uuid
+  toChildId    String           @map("to_child_id") @db.Uuid
+  text         String           @db.VarChar(200)
+  status       KidMessageStatus @default(unread)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  readAt       DateTime?        @map("read_at")
+  deletedAt    DateTime?        @map("deleted_at")
+
+  fromParent ParentAccount @relation(fields: [fromParentId], references: [id], onDelete: Cascade)
+  toChild    ChildProfile  @relation(fields: [toChildId], references: [id], onDelete: Cascade)
+
+  @@index([toChildId, createdAt], name: "idx_kid_messages_to_child_unread")
+  @@index([fromParentId, createdAt(sort: Desc)])
+  @@map("kid_messages")
+}
+
+// ─── Family, co-parents, devices, notifications (parent spec §9, §10.4, §10.5) ─
+
+enum CoparentLinkRole {
+  primary
+  coparent
+}
+
+enum CoparentInviteStatus {
+  pending
+  accepted
+  declined
+  expired
+  cancelled
+}
+
+enum NotificationDigestCadence {
+  daily
+  every_2_days
+  weekly
+  off
+}
+
+enum FamilyActionKind {
+  session_classified
+  feedback_left
+  feedback_edited
+  kid_added
+  kid_edited
+  kid_removed
+  device_paired
+  device_revoked
+  coparent_invited
+  coparent_joined
+  coparent_removed
+  message_sent
+  message_deleted
+}
+
+// Many-to-many: parents ↔ children. The first parent to create a kid has
+// `role=primary` (used for GDPR / billing context). Phase 1 cap = 2 parents per
+// child but the table can hold more — enforced in app layer.
+model ParentChildLink {
+  parentId  String           @map("parent_id") @db.Uuid
+  childId   String           @map("child_id") @db.Uuid
+  role      CoparentLinkRole @default(coparent)
+  linkedAt  DateTime         @default(now()) @map("linked_at")
+  invitedBy String?          @map("invited_by") @db.Uuid
+
+  parent ParentAccount @relation("ParentChildLinkParent", fields: [parentId], references: [id], onDelete: Cascade)
+  child  ChildProfile  @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@id([parentId, childId])
+  @@index([childId])
+  @@map("parent_child_links")
+}
+
+// Invite a co-parent by email. Token is signed JWT (7-day TTL).
+model CoparentInvite {
+  id              String               @id @default(uuid()) @db.Uuid
+  inviterParentId String               @map("inviter_parent_id") @db.Uuid
+  inviteeEmail    String               @map("invitee_email")
+  childIds        String[]             @default([]) @map("child_ids") @db.Uuid
+  token           String               @unique
+  personalNote    String?              @map("personal_note")
+  status          CoparentInviteStatus @default(pending)
+  expiresAt       DateTime             @map("expires_at")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  resolvedAt      DateTime?            @map("resolved_at")
+
+  inviter ParentAccount @relation("CoparentInviteInviter", fields: [inviterParentId], references: [id], onDelete: Cascade)
+
+  @@index([inviteeEmail, status])
+  @@index([inviterParentId, status])
+  @@map("coparent_invites")
+}
+
+// A paired kid device — the long-lived refresh token reference is opaque to us
+// at the model level (the device sends it as a cookie; we look up by `id`).
+// Revoking flips `revokedAt`; the kid app's bearer becomes invalid after that.
+model DeviceLink {
+  id             String    @id @default(uuid()) @db.Uuid
+  parentId       String    @map("parent_id") @db.Uuid
+  label          String
+  userAgentHint  String?   @map("user_agent_hint")
+  refreshTokenId String    @unique @map("refresh_token_id") @db.Uuid
+  pairedAt       DateTime  @default(now()) @map("paired_at")
+  lastActiveAt   DateTime? @map("last_active_at")
+  revokedAt     DateTime? @map("revoked_at")
+
+  parent ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@index([parentId, revokedAt])
+  @@map("device_links")
+}
+
+// One-shot email-pair token — created on "send link to device", redeemed by
+// the kid app to mint a DeviceLink. 24h TTL. `usedAt` blocks replays.
+model DevicePairToken {
+  id             String    @id @default(uuid()) @db.Uuid
+  parentId       String    @map("parent_id") @db.Uuid
+  token          String    @unique
+  targetEmail    String    @map("target_email")
+  expiresAt      DateTime  @map("expires_at")
+  usedAt         DateTime? @map("used_at")
+  resultingDeviceId String? @map("resulting_device_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([parentId, expiresAt])
+  @@map("device_pair_tokens")
+}
+
+// Per-parent notification preferences (parent spec §4.3 + §10.5). Security +
+// co-parent invite emails are always-on and not stored here.
+model NotificationPrefs {
+  parentId           String                    @id @map("parent_id") @db.Uuid
+  classificationDigest NotificationDigestCadence @default(daily) @map("classification_digest")
+  weeklySummary      Boolean                   @default(true) @map("weekly_summary")
+  feedbackResponse   Boolean                   @default(true) @map("feedback_response")
+  updatedAt          DateTime                  @updatedAt @map("updated_at")
+
+  parent ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@map("notification_prefs")
+}
+
+// Family activity log — every parent mutation visible to all linked parents on
+// a kid. Used by /parent/kids "Recent family activity" feed (spec §7.1, §9.3).
+model FamilyActivityLog {
+  id            String           @id @default(uuid()) @db.Uuid
+  childId       String           @map("child_id") @db.Uuid
+  actorParentId String           @map("actor_parent_id") @db.Uuid
+  action        FamilyActionKind
+  payload       Json             @default("{}")
+  createdAt     DateTime         @default(now()) @map("created_at")
+
+  child ChildProfile  @relation(fields: [childId], references: [id], onDelete: Cascade)
+  actor ParentAccount @relation(fields: [actorParentId], references: [id], onDelete: Cascade)
+
+  @@index([childId, createdAt(sort: Desc)])
+  @@index([actorParentId, createdAt(sort: Desc)])
+  @@map("family_activity_log")
+}
+
+// ─── Healthy-use limits (product §6.3) ──────────────────────────────────────
+
+// Singleton: a single 'default' row holds the admin-defined min/default/max
+// for each healthy-use control. The Curriculum tier (Phase 3+) will later
+// scope this per curriculum; for Phase 1, every kid inherits from this row.
+model HealthyUseLimits {
+  id String @id @default("default")
+
+  // Daily lesson target (sessions/day)
+  dailyLessonTargetMin     Int @default(1)  @map("daily_lesson_target_min")
+  dailyLessonTargetDefault Int @default(4)  @map("daily_lesson_target_default")
+  dailyLessonTargetMax     Int @default(12) @map("daily_lesson_target_max")
+
+  // Session soft limit (minutes — overlay invites a break)
+  sessionSoftLimitMinMin     Int @default(30)  @map("session_soft_limit_min_min")
+  sessionSoftLimitMinDefault Int @default(60)  @map("session_soft_limit_min_default")
+  sessionSoftLimitMinMax     Int @default(120) @map("session_soft_limit_min_max")
+
+  // Session hard cap (minutes — ends the session)
+  sessionHardCapMinMin     Int @default(45)  @map("session_hard_cap_min_min")
+  sessionHardCapMinDefault Int @default(120) @map("session_hard_cap_min_default")
+  sessionHardCapMinMax     Int @default(180) @map("session_hard_cap_min_max")
+
+  // Daily total cumul cap (minutes — locks the Hub until tomorrow)
+  dailyTotalCapMinMin     Int @default(60)  @map("daily_total_cap_min_min")
+  dailyTotalCapMinDefault Int @default(180) @map("daily_total_cap_min_default")
+  dailyTotalCapMinMax     Int @default(300) @map("daily_total_cap_min_max")
+
+  // 20-20-20 look-away breaks
+  lookAwayIntervalMin    Int     @default(10) @map("look_away_interval_min")
+  lookAwayPauseSec       Int     @default(20) @map("look_away_pause_sec")
+  lookAwayEnabledDefault Boolean @default(true) @map("look_away_enabled_default")
+
+  // Streaks + badges (admin can globally disable)
+  streakEnabled Boolean @default(true) @map("streak_enabled")
+  badgesEnabled Boolean @default(true) @map("badges_enabled")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("healthy_use_limits")
+}

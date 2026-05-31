@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gabee — Admin · tous les écrans</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800;900&display=swap" />
+  <style>
+    body { margin: 0; font-family: 'Mulish', system-ui, sans-serif; background: #f0eee9; }
+    .screen-iframe { width: 1440px; height: 900px; border: 0; display: block; background: #F4F5F7; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+
+  <script type="text/babel">
+    const { DesignCanvas, DCSection, DCArtboard, DCPostIt } = window;
+    const W = 1440, H = 900;
+    function Screen({ hash }) {
+      return <iframe className="screen-iframe" src={`Gabee Admin.html#${hash}`} title={hash} />;
+    }
+
+    function App() {
+      return (
+        <DesignCanvas
+          title="Gabee — Back-office admin"
+          subtitle="admin.gabee.app · MVP · desktop 1440×900 · FR par défaut, EN au choix"
+        >
+          <DCSection id="dashboard" title="Tableau de bord" subtitle="Métriques de décision d’abord — étoile polaire, trois signaux, contexte opérationnel">
+            <DCArtboard id="dash" label="01 · Dashboard — Default" width={W} height={H}><Screen hash="dashboard" /></DCArtboard>
+            <DCArtboard id="dash-load" label="02 · Dashboard — Loading" width={W} height={H}><Screen hash="dashboard:loading" /></DCArtboard>
+            <DCArtboard id="dash-en" label="03 · Dashboard — English" width={W} height={H}><Screen hash="dashboard::en" /></DCArtboard>
+          </DCSection>
+
+          <DCSection id="modules" title="Modules" subtitle="Cinq entités fixes de premier ordre · édition réservée au super admin">
+            <DCArtboard id="mod-list" label="04 · Modules — liste (super admin)" width={W} height={H}><Screen hash="modules" /></DCArtboard>
+            <DCArtboard id="mod-list-admin" label="05 · Modules — liste (admin, lecture seule)" width={W} height={H}><Screen hash="modules:adminrole" /></DCArtboard>
+            <DCArtboard id="mod-detail" label="06 · Module — détail" width={W} height={H}><Screen hash="module-detail" /></DCArtboard>
+            <DCArtboard id="mod-disabled" label="07 · Module — désactivé" width={W} height={H}><Screen hash="module-detail:disabled" /></DCArtboard>
+          </DCSection>
+
+          <DCSection id="content" title="Contenu — le flux d’authoring IA" subtitle="Là où les admins passent le plus de temps : matrice → plan (streaming) → pool (lot + revue)">
+            <DCArtboard id="matrix" label="08 · Matrice module × niveau" width={W} height={H}><Screen hash="content" /></DCArtboard>
+            <DCArtboard id="plan" label="09 · Éditeur de plan — brouillon IA" width={W} height={H}><Screen hash="plan-editor" /></DCArtboard>
+            <DCArtboard id="plan-stream" label="10 · Plan — génération en direct ✦" width={W} height={H}><Screen hash="plan-editor:streaming" /></DCArtboard>
+            <DCArtboard id="plan-err" label="11 · Plan — erreur (édits conservés)" width={W} height={H}><Screen hash="plan-editor:error" /></DCArtboard>
+            <DCArtboard id="plan-dis" label="12 · Plan — bloqué (niveau préc.)" width={W} height={H}><Screen hash="plan-editor:disabled" /></DCArtboard>
+            <DCArtboard id="pool" label="13 · Pool — revue & notation" width={W} height={H}><Screen hash="pool" /></DCArtboard>
+            <DCArtboard id="pool-gen" label="14 · Pool — génération du lot ✦" width={W} height={H}><Screen hash="pool:generating" /></DCArtboard>
+            <DCArtboard id="pool-modal" label="15 · Pool — modal de génération" width={W} height={H}><Screen hash="pool:modal" /></DCArtboard>
+            <DCArtboard id="pool-empty" label="16 · Pool — vide" width={W} height={H}><Screen hash="pool:empty" /></DCArtboard>
+            <DCArtboard id="pool-dis" label="17 · Pool — bloqué (plan non accepté)" width={W} height={H}><Screen hash="pool:disabled" /></DCArtboard>
+          </DCSection>
+
+          <DCSection id="users" title="Utilisateurs" subtitle="Parents · enfants · admins — listes et détails, invitation super admin">
+            <DCArtboard id="parents" label="18 · Parents — liste" width={W} height={H}><Screen hash="parents" /></DCArtboard>
+            <DCArtboard id="parent" label="19 · Parent — détail" width={W} height={H}><Screen hash="parent-detail" /></DCArtboard>
+            <DCArtboard id="children" label="20 · Enfants — liste" width={W} height={H}><Screen hash="children" /></DCArtboard>
+            <DCArtboard id="child" label="21 · Enfant — détail (lecture seule)" width={W} height={H}><Screen hash="child-detail" /></DCArtboard>
+            <DCArtboard id="admins" label="22 · Admins — liste" width={W} height={H}><Screen hash="admins" /></DCArtboard>
+            <DCArtboard id="invite" label="23 · Inviter un admin — modal" width={W} height={H}><Screen hash="invite" /></DCArtboard>
+          </DCSection>
+
+          <DCSection id="ops" title="Opérations & observabilité" subtitle="Usage IA · journaux système · journal d’audit">
+            <DCArtboard id="ai" label="24 · Usage IA — coût & tokens" width={W} height={H}><Screen hash="ai-usage" /></DCArtboard>
+            <DCArtboard id="logs" label="25 · Journaux système" width={W} height={H}><Screen hash="logs" /></DCArtboard>
+            <DCArtboard id="audit" label="26 · Journal d’audit" width={W} height={H}><Screen hash="audit" /></DCArtboard>
+          </DCSection>
+
+          <DCSection id="frontdesk" title="Boîte de réception" subtitle="Messages de la landing · demandes RGPD (checklist) · retours parents">
+            <DCArtboard id="inbox" label="27 · Messages" width={W} height={H}><Screen hash="inbox" /></DCArtboard>
+            <DCArtboard id="gdpr" label="28 · RGPD — file + checklist" width={W} height={H}><Screen hash="gdpr" /></DCArtboard>
+            <DCArtboard id="feedback" label="29 · Retours parents" width={W} height={H}><Screen hash="feedback" /></DCArtboard>
+          </DCSection>
+
+          <DCSection id="states" title="États transverses & réglages" subtitle="Hors-ligne (lecture seule, tout est sauvegardé) · réglages & langue">
+            <DCArtboard id="offline" label="30 · Hors-ligne" width={W} height={H}><Screen hash="offline" /></DCArtboard>
+            <DCArtboard id="settings" label="31 · Réglages" width={W} height={H}><Screen hash="settings" /></DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

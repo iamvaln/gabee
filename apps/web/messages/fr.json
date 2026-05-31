@@ -1,0 +1,200 @@
+{
+  "meta": {
+    "title": "Gabee — Garder l'esprit vif. Construire les compétences qui comptent.",
+    "description": "Gabee est un outil d'apprentissage bilingue pour les enfants de 6 à 10 ans : vocabulaire, calcul, logique du code, frappe au clavier — en français et en anglais.",
+    "ogTitle": "Gabee — l'apprentissage qui compte",
+    "ogDescription": "Vocabulaire, calcul, premières bases de codage et frappe au clavier. En français et en anglais. Gratuit, jusqu'à 3 enfants."
+  },
+  "nav": {
+    "how": "Comment ça marche",
+    "free": "Gratuit",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "signin": "Se connecter",
+    "signup": "Créer un compte",
+    "menu": "Menu",
+    "ariaLanguage": "langue"
+  },
+  "hero": {
+    "h1": "Garder l'esprit vif.",
+    "h2": "Construire les compétences qui comptent.",
+    "sub": "Gabee est un outil d'apprentissage pour les enfants de 6 à 10 ans : vocabulaire, calcul, logique du code, frappe au clavier — en français et en anglais.",
+    "cta": "Créer un compte gratuit",
+    "cta2": "Comment ça marche",
+    "reassure": "Gratuit, jusqu'à 3 enfants."
+  },
+  "modules": {
+    "h": "Cinq compétences. Une seule abeille.",
+    "below": "Votre enfant renforce ses compétences dans les deux langues.",
+    "numbers": { "title": "Les nombres", "desc": "Compter, additionner, soustraire." },
+    "words": { "title": "Les mots", "desc": "Vocabulaire, lecture, phrases." },
+    "keyboard": { "title": "Le clavier", "desc": "Apprendre à taper, doucement." },
+    "code": { "title": "Le code", "desc": "Premiers pas de programmation." },
+    "translation": { "title": "La traduction", "desc": "Passer du français à l'anglais et retour." }
+  },
+  "how": {
+    "h": "En quatre étapes.",
+    "step1": {
+      "title": "Créez votre compte et ajoutez vos enfants",
+      "body": "Créez votre compte. Ajoutez vos enfants — prénom, âge, ce que vous aimeriez qu'ils travaillent."
+    },
+    "step2": {
+      "title": "Installez Gabee une fois sur l'appareil de la maison",
+      "body": "Installez Gabee une fois sur l'ordinateur ou la tablette de la maison. Ensuite, vos enfants l'ouvrent, choisissent leur profil, et jouent. Pas de mot de passe pour eux."
+    },
+    "step3": {
+      "title": "Restez proche de leur journée",
+      "body": "Chaque jour, un petit email vous dit ce que vos enfants ont fait. Vous restez proches de leur apprentissage, deux minutes à la fois."
+    },
+    "step4": {
+      "title": "Laissez-leur un petit mot",
+      "body": "Un petit mot, à tout moment. À leur prochaine session, votre enfant verra : « Papa t'a laissé un mot. » Ils le lisent, et ça les motive."
+    }
+  },
+  "values": {
+    "h": "Quatre choses qui comptent.",
+    "skills": {
+      "title": "Des compétences pour aujourd'hui et demain",
+      "body": "Vocabulaire et calcul, mais aussi premières bases de codage et frappe au clavier. Votre enfant construit les compétences fondamentales qui lui seront utiles pour naviguer le monde moderne."
+    },
+    "bilingual": {
+      "title": "Bilingue, à leur rythme",
+      "body": "À chaque session, votre enfant choisit sa langue. En français ou en anglais, il apprend réellement dans les deux."
+    },
+    "visibility": {
+      "title": "Vous voyez ce qui se passe",
+      "body": "Quel module il préfère, où il progresse, où il bloque, combien de temps il joue — et dans quelle langue. Pas de badges qui le félicitent pour rien : de vraies informations pour vous."
+    },
+    "respect": {
+      "title": "Conçu avec respect",
+      "body": "Sessions de durée raisonnable, aucune publicité, aucun achat dans l'app. Le temps que votre enfant passe ici sert son apprentissage."
+    }
+  },
+  "pricing": {
+    "h": "Gratuit pour les familles.",
+    "price": "0 FCFA",
+    "sub": "jusqu'à 3 enfants",
+    "noteText": "Plus de 3 enfants à la maison ?",
+    "noteLink": "Écrivez-nous.",
+    "cta": "Créer un compte gratuit"
+  },
+  "faq": {
+    "h": "Questions courantes.",
+    "q1": "À quel âge ça s'adresse ?",
+    "a1": "6-10 ans typiquement. La progression s'adapte au niveau de l'enfant.",
+    "q2": "Français ou anglais ?",
+    "a2": "Les deux. Votre enfant choisit sa langue au début de chaque session.",
+    "q3": "Ça marche hors-ligne ?",
+    "a3": "Oui, l'app enfant fonctionne entièrement hors-ligne. Les données se synchronisent quand la connexion revient.",
+    "q4": "Et le temps d'écran ?",
+    "a4": "Gabee a des limites de session intégrées et un suivi du temps dans le tableau de bord parent.",
+    "q5": "Comment je supprime mes données ?",
+    "a5": "Un bouton dans Réglages → Supprimer le compte. On supprime tout sous 30 jours.",
+    "q6": "Est-ce que ça restera gratuit ?",
+    "a6": "Aujourd'hui, Gabee est gratuit. On sera transparent si jamais quelque chose change.",
+    "q7": "Plusieurs parents pour les mêmes enfants ?",
+    "a7": "Oui : invitez l'autre parent par email depuis vos réglages.",
+    "q8": "Qui voit les données de mon enfant ?",
+    "a8": "Vous (et le co-parent si invité). Personne d'autre — pas de publicitaires, pas de tiers."
+  },
+  "contact": {
+    "h": "Une question ? Écrivez-nous.",
+    "iam": "Je suis",
+    "iamParent": "parent",
+    "iamEducator": "éducateur",
+    "iamJournalist": "journaliste",
+    "iamPartner": "partenaire",
+    "iamOther": "autre",
+    "name": "Nom",
+    "email": "Email",
+    "subject": "Sujet",
+    "subjectOpt": "(facultatif)",
+    "message": "Message",
+    "submit": "Envoyer",
+    "sending": "Envoi…",
+    "ackTitle": "Merci !",
+    "ackBody": "On revient vers vous d'ici quelques jours.",
+    "errMin": "Votre message doit faire au moins 10 caractères.",
+    "errEmail": "Entrez un email valide.",
+    "errSend": "Une erreur est survenue. Veuillez réessayer.",
+    "again": "Envoyer un autre message"
+  },
+  "footer": {
+    "product": "Produit",
+    "legal": "Légal",
+    "help": "Aide",
+    "faqLink": "FAQ",
+    "contactLink": "Contact",
+    "howLink": "Comment ça marche",
+    "signupLink": "Créer un compte",
+    "termsLink": "Conditions",
+    "privacyLink": "Confidentialité",
+    "aboutLine": "Gabee est conçu par Proxia Labs.",
+    "tagline": "Votre enfant apprend les compétences qui comptent, en s'amusant.",
+    "copy": "© Proxia Labs 2026"
+  },
+  "legal": {
+    "backHome": "← Retour à l'accueil",
+    "toc": "Sur cette page",
+    "updated": "Dernière mise à jour : 30 mai 2026 · v0.1",
+    "disclaimerTitle": "Ceci n'est pas un texte juridique définitif.",
+    "disclaimerBody": "Ce document décrit la structure et l'intention de chaque section. La rédaction contraignante finale doit être établie ou revue par un juriste qualifié — notamment parce que la loi camerounaise 2024/017 sur la protection des données s'applique (échéance de conformité : 23 juin 2026) et que des données de mineurs sont concernées.",
+    "kicker": "Légal",
+    "terms": {
+      "title": "Conditions générales",
+      "intro": "Les présentes conditions encadrent l'utilisation de Gabee par les parents et leurs enfants. En créant un compte ou en utilisant l'app enfant, vous les acceptez.",
+      "frameworkTitle": "Cadre juridique applicable (vérifié en mai 2026)",
+      "framework": [
+        "Loi n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel — s'applique à tout traitement sur le territoire camerounais ou concernant des résidents du Cameroun. Échéance de conformité : 23 juin 2026. Sanctions (art. 54+) jusqu'à 100 millions FCFA, plus responsabilités civiles et pénales.",
+        "Loi n° 2010/012 du 21 décembre 2010 relative à la cybersécurité et la cybercriminalité — cadre sous-jacent.",
+        "Loi n° 2023/007 du 25 juillet 2023 — Charte de protection des enfants en ligne. Directement pertinente : Gabee traite des données de mineurs.",
+        "L'autorité de contrôle (« Autorité de protection des données personnelles ») est créée par la loi 2024/017 ; ses modalités opérationnelles restent fixées par décret à venir."
+      ],
+      "sections": [
+        { "id": "t-acceptance", "h": "Acceptation et champ d'application", "b": "Qui est lié, et à partir de quand (création d'un compte, utilisation de l'app enfant). Le titulaire du compte doit être un adulte disposant de l'autorité parentale sur l'enfant. La majorité civile au Cameroun est de 21 ans ; la majorité en matière de protection des données est de 18 ans (loi 2024/017). Révision juridique requise." },
+        { "id": "t-definitions", "h": "Définitions", "b": "Service, parent, enfant (« personne mineure de moins de 18 ans » au sens de la loi 2024/017), contenu, compte, appairage d'appareil, sous-traitants, responsable du traitement (Proxia Digital). Révision juridique requise." },
+        { "id": "t-service", "h": "Le service", "b": "Ce que Gabee fournit ; offert « en l'état », sans garantie ; les fonctionnalités peuvent évoluer. Révision juridique requise." },
+        { "id": "t-consent", "h": "Compte et consentement parental", "b": "Éligibilité (adulte, autorité parentale) ; exactitude des informations ; responsabilité de sécurité (mot de passe). Le traitement des données d'un mineur n'est valable que s'il est appuyé par le consentement du parent ou représentant légal (art. 6+). Le parent confirme ce consentement à l'inscription et pour chaque enfant ajouté. Révision juridique requise." },
+        { "id": "t-use", "h": "Usage acceptable", "b": "Pas de scraping, pas d'ingénierie inverse, pas d'abus, pas de tentative de compromettre d'autres comptes, pas de réutilisation commerciale sans consentement. Révision juridique requise." },
+        { "id": "t-children", "h": "Contenu et données des enfants", "b": "Le parent reconnaît détenir l'autorité parentale ; il accepte que Gabee conserve les données d'apprentissage de l'enfant selon la Politique de confidentialité ; il peut retirer son consentement à tout moment en supprimant le profil enfant ou le compte. Révision juridique requise." },
+        { "id": "t-ip", "h": "Propriété intellectuelle", "b": "Le contenu (programme, design, code) appartient à Proxia Digital ; les retours des parents peuvent être reproduits de façon anonyme à des fins d'amélioration ; le contenu soumis par l'utilisateur est concédé sous licence non exclusive pour l'exploitation du service. Révision juridique requise." },
+        { "id": "t-pricing", "h": "Tarif et gratuité", "b": "Gratuit jusqu'à 3 enfants aujourd'hui ; communication transparente en cas de changement de tarif ; les utilisateurs actuels sont prévenus avant toute évolution. Révision juridique requise." },
+        { "id": "t-privacy", "h": "Confidentialité", "b": "Renvoi à la Politique de confidentialité. Révision juridique requise." },
+        { "id": "t-subprocessors", "h": "Sous-traitants", "b": "Liste nommée (Supabase pour la base de données et l'authentification ; Mailgun pour l'email) ; droit de mise à jour avec préavis. Les transferts hors Cameroun nécessitent des garanties adéquates (loi 2024/017). Révision juridique requise." },
+        { "id": "t-warranty", "h": "Exclusion de garantie", "b": "Le service est un soutien éducatif, et non un substitut à l'école ou à un avis professionnel. Révision juridique requise." },
+        { "id": "t-liability", "h": "Limitation de responsabilité", "b": "Plafond standard ; exception de force majeure. Révision juridique requise." },
+        { "id": "t-termination", "h": "Résiliation", "b": "Le parent peut supprimer son compte à tout moment ; Proxia Digital peut suspendre ou résilier en cas de manquement grave, avec préavis. Révision juridique requise." },
+        { "id": "t-modifications", "h": "Modifications des conditions", "b": "Notification par email aux comptes actifs ; les changements substantiels exigent un nouveau consentement (réacceptation à la prochaine connexion). Révision juridique requise." },
+        { "id": "t-law", "h": "Droit applicable et juridiction", "b": "Droit camerounais ; tribunaux compétents au Cameroun (à préciser avec le juriste). Révision juridique requise." },
+        { "id": "t-contact", "h": "Contact", "b": "Adresse d'enregistrement de Proxia Digital (Douala) et email pour les notifications légales. Révision juridique requise." }
+      ]
+    },
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "intro": "Comment Gabee collecte, utilise et protège les données des parents et des enfants. Proxia Digital est le responsable du traitement au sens de la loi 2024/017.",
+      "frameworkTitle": "Ancrage dans le droit camerounais (vérifié en mai 2026)",
+      "framework": [
+        "Loi n° 2024/017 du 23 décembre 2024 — cadre principal. L'article 5 définit les données personnelles ; l'article 6 et suivants posent les principes (« consentement préalable, libre, éclairé, spécifique et univoque »).",
+        "Disposition relative aux mineurs (art. 6+) : « Le consentement d'une personne mineure de moins de 18 ans est valable uniquement s'il est appuyé par celui de ses parents ou de son représentant légal. »",
+        "Article 54 et suivants — sanctions (administratives jusqu'à 100M FCFA, civiles, pénales). Échéance de conformité : 23 juin 2026.",
+        "Loi n° 2023/007 (charte de protection des enfants en ligne) et loi n° 2010/012 (cybersécurité) informent également cette politique."
+      ],
+      "sections": [
+        { "id": "p-who", "h": "Qui nous sommes", "b": "Proxia Digital, Cameroun (adresse à préciser) ; responsable du traitement au sens de la loi 2024/017 ; contact pour les questions de protection des données. Révision juridique requise." },
+        { "id": "p-what", "h": "Quelles données nous collectons", "b": "Parent : email, prénom, nom, pays, langue, mot de passe haché, métadonnées de connexion. Enfant : prénom, date de naissance (âge dérivé), choix d'avatar, niveau scolaire et objectifs optionnels, langue choisie à chaque session. Données d'apprentissage : module, niveau, leçon, langue, durée, réponses, indices, frappe au clavier, classification. Appairage : libellé d'appareil, dernière activité, référence du jeton. Révision juridique requise." },
+        { "id": "p-why", "h": "Pourquoi nous les collectons", "b": "Fournir le service (synchronisation entre appareils) ; montrer au parent ce que fait son enfant ; améliorer le contenu (données anonymisées) ; exploitation (journaux de débogage et de sécurité). Révision juridique requise." },
+        { "id": "p-basis", "h": "Base légale", "b": "Consentement parental pour les données de l'enfant — la base sous le modèle Gabee, révocable à tout moment. Contrat pour les données propres du parent. Intérêt légitime pour les journaux de sécurité et la prévention des abus. Révision juridique requise." },
+        { "id": "p-sharing", "h": "Avec qui nous partageons", "b": "Sous-traitants nommés : Supabase (base de données et authentification, région UE) ; Mailgun (emails, États-Unis). Jamais partagé avec des publicitaires, courtiers de données ou plateformes sociales. Le recours à Mailgun implique un transfert vers les États-Unis, encadré par des garanties documentées. Révision juridique requise." },
+        { "id": "p-coparents", "h": "Co-parents", "b": "Quand un parent invite un co-parent, celui-ci accède aux données des enfants partagés. Chaque parent donne son propre consentement à l'inscription. Révision juridique requise." },
+        { "id": "p-retention", "h": "Conservation des données", "b": "Comptes actifs : données conservées tant que le compte est actif. Suppression : effacement réversible sous 30 jours, puis suppression définitive. Comptes inactifs : après 24 mois sans connexion, avertissement par email puis suppression. Les analyses agrégées (non rattachées à une personne) peuvent être conservées indéfiniment. Révision juridique requise." },
+        { "id": "p-rights", "h": "Droits des personnes", "b": "Accès, rectification, effacement (« droit à l'oubli »), portabilité, opposition / limitation, et droit de plainte auprès de l'autorité camerounaise. Pour les mineurs, ces droits sont exercés par le parent ou représentant légal. Révision juridique requise." },
+        { "id": "p-security", "h": "Sécurité", "b": "HTTPS partout (HSTS sur le domaine .app) ; mots de passe hachés ; chiffrement de la base au repos ; contrôles d'accès ; journalisation ; plan de réponse aux incidents et notification des violations selon la loi 2024/017. Révision juridique requise." },
+        { "id": "p-transfers", "h": "Transferts internationaux", "b": "Supabase est hébergé dans l'UE ; Mailgun implique un transfert vers les États-Unis ; garanties (clauses contractuelles, engagements des sous-traitants) documentées dans la politique publiée. Révision juridique requise." },
+        { "id": "p-cookies", "h": "Cookies et traceurs", "b": "Uniquement des cookies essentiels (NEXT_LOCALE pour la langue, cookie de session pour l'authentification). Pas de bannière de consentement — aucun cookie non essentiel n'est déposé. Révision juridique requise." },
+        { "id": "p-changes", "h": "Modifications de cette politique", "b": "Notification par email et bannière à la prochaine connexion pour les changements substantiels, qui déclenchent un nouveau consentement. Révision juridique requise." },
+        { "id": "p-contact", "h": "Contact pour les questions de confidentialité", "b": "Email et adresse postale ; Délégué à la protection des données (DPO) — nom et coordonnées publiés dans la politique en vigueur. Révision juridique requise." },
+        { "id": "p-effective", "h": "Date d'effet et historique", "b": "Date d'entrée en vigueur et historique des versions. Révision juridique requise." }
+      ]
+    }
+  }
+}

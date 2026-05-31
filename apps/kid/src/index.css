@@ -1,0 +1,3 @@
+@import 'tailwindcss';
+/* Gabee design system (tokens + components) — from the design handoff (design-spec §6-7). */
+@import './gabee.css';

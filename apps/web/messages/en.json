@@ -1,0 +1,200 @@
+{
+  "meta": {
+    "title": "Gabee — A sharp mind. The skills that matter.",
+    "description": "Gabee is a bilingual learning tool for 6-10 year-olds: vocabulary, math, coding logic, keyboard typing — in French and English.",
+    "ogTitle": "Gabee — the learning that matters",
+    "ogDescription": "Vocabulary, math, first steps in coding and keyboard typing. In French and English. Free, up to 3 children."
+  },
+  "nav": {
+    "how": "How it works",
+    "free": "Free",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "signin": "Sign in",
+    "signup": "Sign up free",
+    "menu": "Menu",
+    "ariaLanguage": "language"
+  },
+  "hero": {
+    "h1": "A sharp mind.",
+    "h2": "The skills that matter.",
+    "sub": "Gabee is a learning tool for 6-10 year-olds: vocabulary, math, coding logic, keyboard typing — in French and English.",
+    "cta": "Sign up free",
+    "cta2": "How it works",
+    "reassure": "Free, up to 3 children."
+  },
+  "modules": {
+    "h": "Five skills. One bee.",
+    "below": "Your child strengthens their skills in both languages.",
+    "numbers": { "title": "Numbers", "desc": "Counting, adding, subtracting." },
+    "words": { "title": "Words", "desc": "Vocabulary, reading, sentences." },
+    "keyboard": { "title": "Keyboard", "desc": "Learning to type, gently." },
+    "code": { "title": "Code", "desc": "First steps in coding." },
+    "translation": { "title": "Translation", "desc": "Moving between French and English." }
+  },
+  "how": {
+    "h": "Four steps.",
+    "step1": {
+      "title": "Sign up & add your kids",
+      "body": "Create your account. Add your kids — first name, age, what you'd like them to focus on."
+    },
+    "step2": {
+      "title": "Set up Gabee on the family device, once",
+      "body": "Set up Gabee once on the home computer or tablet. After that, your kids open it, pick their profile, and play. No password for them."
+    },
+    "step3": {
+      "title": "Stay close to their day",
+      "body": "Each day, a short email tells you what your kids have been doing. You stay close to their learning, two minutes at a time."
+    },
+    "step4": {
+      "title": "Leave them a word",
+      "body": "A short message, anytime. At their next session, your child will see: \"Papa left you a note.\" They read it, and it makes their day."
+    }
+  },
+  "values": {
+    "h": "Four things that matter.",
+    "skills": {
+      "title": "Skills for today and tomorrow",
+      "body": "Vocabulary and math, but also first steps in coding and keyboard typing. Your child builds the foundational skills that will help them navigate the modern world."
+    },
+    "bilingual": {
+      "title": "Truly bilingual, at their own pace",
+      "body": "At each session, your child picks their language. In French or English, they actually learn in both."
+    },
+    "visibility": {
+      "title": "You see what's happening",
+      "body": "Which module they prefer, where they progress, where they get stuck, how long they play — and in which language. No badges cheering them for nothing: real information for you."
+    },
+    "respect": {
+      "title": "Designed with respect",
+      "body": "Sensible session lengths, no ads, no in-app purchases. The time your child spends here serves their learning."
+    }
+  },
+  "pricing": {
+    "h": "Free for families.",
+    "price": "0 FCFA",
+    "sub": "up to 3 children",
+    "noteText": "More than 3 kids at home?",
+    "noteLink": "Get in touch.",
+    "cta": "Sign up free"
+  },
+  "faq": {
+    "h": "Common questions.",
+    "q1": "What ages is it for?",
+    "a1": "Typically 6-10 years old. The progression adapts to the child's level.",
+    "q2": "French or English?",
+    "a2": "Both. Your child picks the language at the start of each session.",
+    "q3": "Does it work offline?",
+    "a3": "Yes, the kid app works entirely offline. Data syncs when the connection comes back.",
+    "q4": "What about screen time?",
+    "a4": "Gabee has built-in session caps and time tracking in the parent dashboard.",
+    "q5": "How do I delete my data?",
+    "a5": "One button in Settings → Delete account. Everything is wiped within 30 days.",
+    "q6": "Will it stay free?",
+    "a6": "Today, Gabee is free. We'll be transparent if anything ever changes.",
+    "q7": "Two parents sharing kids?",
+    "a7": "Yes — invite the other parent by email from your settings.",
+    "q8": "Who sees my child's data?",
+    "a8": "You (and your co-parent if invited). Nobody else — no advertisers, no third parties."
+  },
+  "contact": {
+    "h": "A question? Write to us.",
+    "iam": "I am",
+    "iamParent": "parent",
+    "iamEducator": "educator",
+    "iamJournalist": "journalist",
+    "iamPartner": "partner",
+    "iamOther": "other",
+    "name": "Name",
+    "email": "Email",
+    "subject": "Subject",
+    "subjectOpt": "(optional)",
+    "message": "Message",
+    "submit": "Send",
+    "sending": "Sending…",
+    "ackTitle": "Thanks!",
+    "ackBody": "We'll get back to you within a few days.",
+    "errMin": "Your message must be at least 10 characters.",
+    "errEmail": "Enter a valid email.",
+    "errSend": "Something went wrong. Please try again.",
+    "again": "Send another message"
+  },
+  "footer": {
+    "product": "Product",
+    "legal": "Legal",
+    "help": "Help",
+    "faqLink": "FAQ",
+    "contactLink": "Contact",
+    "howLink": "How it works",
+    "signupLink": "Sign up",
+    "termsLink": "Terms",
+    "privacyLink": "Privacy",
+    "aboutLine": "Gabee is crafted by Proxia Labs.",
+    "tagline": "Your child learns the skills that matter — while having fun.",
+    "copy": "© Proxia Labs 2026"
+  },
+  "legal": {
+    "backHome": "← Back to home",
+    "toc": "On this page",
+    "updated": "Last updated: 30 May 2026 · v0.1",
+    "disclaimerTitle": "This is not final legal text.",
+    "disclaimerBody": "This document describes the structure and intent of each section. The actual binding wording must be drafted or reviewed by a qualified lawyer — particularly because Cameroon's data-protection law 2024/017 applies (compliance deadline: 23 June 2026) and minors' data is involved.",
+    "kicker": "Legal",
+    "terms": {
+      "title": "Terms & Conditions",
+      "intro": "These terms govern the use of Gabee by parents and their children. By creating an account or using the kid app, you accept them.",
+      "frameworkTitle": "Applicable legal framework (verified May 2026)",
+      "framework": [
+        "Law No. 2024/017 of 23 December 2024 on personal-data protection — applies to any processing on Cameroonian territory or concerning residents of Cameroon. Compliance deadline: 23 June 2026. Sanctions (Art. 54+) up to 100 million FCFA, plus civil and penal liabilities.",
+        "Law No. 2010/012 of 21 December 2010 on cybersecurity and cybercrime — the underlying framework.",
+        "Law No. 2023/007 of 25 July 2023 — Online Child-Protection Charter. Directly relevant: Gabee processes minors' data.",
+        "The supervisory authority (\"Autorité de protection des données personnelles\") is established by law 2024/017; its operational modalities are set by a forthcoming decree."
+      ],
+      "sections": [
+        { "id": "t-acceptance", "h": "Acceptance & scope", "b": "Who is bound, and from when (creating an account, using the kid app). The account holder must be an adult with parental authority over the child. Civil majority in Cameroon is 21; data-protection majority is 18 (law 2024/017). Lawyer review required." },
+        { "id": "t-definitions", "h": "Definitions", "b": "Service, parent, child (\"minor under 18\" per law 2024/017), content, account, device pairing, sub-processors, data controller (Proxia Digital). Lawyer review required." },
+        { "id": "t-service", "h": "The service", "b": "What Gabee provides; offered \"as is\" without warranty; features may change. Lawyer review required." },
+        { "id": "t-consent", "h": "Account & parental consent", "b": "Eligibility (adult, parental authority); accuracy of information; security responsibility (password). Processing a minor's data is valid only if supported by parent / legal-representative consent (Art. 6+). The parent confirms this at signup and per kid added. Lawyer review required." },
+        { "id": "t-use", "h": "Acceptable use", "b": "No scraping, no reverse engineering, no abuse, no attempts to compromise other accounts, no commercial reuse without consent. Lawyer review required." },
+        { "id": "t-children", "h": "Children's content & data", "b": "The parent acknowledges holding parental authority; accepts that Gabee stores the child's learning data per the Privacy Policy; can withdraw consent at any time by deleting the kid profile or the account. Lawyer review required." },
+        { "id": "t-ip", "h": "Intellectual property", "b": "Content (curriculum, design, code) owned by Proxia Digital; parent feedback may be reproduced anonymously for improvement; user-submitted content is licensed non-exclusively for service operation. Lawyer review required." },
+        { "id": "t-pricing", "h": "Pricing & free use", "b": "Free up to 3 children today; transparent communication if pricing changes; current users given notice before any change. Lawyer review required." },
+        { "id": "t-privacy", "h": "Privacy", "b": "Cross-reference to the Privacy Policy. Lawyer review required." },
+        { "id": "t-subprocessors", "h": "Sub-processors", "b": "A named list (Supabase for database + auth; Mailgun for email); right to update with notice. Transfers outside Cameroon require adequate safeguards (law 2024/017). Lawyer review required." },
+        { "id": "t-warranty", "h": "Disclaimer of warranty", "b": "The service is educational support, not a substitute for school or professional advice. Lawyer review required." },
+        { "id": "t-liability", "h": "Limitation of liability", "b": "Standard cap; force-majeure carve-out. Lawyer review required." },
+        { "id": "t-termination", "h": "Termination", "b": "The parent can delete the account anytime; Proxia Digital may suspend or terminate for material breach with notice. Lawyer review required." },
+        { "id": "t-modifications", "h": "Modifications to the terms", "b": "Notice via email to active accounts; material changes require renewed consent (re-acceptance on next sign-in). Lawyer review required." },
+        { "id": "t-law", "h": "Governing law & jurisdiction", "b": "Cameroon law; competent courts in Cameroon (to specify with the lawyer). Lawyer review required." },
+        { "id": "t-contact", "h": "Contact", "b": "Proxia Digital registered address (Douala) and email for legal notices. Lawyer review required." }
+      ]
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "intro": "How Gabee collects, uses and protects parents' and children's data. Proxia Digital is the data controller under law 2024/017.",
+      "frameworkTitle": "Anchored in Cameroon law (verified May 2026)",
+      "framework": [
+        "Law No. 2024/017 of 23 December 2024 — the primary framework. Article 5 defines personal data; Article 6 et seq. lay out the principles (\"prior, free, informed, specific and unambiguous consent\").",
+        "Minors' provision (Art. 6+): \"A minor under 18's consent is valid only if supported by that of their parents or legal representative.\"",
+        "Article 54 et seq. — sanctions (administrative up to 100M FCFA, civil, penal). Compliance deadline: 23 June 2026.",
+        "Law No. 2023/007 (online child-protection charter) and law No. 2010/012 (cybersecurity) also inform this policy."
+      ],
+      "sections": [
+        { "id": "p-who", "h": "Who we are", "b": "Proxia Digital, Cameroon (registered address to specify); the data controller under law 2024/017; contact for data-protection questions. Lawyer review required." },
+        { "id": "p-what", "h": "What data we collect", "b": "Parent: email, first name, last name, country, language, hashed password, login metadata. Child: first name, birthday (derived age), avatar choice, optional school level + objectives, language picked each session. Learning data: module, level, lesson, language, duration, answers, hints, keystrokes, classification. Pairing: device label, last activity, refresh-token reference. Lawyer review required." },
+        { "id": "p-why", "h": "Why we collect it", "b": "Provide the service (sync across devices); show the parent what their child is doing; improve content (anonymized); operational (debugging and security logs). Lawyer review required." },
+        { "id": "p-basis", "h": "Legal basis", "b": "Parental consent for the child's data — the basis under Gabee's model, revocable at any time. Contract for the parent's own data. Legitimate interest for security logs and abuse prevention. Lawyer review required." },
+        { "id": "p-sharing", "h": "Who we share with", "b": "Named sub-processors: Supabase (database + auth, EU region); Mailgun (email, US). Never shared with advertisers, data brokers or social platforms. Mailgun entails a US transfer, covered by documented safeguards. Lawyer review required." },
+        { "id": "p-coparents", "h": "Co-parents", "b": "When a parent invites a co-parent, the invitee gains access to the shared kids' data. Each parent provides their own consent at signup. Lawyer review required." },
+        { "id": "p-retention", "h": "Data retention", "b": "Active accounts: data retained while active. Deletion: 30-day soft-delete (recoverable), then hard-delete. Inactive accounts: after 24 months without login, an email warning then deletion. Aggregated analytics (not linked to any person) may be retained indefinitely. Lawyer review required." },
+        { "id": "p-rights", "h": "Data-subject rights", "b": "Access, rectification, erasure (\"right to be forgotten\"), portability, objection / restriction, and the right to lodge a complaint with the Cameroon authority. For minors, these rights are exercised by the parent or legal representative. Lawyer review required." },
+        { "id": "p-security", "h": "Security", "b": "HTTPS everywhere (HSTS on the .app domain); hashed passwords; database encryption at rest; access controls; structured logging; incident-response plan and breach notification per law 2024/017. Lawyer review required." },
+        { "id": "p-transfers", "h": "International transfers", "b": "Supabase is hosted in the EU; Mailgun entails a US transfer; safeguards (contractual clauses, sub-processor commitments) documented in the published policy. Lawyer review required." },
+        { "id": "p-cookies", "h": "Cookies & similar", "b": "Only essential cookies (NEXT_LOCALE for language, session cookie for auth). No consent banner — no non-essential cookies are set. Lawyer review required." },
+        { "id": "p-changes", "h": "Changes to this policy", "b": "Notice via email and an in-app banner on next sign-in for material changes, which trigger renewed consent. Lawyer review required." },
+        { "id": "p-contact", "h": "Contact for privacy questions", "b": "Email and postal address; Data Protection Officer (DPO) — name and contact details published in the live policy. Lawyer review required." },
+        { "id": "p-effective", "h": "Effective date & history", "b": "Effective date and version history. Lawyer review required." }
+      ]
+    }
+  }
+}

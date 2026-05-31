@@ -1,0 +1,152 @@
+import {
+  ChildProfileSchema,
+  ParentAccountSchema,
+  ProgressByModuleSchema,
+  ProgressByModulePerLanguageSchema,
+  QuestionRecordSchema,
+  PendingSessionSchema,
+  defaultProgressByModule,
+  defaultProgressByModulePerLanguage,
+  type ChildProfile,
+  type ParentAccount,
+  type QuestionRecord,
+  type PendingSession,
+} from '@gabee/types';
+
+// Structural shapes of the Prisma rows we map (avoids importing generated model types,
+// whose names collide with the @gabee/types DTOs).
+interface ChildRow {
+  id: string;
+  parentId: string;
+  name: string;
+  avatar: string;
+  language: string;
+  audioEnabled: boolean;
+  createdAt: Date;
+  lastActiveAt: Date | null;
+  totalStars: number;
+  badges: string[];
+  progressByModule: unknown;
+  progressByModulePerLanguage: unknown;
+}
+
+interface ParentRow {
+  id: string;
+  email: string;
+  role: 'parent' | 'admin' | 'super_admin';
+  createdAt: Date;
+  lastLoginAt: Date | null;
+  children?: ChildRow[];
+}
+
+/** Prisma child_profiles row → validated ChildProfile DTO. */
+export function mapChildProfile(row: ChildRow): ChildProfile {
+  const pbm = ProgressByModuleSchema.safeParse(row.progressByModule);
+  const ppl = ProgressByModulePerLanguageSchema.safeParse(row.progressByModulePerLanguage);
+  return ChildProfileSchema.parse({
+    id: row.id,
+    parent_id: row.parentId,
+    name: row.name,
+    avatar: row.avatar,
+    language: row.language,
+    audio_enabled: row.audioEnabled,
+    created_at: row.createdAt.toISOString(),
+    last_active_at: row.lastActiveAt ? row.lastActiveAt.toISOString() : null,
+    total_stars: row.totalStars,
+    badges: row.badges,
+    progress_by_module: pbm.success ? pbm.data : defaultProgressByModule(),
+    progress_by_module_per_language: ppl.success ? ppl.data : defaultProgressByModulePerLanguage(),
+  });
+}
+
+/** Prisma parent_accounts row (with children) → validated ParentAccount DTO. */
+export function mapParentAccount(row: ParentRow): ParentAccount {
+  return ParentAccountSchema.parse({
+    id: row.id,
+    email: row.email,
+    role: row.role,
+    created_at: row.createdAt.toISOString(),
+    last_login_at: row.lastLoginAt ? row.lastLoginAt.toISOString() : null,
+    children: (row.children ?? []).map(mapChildProfile),
+  });
+}
+
+interface QuestionRow {
+  id: string;
+  module: string;
+  subMode: string;
+  level: number;
+  lesson: number;
+  theme: string;
+  type: string;
+  prompt: unknown;
+  answer: unknown;
+  distractors: unknown;
+  difficulty: number;
+  conceptTags: string[];
+  lang: string | null;
+  config: unknown;
+  createdBy: string;
+  ratings: unknown;
+  avgRating: number | null;
+  status: string;
+}
+
+/**
+ * Phase 2A compatibility shim: the kid PWA still filters Words questions by the
+ * legacy short key (`'picture' | 'fill' | 'build' | 'read'`), but stored values
+ * can be either the dotted registry id (`words.picture`) or the short key. For
+ * Words rows we emit only the part after the dot so the kid app keeps matching.
+ * Non-Words modules don't drive kid-side filters yet; we still emit whatever's
+ * stored (short key or dotted id) so admin tooling sees the truth.
+ */
+function compatSubModeForKid(module: string, subMode: string): string | undefined {
+  if (!subMode || subMode === 'default') return undefined;
+  if (module === 'words' && subMode.includes('.')) {
+    return subMode.split('.').pop() ?? subMode;
+  }
+  return subMode;
+}
+
+/** Prisma questions row → validated QuestionRecord DTO. */
+export function mapQuestion(row: QuestionRow): QuestionRecord {
+  return QuestionRecordSchema.parse({
+    id: row.id,
+    module: row.module,
+    sub_mode: compatSubModeForKid(row.module, row.subMode),
+    level: row.level,
+    lesson: row.lesson,
+    theme: row.theme,
+    type: row.type,
+    prompt: row.prompt,
+    answer: row.answer,
+    distractors: row.distractors,
+    difficulty: row.difficulty,
+    concept_tags: row.conceptTags,
+    lang: row.lang,
+    config: row.config ?? undefined,
+    created_by: row.createdBy,
+    ratings: row.ratings,
+    avg_rating: row.avgRating,
+    status: row.status,
+  });
+}
+
+interface PendingSessionRow {
+  sessionId: string;
+  profileId: string;
+  startedAt: Date;
+  firstModule: string | null;
+  durationS: number | null;
+}
+
+/** Prisma session_classifications row → validated PendingSession DTO. */
+export function mapPendingSession(row: PendingSessionRow): PendingSession {
+  return PendingSessionSchema.parse({
+    session_id: row.sessionId,
+    profile_id: row.profileId,
+    started_at: row.startedAt.toISOString(),
+    first_module: row.firstModule ?? null,
+    duration_s: row.durationS ?? null,
+  });
+}

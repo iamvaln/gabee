@@ -1,0 +1,151 @@
+// legal-content.jsx — Gabee Terms & Privacy content, FR + EN.
+// Source: gabee-landing-spec §8 (Terms) and §9 (Privacy).
+// NOT binding legal text — structure and intent only; lawyer review required (per spec).
+
+const LEGAL = {
+  fr: {
+    backHome: '← Retour à l’accueil',
+    toc: 'Sur cette page',
+    updated: 'Dernière mise à jour : 30 mai 2026 · v0.1',
+    disclaimer: {
+      title: 'Ceci n’est pas un texte juridique définitif.',
+      body: 'Ce document décrit la structure et l’intention de chaque section. La rédaction contraignante finale doit être établie ou revue par un juriste qualifié — notamment parce que la loi camerounaise 2024/017 sur la protection des données s’applique (échéance de conformité : 23 juin 2026) et que des données de mineurs sont concernées.',
+    },
+    terms: {
+      kicker: 'Légal',
+      title: 'Conditions générales',
+      intro: 'Les présentes conditions encadrent l’utilisation de Gabee par les parents et leurs enfants. En créant un compte ou en utilisant l’app enfant, vous les acceptez.',
+      framework: {
+        title: 'Cadre juridique applicable (vérifié en mai 2026)',
+        items: [
+          'Loi n° 2024/017 du 23 décembre 2024 relative à la protection des données à caractère personnel — s’applique à tout traitement sur le territoire camerounais ou concernant des résidents du Cameroun. Échéance de conformité : 23 juin 2026. Sanctions (art. 54+) jusqu’à 100 millions FCFA, plus responsabilités civiles et pénales.',
+          'Loi n° 2010/012 du 21 décembre 2010 relative à la cybersécurité et la cybercriminalité — cadre sous-jacent.',
+          'Loi n° 2023/007 du 25 juillet 2023 — Charte de protection des enfants en ligne. Directement pertinente : Gabee traite des données de mineurs.',
+          'L’autorité de contrôle (« Autorité de protection des données personnelles ») est créée par la loi 2024/017 ; ses modalités opérationnelles restent fixées par décret à venir.',
+        ],
+      },
+      sections: [
+        { id: 't-acceptance', h: 'Acceptation et champ d’application', b: 'Qui est lié, et à partir de quand (création d’un compte, utilisation de l’app enfant). Le titulaire du compte doit être un adulte disposant de l’autorité parentale sur l’enfant. La majorité civile au Cameroun est de 21 ans ; la majorité en matière de protection des données est de 18 ans (loi 2024/017).' },
+        { id: 't-definitions', h: 'Définitions', b: 'Service, parent, enfant (« personne mineure de moins de 18 ans » au sens de la loi 2024/017), contenu, compte, appairage d’appareil, sous-traitants, responsable du traitement (Proxia Digital).' },
+        { id: 't-service', h: 'Le service', b: 'Ce que Gabee fournit ; offert « en l’état », sans garantie ; les fonctionnalités peuvent évoluer.' },
+        { id: 't-consent', h: 'Compte et consentement parental', b: 'Éligibilité (adulte, autorité parentale) ; exactitude des informations ; responsabilité de sécurité (mot de passe). Le traitement des données d’un mineur n’est valable que s’il est appuyé par le consentement du parent ou représentant légal (art. 6+). Le parent confirme ce consentement à l’inscription et pour chaque enfant ajouté.' },
+        { id: 't-use', h: 'Usage acceptable', b: 'Pas de scraping, pas d’ingénierie inverse, pas d’abus, pas de tentative de compromettre d’autres comptes, pas de réutilisation commerciale sans consentement.' },
+        { id: 't-children', h: 'Contenu et données des enfants', b: 'Le parent reconnaît détenir l’autorité parentale ; il accepte que Gabee conserve les données d’apprentissage de l’enfant selon la Politique de confidentialité ; il peut retirer son consentement à tout moment en supprimant le profil enfant ou le compte.' },
+        { id: 't-ip', h: 'Propriété intellectuelle', b: 'Le contenu (programme, design, code) appartient à Proxia Digital ; les retours des parents peuvent être reproduits de façon anonyme à des fins d’amélioration ; le contenu soumis par l’utilisateur est concédé sous licence non exclusive pour l’exploitation du service.' },
+        { id: 't-pricing', h: 'Tarif et gratuité', b: 'Gratuit jusqu’à 3 enfants aujourd’hui ; communication transparente en cas de changement de tarif ; les utilisateurs actuels sont prévenus avant toute évolution.' },
+        { id: 't-privacy', h: 'Confidentialité', b: 'Renvoi à la Politique de confidentialité.' },
+        { id: 't-subprocessors', h: 'Sous-traitants', b: 'Liste nommée (Supabase pour la base de données et l’authentification ; Mailgun pour l’email) ; droit de mise à jour avec préavis. Les transferts hors Cameroun nécessitent des garanties adéquates (loi 2024/017).' },
+        { id: 't-warranty', h: 'Exclusion de garantie', b: 'Le service est un soutien éducatif, et non un substitut à l’école ou à un avis professionnel.' },
+        { id: 't-liability', h: 'Limitation de responsabilité', b: 'Plafond standard ; exception de force majeure.' },
+        { id: 't-termination', h: 'Résiliation', b: 'Le parent peut supprimer son compte à tout moment ; Proxia Digital peut suspendre ou résilier en cas de manquement grave, avec préavis.' },
+        { id: 't-modifications', h: 'Modifications des conditions', b: 'Notification par email aux comptes actifs ; les changements substantiels exigent un nouveau consentement (réacceptation à la prochaine connexion).' },
+        { id: 't-law', h: 'Droit applicable et juridiction', b: 'Droit camerounais ; tribunaux compétents au Cameroun (à préciser avec le juriste).' },
+        { id: 't-contact', h: 'Contact', b: 'Adresse d’enregistrement de Proxia Digital (Douala) et email pour les notifications légales.' },
+      ],
+    },
+    privacy: {
+      kicker: 'Légal',
+      title: 'Politique de confidentialité',
+      intro: 'Comment Gabee collecte, utilise et protège les données des parents et des enfants. Proxia Digital est le responsable du traitement au sens de la loi 2024/017.',
+      framework: {
+        title: 'Ancrage dans le droit camerounais (vérifié en mai 2026)',
+        items: [
+          'Loi n° 2024/017 du 23 décembre 2024 — cadre principal. L’article 5 définit les données personnelles ; l’article 6 et suivants posent les principes (« consentement préalable, libre, éclairé, spécifique et univoque »).',
+          'Disposition relative aux mineurs (art. 6+) : « Le consentement d’une personne mineure de moins de 18 ans est valable uniquement s’il est appuyé par celui de ses parents ou de son représentant légal. »',
+          'Article 54 et suivants — sanctions (administratives jusqu’à 100M FCFA, civiles, pénales). Échéance de conformité : 23 juin 2026.',
+          'Loi n° 2023/007 (charte de protection des enfants en ligne) et loi n° 2010/012 (cybersécurité) informent également cette politique.',
+        ],
+      },
+      sections: [
+        { id: 'p-who', h: 'Qui nous sommes', b: 'Proxia Digital, Cameroun (adresse à préciser) ; responsable du traitement au sens de la loi 2024/017 ; contact pour les questions de protection des données.' },
+        { id: 'p-what', h: 'Quelles données nous collectons', b: 'Parent : email, prénom, nom, pays, langue, mot de passe haché, métadonnées de connexion. Enfant : prénom, date de naissance (âge dérivé), choix d’avatar, niveau scolaire et objectifs optionnels, langue choisie à chaque session. Données d’apprentissage : module, niveau, leçon, langue, durée, réponses, indices, frappe au clavier, classification. Appairage : libellé d’appareil, dernière activité, référence du jeton.' },
+        { id: 'p-why', h: 'Pourquoi nous les collectons', b: 'Fournir le service (synchronisation entre appareils) ; montrer au parent ce que fait son enfant ; améliorer le contenu (données anonymisées) ; exploitation (journaux de débogage et de sécurité).' },
+        { id: 'p-basis', h: 'Base légale', b: 'Consentement parental pour les données de l’enfant — la base sous le modèle Gabee, révocable à tout moment. Contrat pour les données propres du parent. Intérêt légitime pour les journaux de sécurité et la prévention des abus.' },
+        { id: 'p-sharing', h: 'Avec qui nous partageons', b: 'Sous-traitants nommés : Supabase (base de données et authentification, région UE) ; Mailgun (emails, États-Unis). Jamais partagé avec des publicitaires, courtiers de données ou plateformes sociales. Le recours à Mailgun implique un transfert vers les États-Unis, encadré par des garanties documentées.' },
+        { id: 'p-coparents', h: 'Co-parents', b: 'Quand un parent invite un co-parent, celui-ci accède aux données des enfants partagés. Chaque parent donne son propre consentement à l’inscription.' },
+        { id: 'p-retention', h: 'Conservation des données', b: 'Comptes actifs : données conservées tant que le compte est actif. Suppression : effacement réversible sous 30 jours, puis suppression définitive. Comptes inactifs : après 24 mois sans connexion, avertissement par email puis suppression. Les analyses agrégées (non rattachées à une personne) peuvent être conservées indéfiniment.' },
+        { id: 'p-rights', h: 'Droits des personnes', b: 'Accès, rectification, effacement (« droit à l’oubli »), portabilité, opposition / limitation, et droit de plainte auprès de l’autorité camerounaise. Pour les mineurs, ces droits sont exercés par le parent ou représentant légal.' },
+        { id: 'p-security', h: 'Sécurité', b: 'HTTPS partout (HSTS sur le domaine .app) ; mots de passe hachés ; chiffrement de la base au repos ; contrôles d’accès ; journalisation ; plan de réponse aux incidents et notification des violations selon la loi 2024/017.' },
+        { id: 'p-transfers', h: 'Transferts internationaux', b: 'Supabase est hébergé dans l’UE ; Mailgun implique un transfert vers les États-Unis ; garanties (clauses contractuelles, engagements des sous-traitants) documentées dans la politique publiée.' },
+        { id: 'p-cookies', h: 'Cookies et traceurs', b: 'Uniquement des cookies essentiels (NEXT_LOCALE pour la langue, cookie de session pour l’authentification). Pas de bannière de consentement — aucun cookie non essentiel n’est déposé.' },
+        { id: 'p-changes', h: 'Modifications de cette politique', b: 'Notification par email et bannière à la prochaine connexion pour les changements substantiels, qui déclenchent un nouveau consentement.' },
+        { id: 'p-contact', h: 'Contact pour les questions de confidentialité', b: 'Email et adresse postale ; Délégué à la protection des données (DPO) — nom et coordonnées publiés dans la politique en vigueur.' },
+        { id: 'p-effective', h: 'Date d’effet et historique', b: 'Date d’entrée en vigueur et historique des versions.' },
+      ],
+    },
+  },
+
+  en: {
+    backHome: '← Back to home',
+    toc: 'On this page',
+    updated: 'Last updated: 30 May 2026 · v0.1',
+    disclaimer: {
+      title: 'This is not final legal text.',
+      body: 'This document describes the structure and intent of each section. The actual binding wording must be drafted or reviewed by a qualified lawyer — particularly because Cameroon’s data-protection law 2024/017 applies (compliance deadline: 23 June 2026) and minors’ data is involved.',
+    },
+    terms: {
+      kicker: 'Legal',
+      title: 'Terms & Conditions',
+      intro: 'These terms govern the use of Gabee by parents and their children. By creating an account or using the kid app, you accept them.',
+      framework: {
+        title: 'Applicable legal framework (verified May 2026)',
+        items: [
+          'Law No. 2024/017 of 23 December 2024 on personal-data protection — applies to any processing on Cameroonian territory or concerning residents of Cameroon. Compliance deadline: 23 June 2026. Sanctions (Art. 54+) up to 100 million FCFA, plus civil and penal liabilities.',
+          'Law No. 2010/012 of 21 December 2010 on cybersecurity and cybercrime — the underlying framework.',
+          'Law No. 2023/007 of 25 July 2023 — Online Child-Protection Charter. Directly relevant: Gabee processes minors’ data.',
+          'The supervisory authority (“Autorité de protection des données personnelles”) is established by law 2024/017; its operational modalities are set by a forthcoming decree.',
+        ],
+      },
+      sections: [
+        { id: 't-acceptance', h: 'Acceptance & scope', b: 'Who is bound, and from when (creating an account, using the kid app). The account holder must be an adult with parental authority over the child. Civil majority in Cameroon is 21; data-protection majority is 18 (law 2024/017).' },
+        { id: 't-definitions', h: 'Definitions', b: 'Service, parent, child (“minor under 18” per law 2024/017), content, account, device pairing, sub-processors, data controller (Proxia Digital).' },
+        { id: 't-service', h: 'The service', b: 'What Gabee provides; offered “as is” without warranty; features may change.' },
+        { id: 't-consent', h: 'Account & parental consent', b: 'Eligibility (adult, parental authority); accuracy of information; security responsibility (password). Processing a minor’s data is valid only if supported by parent / legal-representative consent (Art. 6+). The parent confirms this at signup and per kid added.' },
+        { id: 't-use', h: 'Acceptable use', b: 'No scraping, no reverse engineering, no abuse, no attempts to compromise other accounts, no commercial reuse without consent.' },
+        { id: 't-children', h: 'Children’s content & data', b: 'The parent acknowledges holding parental authority; accepts that Gabee stores the child’s learning data per the Privacy Policy; can withdraw consent at any time by deleting the kid profile or the account.' },
+        { id: 't-ip', h: 'Intellectual property', b: 'Content (curriculum, design, code) owned by Proxia Digital; parent feedback may be reproduced anonymously for improvement; user-submitted content is licensed non-exclusively for service operation.' },
+        { id: 't-pricing', h: 'Pricing & free use', b: 'Free up to 3 children today; transparent communication if pricing changes; current users given notice before any change.' },
+        { id: 't-privacy', h: 'Privacy', b: 'Cross-reference to the Privacy Policy.' },
+        { id: 't-subprocessors', h: 'Sub-processors', b: 'A named list (Supabase for database + auth; Mailgun for email); right to update with notice. Transfers outside Cameroon require adequate safeguards (law 2024/017).' },
+        { id: 't-warranty', h: 'Disclaimer of warranty', b: 'The service is educational support, not a substitute for school or professional advice.' },
+        { id: 't-liability', h: 'Limitation of liability', b: 'Standard cap; force-majeure carve-out.' },
+        { id: 't-termination', h: 'Termination', b: 'The parent can delete the account anytime; Proxia Digital may suspend or terminate for material breach with notice.' },
+        { id: 't-modifications', h: 'Modifications to the terms', b: 'Notice via email to active accounts; material changes require renewed consent (re-acceptance on next sign-in).' },
+        { id: 't-law', h: 'Governing law & jurisdiction', b: 'Cameroon law; competent courts in Cameroon (to specify with the lawyer).' },
+        { id: 't-contact', h: 'Contact', b: 'Proxia Digital registered address (Douala) and email for legal notices.' },
+      ],
+    },
+    privacy: {
+      kicker: 'Legal',
+      title: 'Privacy Policy',
+      intro: 'How Gabee collects, uses and protects parents’ and children’s data. Proxia Digital is the data controller under law 2024/017.',
+      framework: {
+        title: 'Anchored in Cameroon law (verified May 2026)',
+        items: [
+          'Law No. 2024/017 of 23 December 2024 — the primary framework. Article 5 defines personal data; Article 6 et seq. lay out the principles (“prior, free, informed, specific and unambiguous consent”).',
+          'Minors’ provision (Art. 6+): “A minor under 18’s consent is valid only if supported by that of their parents or legal representative.”',
+          'Article 54 et seq. — sanctions (administrative up to 100M FCFA, civil, penal). Compliance deadline: 23 June 2026.',
+          'Law No. 2023/007 (online child-protection charter) and law No. 2010/012 (cybersecurity) also inform this policy.',
+        ],
+      },
+      sections: [
+        { id: 'p-who', h: 'Who we are', b: 'Proxia Digital, Cameroon (registered address to specify); the data controller under law 2024/017; contact for data-protection questions.' },
+        { id: 'p-what', h: 'What data we collect', b: 'Parent: email, first name, last name, country, language, hashed password, login metadata. Child: first name, birthday (derived age), avatar choice, optional school level + objectives, language picked each session. Learning data: module, level, lesson, language, duration, answers, hints, keystrokes, classification. Pairing: device label, last activity, refresh-token reference.' },
+        { id: 'p-why', h: 'Why we collect it', b: 'Provide the service (sync across devices); show the parent what their child is doing; improve content (anonymized); operational (debugging and security logs).' },
+        { id: 'p-basis', h: 'Legal basis', b: 'Parental consent for the child’s data — the basis under Gabee’s model, revocable at any time. Contract for the parent’s own data. Legitimate interest for security logs and abuse prevention.' },
+        { id: 'p-sharing', h: 'Who we share with', b: 'Named sub-processors: Supabase (database + auth, EU region); Mailgun (email, US). Never shared with advertisers, data brokers or social platforms. Mailgun entails a US transfer, covered by documented safeguards.' },
+        { id: 'p-coparents', h: 'Co-parents', b: 'When a parent invites a co-parent, the invitee gains access to the shared kids’ data. Each parent provides their own consent at signup.' },
+        { id: 'p-retention', h: 'Data retention', b: 'Active accounts: data retained while active. Deletion: 30-day soft-delete (recoverable), then hard-delete. Inactive accounts: after 24 months without login, an email warning then deletion. Aggregated analytics (not linked to any person) may be retained indefinitely.' },
+        { id: 'p-rights', h: 'Data-subject rights', b: 'Access, rectification, erasure (“right to be forgotten”), portability, objection / restriction, and the right to lodge a complaint with the Cameroon authority. For minors, these rights are exercised by the parent or legal representative.' },
+        { id: 'p-security', h: 'Security', b: 'HTTPS everywhere (HSTS on the .app domain); hashed passwords; database encryption at rest; access controls; structured logging; incident-response plan and breach notification per law 2024/017.' },
+        { id: 'p-transfers', h: 'International transfers', b: 'Supabase is hosted in the EU; Mailgun entails a US transfer; safeguards (contractual clauses, sub-processor commitments) documented in the published policy.' },
+        { id: 'p-cookies', h: 'Cookies & similar', b: 'Only essential cookies (NEXT_LOCALE for language, session cookie for auth). No consent banner — no non-essential cookies are set.' },
+        { id: 'p-changes', h: 'Changes to this policy', b: 'Notice via email and an in-app banner on next sign-in for material changes, which trigger renewed consent.' },
+        { id: 'p-contact', h: 'Contact for privacy questions', b: 'Email and postal address; Data Protection Officer (DPO) — name and contact details published in the live policy.' },
+        { id: 'p-effective', h: 'Effective date & history', b: 'Effective date and version history.' },
+      ],
+    },
+  },
+};
+
+Object.assign(window, { LEGAL });
