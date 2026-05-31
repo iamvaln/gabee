@@ -1,0 +1,87 @@
+# Gabee — production stack (one project among others on a shared VPS).
+# Routing/TLS is handled by the shared Traefik proxy on the external `web`
+# network (see deploy/proxy/). Bring this stack up with:
+#   docker compose --env-file .env.production up -d --build
+name: gabee
+
+services:
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - gabee-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks: [internal]
+
+  # ── One-shot: apply Prisma migrations, then exit. ───────────────────────────
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    image: ${REGISTRY:-ghcr.io/iamvaln}/gabee-web:${IMAGE_TAG:-latest}
+    env_file: .env.production
+    command: ['pnpm', '--filter', '@gabee/db', 'exec', 'prisma', 'migrate', 'deploy']
+    restart: 'no'
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [internal]
+
+  # ── Next.js: landing + parent portal + admin + /api ─────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_KID_APP_URL: ${NEXT_PUBLIC_KID_APP_URL}
+    image: ${REGISTRY:-ghcr.io/iamvaln}/gabee-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file: .env.production
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks: [internal, web]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=web
+      - traefik.http.routers.gabee-web.rule=Host(`${WEB_DOMAIN}`) || Host(`www.${WEB_DOMAIN}`)
+      - traefik.http.routers.gabee-web.entrypoints=websecure
+      - traefik.http.routers.gabee-web.tls.certresolver=le
+      - traefik.http.services.gabee-web.loadbalancer.server.port=3000
+
+  # ── Kid PWA (static, served by nginx) ───────────────────────────────────────
+  kid:
+    build:
+      context: .
+      dockerfile: apps/kid/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    image: ${REGISTRY:-ghcr.io/iamvaln}/gabee-kid:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    networks: [web]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=web
+      - traefik.http.routers.gabee-kid.rule=Host(`${KID_DOMAIN}`)
+      - traefik.http.routers.gabee-kid.entrypoints=websecure
+      - traefik.http.routers.gabee-kid.tls.certresolver=le
+      - traefik.http.services.gabee-kid.loadbalancer.server.port=80
+
+volumes:
+  gabee-db:
+
+networks:
+  internal: # private: db ↔ web/migrate only
+  web: # shared proxy network (created once: `docker network create web`)
+    external: true
