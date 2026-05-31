@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { cookies } from 'next/headers';
 import Link from 'next/link';
 
 /**
