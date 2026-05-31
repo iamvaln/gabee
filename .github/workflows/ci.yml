@@ -30,7 +30,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # Generate the Prisma client so typecheck/test can resolve @gabee/db types.
+      # prisma.config.ts resolves env('DIRECT_URL') at load time (even though
+      # `generate` never connects) — provide a throwaway URL to satisfy it.
       - name: Prisma generate
+        env:
+          DIRECT_URL: postgresql://prisma:prisma@localhost:5432/prisma
         run: pnpm --filter @gabee/db run db:generate
 
       - name: Lint
