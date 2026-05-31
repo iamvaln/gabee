@@ -9,6 +9,8 @@ import {
   aggregatesByModule,
   listKidFeedback,
 } from '@/lib/server/services/parent-kid-detail';
+import { getKeyboardMetrics } from '@/lib/server/services/keyboard-metrics';
+import { getCodeMetrics } from '@/lib/server/services/code-metrics';
 import { KidDetailTabs } from './kid-detail-tabs';
 
 export const dynamic = 'force-dynamic';
@@ -35,10 +37,12 @@ export default async function KidDetailPage({
     notFound();
   }
 
-  const [sessions, modules, feedback] = await Promise.all([
+  const [sessions, modules, feedback, keyboardMetrics, codeMetrics] = await Promise.all([
     listKidSessions(session.parentId, id, 200),
     aggregatesByModule(session.parentId, id),
     listKidFeedback(session.parentId, id),
+    getKeyboardMetrics(session.parentId, { kidId: id }),
+    getCodeMetrics(session.parentId, { kidId: id }),
   ]);
 
   const lang: Language =
@@ -130,6 +134,8 @@ export default async function KidDetailPage({
         modules={modules}
         feedback={feedback}
         kidName={kid.name}
+        keyboardMetrics={keyboardMetrics}
+        codeMetrics={codeMetrics}
       />
     </div>
   );

@@ -2,6 +2,8 @@ import { cookies } from 'next/headers';
 import type { Module } from '@gabee/types';
 import { requireAdminPage } from '@/lib/server/auth';
 import { getAnalytics } from '@/lib/server/services/admin-observability';
+import { getKeyboardMetricsForAdmin } from '@/lib/server/services/keyboard-metrics';
+import { getCodeMetricsForAdmin } from '@/lib/server/services/code-metrics';
 import { PageHead, MiniBar, ModuleDot } from '../_shell/primitives';
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +22,11 @@ export default async function AnalyticsPage() {
   await requireAdminPage();
   const lang = (await cookies()).get('admin_lang')?.value === 'en' ? 'en' : 'fr';
   const L = lang === 'fr';
-  const a = await getAnalytics();
+  const [a, kbMetrics, codeMetrics] = await Promise.all([
+    getAnalytics(),
+    getKeyboardMetricsForAdmin(),
+    getCodeMetricsForAdmin(),
+  ]);
 
   const nf = (n: number) => n.toLocaleString(L ? 'fr-FR' : 'en-US');
   const pct = (n: number) => `${Math.round(n * 100)}%`;
@@ -116,6 +122,114 @@ export default async function AnalyticsPage() {
         </table>
       </div>
 
+      {/* Process-rich Keyboard + Code metrics (admin spec §11.2). One card
+          each, only rendered when there are events in the window. */}
+      {(kbMetrics || codeMetrics) && (
+        <div className="tiles mt16" style={{ gridTemplateColumns: 'repeat(2,1fr)' }}>
+          {kbMetrics && (
+            <div className="card">
+              <div className="card-head">
+                <h3>
+                  {L ? 'Clavier — détails du processus' : 'Keyboard — process details'}
+                </h3>
+                <span className="card-title-sub">
+                  {L ? '28 derniers jours' : 'last 28 days'}
+                </span>
+              </div>
+              <div className="card-pad">
+                <div className="tiles" style={{ gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>
+                  <KbStat label={L ? 'Vitesse (mots/min)' : 'Speed (WPM)'} value={String(kbMetrics.wpm)} />
+                  <KbStat label={L ? 'Précision' : 'Accuracy'} value={`${kbMetrics.accuracy_pct}%`} />
+                  <KbStat
+                    label={L ? 'Réaction moy.' : 'Avg reaction'}
+                    value={kbMetrics.avg_reaction_ms != null ? `${kbMetrics.avg_reaction_ms} ms` : '—'}
+                  />
+                  <KbStat
+                    label={L ? 'Backspace' : 'Self-corrections'}
+                    value={`${kbMetrics.backspace_pct}%`}
+                  />
+                  {kbMetrics.scrolling_on_time_pct != null && (
+                    <KbStat
+                      label={L ? 'Défilement à temps' : 'Scrolling on-time'}
+                      value={`${kbMetrics.scrolling_on_time_pct}%`}
+                    />
+                  )}
+                  <KbStat
+                    label={L ? 'Mots / frappes' : 'Words / keystrokes'}
+                    value={`${kbMetrics.total_words} / ${kbMetrics.total_keystrokes}`}
+                  />
+                </div>
+                {kbMetrics.top_error_letters.length > 0 && (
+                  <div style={{ marginTop: 14 }}>
+                    <div className="t-sub" style={{ fontWeight: 800, marginBottom: 6, fontSize: 12 }}>
+                      {L ? 'Lettres les plus ratées' : 'Most-missed letters'}
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {kbMetrics.top_error_letters.map((el) => (
+                        <span key={el.letter} className="badge bad">
+                          <span className="t-mono">{el.letter}</span>
+                          <span style={{ marginLeft: 4, opacity: 0.7 }}>×{el.count}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {codeMetrics && (
+            <div className="card">
+              <div className="card-head">
+                <h3>{L ? 'Code — détails du processus' : 'Code — process details'}</h3>
+                <span className="card-title-sub">
+                  {L ? '28 derniers jours' : 'last 28 days'}
+                </span>
+              </div>
+              <div className="card-pad">
+                <div className="tiles" style={{ gridTemplateColumns: 'repeat(2,1fr)', gap: 10 }}>
+                  <KbStat
+                    label={L ? 'Puzzles résolus' : 'Puzzles solved'}
+                    value={String(codeMetrics.solved_puzzles)}
+                  />
+                  <KbStat
+                    label={L ? 'Efficacité moy.' : 'Avg efficiency'}
+                    value={`${Math.round(codeMetrics.efficiency_ratio * 100)}%`}
+                  />
+                  <KbStat
+                    label={L ? 'Essais / puzzle' : 'Attempts / puzzle'}
+                    value={String(codeMetrics.avg_attempts_per_solve)}
+                  />
+                  <KbStat
+                    label={L ? 'Murs / lancement' : 'Walls / run'}
+                    value={String(codeMetrics.wall_hit_rate)}
+                  />
+                  <KbStat
+                    label={L ? 'Boucles utilisées' : 'Loop adoption'}
+                    value={`${codeMetrics.loop_adoption_pct}%`}
+                  />
+                  <KbStat
+                    label={L ? 'Conditions utilisées' : 'Conditional adoption'}
+                    value={`${codeMetrics.conditional_adoption_pct}%`}
+                  />
+                  {codeMetrics.median_solve_duration_s != null && (
+                    <KbStat
+                      label={L ? 'Durée médiane' : 'Median solve'}
+                      value={`${codeMetrics.median_solve_duration_s}s`}
+                    />
+                  )}
+                </div>
+                <p className="t-sub" style={{ marginTop: 10, fontSize: 11 }}>
+                  {L
+                    ? 'Efficacité 100 % = programme optimal à chaque résolution.'
+                    : '100 % efficiency = optimal program every time.'}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* A1 — session initiation breakdown */}
       <div className="card mt16">
         <div className="card-head">
@@ -165,6 +279,27 @@ export default async function AnalyticsPage() {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+// Small stat cell for the process-rich cards above. Matches the visual weight
+// of `.tile` without the surface — fits nicely in a sub-grid.
+function KbStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        display: 'flex', flexDirection: 'column', gap: 2,
+        padding: '8px 12px', borderRadius: 'var(--r-sm)',
+        background: 'var(--surface-2)', border: '1px solid var(--border)',
+      }}
+    >
+      <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        {label}
+      </span>
+      <span style={{ fontSize: 22, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+        {value}
+      </span>
     </div>
   );
 }

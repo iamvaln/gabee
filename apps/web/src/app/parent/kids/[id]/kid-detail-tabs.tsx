@@ -34,6 +34,31 @@ interface FeedbackRow {
   target: unknown;
 }
 
+interface KeyboardMetricsLite {
+  total_words: number;
+  total_keystrokes: number;
+  wpm: number;
+  accuracy_pct: number;
+  avg_reaction_ms: number | null;
+  backspace_pct: number;
+  scrolling_on_time_pct: number | null;
+  top_error_letters: { letter: string; count: number }[];
+  since: string;
+  until: string;
+}
+interface CodeMetricsLite {
+  solved_puzzles: number;
+  total_runs: number;
+  efficiency_ratio: number;
+  avg_attempts_per_solve: number;
+  wall_hit_rate: number;
+  loop_adoption_pct: number;
+  conditional_adoption_pct: number;
+  median_solve_duration_s: number | null;
+  since: string;
+  until: string;
+}
+
 interface Props {
   lang: Language;
   defaultTab: TabId;
@@ -42,6 +67,8 @@ interface Props {
   modules: KidModuleAggregate[];
   feedback: FeedbackRow[];
   kidName: string;
+  keyboardMetrics: KeyboardMetricsLite | null;
+  codeMetrics: CodeMetricsLite | null;
 }
 
 const TAB_LABELS: Record<TabId, { fr: string; en: string }> = {
@@ -74,6 +101,8 @@ export function KidDetailTabs({
   modules,
   feedback,
   kidName,
+  keyboardMetrics,
+  codeMetrics,
 }: Props) {
   const [tab, setTab] = useState<TabId>(defaultTab);
   const TABS: TabId[] = ['overview', 'activity', 'performance', 'feedback'];
@@ -99,7 +128,14 @@ export function KidDetailTabs({
       {tab === 'activity' && (
         <ActivityTab lang={lang} sessions={sessions} kidName={kidName} />
       )}
-      {tab === 'performance' && <PerformanceTab lang={lang} modules={modules} />}
+      {tab === 'performance' && (
+        <PerformanceTab
+          lang={lang}
+          modules={modules}
+          keyboardMetrics={keyboardMetrics}
+          codeMetrics={codeMetrics}
+        />
+      )}
       {tab === 'feedback' && (
         <FeedbackTab lang={lang} rows={feedback} kidName={kidName} />
       )}
@@ -335,9 +371,13 @@ function ActivityTab({
 function PerformanceTab({
   lang,
   modules,
+  keyboardMetrics,
+  codeMetrics,
 }: {
   lang: Language;
   modules: KidModuleAggregate[];
+  keyboardMetrics: KeyboardMetricsLite | null;
+  codeMetrics: CodeMetricsLite | null;
 }) {
   const [open, setOpen] = useState<Record<string, boolean>>(() => {
     return modules[0] ? { [modules[0].module]: true } : {};
@@ -413,11 +453,133 @@ function PerformanceTab({
                     </div>
                   </div>
                 </div>
+                {m.module === 'keyboard' && keyboardMetrics && (
+                  <KeyboardDetailMetrics lang={lang} m={keyboardMetrics} />
+                )}
+                {m.module === 'code' && codeMetrics && (
+                  <CodeDetailMetrics lang={lang} m={codeMetrics} />
+                )}
               </div>
             )}
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ─── Process-rich Keyboard metrics ───────────────────────────────────────────
+
+function KeyboardDetailMetrics({ lang, m }: { lang: Language; m: KeyboardMetricsLite }) {
+  const L = lang === 'fr';
+  return (
+    <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+      <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
+        {L ? 'Détails frappe' : 'Typing details'}
+      </div>
+      <div className="perf-metrics">
+        <div className="metric">
+          <div className="m-label">{L ? 'Vitesse (mots/min)' : 'Speed (WPM)'}</div>
+          <div className="m-value">{m.wpm}</div>
+        </div>
+        <div className="metric">
+          <div className="m-label">{L ? 'Précision' : 'Accuracy'}</div>
+          <div className="m-value">{m.accuracy_pct}%</div>
+        </div>
+        <div className="metric">
+          <div className="m-label">{L ? 'Réaction moyenne' : 'Avg reaction'}</div>
+          <div className="m-value">{m.avg_reaction_ms != null ? `${m.avg_reaction_ms} ms` : '—'}</div>
+        </div>
+        <div className="metric">
+          <div className="m-label">{L ? 'Corrections (backspace)' : 'Self-corrections'}</div>
+          <div className="m-value">{m.backspace_pct}%</div>
+        </div>
+        {m.scrolling_on_time_pct != null && (
+          <div className="metric">
+            <div className="m-label">{L ? 'Défilement à temps' : 'Scrolling on-time'}</div>
+            <div className="m-value">{m.scrolling_on_time_pct}%</div>
+          </div>
+        )}
+      </div>
+      {m.top_error_letters.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-3)', marginBottom: 6 }}>
+            {L ? 'Lettres les plus difficiles' : 'Most-missed letters'}
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {m.top_error_letters.map((el) => (
+              <span
+                key={el.letter}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '4px 10px', borderRadius: 999,
+                  background: 'var(--bad-bg)', color: 'var(--bad)',
+                  fontWeight: 800, fontSize: 13,
+                }}
+              >
+                <span style={{ fontFamily: 'ui-monospace, monospace' }}>{el.letter}</span>
+                <span style={{ fontWeight: 600, opacity: 0.7 }}>×{el.count}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 10 }}>
+        {L
+          ? `Sur ${m.total_words} mots / ${m.total_keystrokes} frappes (28 derniers jours).`
+          : `Across ${m.total_words} words / ${m.total_keystrokes} keystrokes (last 28 days).`}
+      </div>
+    </div>
+  );
+}
+
+// ─── Process-rich Code metrics ───────────────────────────────────────────────
+
+function CodeDetailMetrics({ lang, m }: { lang: Language; m: CodeMetricsLite }) {
+  const L = lang === 'fr';
+  const efficiencyPct = Math.round(m.efficiency_ratio * 100);
+  return (
+    <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+      <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
+        {L ? 'Détails programmation' : 'Coding details'}
+      </div>
+      <div className="perf-metrics">
+        <div className="metric">
+          <div className="m-label">{L ? 'Puzzles résolus' : 'Puzzles solved'}</div>
+          <div className="m-value">{m.solved_puzzles}</div>
+        </div>
+        <div className="metric">
+          <div className="m-label">{L ? 'Efficacité' : 'Efficiency'}</div>
+          <div className="m-value">{efficiencyPct}%</div>
+        </div>
+        <div className="metric">
+          <div className="m-label">{L ? 'Essais par puzzle' : 'Attempts/puzzle'}</div>
+          <div className="m-value">{m.avg_attempts_per_solve}</div>
+        </div>
+        <div className="metric">
+          <div className="m-label">{L ? 'Mur touché / lancement' : 'Wall hits/run'}</div>
+          <div className="m-value">{m.wall_hit_rate}</div>
+        </div>
+        <div className="metric">
+          <div className="m-label">{L ? 'Boucles utilisées' : 'Loops used'}</div>
+          <div className="m-value">{m.loop_adoption_pct}%</div>
+        </div>
+        <div className="metric">
+          <div className="m-label">{L ? 'Conditions utilisées' : 'Conditionals used'}</div>
+          <div className="m-value">{m.conditional_adoption_pct}%</div>
+        </div>
+        {m.median_solve_duration_s != null && (
+          <div className="metric">
+            <div className="m-label">{L ? 'Durée médiane' : 'Median solve'}</div>
+            <div className="m-value">{m.median_solve_duration_s}s</div>
+          </div>
+        )}
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 10 }}>
+        {L
+          ? `Sur ${m.solved_puzzles} puzzles / ${m.total_runs} lancements (28 derniers jours). Efficacité 100 % = programme optimal à chaque fois.`
+          : `Across ${m.solved_puzzles} puzzles / ${m.total_runs} runs (last 28 days). 100 % efficiency = always picked the optimal program.`}
+      </div>
     </div>
   );
 }
