@@ -5,7 +5,9 @@ import i18n from './i18n';
 import { useStore } from './store';
 import { enqueueEvent, flushEvents } from './lib/events';
 import { sync } from './lib/sync';
-import { armSessionEnd, endSession, setLastScreen } from './lib/session';
+import { armSessionEnd, endSession, noteBackground, noteForeground, setLastScreen } from './lib/session';
+import { useIdle, installIdleListeners } from './lib/idle';
+import { LockScreen } from './components/LockScreen';
 import { SyncIndicator } from './components/SyncIndicator';
 import { Login } from './screens/Login';
 import { ProfileSelect } from './screens/ProfileSelect';
@@ -224,22 +226,45 @@ export function App() {
     setLastScreen(route.name);
   }, [route]);
 
-  // Best-effort session_end when the sitting is backgrounded/closed (product §8).
-  // Independent of the sync manager's own flush triggers: this also EMITS the event.
+  // Visibility lifecycle (product §9.3). A backgrounded tab is treated as a
+  // PAUSED sitting, not a closed one — so `session_end.duration_s` reflects
+  // real play time, not first-background time. Only `pagehide` (close) and a
+  // long background (>15 min, configured in lib/session.ts) end the sitting.
+  // Returning from a long background mints a new session_id automatically.
   useEffect(() => {
-    const onHidden = () => {
-      if (document.visibilityState === 'hidden') void endSession();
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        noteBackground();
+      } else {
+        void noteForeground();
+      }
     };
     const onPagehide = () => {
       void endSession(false); // the manager's pagehide flush will pick it up
     };
-    document.addEventListener('visibilitychange', onHidden);
+    document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('pagehide', onPagehide);
     return () => {
-      document.removeEventListener('visibilitychange', onHidden);
+      document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('pagehide', onPagehide);
     };
   }, []);
+
+  // Idle tracker (product §6.3). Activity listeners installed once at mount;
+  // re-armed on profile pick. After 3 min of no input → LockScreen renders.
+  const idleLocked = useIdle((s) => s.isLocked);
+  const armIdle = useIdle((s) => s.arm);
+  const disarmIdle = useIdle((s) => s.disarm);
+  const unlockIdle = useIdle((s) => s.unlock);
+  useEffect(() => {
+    return installIdleListeners();
+  }, []);
+  // Arm the idle timer the moment we have a profile; disarm when we drop it
+  // (no profile → ProfileSelect doesn't need a lock on top of itself).
+  useEffect(() => {
+    if (profile) armIdle();
+    else disarmIdle();
+  }, [profile?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handlePick(p: ChildProfile) {
     setProfile(p);
@@ -321,6 +346,16 @@ export function App() {
 
   const goHome = () => setRoute({ name: 'hub' });
   const goSettings = () => setRoute({ name: 'settings' });
+  // Kid hands the device to a sibling. End the session timer + emit session_end
+  // for clean parent-side accounting, drop the profile (the device-paired token
+  // stays so re-pick is one tap), and reset to the picker.
+  const goSwitchProfile = () => {
+    void endSession();
+    endSessionTimer();
+    useStore.getState().endPlay();
+    useStore.getState().setProfile(null);
+    setRoute({ name: 'hub' });
+  };
 
   let screen: React.ReactNode;
   if (!token) {
@@ -904,7 +939,7 @@ export function App() {
         );
         break;
       case 'settings':
-        screen = <Settings onHome={goHome} onBack={goHome} />;
+        screen = <Settings onHome={goHome} onBack={goHome} onSwitchProfile={goSwitchProfile} />;
         break;
       case 'hub':
       default:
@@ -914,6 +949,10 @@ export function App() {
 
   // Daily lock takes precedence over EVERY screen (post-profile-pick).
   const showDailyLock = !!profile && dailyLocked && !!limits;
+  // Idle lock: shown only while a profile is active and the daily lock isn't
+  // already up. Tapping the avatar unlocks; the "Not me" link drops the
+  // profile and routes to ProfileSelect.
+  const showIdleLock = !!profile && idleLocked && !showDailyLock;
 
   return (
     <div className={STAGE_CLASS}>
@@ -922,6 +961,17 @@ export function App() {
           <DailyLockScreen lang={lang} onHome={goHome} dailyTotalCapMin={limits!.daily_total_cap_min} />
         ) : (
           screen
+        )}
+        {showIdleLock && profile && (
+          <LockScreen
+            profile={profile}
+            lang={lang}
+            onResume={() => unlockIdle()}
+            onSwitchProfile={() => {
+              unlockIdle();
+              goSwitchProfile();
+            }}
+          />
         )}
         <SyncIndicator />
         {pendingMsg && !readerOpen && isSummaryScreen(route.name) && (

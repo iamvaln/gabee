@@ -38,17 +38,17 @@ const COPY = {
   exit: { fr: 'Sortir', en: 'Exit' },
   question: (name: string, lang: Language) =>
     lang === 'fr'
-      ? [`Est-ce que `, name, ` a demandé à utiliser Gabee, ou est-ce vous qui l'avez proposé ?`]
-      : [`Did `, name, ` ask to use Gabee, or did you suggest it?`],
-  theyAsked: { fr: 'Il/elle a demandé', en: 'They asked' },
-  theyAskedSub: { fr: 'Auto-initié', en: 'Self-initiated' },
-  iSuggested: { fr: "Je l'ai proposé", en: 'I suggested' },
-  iSuggestedSub: { fr: 'Proposé par le parent', en: 'Parent-prompted' },
+      ? [`Cette session, c'était à l'initiative de `, name, `, ou à la vôtre ?`]
+      : [`Was this session ${name}'s initiative, or yours?`],
+  theyAsked: { fr: 'À son initiative', en: 'Their initiative' },
+  theyAskedSub: { fr: 'L’enfant a ouvert Gabee seul·e', en: 'They opened Gabee on their own' },
+  iSuggested: { fr: 'À votre initiative', en: 'Your initiative' },
+  iSuggestedSub: { fr: 'Vous le lui avez proposé', en: 'You suggested it' },
   notSure: { fr: 'Pas sûr·e', en: 'Not sure' },
   notSureSub: { fr: 'Retiré de la file', en: 'Removed from queue' },
   skipForNow: { fr: "Passer pour l'instant", en: 'Skip for now' },
   whyAsk: { fr: 'Pourquoi on demande', en: 'Why we ask' },
-  classifyDone: { fr: 'Tout est classé !', en: 'All classified!' },
+  classifyDone: { fr: 'Tout est revu !', en: 'All reviewed!' },
   classifyDoneSub: {
     fr: "Merci d'avoir pris ce moment avec eux aujourd'hui.",
     en: 'Thanks for taking this moment with them today.',
@@ -67,8 +67,8 @@ const COPY = {
   },
   retry: { fr: 'Réessayer', en: 'Retry' },
   whyBody: {
-    fr: "Savoir si votre enfant a demandé Gabee — ou si c'est vous qui l'avez proposé — vous aide à rester proche de son apprentissage au quotidien. C'est votre moment pour voir ce qu'il a fait et choisir ce qui vient ensuite. Vos réponses restent privées et n'affectent jamais le contenu de votre enfant.",
-    en: "Knowing whether your kid asked for Gabee — or you suggested it — helps you stay close to their learning day to day. It's your moment to see what they did and shape what comes next. Your answers stay private and never change your kid's content.",
+    fr: "Savoir si votre enfant a ouvert Gabee de sa propre initiative — ou si c'est vous qui l'avez proposé — vous aide à rester proche de son apprentissage au quotidien. C'est votre moment pour voir ce qu'il a fait et choisir ce qui vient ensuite. Vos réponses restent privées et n'affectent jamais le contenu de votre enfant.",
+    en: "Knowing whether your kid opened Gabee on their own — or you suggested it — helps you stay close to their learning day to day. It's your moment to see what they did and shape what comes next. Your answers stay private and never change your kid's content.",
   },
   gotIt: { fr: 'Compris', en: 'Got it' },
 };

@@ -23,15 +23,15 @@ export function HomeClassificationCard({
         <p className="cc-eyebrow">{isFr ? 'Hors-ligne' : 'Offline'}</p>
         <h2 className="cc-title">
           {isFr
-            ? `Synchronisation impossible. ${n} sessions vues à classer.`
-            : `Can't sync right now. Last seen ${n} sessions to classify.`}
+            ? `Synchronisation impossible. ${n} sessions vues à revoir.`
+            : `Can't sync right now. Last seen ${n} sessions to review.`}
         </h2>
         <p className="cc-sub">
           {isFr ? 'Réessayez dans un instant.' : 'Try again in a moment.'}
         </p>
         <div className="cc-actions">
           <button className="btn coral" disabled type="button">
-            {isFr ? 'Classer maintenant' : 'Classify now'}
+            {isFr ? 'Revoir maintenant' : 'Review now'}
           </button>
         </div>
       </div>
@@ -49,7 +49,7 @@ export function HomeClassificationCard({
               {isFr ? 'Tout est à jour' : "You're all caught up"}
             </p>
             <h2 className="cc-title" style={{ fontSize: 24 }}>
-              {isFr ? 'Aucune session à classer.' : 'No sessions to classify.'}
+              {isFr ? 'Aucune session à revoir.' : 'No sessions to review.'}
             </h2>
             <p className="cc-sub" style={{ margin: '8px 0 16px', color: 'var(--text-2)' }}>
               {isFr
@@ -76,18 +76,18 @@ export function HomeClassificationCard({
   // ── Pending sessions — coral, pulses when ≥ 5 ──────────────────────────────
   return (
     <div className={'classify-card' + (n >= 5 ? ' cc-pulse' : '')}>
-      <p className="cc-eyebrow">{isFr ? 'À classer' : 'Needs you'}</p>
+      <p className="cc-eyebrow">{isFr ? 'À revoir' : 'Needs you'}</p>
       <h2 className="cc-title">
         {isFr ? `${n} sessions ont besoin de toi` : `${n} sessions need your input`}
       </h2>
       <p className="cc-sub">
         {isFr
-          ? 'Dis-nous si ton enfant a demandé Gabee ou si tu l’as proposé.'
-          : 'Tell us if your kid asked for Gabee or if you suggested it.'}
+          ? 'Dis-nous si c’était à l’initiative de ton enfant ou à la tienne.'
+          : 'Tell us whether it was your kid’s initiative or yours.'}
       </p>
       <div className="cc-actions">
         <Link href="/parent/classify" className="btn coral lg">
-          {isFr ? 'Classer maintenant' : 'Classify now'}
+          {isFr ? 'Revoir maintenant' : 'Review now'}
         </Link>
       </div>
       <div className="cc-bee">

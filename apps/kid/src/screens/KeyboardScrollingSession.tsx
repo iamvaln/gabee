@@ -364,6 +364,10 @@ export function KeyboardScrollingSession({
       <div className="session-body">
         <div className="session-stage">
           <div className="session-prompt">
+            {/* Column wrapper so the track + helper text stack vertically. The
+                outer `.session-prompt` defaults to flex-direction row, which
+                would lay them side-by-side. */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 12, width: '100%' }}>
             {/* Scrolling track — the word slides from right (off-stage) to left.
                 Tape avant qu'il ne disparaisse / Type before it scrolls off. */}
             <div
@@ -420,8 +424,9 @@ export function KeyboardScrollingSession({
                 })}
               </div>
             </div>
-            <div style={{ marginTop: 12, fontSize: 14, color: '#64748b' }}>
+            <div style={{ fontSize: 14, color: '#64748b', textAlign: 'center' }}>
               {lang === 'fr' ? 'Tape avant que ça disparaisse !' : 'Type before it scrolls off!'}
+            </div>
             </div>
           </div>
           {feedback ? (

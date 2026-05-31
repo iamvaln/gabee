@@ -93,8 +93,10 @@ function iconFor(action: FamilyActivityRow['action']): string {
 
 /**
  * Human sentence for the action — what comes AFTER "<actor> ". Bilingual.
- * Conjugation uses "tu" / "you" form when the actor is the requester ("Tu as
- * classé…" / "You classified…") and 3rd person otherwise ("Alex a classé…").
+ * Conjugation uses formal "vous" / "you" form when the actor is the requester
+ * ("Vous avez classé…" / "You classified…") and 3rd person otherwise ("Alex a
+ * classé…"). The rest of the parent app uses "vous/votre" so we stay coherent
+ * — using "tu" here would jar.
  */
 function actionSentence(row: FamilyActivityRow, lang: Language): string {
   const child = row.child_name;
@@ -112,87 +114,87 @@ function actionSentence(row: FamilyActivityRow, lang: Language): string {
         ? `${n} session${n > 1 ? 's' : ''}`
         : `${n} session${n > 1 ? 's' : ''}`;
       return v(
-        `as classé ${ses} de ${child}`,
-        `a classé ${ses} de ${child}`,
-        `classified ${ses} for ${child}`,
-        `classified ${ses} for ${child}`,
+        `avez revu ${ses} de ${child}`,
+        `a revu ${ses} de ${child}`,
+        `reviewed ${ses} for ${child}`,
+        `reviewed ${ses} for ${child}`,
       );
     }
     case 'feedback_left':
       return v(
-        `as laissé un retour pour ${child}`,
+        `avez laissé un retour pour ${child}`,
         `a laissé un retour pour ${child}`,
         `left feedback for ${child}`,
         `left feedback for ${child}`,
       );
     case 'feedback_edited':
       return v(
-        `as modifié un retour pour ${child}`,
+        `avez modifié un retour pour ${child}`,
         `a modifié un retour pour ${child}`,
         `edited feedback for ${child}`,
         `edited feedback for ${child}`,
       );
     case 'kid_added':
-      return v(`as ajouté ${child}`, `a ajouté ${child}`, `added ${child}`, `added ${child}`);
+      return v(`avez ajouté ${child}`, `a ajouté ${child}`, `added ${child}`, `added ${child}`);
     case 'kid_edited':
       return v(
-        `as mis à jour le profil de ${child}`,
+        `avez mis à jour le profil de ${child}`,
         `a mis à jour le profil de ${child}`,
         `updated ${child}'s profile`,
         `updated ${child}'s profile`,
       );
     case 'kid_removed':
       return v(
-        `as supprimé le profil de ${child}`,
+        `avez supprimé le profil de ${child}`,
         `a supprimé le profil de ${child}`,
         `removed ${child}'s profile`,
         `removed ${child}'s profile`,
       );
     case 'device_paired':
       return v(
-        `as connecté un appareil pour ${child}`,
+        `avez connecté un appareil pour ${child}`,
         `a connecté un appareil pour ${child}`,
         `paired a device for ${child}`,
         `paired a device for ${child}`,
       );
     case 'device_revoked':
       return v(
-        `as révoqué un appareil pour ${child}`,
+        `avez révoqué un appareil pour ${child}`,
         `a révoqué un appareil pour ${child}`,
         `revoked a device for ${child}`,
         `revoked a device for ${child}`,
       );
     case 'coparent_invited':
       return v(
-        `as invité un co-parent pour ${child}`,
+        `avez invité un co-parent pour ${child}`,
         `a invité un co-parent pour ${child}`,
         `invited a co-parent for ${child}`,
         `invited a co-parent for ${child}`,
       );
     case 'coparent_joined':
       return v(
-        `as rejoint la famille pour ${child}`,
-        `a rejoint la famille pour ${child}`,
-        `joined the family for ${child}`,
-        `joined the family for ${child}`,
+        `avez rejoint la famille comme co-parent de ${child}`,
+        `a rejoint la famille comme co-parent de ${child}`,
+        `joined the family as a co-parent of ${child}`,
+        `joined the family as a co-parent of ${child}`,
       );
     case 'coparent_removed':
       return v(
-        `as retiré un co-parent pour ${child}`,
+        `avez retiré un co-parent pour ${child}`,
         `a retiré un co-parent pour ${child}`,
         `removed a co-parent for ${child}`,
         `removed a co-parent for ${child}`,
       );
     case 'message_sent':
       return v(
-        `as envoyé un message à ${child}`,
+        `avez envoyé un message à ${child}`,
         `a envoyé un message à ${child}`,
         `sent a message to ${child}`,
         `sent a message to ${child}`,
       );
     case 'message_deleted':
       return v(
-        `as supprimé un message pour ${child}`,
+        `avez supprimé un message pour ${child}`,
         `a supprimé un message pour ${child}`,
         `deleted a message for ${child}`,
         `deleted a message for ${child}`,

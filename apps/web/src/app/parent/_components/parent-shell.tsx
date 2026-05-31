@@ -19,7 +19,7 @@ interface NavItem {
 // 5-item primary nav per parent spec §3 — mirrors NAV_ITEMS in parent-shell.jsx.
 const NAV: NavItem[] = [
   { id: 'home',     href: '/parent',          label: { fr: 'Accueil',     en: 'Home' },           icon: 'home' },
-  { id: 'classify', href: '/parent/classify', label: { fr: 'Classement',  en: 'Classification' }, icon: 'classify' },
+  { id: 'classify', href: '/parent/classify', label: { fr: 'Revue',  en: 'Review' }, icon: 'classify' },
   { id: 'kids',     href: '/parent/kids',     label: { fr: 'Enfants',     en: 'Kids' },           icon: 'kids' },
   { id: 'messages', href: '/parent/messages', label: { fr: 'Messages',    en: 'Messages' },       icon: 'message' },
   { id: 'settings', href: '/parent/settings', label: { fr: 'Réglages',    en: 'Settings' },       icon: 'settings' },

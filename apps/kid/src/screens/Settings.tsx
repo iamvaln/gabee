@@ -19,8 +19,17 @@ interface BundleRow {
 // (which the parent dashboard and the admin publish UI also surface) so the
 // operator can diagnose "the kid is on an older version" without leaving the
 // device. Also exposes a manual "Refresh" button that re-runs the launch-time
-// manifest sweep.
-export function Settings({ onHome, onBack }: { onHome: () => void; onBack: () => void }) {
+// manifest sweep, and a "Changer de profil" action so a sibling can take over
+// without needing the parent to log in again.
+export function Settings({
+  onHome,
+  onBack,
+  onSwitchProfile,
+}: {
+  onHome: () => void;
+  onBack: () => void;
+  onSwitchProfile: () => void;
+}) {
   const { t } = useTranslation();
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
@@ -133,9 +142,12 @@ export function Settings({ onHome, onBack }: { onHome: () => void; onBack: () =>
             )}
           </div>
 
-          <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+          <div style={{ marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button className="btn" onClick={onBack}>
               <Icon name="arrow-right" /> {t('back')}
+            </button>
+            <button className="btn ghost" onClick={onSwitchProfile}>
+              {L ? 'Changer de profil' : 'Switch profile'}
             </button>
           </div>
         </div>

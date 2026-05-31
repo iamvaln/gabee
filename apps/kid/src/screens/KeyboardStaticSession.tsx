@@ -376,6 +376,11 @@ export function KeyboardStaticSession({
       <div className="session-body">
         <div className="session-stage">
           <div className="session-prompt">
+            {/* Wrapper enforces vertical stacking: `.session-prompt` itself uses
+                flex-direction row by default, which would lay the prompt and
+                the helper text side-by-side. The column wrapper centers them
+                cleanly within the larger prompt box. */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, maxWidth: '100%' }}>
             {/* Letter-by-letter target. Typed letters dim; the current letter has a mint
                 underline; remaining letters render normal. Flash overlay tints the cell
                 green/red on correct/wrong keystrokes for fast feedback. */}
@@ -420,8 +425,9 @@ export function KeyboardStaticSession({
                 );
               })}
             </div>
-            <div style={{ marginTop: 12, fontSize: 14, color: '#64748b' }}>
+            <div style={{ fontSize: 14, color: '#64748b' }}>
               {lang === 'fr' ? 'Tape la lettre allumée' : 'Type the lit letter'}
+            </div>
             </div>
           </div>
           {feedback ? (

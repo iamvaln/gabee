@@ -123,7 +123,7 @@ export function NotificationsTab({ lang }: { lang: SettingsLang }) {
       {/* Classification digest cadence — segmented control (.seg) */}
       <div className="set-row" style={{ flexWrap: 'wrap', gap: 12 }}>
         <div className="sr-main">
-          <div className="sr-label">{L ? 'Rappel de classement' : 'Classification digest'}</div>
+          <div className="sr-label">{L ? 'Rappel de revue' : 'Review digest'}</div>
           <div className="sr-sub">
             {L
               ? 'Quand des sessions attendent votre avis'
