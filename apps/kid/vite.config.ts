@@ -74,5 +74,24 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  build: {
+    // Split heavy node_modules into their own chunks so the browser can cache
+    // them independently of app code (the React + TanStack Query + Dexie +
+    // Zustand layers rarely change; app code changes per deploy). Without this
+    // the single bundle hits ~650kB and triggers Vite's 500kB warning.
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('react-i18next') || id.includes('/i18next')) return 'i18n';
+          if (id.includes('@tanstack')) return 'query';
+          if (id.includes('dexie')) return 'dexie';
+          if (id.includes('zustand')) return 'zustand';
+          if (id.includes('react-dom') || id.includes('/react/')) return 'react';
+          return 'vendor';
+        },
+      },
+    },
+  },
   server: { port: 5173, strictPort: true },
 });
