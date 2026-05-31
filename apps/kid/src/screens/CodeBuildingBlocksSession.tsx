@@ -154,9 +154,29 @@ export function CodeBuildingBlocksSession({
   const wallHitsRef = useRef(0);
   const totalAttemptsRef = useRef(0);
 
+  // Responsive grid cell — same approach as CodeFindPathSession. Shrinks to
+  // fit the available stage width so phones and narrow tablets don't overflow.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [cell, setCell] = useState(56);
+
   const q = session?.questions[qIdx];
   const puzzle = useMemo(() => (q ? parsePuzzle(q) : null), [q]);
   const ctx = { profileId: profile?.id ?? null, sessionId: play?.id ?? null };
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el || !puzzle) return;
+    function recompute() {
+      if (!el || !puzzle) return;
+      const w = el.clientWidth;
+      const fitted = Math.floor((w - 16) / puzzle.grid.cols);
+      setCell(Math.max(32, Math.min(56, fitted)));
+    }
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [puzzle?.grid.cols]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!session || !q || startedRef.current || !profile) return;
@@ -410,7 +430,6 @@ export function CodeBuildingBlocksSession({
     );
   }
 
-  const CELL = 56;
   const arrows: Record<Direction, string> = { up: '↑', down: '↓', left: '←', right: '→' };
 
   // Recursive renderer for the program tree. Tap a block to remove; tap a
@@ -497,15 +516,15 @@ export function CodeBuildingBlocksSession({
         </div>
       </div>
       <div className="session-body">
-        <div className="session-stage">
+        <div className="session-stage" ref={stageRef}>
           <div
             style={{
               position: 'relative',
-              width: puzzle.grid.cols * CELL,
-              height: puzzle.grid.rows * CELL,
+              width: puzzle.grid.cols * cell,
+              height: puzzle.grid.rows * cell,
               display: 'grid',
-              gridTemplateColumns: `repeat(${puzzle.grid.cols}, ${CELL}px)`,
-              gridTemplateRows: `repeat(${puzzle.grid.rows}, ${CELL}px)`,
+              gridTemplateColumns: `repeat(${puzzle.grid.cols}, ${cell}px)`,
+              gridTemplateRows: `repeat(${puzzle.grid.rows}, ${cell}px)`,
               background: '#FFFBEC',
               border: '3px solid #FCD34D',
               borderRadius: 12,
@@ -538,10 +557,10 @@ export function CodeBuildingBlocksSession({
             <div
               style={{
                 position: 'absolute',
-                top: beePos.y * CELL,
-                left: beePos.x * CELL,
-                width: CELL,
-                height: CELL,
+                top: beePos.y * cell,
+                left: beePos.x * cell,
+                width: cell,
+                height: cell,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -549,7 +568,7 @@ export function CodeBuildingBlocksSession({
                 pointerEvents: 'none',
               }}
             >
-              <Bee size={CELL - 8} expression={beeExpr} wings bob={!running} />
+              <Bee size={Math.max(24, cell - 8)} expression={beeExpr} wings bob={!running} />
             </div>
           </div>
 

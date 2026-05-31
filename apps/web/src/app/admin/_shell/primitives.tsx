@@ -135,3 +135,32 @@ export function PageHead({
     </div>
   );
 }
+
+/**
+ * Friendly empty state — icon + title + helpful body + optional CTA. Use it
+ * for "nothing here yet" lists where the user benefits from a hint about what
+ * will appear and what to do next. Beats a bare "No data." string. The icon
+ * is a single emoji glyph so we don't drag SVG dependencies into every page.
+ */
+export function EmptyState({
+  icon = '✨',
+  title,
+  body,
+  action,
+}: {
+  icon?: string;
+  title: string;
+  body?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="empty-state">
+      <div style={{ fontSize: 48, lineHeight: 1, opacity: 0.85 }} aria-hidden>
+        {icon}
+      </div>
+      <h3>{title}</h3>
+      {body && <p>{body}</p>}
+      {action && <div style={{ marginTop: 12 }}>{action}</div>}
+    </div>
+  );
+}

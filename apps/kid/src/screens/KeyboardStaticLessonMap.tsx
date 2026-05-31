@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { LevelProgress } from '@gabee/types';
 import { Bee } from '../components/Bee';
+import { SkeletonLevelGrid } from '../components/Skeleton';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { MODULES } from '../content/modules';
@@ -61,7 +62,7 @@ export function KeyboardStaticLessonMap({
       </div>
       <div className="level-body">
         {isLoading ? (
-          <div className="skeleton" style={{ width: 420, height: 140 }} />
+          <SkeletonLevelGrid />
         ) : (
           <div className="level-grid">
             {units.map((u, i) => {

@@ -6,6 +6,7 @@ import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { useStore } from '../store';
 import { listCachedBundles, refreshIfNewer } from '../lib/bundles';
+import { useInstall } from '../lib/install';
 
 interface BundleRow {
   module: Module;
@@ -40,6 +41,7 @@ export function Settings({
   const [refreshing, setRefreshing] = useState(false);
   const [persisted, setPersisted] = useState<boolean | null>(null);
   const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const install = useInstall();
 
   async function load() {
     const rows = await listCachedBundles();
@@ -100,6 +102,43 @@ export function Settings({
               {persisted === null ? '…' : persisted ? (L ? 'oui' : 'yes') : (L ? 'non' : 'no')}
             </div>
           </div>
+
+          {install.kind !== 'installed' && install.kind !== 'unavailable' && (
+            <div
+              style={{
+                padding: 12, borderRadius: 12, marginBottom: 16,
+                background: '#EFF6FF', border: '1px solid #BFDBFE',
+                fontSize: 14, color: '#0f172a',
+              }}
+            >
+              <strong>{L ? 'Installer Gabee' : 'Install Gabee'}</strong>
+              <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4, marginBottom: 10 }}>
+                {L
+                  ? 'L’app s’ouvre alors comme une vraie app, sans la barre du navigateur.'
+                  : 'The app opens like a real app, without the browser bar.'}
+              </div>
+              {install.kind === 'available' ? (
+                <button
+                  className="btn"
+                  onClick={() => void install.prompt()}
+                >
+                  <Icon name="arrow-right" /> {L ? 'Installer maintenant' : 'Install now'}
+                </button>
+              ) : (
+                <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+                  {L ? (
+                    <>
+                      <strong>Sur iPhone/iPad :</strong> touche <span style={{ fontWeight: 700 }}>Partager</span> dans Safari, puis <span style={{ fontWeight: 700 }}>« Sur l’écran d’accueil »</span>.
+                    </>
+                  ) : (
+                    <>
+                      <strong>On iPhone/iPad:</strong> tap <span style={{ fontWeight: 700 }}>Share</span> in Safari, then <span style={{ fontWeight: 700 }}>"Add to Home Screen"</span>.
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <strong style={{ fontSize: 14 }}>{L ? 'Contenus en cache' : 'Cached bundles'}</strong>

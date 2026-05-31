@@ -396,8 +396,16 @@ export interface AnalyticsData {
 export async function getAnalytics(): Promise<AnalyticsData> {
   const since28 = new Date(Date.now() - 28 * DAY_MS);
 
-  const [classifications, completionEvents, answerEvents, initiationGroups, profiles, launchEvents] =
-    await Promise.all([
+  const [
+    classifications,
+    completionEvents,
+    answerEvents,
+    typingEvents,
+    codeRunEvents,
+    initiationGroups,
+    profiles,
+    launchEvents,
+  ] = await Promise.all([
       prisma.sessionClassification.findMany({
         where: { startedAt: { gte: since28 } },
         select: { firstModule: true, durationS: true, profileId: true, startedAt: true, label: true },
@@ -411,6 +419,21 @@ export async function getAnalytics(): Promise<AnalyticsData> {
       }),
       prisma.event.findMany({
         where: { name: 'question_answered', serverTs: { gte: since28 } },
+        select: { payload: true },
+      }),
+      // Keyboard module: a typed word with zero errors counts as "correct".
+      // Maps the process-rich `typing_word_completed` event onto the same
+      // accuracy axis as question_answered so the per-module engagement table
+      // can render a real number for keyboard.
+      prisma.event.findMany({
+        where: { name: 'typing_word_completed', serverTs: { gte: since28 } },
+        select: { payload: true },
+      }),
+      // Code module: a `code_run` whose `result === 'success'` counts as
+      // correct. Each run is an attempt — failures (hit_wall, wrong_position)
+      // are tracked as not-correct, which matches kid effort over time.
+      prisma.event.findMany({
+        where: { name: 'code_run', serverTs: { gte: since28 } },
         select: { payload: true },
       }),
       prisma.sessionClassification.groupBy({
@@ -459,6 +482,27 @@ export async function getAnalytics(): Promise<AnalyticsData> {
     agg.total += 1;
     if (p.correct) agg.correct += 1;
     moduleCorrect.set(p.module, agg);
+  }
+  // Keyboard: zero-error typed word = "correct". Module not on the event
+  // payload (the spec embeds it implicitly via the event name), so we hard-
+  // code 'keyboard' here.
+  for (const e of typingEvents) {
+    const p = e.payload as { error_count?: number } | null;
+    if (p == null) continue;
+    const agg = moduleCorrect.get('keyboard') ?? { correct: 0, total: 0 };
+    agg.total += 1;
+    if ((p.error_count ?? 0) === 0) agg.correct += 1;
+    moduleCorrect.set('keyboard', agg);
+  }
+  // Code: a run with result==='success' = "correct"; hit_wall / wrong_position
+  // count as not correct (kid will retry, that's the engagement loop).
+  for (const e of codeRunEvents) {
+    const p = e.payload as { result?: string } | null;
+    if (p == null) continue;
+    const agg = moduleCorrect.get('code') ?? { correct: 0, total: 0 };
+    agg.total += 1;
+    if (p.result === 'success') agg.correct += 1;
+    moduleCorrect.set('code', agg);
   }
 
   const moduleIds = ['numbers', 'words', 'keyboard', 'code', 'translation'];
