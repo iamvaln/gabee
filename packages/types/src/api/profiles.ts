@@ -20,6 +20,17 @@ export const CreateProfileRequestSchema = z.object({
   avatar: AvatarSchema,
   language: LanguageSchema,
   audio_enabled: z.boolean().optional(),
+  /**
+   * Co-parent extension policy on new-kid creation (parent spec §7.1, co-parent §10).
+   * When the creating parent ALREADY has linked co-parents, the client asks:
+   *   "Garder la coparence pour ce nouvel enfant ?" — Yes = `true` → the new
+   *   kid is also linked to every existing co-parent. No = `false` → only the
+   *   primary parent is linked (a co-parent can later be granted access per
+   *   kid).
+   * Omitted = same as `true` (default to "extend" so first-kid creation by a
+   * lone parent doesn't need to send the flag).
+   */
+  share_with_existing_coparents: z.boolean().optional(),
 });
 export type CreateProfileRequest = z.infer<typeof CreateProfileRequestSchema>;
 

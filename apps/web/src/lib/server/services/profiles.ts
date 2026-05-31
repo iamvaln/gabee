@@ -27,16 +27,64 @@ export async function createProfile(
   if (count >= MAX_CHILDREN) {
     throw new HttpError(409, 'too_many_children', `A parent can have at most ${MAX_CHILDREN} profiles`);
   }
-  const row = await prisma.childProfile.create({
-    data: {
-      parentId,
-      name: input.name,
-      avatar: input.avatar,
-      language: input.language,
-      audioEnabled: input.audio_enabled ?? true,
-      progressByModule: defaultProgressByModule(),
-      progressByModulePerLanguage: defaultProgressByModulePerLanguage(),
-    },
+
+  // Co-parent extension: when the creating parent already has linked
+  // co-parents, the client decides whether the new kid is shared with all of
+  // them. Default = extend (true) so the historical behaviour ("two-parent
+  // family sees everything") holds without the client needing to flag it.
+  const extend = input.share_with_existing_coparents ?? true;
+  const coparents = extend
+    ? await prisma.parentChildLink.findMany({
+        where: { parentId, role: 'coparent' },
+        select: { childId: true },
+      })
+    : [];
+  // Distinct co-parent ids — the inviter could be linked to the same co-parent
+  // through multiple kids; one link per (parent, child) pair is the goal.
+  const coparentIds = Array.from(
+    new Set(
+      // We need the co-parent USER ids, not childIds. Re-query the link table
+      // with childId filter to derive the co-parent set.
+      await prisma.parentChildLink
+        .findMany({
+          where: { childId: { in: coparents.map((c) => c.childId) }, role: 'coparent' },
+          select: { parentId: true },
+        })
+        .then((rs) => rs.map((r) => r.parentId)),
+    ),
+  );
+
+  // Single transaction: create the kid row, the primary ParentChildLink, and
+  // any co-parent extension links atomically. The data model expects EVERY
+  // parent-child relationship to live in ParentChildLink (the role enum has
+  // both `primary` and `coparent`); `createCoparentInvite` reads from there.
+  const row = await prisma.$transaction(async (tx) => {
+    const created = await tx.childProfile.create({
+      data: {
+        parentId,
+        name: input.name,
+        avatar: input.avatar,
+        language: input.language,
+        audioEnabled: input.audio_enabled ?? true,
+        progressByModule: defaultProgressByModule(),
+        progressByModulePerLanguage: defaultProgressByModulePerLanguage(),
+      },
+    });
+    await tx.parentChildLink.create({
+      data: { parentId, childId: created.id, role: 'primary' },
+    });
+    if (coparentIds.length > 0) {
+      await tx.parentChildLink.createMany({
+        data: coparentIds.map((cpId) => ({
+          parentId: cpId,
+          childId: created.id,
+          role: 'coparent' as const,
+          invitedBy: parentId,
+        })),
+        skipDuplicates: true,
+      });
+    }
+    return created;
   });
   return mapChildProfile(row);
 }

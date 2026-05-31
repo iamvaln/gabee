@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Language } from '@gabee/types';
 
@@ -86,6 +86,27 @@ function AddKidModal({ lang, onClose }: { lang: Language; onClose: () => void })
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Co-parent extension policy (parent spec §10). On mount we ask /api/family
+  // for the requester's links; if any have `role === 'coparent'` the new-kid
+  // form surfaces a checkbox so the parent can opt OUT of sharing the new kid
+  // with them. Defaults to extend (true) — historical "both parents see all
+  // kids" behaviour, which we keep until the parent says otherwise.
+  const [coparentNames, setCoparentNames] = useState<string[]>([]);
+  const [shareWithCoparents, setShareWithCoparents] = useState(true);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/family');
+        if (!res.ok) return;
+        const data = (await res.json()) as { links?: { role: string; display_name_for_kids?: string; email?: string }[] };
+        const cps = (data.links ?? []).filter((l) => l.role === 'coparent');
+        setCoparentNames(cps.map((l) => l.display_name_for_kids || l.email || '—'));
+      } catch {
+        // Best-effort — the modal still works without the checkbox.
+      }
+    })();
+  }, []);
+
   // birthday/school/objectives/extra: collected per spec §7.2 but not yet
   // persisted server-side. Kept in state so the form behaves as designed and
   // the data is ready when the API accepts them.
@@ -107,7 +128,15 @@ function AddKidModal({ lang, onClose }: { lang: Language; onClose: () => void })
       const res = await fetch('/api/profiles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), avatar, language }),
+        body: JSON.stringify({
+          name: name.trim(),
+          avatar,
+          language,
+          // Only send the flag when we actually surfaced the choice — keeps
+          // the request minimal for parents with no co-parents (server
+          // defaults to `true` for backwards compat).
+          ...(coparentNames.length > 0 ? { share_with_existing_coparents: shareWithCoparents } : {}),
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
@@ -164,6 +193,38 @@ function AddKidModal({ lang, onClose }: { lang: Language; onClose: () => void })
             extra={extra}
             setExtra={setExtra}
           />
+
+          {coparentNames.length > 0 && (
+            <div
+              className="card-pad"
+              style={{
+                marginTop: 12, padding: 14, borderRadius: 12,
+                background: 'var(--mint-soft, #DCFCE7)', border: '1px solid var(--mint-deep, #15803d)',
+              }}
+            >
+              <label
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontSize: 14, lineHeight: 1.5 }}
+              >
+                <input
+                  type="checkbox"
+                  checked={shareWithCoparents}
+                  onChange={(e) => setShareWithCoparents(e.target.checked)}
+                  style={{ marginTop: 3 }}
+                />
+                <span>
+                  <strong>
+                    {lang === 'fr' ? 'Partager avec ' : 'Share with '}
+                    {coparentNames.length === 1 ? coparentNames[0] : (lang === 'fr' ? 'vos co-parents' : 'your co-parents')}
+                  </strong>
+                  <div style={{ fontWeight: 600, color: 'var(--text-2)', marginTop: 4 }}>
+                    {lang === 'fr'
+                      ? `Si activé, ${coparentNames.length === 1 ? coparentNames[0] : 'vos co-parents'} verront ce nouvel enfant comme leurs autres.`
+                      : `If on, ${coparentNames.length === 1 ? coparentNames[0] : 'your co-parents'} will see this new kid alongside their others.`}
+                  </div>
+                </span>
+              </label>
+            </div>
+          )}
 
           {error && (
             <p style={{ color: 'var(--bad)', fontWeight: 800, margin: '12px 0 0' }}>{error}</p>
@@ -235,8 +296,9 @@ export function KidFormFields({
   return (
     <>
       <div className="field">
-        <label>{lang === 'fr' ? 'Prénom' : 'First name'}</label>
+        <label htmlFor="kf-name">{lang === 'fr' ? 'Prénom' : 'First name'}</label>
         <input
+          id="kf-name"
           className="input"
           value={name}
           onChange={(e) => setName(e.target.value.slice(0, 20))}
@@ -247,8 +309,9 @@ export function KidFormFields({
       </div>
 
       <div className="field">
-        <label>{lang === 'fr' ? 'Date de naissance' : 'Birthday'}</label>
+        <label htmlFor="kf-birthday">{lang === 'fr' ? 'Date de naissance' : 'Birthday'}</label>
         <input
+          id="kf-birthday"
           className="input"
           type="date"
           value={birthday}
@@ -256,8 +319,8 @@ export function KidFormFields({
         />
       </div>
 
-      <div className="field">
-        <label>{lang === 'fr' ? 'Avatar' : 'Avatar'}</label>
+      <div className="field" role="group" aria-labelledby="kf-avatar-lbl">
+        <span id="kf-avatar-lbl" className="field-label-text" style={{ fontWeight: 800, fontSize: 13.5, display: 'block', color: 'var(--text)' }}>{lang === 'fr' ? 'Avatar' : 'Avatar'}</span>
         <div className="avatar-pick">
           {AVATARS.map((a) => (
             <button
@@ -279,8 +342,8 @@ export function KidFormFields({
         </div>
       </div>
 
-      <div className="field">
-        <label>{lang === 'fr' ? 'Langue' : 'Language'}</label>
+      <div className="field" role="group" aria-labelledby="kf-language-lbl">
+        <span id="kf-language-lbl" className="field-label-text" style={{ fontWeight: 800, fontSize: 13.5, display: 'block', color: 'var(--text)' }}>{lang === 'fr' ? 'Langue' : 'Language'}</span>
         <div className="seg">
           {(['fr', 'en'] as const).map((l) => (
             <button
@@ -295,8 +358,8 @@ export function KidFormFields({
         </div>
       </div>
 
-      <div className="field">
-        <label>{lang === 'fr' ? 'Niveau scolaire' : 'School level'}</label>
+      <div className="field" role="group" aria-labelledby="kf-school-lbl">
+        <span id="kf-school-lbl" className="field-label-text" style={{ fontWeight: 800, fontSize: 13.5, display: 'block', color: 'var(--text)' }}>{lang === 'fr' ? 'Niveau scolaire' : 'School level'}</span>
         <div className="seg">
           {SCHOOL_LEVELS.map((s) => (
             <button
@@ -311,10 +374,10 @@ export function KidFormFields({
         </div>
       </div>
 
-      <div className="field" style={{ marginBottom: 0 }}>
-        <label>
+      <div className="field" style={{ marginBottom: 0 }} role="group" aria-labelledby="kf-obj-lbl">
+        <span id="kf-obj-lbl" className="field-label-text" style={{ fontWeight: 800, fontSize: 13.5, display: 'block', color: 'var(--text)' }}>
           {lang === 'fr' ? "Objectifs d'apprentissage" : 'Learning objectives'}
-        </label>
+        </span>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 4 }}>
           {OBJECTIVES.map((o) => {
             const on = objectives.includes(o.id);
@@ -342,6 +405,7 @@ export function KidFormFields({
           placeholder={
             lang === 'fr' ? 'Autre chose ? (optionnel)' : 'Anything else? (optional)'
           }
+          aria-label={lang === 'fr' ? 'Autre chose à propos de votre enfant' : 'Anything else about your kid'}
         />
       </div>
     </>
