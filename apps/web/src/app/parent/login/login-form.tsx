@@ -166,7 +166,7 @@ function AuthAside({ lang }: { lang: Language }) {
         ))}
       </div>
       <h2>
-        {/* Non-breaking spaces ( ) inside the guillemets keep the
+        {/* Non-breaking spaces ( ) inside the guillemets keep the
             closing » from orphaning to its own line when the column wraps —
             French typography convention; stays prettier than swapping to
             straight quotes which would clash with the brand voice. */}
