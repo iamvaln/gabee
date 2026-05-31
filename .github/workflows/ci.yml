@@ -14,6 +14,11 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # prisma.config.ts resolves env('DIRECT_URL') at load time, and turbo re-runs
+    # `prisma generate` (the @gabee/db build) as a ^build dependency of typecheck
+    # and test. `generate` never connects, so a throwaway URL satisfies all steps.
+    env:
+      DIRECT_URL: postgresql://prisma:prisma@localhost:5432/prisma
     steps:
       - uses: actions/checkout@v4
 
@@ -30,11 +35,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # Generate the Prisma client so typecheck/test can resolve @gabee/db types.
-      # prisma.config.ts resolves env('DIRECT_URL') at load time (even though
-      # `generate` never connects) — provide a throwaway URL to satisfy it.
       - name: Prisma generate
-        env:
-          DIRECT_URL: postgresql://prisma:prisma@localhost:5432/prisma
         run: pnpm --filter @gabee/db run db:generate
 
       - name: Lint
