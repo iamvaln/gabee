@@ -19,7 +19,11 @@ export const POST = route(async (req) => {
     const { token, expiresAt } = await createSessionToken({ parentId: parent.id, email: parent.email });
     const body: AuthSessionResponse = { token, expires_at: expiresAt.toISOString(), parent };
     const res = json(body);
-    setSessionCookie(res, token);
+    // Cookie surface is keyed on the account role: admins get the
+    // admin-scoped cookie (admin.gabee.app only), parents get the
+    // parent-scoped one (.gabee.app — reaches kids subdomain too).
+    const isAdmin = parent.role === 'admin' || parent.role === 'super_admin';
+    setSessionCookie(res, token, isAdmin ? 'admin' : 'parent');
     void logAuthEvent({ req, kind: 'login_success', parentId: parent.id });
     return res;
   } catch (e) {

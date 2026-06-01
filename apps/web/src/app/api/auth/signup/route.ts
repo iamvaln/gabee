@@ -45,7 +45,8 @@ export const POST = route(async (req) => {
   const { token, expiresAt } = await createSessionToken({ parentId: parent.id, email: parent.email });
   const body: AuthSessionResponse = { token, expires_at: expiresAt.toISOString(), parent };
   const res = json(body, 201);
-  setSessionCookie(res, token);
+  // Signup always creates a parent account, never an admin.
+  setSessionCookie(res, token, 'parent');
 
   // Fire-and-forget: email confirmation + audit trail. Neither blocks the
   // 201 — the account exists either way. See public-url.ts for the

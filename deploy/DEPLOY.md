@@ -75,13 +75,26 @@ docker compose version   # vérifie : doit afficher v2.x
 ## 3. DNS — pointer les domaines vers le VPS
 
 Chez ton registrar (zone DNS de `gabee.app`), crée des enregistrements **A** vers
-l'IP publique du VPS :
+l'IP publique du VPS — un par surface publique :
 
-| Type | Nom    | Valeur     |
-| ---- | ------ | ---------- |
-| A    | `@`    | `TON_IP`   |
-| A    | `www`  | `TON_IP`   |
-| A    | `kids` | `TON_IP`   |
+| Type | Nom       | Valeur   | Surface                  |
+| ---- | --------- | -------- | ------------------------ |
+| A    | `@`       | `TON_IP` | Landing apex             |
+| A    | `www`     | `TON_IP` | Alias landing            |
+| A    | `parents` | `TON_IP` | Parent dashboard         |
+| A    | `admin`   | `TON_IP` | Admin back office        |
+| A    | `api`     | `TON_IP` | API REST (kid PWA + …)   |
+| A    | `kids`    | `TON_IP` | Kid PWA statique         |
+
+Le middleware (`apps/web/src/proxy.ts`) reconnaît chaque sous-domaine et
+bloque les chemins qui ne lui appartiennent pas (un `GET admin.gabee.app/parent`
+renvoie 404 propre). Pour partager la session côté navigateur :
+
+- Cookie parent scopé sur `.gabee.app` → vu par parents, kids et apex.
+- Cookie admin scopé sur `admin.gabee.app` → vu par admin uniquement.
+
+Les noms `parents`, `admin`, `api` sont donc requis : sans eux, le middleware
+ne peut pas distinguer les surfaces (tout retombe en apex).
 
 Attends que ça résolve (`dig +short gabee.app` doit renvoyer ton IP) **avant**
 l'étape Traefik : Let's Encrypt vérifie le domaine via le port 443.

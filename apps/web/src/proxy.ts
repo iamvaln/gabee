@@ -95,23 +95,99 @@ function isAppPath(pathname: string): boolean {
   );
 }
 
+type HostRole = 'apex' | 'parents' | 'admin' | 'api' | 'localhost' | 'unknown';
+
 /**
- * Host-based routing (product §11.3), Next 16 "proxy" convention. One deployment
- * serves every subdomain:
+ * Classify the request host into one of the public surfaces. Local
+ * development always returns `'localhost'` so dev keeps the relaxed
+ * path-based behaviour; `unknown` (raw IP probes, unknown subdomains)
+ * is a hard 404.
+ */
+function hostRole(host: string): HostRole {
+  const hostname = (host.split(':')[0] ?? '').toLowerCase();
+  if (
+    hostname === 'localhost' ||
+    hostname.endsWith('.localhost') ||
+    hostname === '::1' ||
+    /^127\.\d+\.\d+\.\d+$/.test(hostname)
+  ) {
+    return 'localhost';
+  }
+  const parts = hostname.split('.');
+  if (parts.length === 2) return 'apex'; // gabee.app
+  if (parts.length === 3) {
+    switch (parts[0]) {
+      case 'www':
+        return 'apex';
+      case 'parents':
+        return 'parents';
+      case 'admin':
+        return 'admin';
+      case 'api':
+        return 'api';
+      default:
+        return 'unknown';
+    }
+  }
+  return 'unknown';
+}
+
+/**
+ * Path allowlist per host role. Returns false → 404. The cross-host
+ * barrier is the whole point: an admin URL on parents.gabee.app, or a
+ * parent URL on admin.gabee.app, never reaches its handler.
+ *
+ * Asset paths (`/_next/*`, the favicon set, manifest, robots) are universal.
+ */
+function isPathAllowed(role: HostRole, pathname: string): boolean {
+  if (role === 'localhost') return true;
+  if (pathname.startsWith('/_next')) return true;
+  if (FAVICON_PATHS.has(pathname)) return true;
+
+  switch (role) {
+    case 'apex':
+      // Marketing surface — landing + legal + contact-form API endpoint.
+      if (pathname.startsWith('/parent')) return false;
+      if (pathname.startsWith('/admin')) return false;
+      if (pathname.startsWith('/api') && pathname !== '/api/contact') return false;
+      return true;
+    case 'parents':
+      // Parent dashboard host. /parent pages + every /api route (the
+      // parent surface calls many of them same-origin; easier to allow
+      // all than enumerate). /admin is blocked outright.
+      if (pathname.startsWith('/admin')) return false;
+      return true;
+    case 'admin':
+      // Admin back office. Mirror of `parents` but blocking /parent.
+      if (pathname.startsWith('/parent')) return false;
+      return true;
+    case 'api':
+      // API-only subdomain. No HTML pages here.
+      return pathname.startsWith('/api');
+    case 'unknown':
+    default:
+      return false;
+  }
+}
+
+/**
+ * Host-based routing (product §11.3), Next 16 "proxy" convention. One
+ * deployment serves every subdomain:
  *   api.     → only /api/* (+ CORS for the kid origin)
- *   parents. → /parent/*
- *   admin.   → /admin/*
- *   apex     → marketing (next-intl localised) + (in local dev, path-based /parent, /admin)
- * Locally there are no subdomains, so we route by path and still apply CORS to /api.
+ *   parents. → /parent/* (plus the API routes parent surfaces call)
+ *   admin.   → /admin/*  (plus the API routes admin surfaces call)
+ *   apex     → marketing (next-intl localised) + /api/contact
+ * Locally (`localhost`) the enforcement is disabled — dev keeps path-based
+ * routing so a single `pnpm dev` covers every surface.
  */
 export function proxy(req: NextRequest): NextResponse {
   const host = req.headers.get('host') ?? '';
-  const hostname = host.split(':')[0] ?? '';
-  const sub = hostname.split('.')[0] ?? '';
+  const role = hostRole(host);
+  const sub = host.split(':')[0]?.split('.')[0] ?? '';
   const { pathname } = req.nextUrl;
 
-  // On the api host, page routes don't exist.
-  if (sub === 'api' && !pathname.startsWith('/api')) {
+  // Host enforcement — the surface barrier. Localhost short-circuits.
+  if (!isPathAllowed(role, pathname)) {
     return applySecurityHeaders(new NextResponse('Not Found', { status: 404 }));
   }
 
@@ -126,6 +202,8 @@ export function proxy(req: NextRequest): NextResponse {
     return applySecurityHeaders(res);
   }
 
+  // Surface rewrites: `parents.gabee.app/login` → internally `/parent/login`
+  // so the parent app's pages serve naturally. Same idea for admin.
   if (sub === 'parents' && !pathname.startsWith('/parent')) {
     return applySecurityHeaders(
       NextResponse.rewrite(new URL(`/parent${pathname === '/' ? '' : pathname}`, req.url)),

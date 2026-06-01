@@ -55,7 +55,10 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=web
-      - traefik.http.routers.gabee-web.rule=Host(`${WEB_DOMAIN}`) || Host(`www.${WEB_DOMAIN}`)
+      # Same Next.js process serves apex (landing), parents.* (parent dashboard),
+      # admin.* (back office) and api.* (REST). The middleware in `proxy.ts`
+      # gates each path by host so cross-surface URLs 404 cleanly.
+      - traefik.http.routers.gabee-web.rule=Host(`${WEB_DOMAIN}`) || Host(`www.${WEB_DOMAIN}`) || Host(`parents.${WEB_DOMAIN}`) || Host(`admin.${WEB_DOMAIN}`) || Host(`api.${WEB_DOMAIN}`)
       - traefik.http.routers.gabee-web.entrypoints=websecure
       - traefik.http.routers.gabee-web.tls.certresolver=le
       - traefik.http.services.gabee-web.loadbalancer.server.port=3000

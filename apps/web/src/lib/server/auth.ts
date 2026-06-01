@@ -5,7 +5,25 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { type NextRequest, type NextResponse } from 'next/server';
 import { prisma } from './db';
-import { AUTH_JWT_SECRET, IS_PROD, SESSION_COOKIE, SESSION_TTL_SECONDS } from './env';
+import {
+  AUTH_JWT_SECRET,
+  IS_PROD,
+  PARENT_SESSION_COOKIE,
+  ADMIN_SESSION_COOKIE,
+  LEGACY_SESSION_COOKIE,
+  COOKIE_DOMAIN_PARENT,
+  COOKIE_DOMAIN_ADMIN,
+  SESSION_TTL_SECONDS,
+} from './env';
+
+/**
+ * Which auth surface a session is tied to. The login route picks this based
+ * on the authenticated account's role: admins get `'admin'`, everyone else
+ * (parent role) gets `'parent'`. Drives which cookie name + Domain scope is
+ * used, so an admin cookie never reaches parents.gabee.app and a parent
+ * cookie reaches both parents.gabee.app + kids.gabee.app.
+ */
+export type SessionSurface = 'parent' | 'admin';
 
 // ─── Password hashing (scrypt — built-in, no native dep) ─────────────────────
 
@@ -73,22 +91,55 @@ async function verifySessionToken(token: string): Promise<SessionClaims | null> 
  * Extract the session from a request: Authorization bearer (kid PWA, cross-origin)
  * takes precedence, then the httpOnly session cookie (web, same-origin).
  */
-export async function getSession(req: NextRequest): Promise<SessionClaims | null> {
+/**
+ * Resolve the session from a request. Order of precedence:
+ *   1. Bearer token (kid PWA, cross-origin) — always wins.
+ *   2. The cookie matching the requested `surface` (parent or admin).
+ *   3. Either new cookie when `surface` is undefined — used by neutral
+ *      endpoints like `/api/auth/me` that don't know in advance which
+ *      surface the caller belongs to.
+ *   4. The legacy `gabee_session` cookie — kept for the short migration
+ *      window where existing users still hold it before their next login.
+ */
+export async function getSession(
+  req: NextRequest,
+  surface?: SessionSurface,
+): Promise<SessionClaims | null> {
   const auth = req.headers.get('authorization');
   if (auth?.startsWith('Bearer ')) {
     return verifySessionToken(auth.slice('Bearer '.length).trim());
   }
-  const cookie = req.cookies.get(SESSION_COOKIE)?.value;
-  if (cookie) return verifySessionToken(cookie);
+  const names = cookieNamesForSurface(surface);
+  for (const name of names) {
+    const token = req.cookies.get(name)?.value;
+    if (!token) continue;
+    const session = await verifySessionToken(token);
+    if (session) return session;
+  }
   return null;
 }
 
 /** Read the session from the cookie store in a Server Component / Server Action. */
-export async function getServerSession(): Promise<SessionClaims | null> {
+export async function getServerSession(
+  surface?: SessionSurface,
+): Promise<SessionClaims | null> {
   const store = await cookies();
-  const token = store.get(SESSION_COOKIE)?.value;
-  if (!token) return null;
-  return verifySessionToken(token);
+  const names = cookieNamesForSurface(surface);
+  for (const name of names) {
+    const token = store.get(name)?.value;
+    if (!token) continue;
+    const session = await verifySessionToken(token);
+    if (session) return session;
+  }
+  return null;
+}
+
+function cookieNamesForSurface(surface: SessionSurface | undefined): string[] {
+  // Always fall through to the legacy cookie last — covers the brief
+  // migration where pre-deploy users still hold `gabee_session`.
+  if (surface === 'admin') return [ADMIN_SESSION_COOKIE, LEGACY_SESSION_COOKIE];
+  if (surface === 'parent') return [PARENT_SESSION_COOKIE, LEGACY_SESSION_COOKIE];
+  return [PARENT_SESSION_COOKIE, ADMIN_SESSION_COOKIE, LEGACY_SESSION_COOKIE];
 }
 
 export type AdminRole = 'admin' | 'super_admin';
@@ -106,7 +157,7 @@ export interface AdminSession extends SessionClaims {
  * the login page bring you back here once you authenticate.
  */
 export async function requireParentPage(): Promise<SessionClaims> {
-  const session = await getServerSession();
+  const session = await getServerSession('parent');
   if (!session) redirect('/parent/login?next=%2Fparent');
   const exists = await prisma.parentAccount.findUnique({
     where: { id: session.parentId },
@@ -125,7 +176,7 @@ export async function requireParentPage(): Promise<SessionClaims> {
  * + role so pages can hide super_admin-only actions.
  */
 export async function requireAdminPage(): Promise<AdminSession> {
-  const session = await getServerSession();
+  const session = await getServerSession('admin');
   if (!session) redirect('/admin/login?next=%2Fadmin');
   const account = await prisma.parentAccount.findUnique({
     where: { id: session.parentId },
@@ -136,31 +187,60 @@ export async function requireAdminPage(): Promise<AdminSession> {
   return { ...session, role: account.role };
 }
 
-export const sessionCookieName = SESSION_COOKIE;
 export const sessionCookieMaxAge = SESSION_TTL_SECONDS;
 
-/** Set the httpOnly session cookie (web, same-origin) on a response. */
-export function setSessionCookie(res: NextResponse, token: string): void {
+/**
+ * Set the httpOnly session cookie keyed on the surface the user signed into.
+ *  - `'parent'` → `gabee_parent_session` cookie scoped to
+ *    `COOKIE_DOMAIN_PARENT` (e.g. `.gabee.app`) so it reaches parents +
+ *    kids + apex.
+ *  - `'admin'`  → `gabee_admin_session` cookie scoped to
+ *    `COOKIE_DOMAIN_ADMIN` (e.g. `admin.gabee.app`) — admin only.
+ *
+ * Without `COOKIE_DOMAIN_*` (dev), each cookie gets no Domain attribute so
+ * it's scoped to the exact host (localhost), matching today's behaviour.
+ */
+export function setSessionCookie(
+  res: NextResponse,
+  token: string,
+  surface: SessionSurface,
+): void {
+  const name = surface === 'admin' ? ADMIN_SESSION_COOKIE : PARENT_SESSION_COOKIE;
+  const domain = surface === 'admin' ? COOKIE_DOMAIN_ADMIN : COOKIE_DOMAIN_PARENT;
   res.cookies.set({
-    name: SESSION_COOKIE,
+    name,
     value: token,
     httpOnly: true,
     secure: IS_PROD,
     sameSite: 'lax',
     path: '/',
     maxAge: SESSION_TTL_SECONDS,
+    ...(domain ? { domain } : {}),
   });
 }
 
-/** Clear the session cookie (logout). */
+/**
+ * Clear every session cookie the browser might hold for Gabee — both new
+ * names plus the legacy one. Safe to call without knowing which surface
+ * the user is on.
+ */
 export function clearSessionCookie(res: NextResponse): void {
-  res.cookies.set({
-    name: SESSION_COOKIE,
-    value: '',
-    httpOnly: true,
-    secure: IS_PROD,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 0,
-  });
+  const targets: { name: string; domain: string | undefined }[] = [
+    { name: ADMIN_SESSION_COOKIE, domain: COOKIE_DOMAIN_ADMIN },
+    { name: PARENT_SESSION_COOKIE, domain: COOKIE_DOMAIN_PARENT },
+    { name: LEGACY_SESSION_COOKIE, domain: undefined },
+  ];
+  for (const t of targets) {
+    res.cookies.set({
+      name: t.name,
+      value: '',
+      httpOnly: true,
+      secure: IS_PROD,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 0,
+      ...(t.domain ? { domain: t.domain } : {}),
+    });
+  }
 }
+

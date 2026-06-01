@@ -40,6 +40,19 @@ const envSchema = z.object({
   // it explicitly is the safest choice in prod where the request looks like
   // localhost to Next.js (behind Traefik / a reverse proxy).
   PARENT_APP_URL: z.url().optional(),
+
+  // Cookie `Domain` scopes for the two session cookies. The parent cookie
+  // is shared across parents.gabee.app + kids.gabee.app (and the apex
+  // landing) via a leading-dot domain. The admin cookie is intentionally
+  // scoped to admin.gabee.app ONLY so an admin login never silently
+  // authenticates a parent surface. Leave unset in dev: each cookie then
+  // gets no Domain attribute and is scoped to the exact host (localhost),
+  // which is what we want for path-based local routing.
+  // Prod (example):
+  //   COOKIE_DOMAIN_PARENT=.gabee.app
+  //   COOKIE_DOMAIN_ADMIN=admin.gabee.app
+  COOKIE_DOMAIN_PARENT: z.string().optional(),
+  COOKIE_DOMAIN_ADMIN: z.string().optional(),
 });
 
 type RawEnv = z.infer<typeof envSchema>;
@@ -81,5 +94,19 @@ export const IS_PROD = env.NODE_ENV === 'production';
 export const AUTH_JWT_SECRET = env.AUTH_JWT_SECRET;
 export const KID_APP_ORIGIN = env.KID_APP_ORIGIN;
 export const PARENT_APP_URL = env.PARENT_APP_URL;
-export const SESSION_COOKIE = 'gabee_session';
+/**
+ * Two distinct cookie names so an admin session and a parent session can
+ * coexist in the same browser without one accidentally authenticating the
+ * other's surface. Combined with `COOKIE_DOMAIN_*` scoping, the parent
+ * cookie reaches parents + kids + apex; the admin cookie reaches admin
+ * only.
+ */
+export const PARENT_SESSION_COOKIE = 'gabee_parent_session';
+export const ADMIN_SESSION_COOKIE = 'gabee_admin_session';
+/** Legacy single-cookie name — only kept around for the brief migration
+ *  window where existing users still hold it. Reads fall through to this if
+ *  neither new cookie is present. */
+export const LEGACY_SESSION_COOKIE = 'gabee_session';
+export const COOKIE_DOMAIN_PARENT = env.COOKIE_DOMAIN_PARENT;
+export const COOKIE_DOMAIN_ADMIN = env.COOKIE_DOMAIN_ADMIN;
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
