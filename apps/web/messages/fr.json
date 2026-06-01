@@ -32,6 +32,22 @@
     "code": { "title": "Le code", "desc": "Premiers pas de programmation." },
     "translation": { "title": "La traduction", "desc": "Passer du français à l'anglais et retour." }
   },
+  "sessions": {
+    "h": "À quoi ressemble une session.",
+    "sub": "De petits moments de jeu, pensés pour apprendre vraiment.",
+    "bravo": "Bravo !",
+    "kbWords": ["VÉLO", "CHAT", "LUNE"],
+    "sentences": [
+      { "pre": "L’oiseau", "post": "dans le ciel.", "options": ["vole", "nage", "dort"], "answer": 0 },
+      { "pre": "Le poisson", "post": "dans l’eau.", "options": ["nage", "vole", "court"], "answer": 0 },
+      { "pre": "La lune", "post": "la nuit.", "options": ["brille", "dort", "mange"], "answer": 0 }
+    ],
+    "items": [
+      { "tag": "Le clavier", "cap": "Il tape le mot, lettre par lettre." },
+      { "tag": "Les mots", "cap": "Il complète la phrase avec le bon mot." },
+      { "tag": "Le code", "cap": "Il programme l’abeille jusqu’à la fleur." }
+    ]
+  },
   "how": {
     "h": "En quatre étapes.",
     "step1": {

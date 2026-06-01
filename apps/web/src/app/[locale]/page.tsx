@@ -3,6 +3,7 @@ import { TopBar } from '@/components/landing/TopBar';
 import { Hero } from '@/components/landing/Hero';
 import { Modules } from '@/components/landing/Modules';
 import { HowItWorks } from '@/components/landing/HowItWorks';
+import { SessionsShowcase } from '@/components/landing/SessionsShowcase';
 import { Values } from '@/components/landing/Values';
 import { Pricing } from '@/components/landing/Pricing';
 import { FAQ } from '@/components/landing/FAQ';
@@ -32,6 +33,7 @@ export default async function LandingPage({
         <Hero />
         <Modules />
         <HowItWorks />
+        <SessionsShowcase />
         <Values />
         <Pricing />
         <FAQ />

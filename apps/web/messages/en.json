@@ -32,6 +32,22 @@
     "code": { "title": "Code", "desc": "First steps in coding." },
     "translation": { "title": "Translation", "desc": "Moving between French and English." }
   },
+  "sessions": {
+    "h": "What a session looks like.",
+    "sub": "Small moments of play, designed for real learning.",
+    "bravo": "Well done!",
+    "kbWords": ["BIKE", "CAT", "MOON"],
+    "sentences": [
+      { "pre": "The bird", "post": "in the sky.", "options": ["flies", "swims", "sleeps"], "answer": 0 },
+      { "pre": "The fish", "post": "in the water.", "options": ["swims", "flies", "runs"], "answer": 0 },
+      { "pre": "The moon", "post": "at night.", "options": ["shines", "sleeps", "eats"], "answer": 0 }
+    ],
+    "items": [
+      { "tag": "Keyboard", "cap": "They type the word, letter by letter." },
+      { "tag": "Words", "cap": "They complete the sentence with the right word." },
+      { "tag": "Code", "cap": "They program the bee to the flower." }
+    ]
+  },
   "how": {
     "h": "Four steps.",
     "step1": {

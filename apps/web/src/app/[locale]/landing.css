@@ -1287,3 +1287,93 @@ html.landing-html {
     font-size: 12pt;
   }
 }
+
+/* ===================== SESSIONS SHOWCASE ===================== */
+/* Three animated mock-up cards (Keyboard, Words, Code) — Claude Design
+   handoff (Gabee Landing.html `landing-sessions.jsx` + landing.css §SESSIONS
+   SHOWCASE). Each card loops through correct → wrong → win attempts. */
+.section-sessions { padding-top: 88px; }
+.sess-sub { margin-top: 14px; font-size: clamp(16px, 1.6vw, 19px); color: var(--txt-2); font-weight: 500; }
+.sess-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 36px; }
+.sess-card { margin: 0; display: flex; flex-direction: column; }
+.sess-frame { position: relative; aspect-ratio: 4 / 3.2; border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--paper-2); box-shadow: var(--shadow-md); overflow: hidden; }
+.sess-cap { display: flex; flex-direction: column; gap: 4px; padding: 18px 4px 0; }
+.sess-tag { font-size: 13px; font-weight: 800; letter-spacing: 0.04em; color: var(--landing-cta); }
+.sess-captext { font-size: 15.5px; font-weight: 700; color: var(--ink); }
+
+.ss-screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding: 16px; }
+
+/* verdict badge */
+.ss-verdict { position: absolute; top: 12px; right: 12px; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 900; color: #fff; z-index: 4; animation: ssPop .3s var(--ease); }
+.ss-verdict.ss-ok { background: #1F8A5B; }
+.ss-verdict.ss-bad { background: #E5322B; }
+@keyframes ssPop { 0% { transform: scale(.6); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+@keyframes ssShake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(3px); } }
+
+/* --- 1. keyboard: word steady at top, kid types it --- */
+.ss-typing { justify-content: space-between; background: linear-gradient(168deg, #FFF7E6 0%, #FFFFFF 70%); }
+.ss-word { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+.ss-fly-l { width: 28px; height: 36px; border-radius: 7px; background: #fff; border: 2px solid var(--line-strong); display: inline-flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: var(--txt-3); transition: all var(--fast) var(--ease); }
+.ss-fly-l.caught { border-color: var(--mc); background: color-mix(in srgb, var(--mc) 14%, #fff); color: var(--mc); animation: ssPop .26s var(--ease); }
+.ss-fly-l.next { border-color: var(--mc); color: var(--mc); transform: translateY(-3px); box-shadow: 0 5px 12px color-mix(in srgb, var(--mc) 26%, transparent); }
+.ss-fly-l.bad { border-color: #E5322B; color: #E5322B; background: #FDECEC; animation: ssShake .4s var(--ease); }
+.ss-keyboard { display: flex; flex-direction: column; gap: 4px; align-items: center; width: 100%; }
+.ss-kbrow { display: flex; gap: 4px; justify-content: center; }
+.ss-key { width: 19px; height: 19px; border-radius: 4px; background: #fff; border: 1px solid var(--line); font-size: 9px; font-weight: 700; color: var(--txt-3); display: inline-flex; align-items: center; justify-content: center; transition: all var(--fast) var(--ease); }
+.ss-key.lit { background: var(--mc); border-color: var(--mc); color: #fff; transform: translateY(2px); box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc) 22%, transparent); }
+.ss-key.lit-bad { background: #E5322B; border-color: #E5322B; color: #fff; transform: translateY(2px); box-shadow: 0 0 0 3px rgba(229,50,43,.22); }
+
+/* --- 2. words: complete the sentence --- */
+.ss-words { justify-content: center; gap: 24px; background: linear-gradient(168deg, #FDEEF4 0%, #FFFFFF 72%); }
+.ss-sentence { font-size: 18px; font-weight: 800; color: var(--ink); text-align: center; line-height: 1.9; max-width: 24ch; }
+.ss-blank { min-width: 60px; padding: 3px 10px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; border-radius: 7px; border: 2px dashed var(--line-strong); color: var(--mc); font-weight: 800; transition: all var(--fast) var(--ease); }
+.ss-blank.ok { border-style: solid; border-color: #1F8A5B; background: #E7F6EE; color: #1F8A5B; animation: ssPop .3s var(--ease); }
+.ss-blank.bad { border-style: solid; border-color: #E5322B; background: #FDECEC; color: #E5322B; animation: ssShake .4s var(--ease); }
+.ss-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.ss-chip { padding: 9px 16px; border-radius: var(--r-pill); background: #fff; border: 2px solid var(--line-strong); font-size: 15px; font-weight: 800; color: var(--txt-2); transition: all var(--fast) var(--ease); }
+.ss-chip.sel { border-color: var(--mc); color: var(--mc); transform: translateY(-2px); box-shadow: 0 5px 14px color-mix(in srgb, var(--mc) 24%, transparent); }
+.ss-chip.ok { border-color: #1F8A5B; background: #E7F6EE; color: #1F8A5B; }
+.ss-chip.bad { border-color: #E5322B; background: #FDECEC; color: #E5322B; animation: ssShake .4s var(--ease); }
+
+/* --- 3. code: d-pad → program → run → navigate --- */
+.ss-coding { flex-direction: row; align-items: center; justify-content: center; gap: 16px; background: linear-gradient(168deg, #F1ECFD 0%, #FFFFFF 72%); }
+.ss-board { position: relative; width: 46%; max-width: 150px; aspect-ratio: 1; background: #fff; border-radius: var(--r-md); border: 1px solid var(--line); display: grid; grid-template-columns: repeat(3, 1fr); overflow: hidden; box-shadow: var(--shadow-sm); }
+.ss-cell { border-right: 1px solid var(--paper-2); border-bottom: 1px solid var(--paper-2); }
+.ss-flower, .ss-codebee { position: absolute; transform: translate(-50%, -50%); }
+.ss-rock { position: absolute; transform: translate(-50%, -50%); font-size: 20px; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0,0,0,.12)); }
+.ss-flower { font-size: 22px; line-height: 1; animation: ssFloat 2.4s var(--ease) infinite; }
+@keyframes ssFloat { 0%,100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -58%) scale(1.08); } }
+.ss-codebee { transition: left .42s var(--ease), top .42s var(--ease); z-index: 2; }
+.ss-codebee.win { animation: ssCheer .6s var(--ease); }
+@keyframes ssCheer { 0%,100% { transform: translate(-50%,-50%) scale(1); } 40% { transform: translate(-50%,-66%) scale(1.2); } }
+.ss-codectrl { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.ss-pad { display: grid; grid-template-columns: repeat(3, 26px); grid-template-rows: repeat(3, 26px); gap: 4px; }
+.ss-padbtn { border: 1.5px solid var(--line-strong); background: #fff; border-radius: 7px; font-size: 14px; font-weight: 800; color: var(--mc); display: inline-flex; align-items: center; justify-content: center; transition: all var(--fast) var(--ease); }
+.ss-padbtn.press { background: var(--mc); border-color: var(--mc); color: #fff; transform: scale(.86); }
+.ss-prog { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ss-slots { display: flex; gap: 4px; }
+.ss-slot { width: 22px; height: 22px; border-radius: 6px; background: var(--paper-2); border: 1.5px dashed var(--line-strong); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: var(--mc); transition: all var(--fast) var(--ease); }
+.ss-slot.filled { background: color-mix(in srgb, var(--mc) 12%, #fff); border-style: solid; border-color: var(--mc); animation: ssPop .26s var(--ease); }
+.ss-slot.active { background: var(--mc); border-color: var(--mc); color: #fff; transform: translateY(-2px); }
+.ss-run { display: inline-flex; align-items: center; gap: 4px; border: none; border-radius: var(--r-pill); padding: 5px 12px; font-size: 12px; font-weight: 800; color: #fff; background: var(--mc); box-shadow: 0 4px 12px color-mix(in srgb, var(--mc) 30%, transparent); transition: transform var(--fast) var(--ease), filter var(--fast) var(--ease); }
+.ss-run.on { transform: scale(.9); filter: brightness(.9); }
+
+/* --- bravo overlay (per-exercise win) --- */
+.ss-bravo-ov { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: color-mix(in srgb, var(--paper) 80%, transparent); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); opacity: 0; visibility: hidden; transform: scale(.96); transition: opacity .3s var(--ease), transform .3s var(--ease), visibility .3s; }
+.ss-bravo-ov.on { opacity: 1; visibility: visible; transform: scale(1); }
+.ss-bravo-bee { animation: ssBob 2.4s var(--ease) infinite; }
+@keyframes ssBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+.ss-bravo-txt { font-size: 24px; font-weight: 900; letter-spacing: -0.02em; color: var(--landing-cta-ink); }
+.ss-stars { display: flex; gap: 7px; }
+.ss-star { transform: scale(0); transform-origin: 50% 50%; }
+.ss-bravo-ov.on .ss-star { animation: ssStar .5s var(--ease) forwards; }
+@keyframes ssStar { 0% { transform: scale(0) rotate(-30deg); } 65% { transform: scale(1.25) rotate(8deg); } 100% { transform: scale(1) rotate(0); } }
+.ss-conf-wrap { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.ss-conf { position: absolute; top: -12px; width: 8px; height: 12px; border-radius: 2px; opacity: 0; animation: ssFall 2.4s linear forwards; }
+@keyframes ssFall { 0% { transform: translateY(-10px) rotate(var(--rot)); opacity: 0; } 12% { opacity: 1; } 100% { transform: translateY(240px) rotate(calc(var(--rot) + 220deg)); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-flower, .ss-codebee.win, .ss-bravo-bee, .ss-conf, .ss-fly-l, .ss-chip, .ss-blank, .ss-slot, .ss-verdict, .ss-star { animation: none !important; }
+  .ss-conf { display: none; }
+}
+@media (max-width: 1020px) { .sess-grid { grid-template-columns: 1fr; max-width: 460px; margin: 0 auto; } }
