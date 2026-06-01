@@ -205,6 +205,24 @@ docker compose --env-file .env.production up -d --build
 
 Pour ne rebuild qu'un service : `docker compose ... up -d --build web`.
 
+> ⚠️ **Synchronise `.env.production` avec `.env.production.example`.**
+> `git pull` ne touche pas `.env.production` (le fichier est gitignoré, c'est
+> tes vrais secrets). Si l'update a introduit de nouvelles variables, elles
+> figureront dans `.env.production.example` mais pas dans le fichier réel sur
+> le VPS — les services qui les attendent partiront avec une valeur par
+> défaut ou un warning.
+>
+> Réflexe à chaque `git pull` :
+>
+> ```bash
+> # Diff entre l'exemple et le vrai fichier (vars ajoutées / renommées / supprimées)
+> diff <(grep -v '^\s*#' .env.production.example | grep '=' | cut -d= -f1 | sort) \
+>      <(grep -v '^\s*#' .env.production         | grep '=' | cut -d= -f1 | sort)
+> ```
+>
+> Tout ce qui apparaît à gauche (« < ») est manquant dans `.env.production` →
+> à ajouter à la main avant le `up -d --build`.
+
 ---
 
 ## 10. Sauvegardes Postgres
