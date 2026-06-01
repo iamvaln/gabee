@@ -3,7 +3,12 @@
 import { useState, Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { parsePhoneNumberFromString, getCountryCallingCode, type CountryCode } from 'libphonenumber-js';
+import {
+  getCountries,
+  getCountryCallingCode,
+  parsePhoneNumberFromString,
+  type CountryCode,
+} from 'libphonenumber-js';
 import { MintBee, MintBeeGlyph } from '../_components/mint-bee';
 
 /**
@@ -21,12 +26,35 @@ import { MintBee, MintBeeGlyph } from '../_components/mint-bee';
  * in milestone-5.
  */
 
-// Country list — Cameroun only at launch (primary market). New countries get
-// appended here as Gabee opens up; the rest of the form (country select,
-// phone country picker) reads this single source of truth.
-const COUNTRIES = [
-  { code: 'CM', name: { fr: 'Cameroun', en: 'Cameroon' } },
-];
+// Full ISO-3166 country list, built once at module load:
+//   - `libphonenumber-js` gives us every code that has a dialling plan
+//     (~240 entries), so the phone picker always shows a valid country.
+//   - `Intl.DisplayNames` (built into the JS runtime — no extra dep) localises
+//     each name in FR + EN, and the locale-aware sort places accented names
+//     in the right alphabetical slot.
+//   - Cameroun (CM) is forced to the top of the list — primary market — so a
+//     user landing fresh doesn't have to scroll past 30 countries before
+//     hitting the right default. The rest is plain alphabetical.
+const PRIMARY_CODES: readonly CountryCode[] = ['CM'];
+
+function buildCountryList(lang: 'fr' | 'en') {
+  const intl = new Intl.DisplayNames([lang], { type: 'region' });
+  const all = getCountries().map((code) => ({
+    code,
+    name: intl.of(code) ?? code,
+  }));
+  const primary = PRIMARY_CODES.map(
+    (code) => all.find((c) => c.code === code) ?? { code, name: code },
+  );
+  const primarySet = new Set<CountryCode>(PRIMARY_CODES);
+  const rest = all
+    .filter((c) => !primarySet.has(c.code))
+    .sort((a, b) => a.name.localeCompare(b.name, lang));
+  return [...primary, ...rest];
+}
+
+const COUNTRIES_FR = buildCountryList('fr');
+const COUNTRIES_EN = buildCountryList('en');
 
 export default function SignupPage() {
   return (
@@ -51,10 +79,10 @@ function SignupInner() {
   const [email, setEmail] = useState(inviteEmail ?? '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [country, setCountry] = useState('CM');
-  // Phone is OPTIONAL on signup (parent spec §12.1). When the field is
-  // non-empty it MUST validate via libphonenumber-js — we send a canonical
-  // E.164 string to the API or null when empty.
+  // Phone is REQUIRED on signup (account-recovery support + reachability).
+  // Validated client-side via libphonenumber-js; the server re-runs the same
+  // check. The country picker doubles as the country-of-residence signal so
+  // we don't need a separate `country` state/field.
   const [phoneCountry, setPhoneCountry] = useState<CountryCode>('CM');
   const [phoneNational, setPhoneNational] = useState('');
   const [accept, setAccept] = useState(false);
@@ -62,16 +90,17 @@ function SignupInner() {
   const [busy, setBusy] = useState(false);
   const L = lang === 'fr';
 
-  // E.164 phone (or null when empty). Memoised so we don't re-parse on every
-  // render; the parser is non-trivial for international numbers.
+  // E.164 phone or null. Memoised so we don't re-parse on every render — the
+  // parser is non-trivial for international numbers.
   const phoneE164 = useMemo<string | null>(() => {
     const raw = phoneNational.trim();
     if (!raw) return null;
     const parsed = parsePhoneNumberFromString(raw, phoneCountry);
     if (!parsed || !parsed.isValid()) return null;
-    return parsed.number; // E.164: '+33612345678'
+    return parsed.number; // E.164: '+23767512345'
   }, [phoneNational, phoneCountry]);
-  const phoneOk = phoneNational.trim() === '' || phoneE164 !== null;
+  // Phone is REQUIRED — empty input is NOT ok now.
+  const phoneOk = phoneE164 !== null;
   const passwordMatch = password.length > 0 && password === confirmPassword;
 
   function setLangCookie(l: 'fr' | 'en') {
@@ -90,24 +119,24 @@ function SignupInner() {
     passwordOk &&
     passwordMatch &&
     phoneOk &&
-    !!country &&
     accept;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!valid) return;
+    if (!valid || !phoneE164) return;
     setBusy(true);
     setError(null);
 
-    // TODO(milestone-5): also POST { first_name, last_name, country } once
-    // the signup API persists them on the ParentAccount (parent spec §13).
+    // TODO(milestone-5): also POST { first_name, last_name } once the signup
+    // API persists them on the ParentAccount (parent spec §13). Country is
+    // inferred from the phone country code at the DB layer when needed.
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email,
         password,
-        ...(phoneE164 ? { phone: phoneE164 } : {}),
+        phone: phoneE164,
       }),
     });
     if (res.ok) {
@@ -247,23 +276,18 @@ function SignupInner() {
             </div>
 
             <div className="field">
-              <label htmlFor="pph">
-                {L ? 'Téléphone' : 'Phone'}{' '}
-                <span style={{ color: 'var(--text-3)', fontWeight: 600, fontSize: 12 }}>
-                  {L ? '(optionnel)' : '(optional)'}
-                </span>
-              </label>
+              <label htmlFor="pph">{L ? 'Téléphone' : 'Phone'}</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <select
-                  aria-label={L ? 'Indicatif pays' : 'Country code'}
+                  aria-label={L ? 'Pays' : 'Country'}
                   className="select"
                   value={phoneCountry}
                   onChange={(e) => setPhoneCountry(e.target.value as CountryCode)}
-                  style={{ width: 140, flexShrink: 0 }}
+                  style={{ width: 160, flexShrink: 0 }}
                 >
-                  {(COUNTRIES.filter((c) => c.code !== 'OTHER') as { code: CountryCode; name: { fr: string; en: string } }[]).map((c) => (
+                  {(L ? COUNTRIES_FR : COUNTRIES_EN).map((c) => (
                     <option key={c.code} value={c.code}>
-                      {c.name[lang]} (+{getCountryCallingCode(c.code)})
+                      {c.name} (+{getCountryCallingCode(c.code)})
                     </option>
                   ))}
                 </select>
@@ -271,6 +295,7 @@ function SignupInner() {
                   id="pph"
                   className={'input' + (phoneNational && !phoneOk ? ' bad' : '')}
                   type="tel"
+                  required
                   autoComplete="tel-national"
                   placeholder="6 75 12 34 56"
                   value={phoneNational}
@@ -286,25 +311,10 @@ function SignupInner() {
               {!phoneNational && (
                 <span className="hint">
                   {L
-                    ? 'Pour la récupération de compte plus tard. Pas de SMS aujourd’hui.'
-                    : 'For account recovery later. No SMS today.'}
+                    ? 'Pour la récupération de compte si vous perdez votre mot de passe.'
+                    : 'For account recovery if you lose your password.'}
                 </span>
               )}
-            </div>
-
-            <div className="field">
-              <label htmlFor="pc">{L ? 'Pays' : 'Country'}</label>
-              <select
-                id="pc"
-                className="select"
-                required
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-              >
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>{c.name[lang]}</option>
-                ))}
-              </select>
             </div>
 
             <button
