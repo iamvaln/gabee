@@ -32,6 +32,8 @@ RUN DIRECT_URL="postgresql://prisma:prisma@localhost:5432/prisma" \
 # NEXT_PUBLIC_* values are inlined at build time, so they must be present here.
 ARG NEXT_PUBLIC_KID_APP_URL
 ENV NEXT_PUBLIC_KID_APP_URL=$NEXT_PUBLIC_KID_APP_URL
+ARG NEXT_PUBLIC_PARENT_APP_URL
+ENV NEXT_PUBLIC_PARENT_APP_URL=$NEXT_PUBLIC_PARENT_APP_URL
 # `next build` loads server modules to collect route metadata; lib/server/env.ts
 # throws in production if these runtime secrets are unset. They are server-only
 # (never inlined into the client bundle) and the real values come from the

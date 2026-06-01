@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { parentLoginHref, parentSignupHref } from './parent-app-links';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Wordmark } from './LandingBee';
@@ -49,10 +50,10 @@ export function TopBar() {
 
         <div className="ltop-actions">
           <LanguageToggle />
-          <Link href="/parent/login" className="lbtn lbtn-text ltop-signin">
+          <Link href={parentLoginHref()} className="lbtn lbtn-text ltop-signin">
             {t('signin')}
           </Link>
-          <Link href="/parent/signup" className="lbtn lbtn-primary">
+          <Link href={parentSignupHref()} className="lbtn lbtn-primary">
             {t('signup')}
           </Link>
           <button
@@ -75,7 +76,7 @@ export function TopBar() {
             {l.label}
           </a>
         ))}
-        <Link href="/parent/login" className="ltop-drawer-signin" onClick={close}>
+        <Link href={parentLoginHref()} className="ltop-drawer-signin" onClick={close}>
           {t('signin')}
         </Link>
         <LanguageToggle variant="drawer" withGlobe={false} />

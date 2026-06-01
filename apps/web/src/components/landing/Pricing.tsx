@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { parentSignupHref } from './parent-app-links';
 import { getTranslations } from 'next-intl/server';
 import { SectionHead } from './SectionHead';
 import { LandingBee } from './LandingBee';
@@ -27,7 +28,7 @@ export async function Pricing() {
               {t('noteLink')}
             </a>
           </p>
-          <Link href="/parent/signup" className="lbtn lbtn-primary lbtn-lg">
+          <Link href={parentSignupHref()} className="lbtn lbtn-primary lbtn-lg">
             {t('cta')}
           </Link>
         </div>

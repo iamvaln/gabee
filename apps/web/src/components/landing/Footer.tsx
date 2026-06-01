@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { parentSignupHref } from './parent-app-links';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { Wordmark } from './LandingBee';
 import { LanguageToggle } from './LanguageToggle';
@@ -26,7 +27,7 @@ export async function Footer() {
               <a href="#how">{t('howLink')}</a>
             </li>
             <li>
-              <Link href="/parent/signup">{t('signupLink')}</Link>
+              <Link href={parentSignupHref()}>{t('signupLink')}</Link>
             </li>
           </ul>
         </nav>

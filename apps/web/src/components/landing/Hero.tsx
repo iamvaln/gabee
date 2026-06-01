@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { parentSignupHref } from './parent-app-links';
 import { getTranslations } from 'next-intl/server';
 import { LandingBee } from './LandingBee';
 import { Arrow, Check } from './icons';
@@ -18,7 +19,7 @@ export async function Hero() {
           </h1>
           <p className="hero-sub">{t('sub')}</p>
           <div className="hero-ctas">
-            <Link href="/parent/signup" className="lbtn lbtn-primary lbtn-lg">
+            <Link href={parentSignupHref()} className="lbtn lbtn-primary lbtn-lg">
               {t('cta')}
             </Link>
             <a href="#how" className="lbtn lbtn-ghost lbtn-lg">

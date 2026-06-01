@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { parentLoginHref, parentSignupHref } from './parent-app-links';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { LandingBee, Wordmark } from './LandingBee';
 import { LanguageToggle } from './LanguageToggle';
@@ -45,10 +46,10 @@ export async function LegalPage({ kind }: { kind: LegalKind }) {
           </Link>
           <div className="ltop-actions">
             <LanguageToggle />
-            <Link href="/parent/login" className="lbtn lbtn-text ltop-signin">
+            <Link href={parentLoginHref()} className="lbtn lbtn-text ltop-signin">
               {navT('signin')}
             </Link>
-            <Link href="/parent/signup" className="lbtn lbtn-primary">
+            <Link href={parentSignupHref()} className="lbtn lbtn-primary">
               {navT('signup')}
             </Link>
           </div>

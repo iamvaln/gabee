@@ -43,6 +43,7 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_KID_APP_URL: ${NEXT_PUBLIC_KID_APP_URL}
+        NEXT_PUBLIC_PARENT_APP_URL: ${NEXT_PUBLIC_PARENT_APP_URL}
     image: ${REGISTRY:-ghcr.io/iamvaln}/gabee-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
     env_file: .env.production
