@@ -39,13 +39,14 @@ export default async function ParentHome() {
   };
   let weekSpark: number[] = [0, 0, 0, 0, 0, 0, 0];
   let adherence: number | null = null;
+  let hasDevice = false;
   let offline = false;
 
   const account = await getAccount(session.parentId);
   const childIds = account.children.map((c) => c.id);
 
   try {
-    const [pending, perKid, week, spark, adh] = await Promise.all([
+    const [pending, perKid, week, spark, adh, deviceCount] = await Promise.all([
       prisma.sessionClassification.count({
         where: { label: null, profile: { parentId: session.parentId } },
       }),
@@ -53,12 +54,14 @@ export default async function ParentHome() {
       loadWeekAggregates(session.parentId, weekStart),
       loadWeekSparkline(session.parentId, weekStart),
       loadAdherence(session.parentId, weekStart),
+      prisma.deviceLink.count({ where: { parentId: session.parentId, revokedAt: null } }),
     ]);
     pendingCount = pending;
     todayPerKid = perKid;
     weekAgg = week;
     weekSpark = spark;
     adherence = adh;
+    hasDevice = deviceCount > 0;
   } catch {
     // Single catch — if the DB is unreachable the whole page renders an
     // offline-flavoured classification card and zero aggregates. Last-seen
@@ -110,7 +113,7 @@ export default async function ParentHome() {
           </p>
         </div>
         <div className="card card-pad" style={{ maxWidth: 520, margin: '0 auto' }}>
-          <AddChildForm />
+          <AddChildForm lang={lang} />
         </div>
       </div>
     );
@@ -143,7 +146,7 @@ export default async function ParentHome() {
 
       {/* §5.1 + §5.3 — side-by-side on wide widths, stack on narrow. */}
       <div className="home-grid">
-        <HomeClassificationCard lang={lang} n={pendingCount} offline={offline} />
+        <HomeClassificationCard lang={lang} n={pendingCount} offline={offline} hasDevice={hasDevice} />
         <HomeAggregates lang={lang} data={aggregates} />
       </div>
 

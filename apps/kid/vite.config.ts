@@ -87,23 +87,20 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   build: {
-    // Split heavy node_modules into their own chunks so the browser can cache
-    // them independently of app code (the React + TanStack Query + Dexie +
-    // Zustand layers rarely change; app code changes per deploy). Without this
-    // the single bundle hits ~650kB and triggers Vite's 500kB warning.
+    // One `vendor` chunk for ALL node_modules (cacheable independently of app
+    // code), app code in the entry. Splitting node_modules across MULTIPLE
+    // chunks (react / query / dexie / zustand / i18n) reordered cross-chunk
+    // module init and surfaced a "Cannot access '…' before initialization"
+    // crash at boot → blank screen in prod. A single vendor chunk keeps the
+    // caching win without any inter-chunk init-order hazard.
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          if (!id.includes('node_modules')) return undefined;
-          if (id.includes('react-i18next') || id.includes('/i18next')) return 'i18n';
-          if (id.includes('@tanstack')) return 'query';
-          if (id.includes('dexie')) return 'dexie';
-          if (id.includes('zustand')) return 'zustand';
-          if (id.includes('react-dom') || id.includes('/react/')) return 'react';
-          return 'vendor';
-        },
+        manualChunks: (id) => (id.includes('node_modules') ? 'vendor' : undefined),
       },
     },
+    // The combined vendor chunk is ~500kB; that's fine (precached once, cached
+    // across app deploys). Silence Vite's size warning at this known baseline.
+    chunkSizeWarningLimit: 900,
   },
   server: { port: 5173, strictPort: true },
 });

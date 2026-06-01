@@ -9,12 +9,44 @@ export function HomeClassificationCard({
   lang,
   n,
   offline,
+  hasDevice,
 }: {
   lang: 'fr' | 'en';
   n: number;
   offline: boolean;
+  hasDevice: boolean;
 }) {
   const isFr = lang === 'fr';
+
+  // ── No device paired yet — invite to set one up (don't claim we synced) ─────
+  if (!offline && !hasDevice) {
+    return (
+      <div className="classify-card calm">
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 18 }}>
+          <MintBee size={64} expression="encourage" />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p className="cc-eyebrow">{isFr ? 'Premier pas' : 'First step'}</p>
+            <h2 className="cc-title" style={{ fontSize: 24 }}>
+              {isFr ? "Associe l'appareil de ton enfant." : "Set up your kid's device."}
+            </h2>
+            <p className="cc-sub" style={{ margin: '8px 0 16px', color: 'var(--text-2)' }}>
+              {isFr
+                ? "Envoie le lien d'installation sur la tablette ou l'ordi de ton enfant pour commencer à suivre ses apprentissages."
+                : "Send the install link to your kid's tablet or computer to start following their learning."}
+            </p>
+            <div className="cc-actions" style={{ flexWrap: 'wrap' }}>
+              <Link href="/parent/settings?tab=devices" className="btn coral">
+                {isFr ? 'Associer un appareil' : 'Set up a device'}
+              </Link>
+              <Link href="/parent/settings?tab=devices" className="btn link">
+                {isFr ? 'Comment la synchro marche ?' : 'How sync works'}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ── Offline ────────────────────────────────────────────────────────────────
   if (offline) {

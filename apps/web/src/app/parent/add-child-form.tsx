@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 
 const AVATARS = ['avatar_1', 'avatar_2', 'avatar_3', 'avatar_4'] as const;
 
-export function AddChildForm() {
+export function AddChildForm({ lang = 'fr' }: { lang?: 'fr' | 'en' }) {
+  const isFr = lang === 'fr';
   const router = useRouter();
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState<(typeof AVATARS)[number]>('avatar_1');
-  const [language, setLanguage] = useState<'fr' | 'en'>('fr');
+  const [language, setLanguage] = useState<'fr' | 'en'>(lang);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -29,7 +30,10 @@ export function AddChildForm() {
       return;
     }
     const body = await res.json().catch(() => null);
-    setError(body?.error?.message ?? 'Could not add profile');
+    setError(
+      body?.error?.message ??
+        (isFr ? "Impossible d'ajouter le profil." : 'Could not add profile.'),
+    );
     setBusy(false);
   }
 
@@ -40,7 +44,7 @@ export function AddChildForm() {
       style={{ borderColor: 'var(--border)' }}
     >
       <label className="flex flex-col gap-1">
-        <span className="text-sm font-bold">Child's first name</span>
+        <span className="text-sm font-bold">{isFr ? "Prénom de l'enfant" : "Child's first name"}</span>
         <input
           required
           minLength={2}
@@ -67,7 +71,7 @@ export function AddChildForm() {
         </select>
       </label>
       <label className="flex flex-col gap-1">
-        <span className="text-sm font-bold">Language</span>
+        <span className="text-sm font-bold">{isFr ? 'Langue' : 'Language'}</span>
         <select
           value={language}
           onChange={(e) => setLanguage(e.target.value as 'fr' | 'en')}
@@ -84,7 +88,7 @@ export function AddChildForm() {
         className="rounded-[var(--radius-lg)] px-5 py-2 font-extrabold disabled:opacity-50"
         style={{ background: 'var(--color-brand)', color: 'var(--color-ink)' }}
       >
-        Add child
+        {busy ? '…' : isFr ? "Ajouter l'enfant" : 'Add child'}
       </button>
       {error && (
         <p className="w-full" style={{ color: 'var(--feedback-retry)' }}>
