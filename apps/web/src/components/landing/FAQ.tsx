@@ -14,7 +14,7 @@ export function FAQ() {
   const t = useTranslations('faq');
   const [open, setOpen] = useState<number>(0);
   return (
-    <section className="section section-faq" id="faq">
+    <section className="section section-faq sec-tint sec-tint-coral" id="faq">
       <SectionHead title={t('h')} />
       <div className="faq-list">
         {KEYS.map((n, i) => {

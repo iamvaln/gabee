@@ -35,52 +35,70 @@ type TimelineFn = ((at: (delay: number, fn: () => void) => void) => number | voi
   steady?: () => void;
 };
 
+interface TimelineOpts {
+  /**
+   * When false, the timeline DOES NOT run — `build.steady()` is invoked
+   * instead so the card shows its "happy ending" snapshot while another
+   * card holds the user's attention. Used by SessionsShowcase to play the
+   * three cards one after the other rather than all at once.
+   */
+  active: boolean;
+  /**
+   * Called once the active cycle completes (build returned, plus a short
+   * tail delay so the Bravo overlay has time to register). Drives the
+   * round-robin in the parent.
+   */
+  onCycleEnd?: () => void;
+}
+
 /**
- * Hook: schedule a looping animation timeline. `build(at)` schedules
- * callbacks; its return value is the cycle length (ms) used to space loops.
- * `build.steady()` is called instead when the user prefers reduced motion —
- * sets a final, calm state with no animation.
+ * Hook: schedule an animation timeline. When `active` is true, runs ONE
+ * cycle and then invokes `onCycleEnd`. When `active` is false, calls
+ * `build.steady()` to show the final happy state without animation.
+ * Reduced-motion always takes the steady path.
  */
-function useTimeline(build: TimelineFn, deps: unknown[]) {
+function useTimeline(build: TimelineFn, deps: unknown[], opts: TimelineOpts) {
+  const { active, onCycleEnd } = opts;
   useEffect(() => {
     if (prefersReducedMotion()) {
       build.steady?.();
       return;
     }
-    let timers: ReturnType<typeof setTimeout>[] = [];
-    let loopTimer: ReturnType<typeof setTimeout> | null = null;
+    if (!active) {
+      build.steady?.();
+      return;
+    }
+    const timers: ReturnType<typeof setTimeout>[] = [];
     let stopped = false;
     const at = (delay: number, fn: () => void) => {
       timers.push(
         setTimeout(() => {
           if (!stopped) {
-            try { fn(); } catch { /* swallow — never break the loop */ }
+            try { fn(); } catch { /* swallow — never break the cycle */ }
           }
         }, delay),
       );
     };
-    const loop = () => {
-      if (stopped) return;
-      timers.forEach(clearTimeout);
-      timers = [];
-      let total = 9000;
-      try {
-        const r = build(at);
-        if (typeof r === 'number' && Number.isFinite(r) && r > 0) total = r;
-      } catch {
-        /* same */
-      }
-      loopTimer = setTimeout(loop, total + 400);
-    };
-    loop();
+    let total = 9000;
+    try {
+      const r = build(at);
+      if (typeof r === 'number' && Number.isFinite(r) && r > 0) total = r;
+    } catch {
+      /* same */
+    }
+    // Tail buffer matches the design's loop spacing — gives the Bravo a beat
+    // before the next card's "starting" reset clobbers the screen.
+    const endTimer = setTimeout(() => {
+      if (!stopped) onCycleEnd?.();
+    }, total + 600);
     return () => {
       stopped = true;
       timers.forEach(clearTimeout);
-      if (loopTimer) clearTimeout(loopTimer);
+      clearTimeout(endTimer);
     };
     // deps intentionally provided by the caller
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [active, ...deps]);
 }
 
 // ─── Shared verdict + Bravo overlay ──────────────────────────────────────────
@@ -149,7 +167,12 @@ function BravoOverlay({ show, text }: { show: boolean; text: string }) {
 const KB_ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
 const norm = (c: string) => c.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
 
-function KeyboardScreen({ words, bravo }: { words: string[]; bravo: string }) {
+interface ScreenProps {
+  active: boolean;
+  onCycleEnd: () => void;
+}
+
+function KeyboardScreen({ words, bravo, active, onCycleEnd }: ScreenProps & { words: string[]; bravo: string }) {
   const [wi, setWi] = useState(0);
   const [n, setN] = useState(0);
   const [lit, setLit] = useState<string | null>(null);
@@ -197,12 +220,18 @@ function KeyboardScreen({ words, bravo }: { words: string[]; bravo: string }) {
     },
     [words],
   );
+  // Steady = the "calm done" snapshot shown while another card holds the
+  // spotlight. Clears `win` so the Bravo overlay from a just-finished cycle
+  // doesn't linger past the active hand-off.
   (build as TimelineFn).steady = () => {
     setWi(0);
     setN(words[0]!.length);
     setVerdict('ok');
+    setWin(false);
+    setBad(-1);
+    setLit(null);
   };
-  useTimeline(build, [words]);
+  useTimeline(build, [words], { active, onCycleEnd });
 
   const letters = (words[wi] ?? '').split('');
   const nextKey = verdict == null && n < letters.length ? norm(letters[n]!) : null;
@@ -256,7 +285,7 @@ interface Sentence {
   answer: number;
 }
 
-function WordsScreen({ sentences, bravo }: { sentences: Sentence[]; bravo: string }) {
+function WordsScreen({ sentences, bravo, active, onCycleEnd }: ScreenProps & { sentences: Sentence[]; bravo: string }) {
   const [si, setSi] = useState(0);
   const [picked, setPicked] = useState<number | null>(0);
   const [sel, setSel] = useState<number | null>(null);
@@ -300,8 +329,10 @@ function WordsScreen({ sentences, bravo }: { sentences: Sentence[]; bravo: strin
     setSi(0);
     setPicked(sentences[0]!.answer);
     setVerdict('ok');
+    setWin(false);
+    setSel(null);
   };
-  useTimeline(build, [sentences]);
+  useTimeline(build, [sentences], { active, onCycleEnd });
 
   const cur = sentences[si]!;
   const blankState = picked != null ? (verdict === 'bad' ? ' bad' : ' ok') : '';
@@ -370,7 +401,7 @@ const PAD = [
   { d: '↓', col: 2, row: 3 },
 ];
 
-function CodeScreen({ bravo }: { bravo: string }) {
+function CodeScreen({ bravo, active, onCycleEnd }: ScreenProps & { bravo: string }) {
   const initialPath = useMemo(() => pathFrom(C_CORRECT), []);
   const [program, setProgram] = useState<string[]>(C_CORRECT);
   const [press, setPress] = useState<string | null>(null);
@@ -434,8 +465,11 @@ function CodeScreen({ bravo }: { bravo: string }) {
     setObstacle(C_OBSTACLE);
     setBeeStep(pathFrom(C_AROUND).length - 1);
     setVerdict('ok');
+    setWin(false);
+    setRunning(false);
+    setPress(null);
   };
-  useTimeline(build, []);
+  useTimeline(build, [], { active, onCycleEnd });
 
   const cell = 100 / GRID;
   const pos = path[Math.min(beeStep, path.length - 1)]!;
@@ -533,6 +567,17 @@ export function SessionsShowcase() {
   const items = t.raw('items') as { tag: string; cap: string }[];
   const bravo = t('bravo');
 
+  // Round-robin orchestrator: Keyboard → Words → Code → Keyboard … The active
+  // card plays its full cycle (with Bravo overlay at the end); the other two
+  // hold their "steady" snapshot so the viewer's attention stays on a single
+  // animation at a time. The design plays all three in parallel which reads
+  // as visual chaos in practice — sequencing them is a deliberate fidelity
+  // improvement over the handoff.
+  const [activeIndex, setActiveIndex] = useState(0);
+  const advance = useCallback(() => {
+    setActiveIndex((i) => (i + 1) % 3);
+  }, []);
+
   return (
     <section className="section section-sessions" id="sessions">
       <SectionHead title={t('h')} />
@@ -540,7 +585,12 @@ export function SessionsShowcase() {
       <div className="sess-grid">
         <figure className="sess-card">
           <div className="sess-frame">
-            <KeyboardScreen words={kbWords} bravo={bravo} />
+            <KeyboardScreen
+              words={kbWords}
+              bravo={bravo}
+              active={activeIndex === 0}
+              onCycleEnd={advance}
+            />
           </div>
           <figcaption className="sess-cap">
             <span className="sess-tag">{items[0]?.tag}</span>
@@ -549,7 +599,12 @@ export function SessionsShowcase() {
         </figure>
         <figure className="sess-card">
           <div className="sess-frame">
-            <WordsScreen sentences={sentences} bravo={bravo} />
+            <WordsScreen
+              sentences={sentences}
+              bravo={bravo}
+              active={activeIndex === 1}
+              onCycleEnd={advance}
+            />
           </div>
           <figcaption className="sess-cap">
             <span className="sess-tag">{items[1]?.tag}</span>
@@ -558,7 +613,11 @@ export function SessionsShowcase() {
         </figure>
         <figure className="sess-card">
           <div className="sess-frame">
-            <CodeScreen bravo={bravo} />
+            <CodeScreen
+              bravo={bravo}
+              active={activeIndex === 2}
+              onCycleEnd={advance}
+            />
           </div>
           <figcaption className="sess-cap">
             <span className="sess-tag">{items[2]?.tag}</span>

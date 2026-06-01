@@ -10,7 +10,7 @@ import { LandingBee } from './LandingBee';
 export async function Pricing() {
   const t = await getTranslations('pricing');
   return (
-    <section className="section section-pricing sec-tint sec-tint-mint" id="free">
+    <section className="section section-pricing" id="free">
       <SectionHead title={t('h')} />
       <div className="pricing-card">
         <div className="pricing-art" aria-hidden>

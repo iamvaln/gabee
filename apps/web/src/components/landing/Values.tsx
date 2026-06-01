@@ -14,7 +14,7 @@ const PROPS: { key: 'skills' | 'bilingual' | 'visibility' | 'respect'; icon: Val
 export async function Values() {
   const t = await getTranslations('values');
   return (
-    <section className="section section-values" id="values">
+    <section className="section section-values sec-tint sec-tint-mint" id="values">
       <SectionHead title={t('h')} />
       <div className="value-grid">
         {PROPS.map((p) => (

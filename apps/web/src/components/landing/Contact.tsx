@@ -82,7 +82,7 @@ export function Contact() {
   if (state === 'done') {
     return (
       <section
-        className="section section-contact sec-tint sec-tint-coral"
+        className="section section-contact"
         id="contact"
         ref={sectionRef}
         // Polite live region: assistive tech announces the heading change
@@ -103,7 +103,7 @@ export function Contact() {
   }
 
   return (
-    <section className="section section-contact sec-tint sec-tint-coral" id="contact" ref={sectionRef}>
+    <section className="section section-contact" id="contact" ref={sectionRef}>
       <SectionHead title={t('h')} />
       <form className="contact-form" onSubmit={submit} noValidate>
         <div className="cf-field">
