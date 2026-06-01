@@ -5,7 +5,12 @@ import { useEffect, useState, type CSSProperties } from 'react';
 // Deep-teal Gabee mascot for the public landing. SVG construction mirrors the
 // design source `landing-bee.jsx` (gabee-design-spec §2 + landing spec §5).
 
-const TEAL = '#0E7C7B';
+// Bee body fill. The handoff design exposes this through a `--bee-body` CSS
+// variable (so it can be tweaked) with a teal default; we keep the same
+// variable but ship Gabee yellow `#FFB400` as the chosen brand colour. The
+// constant stays as a hard-coded fallback for environments where the var
+// isn't resolved.
+const BEE_BODY = 'var(--bee-body, #FFB400)';
 
 export type LandingBeeExpression = 'idle' | 'encourage' | 'correct' | 'celebrate' | 'focus';
 
@@ -179,7 +184,7 @@ export function LandingBee({
       </g>
       <circle cx={30} cy={8} r={3.5} fill="#2BD4E6" stroke="#20242E" strokeWidth={1.5} />
       <circle cx={70} cy={8} r={3.5} fill="#2BD4E6" stroke="#20242E" strokeWidth={1.5} />
-      <circle cx={50} cy={50} r={30} fill={TEAL} stroke="#20242E" strokeWidth={2.5} />
+      <circle cx={50} cy={50} r={30} fill={BEE_BODY} stroke="#20242E" strokeWidth={2.5} />
       <g>
         <rect x={20} y={39} width={60} height={22} rx={11} ry={11} fill="#20242E" />
         <rect x={22} y={41} width={56} height={3.5} rx={2} fill="rgba(255,255,255,0.06)" />
@@ -187,7 +192,7 @@ export function LandingBee({
           <VisorContent expression={expr} blink={blink} />
         </g>
       </g>
-      <circle cx={50} cy={110} r={30} fill={TEAL} stroke="#20242E" strokeWidth={2.5} />
+      <circle cx={50} cy={110} r={30} fill={BEE_BODY} stroke="#20242E" strokeWidth={2.5} />
       <g fill="#20242E">
         <path d="M 27 105 Q 50 99 73 105 L 73 110 Q 50 104 27 110 Z" />
         <path d="M 26 120 Q 50 114 74 120 L 74 125 Q 50 119 26 125 Z" />
@@ -215,11 +220,11 @@ export function LandingBeeGlyph({ size = 30 }: { size?: number }) {
       <circle cx={45} cy={4} r={3.4} fill="#2BD4E6" />
       <ellipse cx={11} cy={40} rx={11} ry={7.5} fill="#BBEAF2" transform="rotate(-24 11 40)" />
       <ellipse cx={49} cy={40} rx={11} ry={7.5} fill="#BBEAF2" transform="rotate(24 49 40)" />
-      <circle cx={30} cy={26} r={17} fill={TEAL} />
+      <circle cx={30} cy={26} r={17} fill={BEE_BODY} />
       <rect x={16} y={19} width={28} height={13} rx={6.5} fill="#20242E" />
       <circle cx={25} cy={25.5} r={2.7} fill="#2BD4E6" />
       <circle cx={35} cy={25.5} r={2.7} fill="#2BD4E6" />
-      <circle cx={30} cy={55} r={17} fill={TEAL} />
+      <circle cx={30} cy={55} r={17} fill={BEE_BODY} />
       <path d="M19 51 Q30 47 41 51 L41 54 Q30 50 19 54 Z" fill="#20242E" />
       <path d="M19 60 Q30 56 41 60 L41 63 Q30 59 19 63 Z" fill="#20242E" />
     </svg>
