@@ -28,9 +28,14 @@
   --l-maxw: 1160px;
 }
 
-/* Reset the parent app's surface-muted body for the landing surfaces. */
-body.landing-body {
+/* Reset the parent app's surface-muted body for the landing surfaces. The
+   root layout owns `<body>` (without a class), so we hang the white surface
+   off the `.landing` wrapper inside `[locale]/layout.tsx`. Use
+   `min-height: 100vh` so the landing paper extends below the fold even on
+   short pages — otherwise the parent app's `--bg` shows under the footer. */
+.landing {
   margin: 0;
+  min-height: 100vh;
   font-family: 'Mulish', system-ui, -apple-system, sans-serif;
   background: var(--landing-paper);
   color: var(--landing-txt);
@@ -39,6 +44,10 @@ body.landing-body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+/* And mirror the paper colour on the body element so the small strip
+   outside .landing (margin / overscroll bounce) doesn't show through with
+   the parent app's cream `--bg`. */
+body:has(.landing) { background: var(--landing-paper); }
 .landing,
 .landing * {
   box-sizing: border-box;
