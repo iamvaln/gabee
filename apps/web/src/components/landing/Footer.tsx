@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { parentSignupHref } from './parent-app-links';
+import { parentSignupHref, kidAppHref } from './parent-app-links';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { Wordmark } from './LandingBee';
 import { LanguageToggle } from './LanguageToggle';
@@ -28,6 +28,11 @@ export async function Footer() {
             </li>
             <li>
               <Link href={parentSignupHref()}>{t('signupLink')}</Link>
+            </li>
+            <li>
+              {/* Discreet entry point for an already-installed kid PWA — not a
+                  primary CTA (the real onboarding is device pairing). */}
+              <a href={kidAppHref()}>{locale === 'fr' ? 'Espace enfant' : 'Kids app'}</a>
             </li>
           </ul>
         </nav>

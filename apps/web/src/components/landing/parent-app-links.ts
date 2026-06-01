@@ -25,3 +25,11 @@ export function parentLoginHref(): string {
 export function parentSignupHref(): string {
   return buildHref('/signup', '/parent/signup');
 }
+
+/**
+ * Absolute URL of the kid PWA (always a separate host). Inlined at build time
+ * via `NEXT_PUBLIC_KID_APP_URL`; falls back to the Vite dev port locally.
+ */
+export function kidAppHref(): string {
+  return (process.env.NEXT_PUBLIC_KID_APP_URL ?? 'http://localhost:5173').replace(/\/$/, '');
+}
