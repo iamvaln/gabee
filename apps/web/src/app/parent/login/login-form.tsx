@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Language } from '@gabee/types';
-import { MintBee, MintBeeGlyph } from '../_components/mint-bee';
+import { AuthAside, AuthLangToggle } from '../_components/auth-aside';
 
 /**
  * Parent sign-in surface. Verbatim port of the `Login` screen in
@@ -21,10 +21,20 @@ import { MintBee, MintBeeGlyph } from '../_components/mint-bee';
  * parent → `next ?? /parent`. The `parent_lang` cookie is written on the
  * FR/EN toggle so the rest of the surface picks it up.
  */
-export function LoginForm({ lang: initialLang, next }: { lang: Language; next?: string }) {
+export function LoginForm({
+  lang: initialLang,
+  next,
+  initialEmail,
+}: {
+  lang: Language;
+  next?: string;
+  /** Pre-fill when landing here from `/parent/signup?email=…` after the user
+   *  hit the "account already exists" CTA — saves them retyping. */
+  initialEmail?: string;
+}) {
   const router = useRouter();
   const [lang, setLang] = useState<Language>(initialLang);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail ?? '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -143,55 +153,6 @@ export function LoginForm({ lang: initialLang, next }: { lang: Language; next?: 
   );
 }
 
-// ── Shared aside (mirrors `<AuthAside>` in parent-onboarding.jsx) ──────────
-function AuthAside({ lang }: { lang: Language }) {
-  const L = lang === 'fr';
-  const points: { icon: 'classify' | 'kids' | 'users'; fr: string; en: string }[] = [
-    { icon: 'classify', fr: 'Revoyez les sessions en un geste', en: 'Review sessions in one tap' },
-    { icon: 'kids', fr: 'Suivez chaque enfant en détail', en: 'Follow each kid in detail' },
-    { icon: 'users', fr: 'Co-parentez à deux, en confiance', en: 'Co-parent together, in sync' },
-  ];
-  return (
-    <aside className="auth-aside">
-      <div className="aa-mark">
-        <MintBeeGlyph size={30} />
-        <span style={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.03em' }}>abee</span>
-      </div>
-      <div className="aa-points">
-        {points.map((p) => (
-          <div className="aa-point" key={p.icon}>
-            <span className="ic"><AsideIcon name={p.icon} size={17} /></span>
-            {p[lang]}
-          </div>
-        ))}
-      </div>
-      <h2>
-        {/* Non-breaking spaces ( ) inside the guillemets keep the
-            closing » from orphaning to its own line when the column wraps —
-            French typography convention; stays prettier than swapping to
-            straight quotes which would clash with the brand voice. */}
-        {L
-          ? '\u201CRestez proche de leur apprentissage.\u201D'
-          : '\u201CStay close to their learning.\u201D'}
-      </h2>
-      <p>{L ? "L'espace parent de Gabee." : 'The Gabee parent space.'}</p>
-      <div className="aa-bee">
-        <MintBee size={150} expression="focus" wings bob />
-      </div>
-    </aside>
-  );
-}
-
-// ── Shared lang toggle (mirrors `<AuthLangToggle>` in parent-onboarding.jsx) ──
-function AuthLangToggle({ lang, setLang }: { lang: Language; setLang: (l: Language) => void }) {
-  return (
-    <div className="lang-toggle" role="group" aria-label="language">
-      <button type="button" className={lang === 'fr' ? 'on' : ''} onClick={() => setLang('fr')}>FR</button>
-      <button type="button" className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
-    </div>
-  );
-}
-
 // ── Inline alert icon (used by `.inline-error`) ────────────────────────────
 function AlertIcon() {
   return (
@@ -202,26 +163,4 @@ function AlertIcon() {
   );
 }
 
-// ── Aside bullet icons (3 of them: classify / kids / users) ───────────────
-function AsideIcon({ name, size = 17 }: { name: 'classify' | 'kids' | 'users'; size?: number }) {
-  const s = {
-    width: size,
-    height: size,
-    viewBox: '0 0 24 24',
-    fill: 'none' as const,
-    stroke: 'currentColor',
-    strokeWidth: 2,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-  };
-  switch (name) {
-    case 'classify':
-      return (<svg {...s}><path d="M4 6h11" /><path d="M4 12h7" /><path d="M4 18h9" /><path d="m15.5 16.5 2 2 4-4" /></svg>);
-    case 'kids':
-      return (<svg {...s}><circle cx="8" cy="8" r="3" /><path d="M3 20a5 5 0 0 1 10 0" /><circle cx="17" cy="9" r="2.4" /><path d="M15.5 20a4 4 0 0 1 5.5-3.7" /></svg>);
-    case 'users':
-      return (<svg {...s}><circle cx="9" cy="8" r="3" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 5.4a3 3 0 0 1 0 5.2" /><path d="M17.5 13.4A5.5 5.5 0 0 1 20.5 18.5" /></svg>);
-    default:
-      return null;
-  }
-}
+

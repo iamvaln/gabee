@@ -9,7 +9,7 @@ import {
   parsePhoneNumberFromString,
   type CountryCode,
 } from 'libphonenumber-js';
-import { MintBee, MintBeeGlyph } from '../_components/mint-bee';
+import { AuthAside, AuthLangToggle } from "../_components/auth-aside";
 
 /**
  * Parent self-signup (P7, parent spec §12.1). Verbatim port of the `Signup`
@@ -87,6 +87,13 @@ function SignupInner() {
   const [phoneNational, setPhoneNational] = useState('');
   const [accept, setAccept] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Set ONLY when the API returned `email_taken` (409). Lets the inline error
+   * render a "Sign in instead" CTA that deeplinks back to /parent/login with
+   * the email pre-filled — way nicer than just telling the user they're
+   * stuck.
+   */
+  const [emailTaken, setEmailTaken] = useState(false);
   const [busy, setBusy] = useState(false);
   const L = lang === 'fr';
 
@@ -126,6 +133,7 @@ function SignupInner() {
     if (!valid || !phoneE164) return;
     setBusy(true);
     setError(null);
+    setEmailTaken(false);
 
     // TODO(milestone-5): also POST { first_name, last_name } once the signup
     // API persists them on the ParentAccount (parent spec §13). Country is
@@ -157,14 +165,28 @@ function SignupInner() {
       router.refresh();
       return;
     }
-    const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-    setError(body?.error?.message ?? (L ? 'Inscription échouée.' : 'Sign up failed.'));
+    const body = (await res.json().catch(() => null)) as {
+      error?: { code?: string; message?: string };
+    } | null;
+    const code = body?.error?.code;
+    if (code === 'email_taken') {
+      // Show a friendly French / English message — the API's English string is
+      // accurate but generic; we want the localised, conversational tone here.
+      setError(
+        L
+          ? 'Un compte existe déjà avec cet email.'
+          : 'An account already exists with this email.',
+      );
+      setEmailTaken(true);
+    } else {
+      setError(body?.error?.message ?? (L ? 'Inscription échouée.' : 'Sign up failed.'));
+    }
     setBusy(false);
   }
 
   return (
     <div className="auth-stage">
-      <AuthAside lang={lang} />
+      <AuthAside lang={lang} expression="encourage" />
       <div className="auth-main">
         <div className="auth-main-top">
           <div className="spacer" />
@@ -343,7 +365,20 @@ function SignupInner() {
             {error && (
               <div className="inline-error" style={{ marginBottom: 18 }} role="alert">
                 <AlertIcon />
-                {error}
+                <span>
+                  {error}
+                  {emailTaken && (
+                    <>
+                      {' '}
+                      <Link
+                        href={`/parent/login?email=${encodeURIComponent(email)}`}
+                        style={{ fontWeight: 800, textDecoration: 'underline' }}
+                      >
+                        {L ? 'Se connecter à la place ?' : 'Sign in instead?'}
+                      </Link>
+                    </>
+                  )}
+                </span>
               </div>
             )}
 
@@ -368,53 +403,6 @@ function SignupInner() {
   );
 }
 
-// ── Shared aside (mirrors `<AuthAside>` in parent-onboarding.jsx) ──────────
-// Identical to the one in /parent/login — kept local to avoid leaking a
-// component into _components/ that only the auth pages consume.
-function AuthAside({ lang }: { lang: 'fr' | 'en' }) {
-  const L = lang === 'fr';
-  const points: { icon: 'classify' | 'kids' | 'users'; fr: string; en: string }[] = [
-    { icon: 'classify', fr: 'Revoyez les sessions en un geste', en: 'Review sessions in one tap' },
-    { icon: 'kids', fr: 'Suivez chaque enfant en détail', en: 'Follow each kid in detail' },
-    { icon: 'users', fr: 'Co-parentez à deux, en confiance', en: 'Co-parent together, in sync' },
-  ];
-  return (
-    <aside className="auth-aside">
-      <div className="aa-mark">
-        <MintBeeGlyph size={30} />
-        <span style={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.03em' }}>abee</span>
-      </div>
-      <div className="aa-points">
-        {points.map((p) => (
-          <div className="aa-point" key={p.icon}>
-            <span className="ic"><AsideIcon name={p.icon} size={17} /></span>
-            {p[lang]}
-          </div>
-        ))}
-      </div>
-      <h2>
-        {/* Non-breaking spaces ( ) inside the guillemets so the closing »
-            doesn't orphan to its own line when the column wraps. */}
-        {L
-          ? '\u201CRestez proche de leur apprentissage.\u201D'
-          : '\u201CStay close to their learning.\u201D'}
-      </h2>
-      <p>{L ? "L'espace parent de Gabee." : 'The Gabee parent space.'}</p>
-      <div className="aa-bee">
-        <MintBee size={150} expression="encourage" wings bob />
-      </div>
-    </aside>
-  );
-}
-
-function AuthLangToggle({ lang, setLang }: { lang: 'fr' | 'en'; setLang: (l: 'fr' | 'en') => void }) {
-  return (
-    <div className="lang-toggle" role="group" aria-label="language">
-      <button type="button" className={lang === 'fr' ? 'on' : ''} onClick={() => setLang('fr')}>FR</button>
-      <button type="button" className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
-    </div>
-  );
-}
 
 function AlertIcon() {
   return (
@@ -425,25 +413,3 @@ function AlertIcon() {
   );
 }
 
-function AsideIcon({ name, size = 17 }: { name: 'classify' | 'kids' | 'users'; size?: number }) {
-  const s = {
-    width: size,
-    height: size,
-    viewBox: '0 0 24 24',
-    fill: 'none' as const,
-    stroke: 'currentColor',
-    strokeWidth: 2,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-  };
-  switch (name) {
-    case 'classify':
-      return (<svg {...s}><path d="M4 6h11" /><path d="M4 12h7" /><path d="M4 18h9" /><path d="m15.5 16.5 2 2 4-4" /></svg>);
-    case 'kids':
-      return (<svg {...s}><circle cx="8" cy="8" r="3" /><path d="M3 20a5 5 0 0 1 10 0" /><circle cx="17" cy="9" r="2.4" /><path d="M15.5 20a4 4 0 0 1 5.5-3.7" /></svg>);
-    case 'users':
-      return (<svg {...s}><circle cx="9" cy="8" r="3" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 5.4a3 3 0 0 1 0 5.2" /><path d="M17.5 13.4A5.5 5.5 0 0 1 20.5 18.5" /></svg>);
-    default:
-      return null;
-  }
-}

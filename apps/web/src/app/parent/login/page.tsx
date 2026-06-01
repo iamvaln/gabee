@@ -15,9 +15,9 @@ import { LoginForm } from './login-form';
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; email?: string }>;
 }) {
-  const { next } = await searchParams;
+  const { next, email } = await searchParams;
   const session = await getServerSession();
   if (session) {
     const account = await prisma.parentAccount.findUnique({
@@ -39,7 +39,7 @@ export default async function LoginPage({
 
   const store = await cookies();
   const lang: Language = store.get('parent_lang')?.value === 'en' ? 'en' : 'fr';
-  return <LoginForm lang={lang} next={safeNext(next)} />;
+  return <LoginForm lang={lang} next={safeNext(next)} initialEmail={safeEmail(email)} />;
 }
 
 /** Only allow same-origin relative paths as `next` (prevents open-redirect). */
@@ -47,4 +47,11 @@ function safeNext(raw: string | undefined): string | undefined {
   if (!raw) return undefined;
   if (!raw.startsWith('/') || raw.startsWith('//')) return undefined;
   return raw;
+}
+
+/** Pre-fill from `?email=` only if it looks vaguely like an address. */
+function safeEmail(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  const trimmed = raw.trim().slice(0, 254);
+  return /\S+@\S+\.\S+/.test(trimmed) ? trimmed : undefined;
 }
