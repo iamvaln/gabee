@@ -45,6 +45,14 @@ export async function login(email: string, password: string): Promise<ParentAcco
   const ok = await verifyPassword(password, credential.hash, credential.salt);
   if (!ok) throw new HttpError(401, 'invalid_credentials', 'Email or password is incorrect');
 
+  // Email confirmation gate: credentials are valid but the account hasn't
+  // confirmed its email. Surfaced AFTER the password check so we never reveal
+  // confirmation state to someone who doesn't know the password. The client
+  // offers a "resend confirmation" action on this code.
+  if (!account.emailConfirmedAt) {
+    throw new HttpError(403, 'email_not_confirmed', 'Please confirm your email before signing in.');
+  }
+
   await prisma.parentAccount.update({
     where: { id: account.id },
     data: { lastLoginAt: new Date() },

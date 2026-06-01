@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Suspense, useMemo } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   getCountries,
@@ -65,7 +65,6 @@ export default function SignupPage() {
 }
 
 function SignupInner() {
-  const router = useRouter();
   // Co-parent invite flow (parent spec §9.2 P4): when the visitor lands here
   // from `/parent/coparent/accept?token=…` with no account yet, the accept
   // page bounces us with `?invite=<token>&email=<email>` so we pre-fill the
@@ -87,6 +86,10 @@ function SignupInner() {
   const [phoneNational, setPhoneNational] = useState('');
   const [accept, setAccept] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Set once the account is created: we DON'T sign the user in — they must
+  // confirm their email first. Flips the screen to a "check your inbox" state.
+  const [sent, setSent] = useState(false);
+  const [resent, setResent] = useState(false);
   /**
    * Set ONLY when the API returned `email_taken` (409). Lets the inline error
    * render a "Sign in instead" CTA that deeplinks back to /parent/login with
@@ -148,21 +151,11 @@ function SignupInner() {
       }),
     });
     if (res.ok) {
-      // Co-parent flow: auto-accept the invite with the freshly-set session.
-      if (inviteToken) {
-        try {
-          await fetch('/api/family/accept', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: inviteToken }),
-          });
-        } catch {
-          // If accept fails (expired, race, etc.), don't block — the parent
-          // can re-open the email link; they're now signed in.
-        }
-      }
-      router.push('/parent');
-      router.refresh();
+      // No session is issued — the account must confirm its email first. Show
+      // the "check your inbox" screen. (Co-parent invitees finish accepting by
+      // re-opening their invite link once confirmed + signed in.)
+      setSent(true);
+      setBusy(false);
       return;
     }
     const body = (await res.json().catch(() => null)) as {
@@ -182,6 +175,63 @@ function SignupInner() {
       setError(body?.error?.message ?? (L ? 'Inscription échouée.' : 'Sign up failed.'));
     }
     setBusy(false);
+  }
+
+  async function resend() {
+    try {
+      await fetch('/api/auth/resend-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+    } catch {
+      // Always-200 endpoint; ignore network blips and just show "sent".
+    }
+    setResent(true);
+  }
+
+  // ── Post-signup: account created, awaiting email confirmation ──────────────
+  if (sent) {
+    return (
+      <div className="auth-stage">
+        <AuthAside lang={lang} expression="encourage" />
+        <div className="auth-main">
+          <div className="auth-main-top">
+            <div className="spacer" />
+            <AuthLangToggle lang={lang} setLang={setLangCookie} />
+          </div>
+          <div className="auth-form-wrap">
+            <div className="auth-form" style={{ textAlign: 'center' }}>
+              <h1>{L ? 'Vérifie tes mails' : 'Check your inbox'}</h1>
+              <p className="sub" style={{ marginTop: 14, lineHeight: 1.5 }}>
+                {L
+                  ? `On a envoyé un lien de confirmation à ${email}. Clique dessus pour activer ton compte, puis connecte-toi.`
+                  : `We sent a confirmation link to ${email}. Click it to activate your account, then sign in.`}
+              </p>
+              <div style={{ marginTop: 28 }}>
+                <Link href="/parent/login" className="btn mint block lg">
+                  {L ? 'Aller à la connexion' : 'Go to sign in'}
+                </Link>
+              </div>
+              <div className="auth-foot" style={{ marginTop: 18 }}>
+                {resent ? (
+                  <span style={{ opacity: 0.8 }}>
+                    {L ? 'Lien renvoyé ✓' : 'Link resent ✓'}
+                  </span>
+                ) : (
+                  <>
+                    {L ? "Pas reçu l'email ? " : "Didn't get the email? "}
+                    <button type="button" className="btn link" style={{ display: 'inline' }} onClick={resend}>
+                      {L ? 'Renvoyer' : 'Resend'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -1,7 +1,6 @@
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
-import { SignupRequestSchema, type AuthSessionResponse } from '@gabee/types';
+import { SignupRequestSchema } from '@gabee/types';
 import { route, readJson, json, HttpError } from '@/lib/server/http';
-import { createSessionToken, setSessionCookie } from '@/lib/server/auth';
 import { signup } from '@/lib/server/services/accounts';
 import { rateLimit, clientIpFrom } from '@/lib/server/rate-limit';
 import { isDisposableEmail } from '@/lib/server/disposable-emails';
@@ -42,11 +41,10 @@ export const POST = route(async (req) => {
   }
 
   const parent = await signup(input.email, input.password, { phone: input.phone ?? null });
-  const { token, expiresAt } = await createSessionToken({ parentId: parent.id, email: parent.email });
-  const body: AuthSessionResponse = { token, expires_at: expiresAt.toISOString(), parent };
-  const res = json(body, 201);
-  // Signup always creates a parent account, never an admin.
-  setSessionCookie(res, token, 'parent');
+  // No session is issued at signup: the account must confirm its email first
+  // (login is gated on `emailConfirmedAt`). The client shows a "check your
+  // inbox" screen on this 201.
+  const res = json({ status: 'confirmation_required', email: parent.email }, 201);
 
   // Fire-and-forget: email confirmation + audit trail. Neither blocks the
   // 201 — the account exists either way. See public-url.ts for the

@@ -37,8 +37,25 @@ export function LoginForm({
   const [email, setEmail] = useState(initialEmail ?? '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  // Set when login is refused because the email isn't confirmed yet — unlocks
+  // a "resend confirmation" action below the error.
+  const [notConfirmed, setNotConfirmed] = useState(false);
+  const [resent, setResent] = useState(false);
   const [busy, setBusy] = useState(false);
   const L = lang === 'fr';
+
+  async function resendConfirmation() {
+    try {
+      await fetch('/api/auth/resend-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+    } catch {
+      // Always-200 endpoint; ignore network blips.
+    }
+    setResent(true);
+  }
 
   function setLangCookie(l: Language) {
     document.cookie = `parent_lang=${l}; path=/; max-age=31536000`;
@@ -49,6 +66,8 @@ export function LoginForm({
     e.preventDefault();
     setBusy(true);
     setError(null);
+    setNotConfirmed(false);
+    setResent(false);
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -65,8 +84,19 @@ export function LoginForm({
       router.refresh();
       return;
     }
-    const body = await res.json().catch(() => null);
-    setError(body?.error?.message ?? (L ? 'Email ou mot de passe incorrect.' : 'Wrong email or password.'));
+    const body = (await res.json().catch(() => null)) as {
+      error?: { code?: string; message?: string };
+    } | null;
+    if (body?.error?.code === 'email_not_confirmed') {
+      setNotConfirmed(true);
+      setError(
+        L
+          ? "Confirme ton email avant de te connecter — vérifie ta boîte mail."
+          : 'Confirm your email before signing in — check your inbox.',
+      );
+    } else {
+      setError(body?.error?.message ?? (L ? 'Email ou mot de passe incorrect.' : 'Wrong email or password.'));
+    }
     setBusy(false);
   }
 
@@ -88,7 +118,25 @@ export function LoginForm({
             {error && (
               <div className="inline-error" style={{ marginBottom: 18 }} role="alert">
                 <AlertIcon />
-                {error}
+                <span>
+                  {error}
+                  {notConfirmed && (
+                    <>
+                      {' '}
+                      {resent ? (
+                        <strong>{L ? 'Lien renvoyé ✓' : 'Link resent ✓'}</strong>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={resendConfirmation}
+                          style={{ fontWeight: 800, textDecoration: 'underline', background: 'none', border: 0, cursor: 'pointer', color: 'inherit', padding: 0 }}
+                        >
+                          {L ? 'Renvoyer le lien' : 'Resend the link'}
+                        </button>
+                      )}
+                    </>
+                  )}
+                </span>
               </div>
             )}
 
