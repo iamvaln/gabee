@@ -5,6 +5,7 @@ import { createSessionToken, setSessionCookie } from '@/lib/server/auth';
 import { signup } from '@/lib/server/services/accounts';
 import { rateLimit, clientIpFrom } from '@/lib/server/rate-limit';
 import { isDisposableEmail } from '@/lib/server/disposable-emails';
+import { getPublicAppUrl } from '@/lib/server/public-url';
 import { sendConfirmationEmail } from '@/lib/server/services/email-confirmation';
 import { logAuthEvent } from '@/lib/server/services/auth-events';
 
@@ -47,9 +48,10 @@ export const POST = route(async (req) => {
   setSessionCookie(res, token);
 
   // Fire-and-forget: email confirmation + audit trail. Neither blocks the
-  // 201 — the account exists either way.
-  const origin = new URL(req.url).origin;
-  void sendConfirmationEmail(parent.id, parent.email, origin).then(
+  // 201 — the account exists either way. See public-url.ts for the
+  // resolution chain; in prod set PARENT_APP_URL to override.
+  const appUrl = getPublicAppUrl(req);
+  void sendConfirmationEmail(parent.id, parent.email, appUrl).then(
     () => logAuthEvent({ req, kind: 'email_confirmation_sent', parentId: parent.id }),
     (e) => {
       // eslint-disable-next-line no-console

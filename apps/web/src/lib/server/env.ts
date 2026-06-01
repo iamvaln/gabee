@@ -33,6 +33,13 @@ const envSchema = z.object({
   // Cross-origin kid PWA. CORS allowlist + share links in admin nav.
   KID_APP_ORIGIN: z.url().default('http://localhost:5173'),
   NEXT_PUBLIC_KID_APP_URL: z.url().default('http://localhost:5173'),
+
+  // Public parent app URL — used to mint absolute links in outbound emails
+  // (password reset, email confirmation, co-parent invite). Optional: when
+  // unset we fall back to forwarded-header detection, then req.url; setting
+  // it explicitly is the safest choice in prod where the request looks like
+  // localhost to Next.js (behind Traefik / a reverse proxy).
+  PARENT_APP_URL: z.url().optional(),
 });
 
 type RawEnv = z.infer<typeof envSchema>;
@@ -73,5 +80,6 @@ export const env = loadEnv();
 export const IS_PROD = env.NODE_ENV === 'production';
 export const AUTH_JWT_SECRET = env.AUTH_JWT_SECRET;
 export const KID_APP_ORIGIN = env.KID_APP_ORIGIN;
+export const PARENT_APP_URL = env.PARENT_APP_URL;
 export const SESSION_COOKIE = 'gabee_session';
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days

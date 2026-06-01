@@ -2,6 +2,7 @@ import { CreateCoparentInviteRequestSchema } from '@gabee/types';
 import { route, readJson, json, requireParent } from '@/lib/server/http';
 import { createCoparentInvite } from '@/lib/server/services/family';
 import { IS_PROD } from '@/lib/server/env';
+import { getPublicAppUrl } from '@/lib/server/public-url';
 
 export const runtime = 'nodejs';
 
@@ -12,13 +13,11 @@ export const POST = route(async (req) => {
   const session = await requireParent(req);
   const input = await readJson(req, CreateCoparentInviteRequestSchema);
 
-  // Build the accept URL from the request origin so the email link points
-  // back to whatever host the parent is on (localhost in dev, parents.gabee.app
-  // in prod). Fall back to the env `KID_APP_ORIGIN`-style override if a proxy
-  // hides the original host.
-  const origin =
-    req.headers.get('origin') ??
-    `${req.nextUrl.protocol}//${req.nextUrl.host}`;
+  // Build the accept URL from the public-facing origin so the email link
+  // resolves whatever the recipient clicks (localhost in dev,
+  // parents.gabee.app in prod). See `public-url.ts` for the resolution
+  // order — `PARENT_APP_URL` overrides everything when set.
+  const origin = getPublicAppUrl(req);
 
   const { invite, token } = await createCoparentInvite(session.parentId, origin, input);
   return json(
