@@ -218,8 +218,9 @@ export function LandingBeeGlyph({ size = 30 }: { size?: number }) {
       </g>
       <circle cx={15} cy={4} r={3.4} fill="#2BD4E6" />
       <circle cx={45} cy={4} r={3.4} fill="#2BD4E6" />
-      <ellipse cx={11} cy={40} rx={11} ry={7.5} fill="#BBEAF2" transform="rotate(-24 11 40)" />
-      <ellipse cx={49} cy={40} rx={11} ry={7.5} fill="#BBEAF2" transform="rotate(24 49 40)" />
+      {/* Per design handoff (landing-bee.jsx TealBeeGlyph): wordmark glyph
+          has NO wings — only the antennae, head + visor, body + stripes.
+          Wings live exclusively on the larger LandingBee mascot. */}
       <circle cx={30} cy={26} r={17} fill={BEE_BODY} />
       <rect x={16} y={19} width={28} height={13} rx={6.5} fill="#20242E" />
       <circle cx={25} cy={25.5} r={2.7} fill="#2BD4E6" />

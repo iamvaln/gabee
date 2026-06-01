@@ -160,8 +160,12 @@ function KeyboardScreen({ words, bravo }: { words: string[]; bravo: string }) {
 
   const build = useCallback<TimelineFn>(
     (at) => {
-      const TYPE = 350, UP = 120;
-      let d = 450;
+      // Timings slowed ~50 % vs the design handoff so the per-letter pace is
+      // comfortable to follow: kids reading the mock would feel rushed at the
+      // original 350/120 ms cadence. Verdict + bravo pauses lengthened too so
+      // the ✓ / ✕ register before the next round starts.
+      const TYPE = 520, UP = 160;
+      let d = 600;
       const typeUpTo = (L: string, count: number) => {
         for (let i = 1; i <= count; i++) {
           const ch = norm(L[i - 1]!);
@@ -171,21 +175,24 @@ function KeyboardScreen({ words, bravo }: { words: string[]; bravo: string }) {
           d += TYPE;
         }
       };
-      // round 1 — correct
+      // round 1 — correct. Always clear win + verdict on round start so the
+      // Bravo overlay from a previous cycle is dismissed cleanly before any
+      // typing begins (the design only cleared it on round 1 and relied on
+      // the loop gap to mask leftover state — felt jittery in practice).
       at(d, () => { setWi(0); setN(0); setBad(-1); setVerdict(null); setWin(false); });
       typeUpTo(words[0]!, words[0]!.length);
-      at(d, () => setVerdict('ok')); d += 1250;
+      at(d, () => setVerdict('ok')); d += 1700;
       // round 2 — wrong key
-      at(d, () => { setWi(1); setN(0); setBad(-1); setVerdict(null); }); d += 220;
+      at(d, () => { setWi(1); setN(0); setBad(-1); setVerdict(null); setWin(false); }); d += 320;
       const stop = Math.min(2, words[1]!.length - 1);
       typeUpTo(words[1]!, stop);
       at(d, () => { setLit('X'); setLitBad(true); });
       at(d + UP, () => { setLit(null); setBad(stop); setVerdict('bad'); });
-      d += TYPE + 1200;
+      d += TYPE + 1700;
       // round 3 — win
-      at(d, () => { setWi(2); setN(0); setBad(-1); setVerdict(null); }); d += 220;
+      at(d, () => { setWi(2); setN(0); setBad(-1); setVerdict(null); setWin(false); }); d += 320;
       typeUpTo(words[2]!, words[2]!.length);
-      at(d, () => { setVerdict('win'); setWin(true); }); d += 2000;
+      at(d, () => { setVerdict('win'); setWin(true); }); d += 2600;
       return d;
     },
     [words],
@@ -258,7 +265,11 @@ function WordsScreen({ sentences, bravo }: { sentences: Sentence[]; bravo: strin
 
   const build = useCallback<TimelineFn>(
     (at) => {
-      let d = 550;
+      // Timings slowed vs design (480/480/340/1300 ms) and `win` is now
+      // cleared at the START of every round — including round 3 — so the
+      // Bravo overlay from a previous cycle never lingers into the next
+      // sentence.
+      let d = 700;
       const round = (idx: number, result: 'ok' | 'bad' | 'win') => {
         const s = sentences[idx]!;
         const ans = s.answer;
@@ -268,15 +279,15 @@ function WordsScreen({ sentences, bravo }: { sentences: Sentence[]; bravo: strin
           setPicked(null);
           setSel(null);
           setVerdict(null);
-          if (result !== 'win') setWin(false);
+          setWin(false);
         });
-        d += 480;
+        d += 700;
         at(d, () => setSel(choice));
-        d += 480;
+        d += 700;
         at(d, () => { setPicked(choice); setSel(null); });
-        d += 340;
+        d += 480;
         at(d, () => { setVerdict(result); if (result === 'win') setWin(true); });
-        d += result === 'win' ? 2000 : 1300;
+        d += result === 'win' ? 2600 : 1700;
       };
       round(0, 'ok');
       round(1, 'bad');
@@ -371,7 +382,12 @@ function CodeScreen({ bravo }: { bravo: string }) {
   const [win, setWin] = useState(false);
 
   const build = useCallback<TimelineFn>((at) => {
-    let d = 500;
+    // Code timings slowed vs design (430 ms per slot fill, 480 ms per bee
+    // step, 1250 ms verdict pause) so each round reads as a deliberate
+    // sequence: write the program → press run → watch the bee navigate.
+    // `win` is cleared at the start of every round so a previous cycle's
+    // Bravo never bleeds into the new program-writing phase.
+    let d = 700;
     const round = (
       dirs: string[],
       result: 'ok' | 'bad' | 'win',
@@ -385,28 +401,28 @@ function CodeScreen({ bravo }: { bravo: string }) {
         setVerdict(null);
         setPath(pth);
         setObstacle(obs);
-        if (result !== 'win') setWin(false);
+        setWin(false);
       });
-      d += 450;
+      d += 600;
       dirs.forEach((dir, i) => {
         at(d, () => setPress(dir));
-        at(d + 150, () => { setProgram(dirs.slice(0, i + 1)); setPress(null); });
-        d += 430;
+        at(d + 200, () => { setProgram(dirs.slice(0, i + 1)); setPress(null); });
+        d += 580;
       });
-      d += 250;
+      d += 400;
       at(d, () => setRunning(true));
-      d += 620;
+      d += 820;
       for (let i = 1; i < pth.length; i++) {
         const k = i;
         at(d, () => setBeeStep(k));
-        d += 480;
+        d += 620;
       }
-      d += 150;
+      d += 250;
       at(d, () => {
         setVerdict(result);
         if (result === 'win') setWin(true);
       });
-      d += result === 'win' ? 2000 : 1250;
+      d += result === 'win' ? 2600 : 1700;
     };
     round(C_CORRECT, 'ok', null);
     round(C_WRONG, 'bad', null);

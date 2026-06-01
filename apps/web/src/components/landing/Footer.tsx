@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getTranslations, getLocale } from 'next-intl/server';
-import { LandingBee, Wordmark } from './LandingBee';
+import { Wordmark } from './LandingBee';
 import { LanguageToggle } from './LanguageToggle';
 
 // Public footer (LP §3.8). Three link columns + a bottom strip with the bee,
@@ -54,7 +54,8 @@ export async function Footer() {
         </nav>
       </div>
       <div className="lfooter-strip">
-        <LandingBee size={30} expression="idle" wings={false} />
+        {/* Per design handoff (landing-sections.jsx Footer): no bee in the
+            bottom strip — copy + language toggle only. */}
         <span>{t('copy')}</span>
         <LanguageToggle variant="foot" />
       </div>
