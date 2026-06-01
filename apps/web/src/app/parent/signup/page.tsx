@@ -396,8 +396,8 @@ function AuthAside({ lang }: { lang: 'fr' | 'en' }) {
         {/* Non-breaking spaces ( ) inside the guillemets so the closing »
             doesn't orphan to its own line when the column wraps. */}
         {L
-          ? '« Restez proche de leur apprentissage. »'
-          : 'Stay close to their learning.'}
+          ? '\u201CRestez proche de leur apprentissage.\u201D'
+          : '\u201CStay close to their learning.\u201D'}
       </h2>
       <p>{L ? "L'espace parent de Gabee." : 'The Gabee parent space.'}</p>
       <div className="aa-bee">

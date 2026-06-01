@@ -834,7 +834,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 }
 .auth-main { background: var(--surface); }
 .auth-aside .aa-mark { display: inline-flex; align-items: center; gap: 10px; font-weight: 900; }
-.auth-aside h2 { font-size: 34px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin: auto 0 0; max-width: 16ch; }
+.auth-aside h2 { font-size: 34px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin: auto 0 0; max-width: 20ch; }
 .auth-aside p { font-size: 16px; font-weight: 700; margin: 14px 0 0; max-width: 30ch; opacity: .9; }
 .auth-aside .aa-bee { position: absolute; right: -10px; bottom: -10px; opacity: 1; background: radial-gradient(circle at 52% 44%, rgba(255,255,255,.62), rgba(255,255,255,0) 60%); }
 .auth-aside .aa-points { margin: 22px 0 8px; display: flex; flex-direction: column; gap: 12px; }

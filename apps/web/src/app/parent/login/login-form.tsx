@@ -13,7 +13,7 @@ import { MintBee, MintBeeGlyph } from '../_components/mint-bee';
  * right. The aside renders the design's `<AuthAside>`: `.aa-mark` wordmark,
  * 3 bullet `.aa-points` (Classify / Kids / Co-parent), heading + sub, and
  * the mascot in `.aa-bee`. Per brief the tagline is
- * « Restez proche de leur apprentissage. » / "Stay close to their learning."
+ * "Restez proche de leur apprentissage." / "Stay close to their learning."
  * with MintBee `focus`.
  *
  * Existing wiring is preserved: posts `{email, password}` to
@@ -171,8 +171,8 @@ function AuthAside({ lang }: { lang: Language }) {
             French typography convention; stays prettier than swapping to
             straight quotes which would clash with the brand voice. */}
         {L
-          ? '« Restez proche de leur apprentissage. »'
-          : 'Stay close to their learning.'}
+          ? '\u201CRestez proche de leur apprentissage.\u201D'
+          : '\u201CStay close to their learning.\u201D'}
       </h2>
       <p>{L ? "L'espace parent de Gabee." : 'The Gabee parent space.'}</p>
       <div className="aa-bee">
