@@ -33,6 +33,7 @@ jobs:
           push: true
           build-args: |
             NEXT_PUBLIC_KID_APP_URL=${{ vars.NEXT_PUBLIC_KID_APP_URL }}
+            NEXT_PUBLIC_PARENT_APP_URL=${{ vars.NEXT_PUBLIC_PARENT_APP_URL }}
           tags: |
             ${{ env.REGISTRY }}/gabee-web:${{ github.ref_name }}
             ${{ env.REGISTRY }}/gabee-web:latest
