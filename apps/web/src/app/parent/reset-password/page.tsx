@@ -3,11 +3,14 @@
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import type { Language } from '@gabee/types';
+import { AuthAside, AuthLangToggle } from '../_components/auth-aside';
 
 /**
  * /parent/reset-password?token=… — final step of the reset flow.
  *
- * UX:
+ * Same 2-column shell as login / signup / forgot-password (coral
+ * `<AuthAside>` left, form right). UX:
  *   - Reads the token from the query string (sent in the email).
  *   - Asks for new password + repeat password. Same rule as signup: 8 chars,
  *     1 digit, 1 letter, MUST match the repeat field.
@@ -26,13 +29,20 @@ export default function ResetPasswordPage() {
 function ResetPasswordForm() {
   const search = useSearchParams();
   const token = search.get('token') ?? '';
-  const lang = typeof document !== 'undefined' && document.cookie.includes('parent_lang=en') ? 'en' : 'fr';
+  const initial: Language =
+    typeof document !== 'undefined' && document.cookie.includes('parent_lang=en') ? 'en' : 'fr';
+  const [lang, setLang] = useState<Language>(initial);
   const L = lang === 'fr';
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+
+  function setLangCookie(l: Language) {
+    document.cookie = `parent_lang=${l}; path=/; max-age=31536000`;
+    setLang(l);
+  }
 
   const passwordOk =
     password.length >= 8 && /\d/.test(password) && /[a-zA-Z]/.test(password);
@@ -62,11 +72,16 @@ function ResetPasswordForm() {
     setBusy(false);
   }
 
-  if (!token) {
-    return (
-      <div className="auth-stage">
-        <div className="auth-main">
-          <div className="auth-form-wrap">
+  return (
+    <div className="auth-stage">
+      <AuthAside lang={lang} expression="idle" />
+      <div className="auth-main">
+        <div className="auth-main-top">
+          <div className="spacer" />
+          <AuthLangToggle lang={lang} setLang={setLangCookie} />
+        </div>
+        <div className="auth-form-wrap">
+          {!token ? (
             <div className="auth-form" style={{ textAlign: 'center' }}>
               <h1>{L ? 'Lien invalide' : 'Invalid link'}</h1>
               <p className="sub" style={{ marginTop: 14 }}>
@@ -80,17 +95,7 @@ function ResetPasswordForm() {
                 </Link>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (done) {
-    return (
-      <div className="auth-stage">
-        <div className="auth-main">
-          <div className="auth-form-wrap">
+          ) : done ? (
             <div className="auth-form" style={{ textAlign: 'center' }}>
               <h1>{L ? 'Mot de passe réinitialisé' : 'Password reset'}</h1>
               <p className="sub" style={{ marginTop: 14 }}>
@@ -104,69 +109,61 @@ function ResetPasswordForm() {
                 </Link>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="auth-stage">
-      <div className="auth-main">
-        <div className="auth-form-wrap">
-          <form className="auth-form" onSubmit={submit}>
-            <h1>{L ? 'Nouveau mot de passe' : 'New password'}</h1>
-            <p className="sub">
-              {L
-                ? 'Choisissez un nouveau mot de passe sécurisé.'
-                : 'Pick a fresh secure password.'}
-            </p>
-            <div className="field">
-              <label htmlFor="rp1">{L ? 'Mot de passe' : 'Password'}</label>
-              <input
-                id="rp1"
-                className="input"
-                type="password"
-                required
-                minLength={8}
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <span className="hint">
-                {L ? '8 caractères min., 1 chiffre, 1 lettre' : '8+ chars, 1 digit, 1 letter'}
-              </span>
-            </div>
-            <div className="field">
-              <label htmlFor="rp2">{L ? 'Confirmer' : 'Confirm'}</label>
-              <input
-                id="rp2"
-                className={'input' + (confirm && !match ? ' bad' : '')}
-                type="password"
-                required
-                autoComplete="new-password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                aria-invalid={!!confirm && !match}
-              />
-              {confirm && !match && (
-                <span className="hint" style={{ color: 'var(--bad)' }}>
-                  {L ? 'Les mots de passe ne correspondent pas.' : 'Passwords do not match.'}
+          ) : (
+            <form className="auth-form" onSubmit={submit}>
+              <h1>{L ? 'Nouveau mot de passe' : 'New password'}</h1>
+              <p className="sub">
+                {L
+                  ? 'Choisissez un nouveau mot de passe sécurisé.'
+                  : 'Pick a fresh secure password.'}
+              </p>
+              <div className="field">
+                <label htmlFor="rp1">{L ? 'Mot de passe' : 'Password'}</label>
+                <input
+                  id="rp1"
+                  className="input"
+                  type="password"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <span className="hint">
+                  {L ? '8 caractères min., 1 chiffre, 1 lettre' : '8+ chars, 1 digit, 1 letter'}
                 </span>
-              )}
-            </div>
-            {error && (
-              <div className="inline-error" role="alert" style={{ marginBottom: 14 }}>
-                {error}
               </div>
-            )}
-            <button type="submit" className="btn mint block lg" disabled={!canSubmit || busy}>
-              {busy ? '…' : L ? 'Réinitialiser' : 'Reset password'}
-            </button>
-            <div className="auth-foot">
-              <Link href="/parent/login">{L ? '← Retour à la connexion' : '← Back to sign in'}</Link>
-            </div>
-          </form>
+              <div className="field">
+                <label htmlFor="rp2">{L ? 'Confirmer' : 'Confirm'}</label>
+                <input
+                  id="rp2"
+                  className={'input' + (confirm && !match ? ' bad' : '')}
+                  type="password"
+                  required
+                  autoComplete="new-password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  aria-invalid={!!confirm && !match}
+                />
+                {confirm && !match && (
+                  <span className="hint" style={{ color: 'var(--bad)' }}>
+                    {L ? 'Les mots de passe ne correspondent pas.' : 'Passwords do not match.'}
+                  </span>
+                )}
+              </div>
+              {error && (
+                <div className="inline-error" role="alert" style={{ marginBottom: 14 }}>
+                  {error}
+                </div>
+              )}
+              <button type="submit" className="btn mint block lg" disabled={!canSubmit || busy}>
+                {busy ? '…' : L ? 'Réinitialiser' : 'Reset password'}
+              </button>
+              <div className="auth-foot">
+                <Link href="/parent/login">{L ? '← Retour à la connexion' : '← Back to sign in'}</Link>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
