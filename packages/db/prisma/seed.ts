@@ -19,8 +19,8 @@ const DEFAULT_CURRICULUM_ID = '00000000-0000-4000-8000-0000000000c0';
 // admin UI, AI provider, and progress engine key off. `mechanic_hint` is fed verbatim
 // into the AI prompt to keep generations on-pattern.
 const SUB_MODE_DEFS = [
-  { id: 'numbers.arithmetic', module: 'numbers', key: 'arithmetic', name: { fr: 'Arithmétique', en: 'Arithmetic' }, languageDependent: false, displayOrder: 1, mechanicHint: 'MCQ-number — counting, addition, subtraction (per spec §4.1).' },
-  { id: 'numbers.geometry', module: 'numbers', key: 'geometry', name: { fr: 'Géométrie', en: 'Geometry' }, languageDependent: false, displayOrder: 2, mechanicHint: 'MCQ-number — shapes, sides, symmetry, area concepts.' },
+  { id: 'numbers.arithmetic', module: 'numbers', key: 'arithmetic', name: { fr: 'Arithmétique', en: 'Arithmetic' }, languageDependent: true, displayOrder: 1, mechanicHint: 'MCQ-number — counting, addition, subtraction (per spec §4.1).' },
+  { id: 'numbers.geometry', module: 'numbers', key: 'geometry', name: { fr: 'Géométrie', en: 'Geometry' }, languageDependent: true, displayOrder: 2, mechanicHint: 'MCQ-number — shapes, sides, symmetry, area concepts.' },
   { id: 'words.picture', module: 'words', key: 'picture', name: { fr: 'Image → mot', en: 'Picture → word' }, languageDependent: true, displayOrder: 1, mechanicHint: 'MCQ-image — single emoji prompt, bilingual word answers.' },
   { id: 'words.fill', module: 'words', key: 'fill', name: { fr: 'Trouve le mot', en: 'Fill the blank' }, languageDependent: true, displayOrder: 2, mechanicHint: 'MCQ-word — sentence with `___`, bilingual word answers.' },
   { id: 'words.build', module: 'words', key: 'build', name: { fr: 'Construis la phrase', en: 'Build the sentence' }, languageDependent: true, displayOrder: 3, mechanicHint: 'Build-sentence — answer is a single bilingual STRING, not an array.' },

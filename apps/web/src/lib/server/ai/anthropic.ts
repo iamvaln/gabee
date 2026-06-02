@@ -10,10 +10,11 @@ import type {
   StreamPlanInput,
 } from './provider';
 
-/** Default model for content authoring (claude-api skill default). */
-const MODEL = 'claude-opus-4-7';
+/** Default model for content authoring — Opus 4.8 (most capable). */
+const MODEL = 'claude-opus-4-8';
 
-// Opus 4.7 pricing per 1M tokens (input / output) — for the aiUsage cost rollup.
+// Opus 4.8 pricing per 1M tokens (input / output) — for the aiUsage cost rollup.
+// (Same per-token rates as 4.7.)
 const INPUT_USD_PER_TOKEN = 5 / 1_000_000;
 const OUTPUT_USD_PER_TOKEN = 25 / 1_000_000;
 
@@ -244,7 +245,10 @@ const QUESTION_TYPE_BY_MODULE: Record<string, string> = {
   code: 'code-grid',
   translation: 'translation',
 };
-const LANG_BOTH_MODULES = new Set(['words', 'translation']);
+// Modules whose questions carry natural-language text → generated bilingually
+// ({fr,en} with parity). Everything EXCEPT `code` (whose puzzles are symbolic —
+// grids/blocks, prompt is just "★" — and are genuinely language-agnostic).
+const LANG_BOTH_MODULES = new Set(['words', 'translation', 'numbers', 'keyboard']);
 
 // ─── Parsing helpers ─────────────────────────────────────────────────────────
 
