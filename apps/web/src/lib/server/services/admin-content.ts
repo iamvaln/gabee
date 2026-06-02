@@ -652,3 +652,13 @@ export async function reviewQuestion(
   });
   return mapAdminQuestion(updated);
 }
+
+/** Bulk status change (accept-all / reject-all / batch on a selection). */
+export async function bulkSetQuestionStatus(
+  ids: string[],
+  status: 'confirmed' | 'rejected' | 'demoted',
+): Promise<number> {
+  if (ids.length === 0) return 0;
+  const res = await prisma.question.updateMany({ where: { id: { in: ids } }, data: { status } });
+  return res.count;
+}

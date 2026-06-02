@@ -50,6 +50,36 @@ export function QuestionPool({
   const [modal, setModal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  /** Bulk status change on a set of ids (accept-all / reject-all / on selection). */
+  async function bulkStatus(ids: string[], status: 'confirmed' | 'rejected' | 'demoted') {
+    if (ids.length === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/admin/questions/bulk-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, status }),
+      });
+      if (!res.ok) throw new Error((await res.json())?.error?.message ?? 'Bulk update failed');
+      setSelected(new Set());
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Bulk update failed');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const moduleName = MODULE_NAMES[data.module][lang];
   const ratedHigh = data.rated_high;
@@ -199,17 +229,59 @@ export function QuestionPool({
       )}
 
       {data.candidates.length > 0 && (
-        <div className="cand-grid mt16">
-          {data.candidates.map((c) => (
-            <CandidateCard
-              key={c.id}
-              lang={lang}
-              c={c}
-              onRate={rate}
-              onStatus={setStatus}
-            />
-          ))}
-        </div>
+        <>
+          <div
+            className="row gap8 mt16"
+            style={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <div className="row gap8" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                className="btn brand sm"
+                disabled={busy}
+                onClick={() => bulkStatus(data.candidates.map((c) => c.id), 'confirmed')}
+              >
+                {L ? 'Tout accepter' : 'Accept all'}
+              </button>
+              <button
+                className="btn danger sm"
+                disabled={busy}
+                onClick={() => bulkStatus(data.candidates.map((c) => c.id), 'rejected')}
+              >
+                {L ? 'Tout rejeter' : 'Reject all'}
+              </button>
+            </div>
+            {selected.size > 0 && (
+              <div className="row gap8" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
+                <span className="b-sub">{selected.size} {L ? 'sélectionnée(s)' : 'selected'}</span>
+                <button className="btn brand sm" disabled={busy} onClick={() => bulkStatus([...selected], 'confirmed')}>
+                  {L ? 'Accepter' : 'Accept'}
+                </button>
+                <button className="btn ghost sm" disabled={busy} onClick={() => bulkStatus([...selected], 'demoted')}>
+                  {L ? 'Rétrograder' : 'Demote'}
+                </button>
+                <button className="btn danger sm" disabled={busy} onClick={() => bulkStatus([...selected], 'rejected')}>
+                  {L ? 'Rejeter' : 'Reject'}
+                </button>
+                <button className="btn link sm" onClick={() => setSelected(new Set())}>
+                  {L ? 'Effacer' : 'Clear'}
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="cand-grid mt8">
+            {data.candidates.map((c) => (
+              <CandidateCard
+                key={c.id}
+                lang={lang}
+                c={c}
+                onRate={rate}
+                onStatus={setStatus}
+                selected={selected.has(c.id)}
+                onToggleSelect={toggleSelect}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       {data.confirmed.length > 0 && (
@@ -255,16 +327,29 @@ function CandidateCard({
   c,
   onRate,
   onStatus,
+  selected,
+  onToggleSelect,
 }: {
   lang: Language;
   c: AdminQuestion;
   onRate: (id: string, lang: 'fr' | 'en', n: number) => void;
   onStatus: (id: string, status: 'confirmed' | 'rejected' | 'demoted') => void;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }) {
   const L = lang === 'fr';
   return (
-    <div className="cand">
+    <div className={'cand' + (selected ? ' selected' : '')}>
       <div className="cand-top">
+        {onToggleSelect && (
+          <input
+            type="checkbox"
+            checked={!!selected}
+            onChange={() => onToggleSelect(c.id)}
+            aria-label={L ? 'Sélectionner' : 'Select'}
+            style={{ marginRight: 8, width: 16, height: 16, cursor: 'pointer' }}
+          />
+        )}
         <span className="cand-type">{c.type}</span>
         {c.objective_ref && <span className="cand-obj">· {L ? 'objectif' : 'objective'} #{c.objective_ref}</span>}
         <div className="grow" />

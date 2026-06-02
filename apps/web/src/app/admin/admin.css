@@ -1007,3 +1007,6 @@ textarea:focus-visible {
   0% { left: -35%; }
   100% { left: 100%; }
 }
+
+/* Selected candidate card (bulk actions). */
+.cand.selected { outline: 2px solid var(--mascot-admin); outline-offset: 1px; }
