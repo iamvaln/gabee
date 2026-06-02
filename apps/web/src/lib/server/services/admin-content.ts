@@ -372,13 +372,17 @@ export async function saveAiDraft(
 /** Build the AI streaming inputs for a level (module metadata + continuity). */
 export async function planStreamInput(module: Module, subMode: string, level: Level, actorId: string) {
   const curriculumId = await getDefaultCurriculumId();
-  const [def, prev] = await Promise.all([
+  const [def, sm, prev] = await Promise.all([
     prisma.moduleDef.findUnique({ where: { id: module }, select: { name: true, characteristics: true } }),
+    prisma.subMode.findFirst({ where: { module, key: subMode }, select: { name: true, mechanicHint: true } }),
     prevContext(curriculumId, module, subMode, level),
   ]);
   return {
     module,
     level,
+    subMode,
+    subModeName: asBilingual(sm?.name),
+    subModeMechanic: sm?.mechanicHint ?? '',
     moduleName: asBilingual(def?.name),
     characteristics: def?.characteristics ?? {},
     prevContext: prev,

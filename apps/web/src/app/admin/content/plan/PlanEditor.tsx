@@ -408,7 +408,7 @@ export function PlanEditor({ lang, data }: { lang: Language; data: PlanResponse 
                 </button>
                 <Link
                   className="btn secondary"
-                  href={`/admin/content/pool?module=${data.module}&level=${data.level}`}
+                  href={`/admin/content/pool?module=${data.module}&sub_mode=${encodeURIComponent(data.sub_mode)}&level=${data.level}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

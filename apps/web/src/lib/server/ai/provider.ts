@@ -17,6 +17,11 @@ export interface PrevLevelContext {
 export interface StreamPlanInput {
   module: Module;
   level: Level;
+  /** Sub-mode this plan is for (short key) + display name + mechanic hint, so the
+   *  plan is specific to e.g. Geometry vs Arithmetic — not a generic module plan. */
+  subMode: string;
+  subModeName: BilingualText;
+  subModeMechanic: string;
   /** Module ops metadata (input methods, voiceover, sub-modes) for grounding. */
   moduleName: BilingualText;
   characteristics: unknown;

@@ -60,7 +60,8 @@ const AGE_BAND = 'children aged 6 to 8';
 function planSystemPrompt(): string {
   return [
     `You are a bilingual (French/English) curriculum designer for Gabee, a learning app for ${AGE_BAND}.`,
-    'You draft a single level plan: a scope statement, 3 to 5 pedagogical objectives, and validation criteria.',
+    'You draft a single level plan FOR ONE SPECIFIC SUB-MODE of a module: a scope statement, 3 to 5 pedagogical objectives, and validation criteria.',
+    'The plan MUST be specific to that sub-mode\'s mechanic — e.g. a Geometry plan is about shapes, sides, symmetry and space, NOT generic number recognition; an Arithmetic plan is about counting and operations. Do not write a generic module plan.',
     'Everything must be age-appropriate, concrete, and bilingual with strict FR/EN parity (every field present in both languages).',
     'Build on the previous levels (continuity) without repeating them. Ground the plan in the module characteristics.',
     'Respond with ONLY a JSON object, no prose, no markdown fences, matching exactly:',
@@ -79,9 +80,12 @@ function planUserPrompt(input: StreamPlanInput): string {
     : 'None — this is the first level.';
   return [
     `Module: ${input.moduleName.fr} / ${input.moduleName.en}`,
+    `Sub-mode (the plan is for THIS sub-mode only): ${input.subModeName.fr} / ${input.subModeName.en} [${input.subMode}]`,
+    `Sub-mode mechanic: ${input.subModeMechanic || '(none specified)'}`,
     `Target level: ${input.level} (of 10).`,
     `Module characteristics: ${JSON.stringify(input.characteristics)}`,
-    'Previous-level objectives (continuity context):',
+    `Write the scope, objectives and validation criteria specifically for the "${input.subModeName.en}" sub-mode at this level.`,
+    'Previous-level objectives for this sub-mode (continuity context):',
     prev,
   ].join('\n');
 }

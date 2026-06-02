@@ -217,6 +217,17 @@ export function QuestionPool({
           <div className="section-label" style={{ marginBottom: 8 }}>
             {L ? 'Confirmées (visibles aux enfants)' : 'Confirmed (visible to kids)'} · {data.confirmed.length}
           </div>
+          <div className="cand-grid">
+            {data.confirmed.map((c) => (
+              <CandidateCard
+                key={c.id}
+                lang={lang}
+                c={c}
+                onRate={rate}
+                onStatus={setStatus}
+              />
+            ))}
+          </div>
         </div>
       )}
 
