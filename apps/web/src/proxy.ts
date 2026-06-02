@@ -204,12 +204,15 @@ export function proxy(req: NextRequest): NextResponse {
 
   // Surface rewrites: `parents.gabee.app/login` → internally `/parent/login`
   // so the parent app's pages serve naturally. Same idea for admin.
-  if (sub === 'parents' && !pathname.startsWith('/parent')) {
+  // Universal root assets (favicon set, robots, sitemap, manifest) must NOT be
+  // rewritten under /parent or /admin — they live at the public root, so a
+  // rewrite would 404 them on the subdomains.
+  if (sub === 'parents' && !pathname.startsWith('/parent') && !FAVICON_PATHS.has(pathname)) {
     return applySecurityHeaders(
       NextResponse.rewrite(new URL(`/parent${pathname === '/' ? '' : pathname}`, req.url)),
     );
   }
-  if (sub === 'admin' && !pathname.startsWith('/admin')) {
+  if (sub === 'admin' && !pathname.startsWith('/admin') && !FAVICON_PATHS.has(pathname)) {
     return applySecurityHeaders(
       NextResponse.rewrite(new URL(`/admin${pathname === '/' ? '' : pathname}`, req.url)),
     );
