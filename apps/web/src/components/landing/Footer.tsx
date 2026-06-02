@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { parentSignupHref, kidAppHref } from './parent-app-links';
+import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { Wordmark } from './LandingBee';
 import { LanguageToggle } from './LanguageToggle';
@@ -55,6 +56,12 @@ export async function Footer() {
             </li>
             <li>
               <a href="#contact">{t('contactLink')}</a>
+            </li>
+            <li>
+              {/* Support — WhatsApp group (opens in a new tab). */}
+              <a href={SUPPORT_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                Support
+              </a>
             </li>
           </ul>
         </nav>

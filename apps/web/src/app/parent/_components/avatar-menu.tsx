@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Language } from '@gabee/types';
+import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
 
 type Role = 'parent' | 'admin' | 'super_admin';
 
@@ -143,6 +144,19 @@ export function AvatarMenu({
               <path d="M8 21h8M12 17v4" />
             </svg>
             {L ? "Ouvrir l'espace enfant" : 'Open kids app'}
+          </a>
+          <a
+            href={SUPPORT_WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="menu-item"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-4-1L3 20l1-5.5a8.5 8.5 0 0 1-1-4A8.38 8.38 0 0 1 11.5 2 8.5 8.5 0 0 1 21 11.5Z" />
+            </svg>
+            Support
           </a>
           <hr />
           <button type="button" className="menu-item" onClick={signOut} role="menuitem">
