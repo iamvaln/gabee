@@ -408,6 +408,8 @@ export function PlanEditor({ lang, data }: { lang: Language; data: PlanResponse 
                 <Link
                   className="btn secondary"
                   href={`/admin/content/pool?module=${data.module}&level=${data.level}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   <AIcon name="external" size={15} />
                   {L ? 'Ouvrir le pool' : 'Open question pool'}
