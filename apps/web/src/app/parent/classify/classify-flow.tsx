@@ -89,6 +89,7 @@ export function ClassifyFlow({ initial, kids, lang }: Props) {
   // Track all kid ids whose sessions we just classified — used for Leave-a-word.
   const [classifiedKidIds, setClassifiedKidIds] = useState<string[]>([]);
 
+  const router = useRouter();
   const total = initial.length;
   const current = initial[idx];
   const done = !current;
@@ -119,6 +120,10 @@ export function ClassifyFlow({ initial, kids, lang }: Props) {
         setClassifiedKidIds((arr) =>
           arr.includes(current.profile_id) ? arr : [...arr, current.profile_id],
         );
+        // Re-run the server layout so the "Revue" nav badge decrements live as
+        // each session is classified (and the dashboard is already correct on
+        // return). Soft refresh — keeps this flow's client state intact.
+        router.refresh();
         // Brief delay so the user sees their selection highlight (per design).
         setTimeout(advance, 260);
       } catch (e) {
@@ -128,7 +133,7 @@ export function ClassifyFlow({ initial, kids, lang }: Props) {
         setSubmitting(false);
       }
     },
-    [current, advance],
+    [current, advance, router],
   );
 
   // ---- Empty / done state -------------------------------------------------
