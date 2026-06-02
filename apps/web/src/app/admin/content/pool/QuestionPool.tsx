@@ -389,6 +389,23 @@ function GenModal({
               <div>{error}</div>
             </div>
           )}
+          {busy && (
+            <div className="banner" style={{ background: 'var(--surface-2)', color: 'var(--text-2)', margin: 0 }}>
+              <AIcon name="sparkle" size={16} />
+              <div style={{ flex: 1 }}>
+                <b style={{ color: 'var(--ink)' }}>{L ? 'Génération en cours…' : 'Generating…'}</b>
+                <span className="b-sub">
+                  {' '}
+                  {L
+                    ? `${batch} candidats — l'IA travaille, patiente quelques instants.`
+                    : `${batch} candidates — the AI is working, this can take a moment.`}
+                </span>
+                <div className="ai-progress" aria-hidden>
+                  <i />
+                </div>
+              </div>
+            </div>
+          )}
           <div>
             <div className="field-label">{L ? 'Taille du lot' : 'Batch size'}</div>
             <div className="row gap8">

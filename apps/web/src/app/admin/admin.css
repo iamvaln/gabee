@@ -982,3 +982,28 @@ textarea:focus-visible {
   .admin-auth { grid-template-columns: 1fr; }
   .aauth-aside { display: none; }
 }
+
+/* Indeterminate progress bar — shown while an AI generation request is in
+   flight (the generate endpoints aren't streamed, so there's no real %). */
+.ai-progress {
+  position: relative;
+  height: 6px;
+  margin-top: 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.ai-progress > i {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 35%;
+  border-radius: 999px;
+  background: var(--mascot-admin);
+  animation: ai-progress-slide 1.15s ease-in-out infinite;
+}
+@keyframes ai-progress-slide {
+  0% { left: -35%; }
+  100% { left: 100%; }
+}
