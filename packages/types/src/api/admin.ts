@@ -94,6 +94,10 @@ export const ContentMatrixRowSchema = z.object({
   module: ModuleSchema,
   name: BilingualTextSchema,
   slug: z.string(),
+  /** Sub-mode short key this row plans for (e.g. "arithmetic", "geometry",
+   *  "default" for modules without sub-modes). One row per (module, sub_mode). */
+  sub_mode: z.string(),
+  sub_mode_name: BilingualTextSchema,
   cells: z.array(ContentMatrixCellSchema),
 });
 export const ContentMatrixResponseSchema = z.object({
@@ -108,6 +112,7 @@ export type ContentMatrixResponse = z.infer<typeof ContentMatrixResponseSchema>;
 export const ContentPlanSchema = z.object({
   id: z.uuid(),
   module: ModuleSchema,
+  sub_mode: z.string(),
   level: LevelSchema,
   scope: BilingualTextSchema,
   pedagogical_objectives: z.array(BilingualTextSchema),
@@ -136,6 +141,7 @@ export const PrevLevelContextSchema = z.object({
 // GET /api/admin/content/plan?module=&level=
 export const PlanResponseSchema = z.object({
   module: ModuleSchema,
+  sub_mode: z.string(),
   level: LevelSchema,
   plan: ContentPlanSchema.nullable(),
   /** Previous-level objectives (continuity context); empty for level 1. */
@@ -148,6 +154,7 @@ export type PlanResponse = z.infer<typeof PlanResponseSchema>;
 // PUT /api/admin/content/plan
 export const SavePlanRequestSchema = z.object({
   module: ModuleSchema,
+  sub_mode: z.string(),
   level: LevelSchema,
   scope: BilingualTextSchema,
   pedagogical_objectives: z.array(BilingualTextSchema),
@@ -157,7 +164,11 @@ export const SavePlanRequestSchema = z.object({
 export type SavePlanRequest = z.infer<typeof SavePlanRequestSchema>;
 
 // POST /api/admin/content/plan/generate  (streams text/event-stream; this is the trigger body)
-export const GeneratePlanRequestSchema = z.object({ module: ModuleSchema, level: LevelSchema });
+export const GeneratePlanRequestSchema = z.object({
+  module: ModuleSchema,
+  sub_mode: z.string(),
+  level: LevelSchema,
+});
 export type GeneratePlanRequest = z.infer<typeof GeneratePlanRequestSchema>;
 
 export const PlanMutationResponseSchema = z.object({ plan: ContentPlanSchema });
@@ -198,6 +209,7 @@ export type AdminQuestion = z.infer<typeof AdminQuestionSchema>;
 // GET /api/admin/content/pool?module=&level=
 export const PoolResponseSchema = z.object({
   module: ModuleSchema,
+  sub_mode: z.string(),
   level: LevelSchema,
   pool_target: z.number().int().min(0),
   plan_accepted: z.boolean(),
@@ -238,7 +250,11 @@ export const ReviewQuestionRequestSchema = z.object({
 export type ReviewQuestionRequest = z.infer<typeof ReviewQuestionRequestSchema>;
 
 // POST /api/admin/content/pool/confirm
-export const ConfirmPoolRequestSchema = z.object({ module: ModuleSchema, level: LevelSchema });
+export const ConfirmPoolRequestSchema = z.object({
+  module: ModuleSchema,
+  sub_mode: z.string(),
+  level: LevelSchema,
+});
 export const ConfirmPoolResponseSchema = z.object({ confirmed: z.number().int().min(0) });
 export type ConfirmPoolResponse = z.infer<typeof ConfirmPoolResponseSchema>;
 

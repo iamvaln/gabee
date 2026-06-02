@@ -9,8 +9,9 @@ export const GET = route(async (req) => {
   const url = new URL(req.url);
   const module = ModuleSchema.safeParse(url.searchParams.get('module'));
   const level = LevelSchema.safeParse(Number(url.searchParams.get('level')));
-  if (!module.success || !level.success) {
-    throw new HttpError(400, 'invalid_target', 'Provide a valid ?module= and ?level=');
+  const subMode = url.searchParams.get('sub_mode');
+  if (!module.success || !level.success || !subMode) {
+    throw new HttpError(400, 'invalid_target', 'Provide a valid ?module=, ?sub_mode= and ?level=');
   }
-  return json(await getPool(module.data, level.data));
+  return json(await getPool(module.data, subMode, level.data));
 });

@@ -8,8 +8,8 @@ export const runtime = 'nodejs';
 
 export const POST = route(async (req) => {
   const session = await requireAdmin(req);
-  const { module, level } = await readJson(req, ConfirmPoolRequestSchema);
-  const result = await confirmPool(module, level);
+  const { module, sub_mode, level } = await readJson(req, ConfirmPoolRequestSchema);
+  const result = await confirmPool(module, sub_mode, level);
 
   const account = await prisma.parentAccount.findUnique({
     where: { id: session.parentId },
@@ -20,7 +20,7 @@ export const POST = route(async (req) => {
     actorRole: account?.role ?? 'admin',
     kind: 'pool.confirm',
     targetKind: 'content_pool',
-    targetId: `${module}:${level}`,
+    targetId: `${module}:${sub_mode}:${level}`,
     diff: { confirmed: result.confirmed },
   });
 

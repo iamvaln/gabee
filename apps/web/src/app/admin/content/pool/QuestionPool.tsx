@@ -35,12 +35,15 @@ export function QuestionPool({
   data,
   target,
   subModes,
+  subMode,
 }: {
   lang: Language;
   data: PoolResponse;
   target: number;
   /** Sub-modes available for this module, server-fetched on the page. */
   subModes: SubModeDef[];
+  /** The sub-mode this pool is scoped to (short key) — pins generation. */
+  subMode: string;
 }) {
   const L = lang === 'fr';
   const router = useRouter();
@@ -89,7 +92,7 @@ export function QuestionPool({
       const res = await fetch('/api/admin/content/pool/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ module: data.module, level: data.level }),
+        body: JSON.stringify({ module: data.module, sub_mode: data.sub_mode, level: data.level }),
       });
       if (!res.ok) throw new Error((await res.json())?.error?.message ?? 'Confirm failed');
       router.refresh();
@@ -224,6 +227,7 @@ export function QuestionPool({
           level={data.level}
           module={data.module}
           subModes={subModes}
+          subMode={subMode}
           onClose={() => setModal(false)}
           onDone={() => {
             setModal(false);
@@ -316,6 +320,7 @@ function GenModal({
   module,
   level,
   subModes,
+  subMode,
   onClose,
   onDone,
 }: {
@@ -324,6 +329,8 @@ function GenModal({
   module: Module;
   level: number;
   subModes: SubModeDef[];
+  /** The sub-mode this pool/generation is pinned to (short key). */
+  subMode: string;
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -332,8 +339,6 @@ function GenModal({
   const [difficulty, setDifficulty] = useState<'easier' | 'as_planned' | 'harder'>('as_planned');
   const [themes, setThemes] = useState('');
   const [instructions, setInstructions] = useState('');
-  // Empty string = AI varies across sub-modes (or uses the module's default).
-  const [subMode, setSubMode] = useState<string>('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -351,7 +356,7 @@ function GenModal({
           difficulty_hint: difficulty,
           themes: themes || undefined,
           instructions: instructions || undefined,
-          sub_mode: subMode || undefined,
+          sub_mode: subMode,
         }),
       });
       if (!res.ok) throw new Error((await res.json())?.error?.message ?? 'Generation failed');
@@ -433,30 +438,21 @@ function GenModal({
               ))}
             </div>
           </div>
-          {subModes.length > 0 && (
-            <div>
-              <div className="field-label">{L ? 'Sous-mode' : 'Sub-mode'}</div>
-              <select
-                className="inp"
-                value={subMode}
-                onChange={(e) => setSubMode(e.target.value)}
-              >
-                <option value="">
-                  {L ? '— laisser l’IA varier —' : '— let the AI vary —'}
-                </option>
-                {subModes.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name[lang]} ({s.key})
-                  </option>
-                ))}
-              </select>
-              <p className="help">
-                {L
-                  ? 'optionnel — épingle chaque question du lot à ce sous-mode'
-                  : 'optional — pins every question in the batch to this sub-mode'}
-              </p>
-            </div>
-          )}
+          <div>
+            <div className="field-label">{L ? 'Sous-mode' : 'Sub-mode'}</div>
+            {/* Pinned: the pool is scoped to one sub-mode, so the whole batch
+                targets it (no "let the AI vary" — that would mix sub-modes). */}
+            <input
+              className="inp"
+              readOnly
+              value={subModes.find((s) => s.key === subMode)?.name[lang] ?? subMode}
+            />
+            <p className="help">
+              {L
+                ? 'Tout le lot est généré pour ce sous-mode.'
+                : 'The whole batch is generated for this sub-mode.'}
+            </p>
+          </div>
           <div>
             <div className="field-label">{L ? 'Thèmes à favoriser / éviter' : 'Themes to favor / avoid'}</div>
             <input

@@ -13,14 +13,15 @@ export const dynamic = 'force-dynamic';
 export default async function PoolPage({
   searchParams,
 }: {
-  searchParams: Promise<{ module?: string; level?: string }>;
+  searchParams: Promise<{ module?: string; sub_mode?: string; level?: string }>;
 }) {
   const lang: Language = (await cookies()).get('admin_lang')?.value === 'en' ? 'en' : 'fr';
   const sp = await searchParams;
   const module = ModuleSchema.safeParse(sp.module);
   const level = LevelSchema.safeParse(Number(sp.level));
+  const subMode = sp.sub_mode;
 
-  if (!module.success || !level.success) {
+  if (!module.success || !level.success || !subMode) {
     const L = lang === 'fr';
     return (
       <div className="page">
@@ -35,10 +36,10 @@ export default async function PoolPage({
   }
 
   const [data, { sub_modes }] = await Promise.all([
-    getPool(module.data, level.data),
+    getPool(module.data, subMode, level.data),
     listSubModes(module.data),
   ]);
   return (
-    <QuestionPool lang={lang} data={data} target={POOL_TARGET} subModes={sub_modes} />
+    <QuestionPool lang={lang} data={data} target={POOL_TARGET} subModes={sub_modes} subMode={subMode} />
   );
 }

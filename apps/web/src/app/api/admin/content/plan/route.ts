@@ -4,20 +4,25 @@ import { getPlan, savePlan } from '@/lib/server/services/admin-content';
 
 export const runtime = 'nodejs';
 
-function parseTarget(req: Request): { module: ReturnType<typeof ModuleSchema.parse>; level: number } {
+function parseTarget(req: Request): {
+  module: ReturnType<typeof ModuleSchema.parse>;
+  subMode: string;
+  level: number;
+} {
   const url = new URL(req.url);
   const module = ModuleSchema.safeParse(url.searchParams.get('module'));
   const level = LevelSchema.safeParse(Number(url.searchParams.get('level')));
-  if (!module.success || !level.success) {
-    throw new HttpError(400, 'invalid_target', 'Provide a valid ?module= and ?level=');
+  const subMode = url.searchParams.get('sub_mode');
+  if (!module.success || !level.success || !subMode) {
+    throw new HttpError(400, 'invalid_target', 'Provide a valid ?module=, ?sub_mode= and ?level=');
   }
-  return { module: module.data, level: level.data };
+  return { module: module.data, subMode, level: level.data };
 }
 
 export const GET = route(async (req) => {
   await requireAdmin(req);
-  const { module, level } = parseTarget(req);
-  return json(await getPlan(module, level));
+  const { module, subMode, level } = parseTarget(req);
+  return json(await getPlan(module, subMode, level));
 });
 
 export const PUT = route(async (req) => {

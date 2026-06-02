@@ -65,13 +65,13 @@ export default async function ContentMatrixPage() {
           </thead>
           <tbody>
             {matrix.rows.map((row) => (
-              <tr key={row.module}>
+              <tr key={`${row.module}:${row.sub_mode}`}>
                 <td className="mod-c">
                   <div className="matrix-mod">
                     <ModuleDot id={row.module} size={11} />
                     <div className="col">
                       <span className="mname">{row.name[lang]}</span>
-                      <span className="mslug">{row.slug}</span>
+                      <span className="mslug">{row.sub_mode_name[lang]}</span>
                     </div>
                   </div>
                 </td>
@@ -81,16 +81,17 @@ export default async function ContentMatrixPage() {
                   const planClass =
                     cell.plan_status === 'ai_draft' ? 'draft' : cell.plan_status;
                   // Accepted plan → jump to pool; otherwise → plan editor.
+                  const qs = `module=${row.module}&sub_mode=${encodeURIComponent(row.sub_mode)}&level=${cell.level}`;
                   const href =
                     cell.plan_status === 'accepted'
-                      ? `/admin/content/pool?module=${row.module}&level=${cell.level}`
-                      : `/admin/content/plan?module=${row.module}&level=${cell.level}`;
+                      ? `/admin/content/pool?${qs}`
+                      : `/admin/content/plan?${qs}`;
                   return (
                     <td key={cell.level} className="cell">
                       <Link
                         href={href}
                         className={'mcell ' + (full ? 'full' : partial ? 'partial' : 'empty-pool')}
-                        title={`${row.name[lang]} · ${L ? 'niveau' : 'level'} ${cell.level}`}
+                        title={`${row.name[lang]} · ${row.sub_mode_name[lang]} · ${L ? 'niveau' : 'level'} ${cell.level}`}
                       >
                         <span className="pips">
                           <span className={'pip plan-' + planClass} />

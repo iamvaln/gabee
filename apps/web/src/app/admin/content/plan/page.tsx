@@ -11,14 +11,15 @@ export const dynamic = 'force-dynamic';
 export default async function PlanPage({
   searchParams,
 }: {
-  searchParams: Promise<{ module?: string; level?: string }>;
+  searchParams: Promise<{ module?: string; sub_mode?: string; level?: string }>;
 }) {
   const lang: Language = (await cookies()).get('admin_lang')?.value === 'en' ? 'en' : 'fr';
   const sp = await searchParams;
   const module = ModuleSchema.safeParse(sp.module);
   const level = LevelSchema.safeParse(Number(sp.level));
+  const subMode = sp.sub_mode;
 
-  if (!module.success || !level.success) {
+  if (!module.success || !level.success || !subMode) {
     const L = lang === 'fr';
     return (
       <div className="page">
@@ -32,6 +33,6 @@ export default async function PlanPage({
     );
   }
 
-  const data = await getPlan(module.data, level.data);
+  const data = await getPlan(module.data, subMode, level.data);
   return <PlanEditor lang={lang} data={data} />;
 }

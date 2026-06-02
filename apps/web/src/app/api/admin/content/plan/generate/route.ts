@@ -17,6 +17,7 @@ export const runtime = 'nodejs';
  */
 export async function POST(req: NextRequest): Promise<Response> {
   let module: GeneratePlanRequest['module'];
+  let subMode: string;
   let level: GeneratePlanRequest['level'];
   let actorId: string;
   try {
@@ -24,6 +25,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     actorId = session.parentId;
     const body = await readJson(req, GeneratePlanRequestSchema);
     module = body.module;
+    subMode = body.sub_mode;
     level = body.level;
     // Fail before opening the stream when the key is absent so the UI gets a clean 503.
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -34,7 +36,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     return errorResponse(new HttpError(500, 'internal_error', 'Something went wrong'));
   }
 
-  const baseInput = await planStreamInput(module, level, actorId);
+  const baseInput = await planStreamInput(module, subMode, level, actorId);
   const provider = getAiProvider();
   const encoder = new TextEncoder();
 
@@ -52,9 +54,9 @@ export async function POST(req: NextRequest): Promise<Response> {
         }
         // Persist the parsed draft once the stream completes.
         const draft = provider.parsePlan(full);
-        await saveAiDraft(module, level, draft, {
+        await saveAiDraft(module, subMode, level, draft, {
           provider: 'anthropic',
-          model: 'claude-opus-4-7',
+          model: 'claude-opus-4-8',
           tokens: usage.inputTokens + usage.outputTokens,
         });
       } catch (err) {

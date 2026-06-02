@@ -69,6 +69,7 @@ export function PlanEditor({ lang, data }: { lang: Language; data: PlanResponse 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           module: data.module,
+          sub_mode: data.sub_mode,
           level: data.level,
           scope: draft.scope,
           pedagogical_objectives: draft.objectives,
@@ -94,7 +95,7 @@ export function PlanEditor({ lang, data }: { lang: Language; data: PlanResponse 
       const res = await fetch('/api/admin/content/plan/accept', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ module: data.module, level: data.level }),
+        body: JSON.stringify({ module: data.module, sub_mode: data.sub_mode, level: data.level }),
       });
       if (!res.ok) throw new Error((await res.json())?.error?.message ?? 'Accept failed');
       setStatus('accepted');
@@ -118,7 +119,7 @@ export function PlanEditor({ lang, data }: { lang: Language; data: PlanResponse 
       const res = await fetch('/api/admin/content/plan/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ module: data.module, level: data.level }),
+        body: JSON.stringify({ module: data.module, sub_mode: data.sub_mode, level: data.level }),
         signal: ctrl.signal,
       });
       if (!res.ok || !res.body) {
@@ -172,7 +173,7 @@ export function PlanEditor({ lang, data }: { lang: Language; data: PlanResponse 
   return (
     <div className="page">
       <PageHead
-        title={`${moduleName} · ${L ? 'Niveau' : 'Level'} ${data.level}`}
+        title={`${moduleName} · ${data.sub_mode} · ${L ? 'Niveau' : 'Level'} ${data.level}`}
         sub={
           L
             ? 'Éditeur de plan — portée, objectifs pédagogiques et critères de validation, bilingue (parité exigée).'
@@ -230,7 +231,7 @@ export function PlanEditor({ lang, data }: { lang: Language; data: PlanResponse 
           <div className="col">
             <span className="ai-msg">{L ? 'Gabee rédige le plan…' : 'Gabee is drafting the plan…'}</span>
             <span className="ai-sub">
-              {L ? 'Contexte : objectifs des niveaux précédents · claude-opus-4-7' : 'Context: previous-level objectives · claude-opus-4-7'}
+              {L ? 'Contexte : objectifs des niveaux précédents · claude-opus-4-8' : 'Context: previous-level objectives · claude-opus-4-8'}
             </span>
           </div>
           <button className="btn ghost sm" onClick={stopGenerate}>

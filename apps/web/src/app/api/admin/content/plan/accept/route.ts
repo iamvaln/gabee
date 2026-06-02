@@ -9,8 +9,8 @@ export const runtime = 'nodejs';
 // Reuses the {module, level} trigger shape from GeneratePlanRequest.
 export const POST = route(async (req) => {
   const session = await requireAdmin(req);
-  const { module, level } = await readJson(req, GeneratePlanRequestSchema);
-  const plan = await acceptPlan(module, level, session.parentId);
+  const { module, sub_mode, level } = await readJson(req, GeneratePlanRequestSchema);
+  const plan = await acceptPlan(module, sub_mode, level, session.parentId);
 
   const account = await prisma.parentAccount.findUnique({
     where: { id: session.parentId },
@@ -22,7 +22,7 @@ export const POST = route(async (req) => {
     kind: 'plan.accept',
     targetKind: 'content_plan',
     targetId: plan.id,
-    diff: { module, level, status: 'accepted' },
+    diff: { module, sub_mode, level, status: 'accepted' },
   });
 
   return json({ plan });

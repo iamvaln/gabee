@@ -65,6 +65,7 @@ function normalizeSubModeForPersist(module: Module, raw: string | undefined): st
 type PlanRow = {
   id: string;
   moduleId: string;
+  subMode: string;
   level: number;
   scope: unknown;
   pedagogicalObjectives: unknown;
@@ -89,6 +90,7 @@ function mapPlan(row: PlanRow): ContentPlan {
   return ContentPlanSchema.parse({
     id: row.id,
     module: row.moduleId,
+    sub_mode: row.subMode,
     level: row.level,
     scope: asBilingual(row.scope),
     pedagogical_objectives: asBilingualArray(row.pedagogicalObjectives),
@@ -176,38 +178,53 @@ function tryMapAdminQuestion(row: QuestionRow): AdminQuestion | null {
 export async function getContentMatrix(): Promise<ContentMatrixResponse> {
   const curriculumId = await getDefaultCurriculumId();
 
-  const [modules, plans, confirmedCounts] = await Promise.all([
+  const [modules, subModes, plans, confirmedCounts] = await Promise.all([
     prisma.moduleDef.findMany({ select: { id: true, slug: true, name: true } }),
+    prisma.subMode.findMany({
+      select: { module: true, key: true, name: true, displayOrder: true },
+      orderBy: { displayOrder: 'asc' },
+    }),
     prisma.contentPlan.findMany({
       where: { curriculumId },
-      select: { moduleId: true, level: true, status: true },
+      select: { moduleId: true, subMode: true, level: true, status: true },
     }),
     prisma.question.groupBy({
-      by: ['module', 'level'],
+      by: ['module', 'subMode', 'level'],
       where: { curriculumId, status: 'confirmed' },
       _count: { _all: true },
     }),
   ]);
 
-  const planByKey = new Map(plans.map((p) => [`${p.moduleId}:${p.level}`, p.status]));
+  const planByKey = new Map(plans.map((p) => [`${p.moduleId}:${p.subMode}:${p.level}`, p.status]));
   const confirmedByKey = new Map(
-    confirmedCounts.map((c) => [`${c.module}:${c.level}`, c._count._all]),
+    confirmedCounts.map((c) => [`${c.module}:${c.subMode}:${c.level}`, c._count._all]),
   );
   const moduleByName = new Map(modules.map((m) => [m.id, m]));
+  // Sub-modes per module, in display order. Every module has ≥1 (translation = "default").
+  const subModesByModule = new Map<string, { key: string; name: unknown }[]>();
+  for (const sm of subModes) {
+    const arr = subModesByModule.get(sm.module) ?? [];
+    arr.push({ key: sm.key, name: sm.name });
+    subModesByModule.set(sm.module, arr);
+  }
 
-  const rows = MODULE_ORDER.map((module) => {
+  // One row per (module, sub_mode) — mirrors the kid app's module → sub-mode → levels.
+  const rows = MODULE_ORDER.flatMap((module) => {
     const def = moduleByName.get(module);
-    return {
+    const sms = subModesByModule.get(module) ?? [{ key: 'default', name: { fr: 'Défaut', en: 'Default' } }];
+    return sms.map((sm) => ({
       module,
       name: asBilingual(def?.name),
       slug: def?.slug ?? module,
+      sub_mode: sm.key,
+      sub_mode_name: asBilingual(sm.name),
       cells: LEVELS.map((level) => ({
         level,
-        plan_status: planByKey.get(`${module}:${level}`) ?? 'pending',
-        pool_confirmed: confirmedByKey.get(`${module}:${level}`) ?? 0,
+        plan_status: planByKey.get(`${module}:${sm.key}:${level}`) ?? 'pending',
+        pool_confirmed: confirmedByKey.get(`${module}:${sm.key}:${level}`) ?? 0,
         pool_target: POOL_TARGET,
       })),
-    };
+    }));
   });
 
   return ContentMatrixResponseSchema.parse({
@@ -219,17 +236,13 @@ export async function getContentMatrix(): Promise<ContentMatrixResponse> {
 
 // ─── C2 · Plan ───────────────────────────────────────────────────────────────
 
-/** Phase 2A note: ContentPlan is now keyed on (curriculum, module, sub_mode, level).
- *  Existing flows pre-Phase-2A didn't carry a sub_mode; we default to `"default"` so
- *  the single legacy row per (module, level) keeps resolving until per-sub-mode
- *  plans land in a follow-up phase. */
-const DEFAULT_PLAN_SUB_MODE = 'default';
-
+// ContentPlan is keyed on (curriculum, module, sub_mode, level) — one plan per
+// sub-mode, mirroring the kid app's module → sub-mode → levels structure.
 async function loadPlanRow(
   curriculumId: string,
   module: Module,
   level: Level,
-  subMode: string = DEFAULT_PLAN_SUB_MODE,
+  subMode: string,
 ) {
   return prisma.contentPlan.findUnique({
     where: {
@@ -238,11 +251,11 @@ async function loadPlanRow(
   });
 }
 
-/** Objectives from prior levels (continuity context); empty for level 1. */
-async function prevContext(curriculumId: string, module: Module, level: Level) {
+/** Objectives from prior levels OF THE SAME SUB-MODE (continuity context); empty for level 1. */
+async function prevContext(curriculumId: string, module: Module, subMode: string, level: Level) {
   if (level <= 1) return [];
   const rows = await prisma.contentPlan.findMany({
-    where: { curriculumId, moduleId: module, level: { lt: level } },
+    where: { curriculumId, moduleId: module, subMode, level: { lt: level } },
     orderBy: { level: 'desc' },
     select: { level: true, pedagogicalObjectives: true, status: true },
   });
@@ -252,24 +265,30 @@ async function prevContext(curriculumId: string, module: Module, level: Level) {
   }));
 }
 
-/** True when every previous level has an accepted plan (else editor is gated). */
-async function prereqsMet(curriculumId: string, module: Module, level: Level): Promise<boolean> {
+/** True when every previous level of THIS sub-mode has an accepted plan (else editor is gated). */
+async function prereqsMet(
+  curriculumId: string,
+  module: Module,
+  subMode: string,
+  level: Level,
+): Promise<boolean> {
   if (level <= 1) return true;
   const acceptedPriors = await prisma.contentPlan.count({
-    where: { curriculumId, moduleId: module, level: { lt: level }, status: 'accepted' },
+    where: { curriculumId, moduleId: module, subMode, level: { lt: level }, status: 'accepted' },
   });
   return acceptedPriors >= level - 1;
 }
 
-export async function getPlan(module: Module, level: Level): Promise<PlanResponse> {
+export async function getPlan(module: Module, subMode: string, level: Level): Promise<PlanResponse> {
   const curriculumId = await getDefaultCurriculumId();
   const [row, prev, prereqs] = await Promise.all([
-    loadPlanRow(curriculumId, module, level),
-    prevContext(curriculumId, module, level),
-    prereqsMet(curriculumId, module, level),
+    loadPlanRow(curriculumId, module, level, subMode),
+    prevContext(curriculumId, module, subMode, level),
+    prereqsMet(curriculumId, module, subMode, level),
   ]);
   return PlanResponseSchema.parse({
     module,
+    sub_mode: subMode,
     level,
     plan: row ? mapPlan(row) : null,
     prev_context: prev,
@@ -280,7 +299,7 @@ export async function getPlan(module: Module, level: Level): Promise<PlanRespons
 /** Upsert the editable plan fields (PUT). Does not change accepted status. */
 export async function savePlan(body: SavePlanRequest): Promise<ContentPlan> {
   const curriculumId = await getDefaultCurriculumId();
-  const existing = await loadPlanRow(curriculumId, body.module, body.level);
+  const existing = await loadPlanRow(curriculumId, body.module, body.level, body.sub_mode);
 
   const data = {
     scope: body.scope as Prisma.InputJsonValue,
@@ -294,14 +313,14 @@ export async function savePlan(body: SavePlanRequest): Promise<ContentPlan> {
       curriculumId_moduleId_subMode_level: {
         curriculumId,
         moduleId: body.module,
-        subMode: DEFAULT_PLAN_SUB_MODE,
+        subMode: body.sub_mode,
         level: body.level,
       },
     },
     create: {
       curriculumId,
       moduleId: body.module,
-      subMode: DEFAULT_PLAN_SUB_MODE,
+      subMode: body.sub_mode,
       level: body.level,
       // A manually-saved plan that wasn't an AI draft stays pending until accepted.
       status: existing?.status === 'accepted' ? 'accepted' : existing?.status ?? 'pending',
@@ -315,6 +334,7 @@ export async function savePlan(body: SavePlanRequest): Promise<ContentPlan> {
 /** Persist a streamed AI draft: writes parsed fields + ai_meta, status → ai_draft. */
 export async function saveAiDraft(
   module: Module,
+  subMode: string,
   level: Level,
   draft: { scope: BilingualText; pedagogical_objectives: BilingualText[]; validation_criteria: BilingualText },
   meta: { provider: string; model: string; tokens: number },
@@ -333,14 +353,14 @@ export async function saveAiDraft(
       curriculumId_moduleId_subMode_level: {
         curriculumId,
         moduleId: module,
-        subMode: DEFAULT_PLAN_SUB_MODE,
+        subMode,
         level,
       },
     },
     create: {
       curriculumId,
       moduleId: module,
-      subMode: DEFAULT_PLAN_SUB_MODE,
+      subMode,
       level,
       notes: null,
       ...data,
@@ -350,11 +370,11 @@ export async function saveAiDraft(
 }
 
 /** Build the AI streaming inputs for a level (module metadata + continuity). */
-export async function planStreamInput(module: Module, level: Level, actorId: string) {
+export async function planStreamInput(module: Module, subMode: string, level: Level, actorId: string) {
   const curriculumId = await getDefaultCurriculumId();
   const [def, prev] = await Promise.all([
     prisma.moduleDef.findUnique({ where: { id: module }, select: { name: true, characteristics: true } }),
-    prevContext(curriculumId, module, level),
+    prevContext(curriculumId, module, subMode, level),
   ]);
   return {
     module,
@@ -372,11 +392,12 @@ export async function planStreamInput(module: Module, level: Level, actorId: str
  */
 export async function acceptPlan(
   module: Module,
+  subMode: string,
   level: Level,
   actorId: string,
 ): Promise<ContentPlan> {
   const curriculumId = await getDefaultCurriculumId();
-  const row = await loadPlanRow(curriculumId, module, level);
+  const row = await loadPlanRow(curriculumId, module, level, subMode);
   if (!row) throw new HttpError(404, 'plan_not_found', 'No plan to accept for this level');
 
   const scope = asBilingual(row.scope);
@@ -404,7 +425,7 @@ export async function acceptPlan(
       curriculumId_moduleId_subMode_level: {
         curriculumId,
         moduleId: module,
-        subMode: DEFAULT_PLAN_SUB_MODE,
+        subMode,
         level,
       },
     },
@@ -415,12 +436,12 @@ export async function acceptPlan(
 
 // ─── C3/C4 · Pool ──────────────────────────────────────────────────────────
 
-export async function getPool(module: Module, level: Level): Promise<PoolResponse> {
+export async function getPool(module: Module, subMode: string, level: Level): Promise<PoolResponse> {
   const curriculumId = await getDefaultCurriculumId();
   const [planRow, questionRows] = await Promise.all([
-    loadPlanRow(curriculumId, module, level),
+    loadPlanRow(curriculumId, module, level, subMode),
     prisma.question.findMany({
-      where: { curriculumId, module, level, status: { in: ['candidate', 'confirmed'] } },
+      where: { curriculumId, module, subMode, level, status: { in: ['candidate', 'confirmed'] } },
       orderBy: [{ status: 'asc' }, { createdAt: 'asc' }],
     }),
   ]);
@@ -436,6 +457,7 @@ export async function getPool(module: Module, level: Level): Promise<PoolRespons
 
   return PoolResponseSchema.parse({
     module,
+    sub_mode: subMode,
     level,
     pool_target: POOL_TARGET,
     plan_accepted: planRow?.status === 'accepted',
@@ -455,8 +477,10 @@ export async function generateQuestions(
   actorId: string,
 ): Promise<PoolResponse> {
   const curriculumId = await getDefaultCurriculumId();
+  // Pin the batch to one sub-mode (short key) — plans + pools are per-sub-mode now.
+  const subMode = normalizeSubModeForPersist(body.module, body.sub_mode);
   const [planRow, def] = await Promise.all([
-    loadPlanRow(curriculumId, body.module, body.level),
+    loadPlanRow(curriculumId, body.module, body.level, subMode),
     prisma.moduleDef.findUnique({
       where: { id: body.module },
       select: { name: true, characteristics: true },
@@ -478,12 +502,12 @@ export async function generateQuestions(
     difficultyHint: body.difficulty_hint,
     themes: body.themes,
     instructions: body.instructions,
-    subMode: body.sub_mode,
+    subMode,
     actorId,
   });
 
-  await insertCandidates(curriculumId, body.module, body.level, result.questions);
-  return getPool(body.module, body.level);
+  await insertCandidates(curriculumId, body.module, subMode, body.level, result.questions);
+  return getPool(body.module, subMode, body.level);
 }
 
 function clampDifficulty(n: number): number {
@@ -493,6 +517,7 @@ function clampDifficulty(n: number): number {
 async function insertCandidates(
   curriculumId: string,
   module: Module,
+  subMode: string,
   level: Level,
   drafts: DraftedQuestion[],
 ): Promise<void> {
@@ -500,9 +525,9 @@ async function insertCandidates(
   // Sequence ids strictly above the highest existing AI suffix for this slot — using
   // count(*) instead leaves gaps after deletions, so new ids collide with surviving
   // rows and skipDuplicates silently drops the whole batch.
-  const prefix = `${module}-l${level}-l${POOL_LESSON}-ai-`;
+  const prefix = `${module}-${subMode}-l${level}-l${POOL_LESSON}-ai-`;
   const existingIds = await prisma.question.findMany({
-    where: { curriculumId, module, level, id: { startsWith: prefix } },
+    where: { curriculumId, module, subMode, level, id: { startsWith: prefix } },
     select: { id: true },
   });
   const maxN = existingIds.reduce((m, r) => {
@@ -516,10 +541,9 @@ async function insertCandidates(
       id: `${prefix}${String(maxN + i + 1).padStart(3, '0')}`,
       curriculumId,
       module,
-      // sub_mode is a free-form string in Phase 2A; normalise to the short key for
-      // Words (kid app still filters on `picture` etc.), fall back to the module
-      // default for non-Words modules so every row gets a slot.
-      subMode: normalizeSubModeForPersist(module, d.sub_mode),
+      // The batch is pinned to one sub-mode (plans/pools are per-sub-mode), so
+      // every generated row is tagged with it — the pool view filters on this key.
+      subMode,
       level,
       lesson: POOL_LESSON,
       theme: d.theme || 'general',
@@ -549,11 +573,12 @@ async function insertCandidates(
  */
 export async function confirmPool(
   module: Module,
+  subMode: string,
   level: Level,
 ): Promise<ConfirmPoolResponse> {
   const curriculumId = await getDefaultCurriculumId();
   const candidates = await prisma.question.findMany({
-    where: { curriculumId, module, level, status: 'candidate' },
+    where: { curriculumId, module, subMode, level, status: 'candidate' },
     orderBy: { createdAt: 'asc' },
   });
 
