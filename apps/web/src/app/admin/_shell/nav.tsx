@@ -190,6 +190,7 @@ const CRUMB_LABELS: Record<string, Bi> = {
   content: { fr: 'Contenu', en: 'Content' },
   plan: { fr: 'Plan', en: 'Plan' },
   pool: { fr: 'Pool', en: 'Pool' },
+  publish: { fr: 'Publication', en: 'Publish' },
   users: { fr: 'Utilisateurs', en: 'Users' },
   parents: { fr: 'Parents', en: 'Parents' },
   children: { fr: 'Enfants', en: 'Children' },
