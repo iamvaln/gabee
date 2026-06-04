@@ -373,6 +373,14 @@ function CandidateCard({
           <div className="cand-a">
             {L ? 'Réponse :' : 'Answer:'} <b>{showValue(c.answer, 'fr')}</b>
           </div>
+          {/* Hint surfacing — read-only for now; AI fills this from a single
+              gen call (Anthropic prompt §hint). Inline edit lands later if
+              the model produces weak nudges that need hand-tuning. */}
+          {c.hint != null && (
+            <div className="cand-hint" style={{ marginTop: 6, opacity: 0.85, fontSize: 13 }}>
+              💡 {showValue(c.hint, 'fr')}
+            </div>
+          )}
         </div>
         <div className="cand-lang">
           <div className="cl-head">
@@ -385,6 +393,11 @@ function CandidateCard({
           <div className="cand-a">
             {L ? 'Réponse :' : 'Answer:'} <b>{showValue(c.answer, 'en')}</b>
           </div>
+          {c.hint != null && (
+            <div className="cand-hint" style={{ marginTop: 6, opacity: 0.85, fontSize: 13 }}>
+              💡 {showValue(c.hint, 'en')}
+            </div>
+          )}
         </div>
       </div>
       <div className="cand-foot">

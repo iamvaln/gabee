@@ -9,7 +9,7 @@ import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { enqueueEvent, flushEvents } from '../lib/events';
 import { useStore } from '../store';
-import { shuffle } from '../lib/util';
+import { shuffle, displayValue } from '../lib/util';
 import { readLocalTrack, writeLocalTrack, CODE_BUILDING_BLOCKS_KEY } from './CodeFindPathSession';
 
 const TOTAL = 5;
@@ -413,10 +413,13 @@ export function CodeBuildingBlocksSession({
 
   const m = MODULES.find((x) => x.id === 'code')!;
   const beeExpr: BeeExpression = feedback === 'correct' ? 'correct' : feedback === 'wrong' ? 'encourage' : 'focus';
+  // On 'wrong', prefer the per-question authored hint (Code is non-MCQ but
+  // the bee coach still surfaces a clue). Falls back to the generic
+  // "réessaie !" line when no hint is authored.
   const coach = feedback === 'correct'
     ? (lang === 'fr' ? 'Bravo !' : 'Well done!')
     : feedback === 'wrong'
-      ? (lang === 'fr' ? 'Réessaie !' : 'Try again!')
+      ? (q?.hint ? `💡 ${displayValue(q.hint, lang)}` : (lang === 'fr' ? 'Réessaie !' : 'Try again!'))
       : (lang === 'fr' ? 'Programme Gabee avec des boucles' : 'Program Gabee with loops');
 
   if (isLoading || !session || !q || !puzzle) {

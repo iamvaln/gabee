@@ -197,9 +197,41 @@ function questionsSystemPrompt(input: GenerateQuestionsInput, registryHint: stri
       : 'Each question is language-AGNOSTIC: set "lang":null and provide prompt/answer as bare strings or numbers (no {fr,en}).',
     'Provide at least 2 plausible distractors per question where the type uses choices.',
     'difficulty is an integer 1-5. theme is a short kebab-case tag. objective_ref references one of the plan objectives (its 1-based index as a string) or null.',
+    // Hint authoring rules — one per question, mirrors the question\'s lang
+    // stance, never reveals the answer. Module-specific style guidance below.
+    'Every question MUST include a "hint" — a SINGLE short sentence (≤80 characters per language) that nudges the kid toward the answer WITHOUT revealing it.',
+    'The hint should evoke an associated idea, a concrete clue, or a simple step. It must NEVER restate the answer, the prompt, or any distractor verbatim.',
+    'Tone: warm, encouraging, addressed to a 6-8 year old (tutoie en français).',
+    bilingual
+      ? 'When "lang":"both", "hint" is bilingual {"fr","en"} with full parity.'
+      : 'When "lang":null, "hint" is a bare string.',
+    `Hint style for this module: ${hintStyleFor(input.module, input.subMode)}`,
     'Respond with ONLY a JSON array, no prose, no markdown fences. Each element:',
-    '{"type":"...","sub_mode":"picture|fill|build|read|null","lang":"both"|null,"prompt":...,"answer":...,"distractors":[...],"difficulty":1-5,"theme":"...","objective_ref":"1"|null,"concept_tags":["..."]}',
+    '{"type":"...","sub_mode":"picture|fill|build|read|null","lang":"both"|null,"prompt":...,"answer":...,"distractors":[...],"hint":...,"difficulty":1-5,"theme":"...","objective_ref":"1"|null,"concept_tags":["..."]}',
   ].join('\n');
+}
+
+// Module-specific hint guidance. Picked into the system prompt so the model
+// adopts the right register per mechanic. Sub-mode-aware where the mechanic
+// changes the kind of help that\'s useful (Numbers arithmetic vs geometry,
+// each Words sub-mode).
+function hintStyleFor(module: string, subMode: string | undefined): string {
+  const key = subMode?.includes('.') ? subMode.split('.').pop() ?? '' : subMode ?? '';
+  if (module === 'numbers') {
+    if (key === 'geometry') return 'Geometry — draw attention to a visible property of the shape ("Compte les côtés un par un" / "Look at the corners — count them"). Never name the shape.';
+    return 'Arithmetic — decompose the calculation or point to a landmark number ("Commence par 10 + 5, puis ajoute" / "Start with 10 + 5, then add the rest"). Never give the result.';
+  }
+  if (module === 'words') {
+    if (key === 'picture') return 'Words/picture — evoke the category or a characteristic of the depicted thing ("C\'est le roi de la jungle" / "It\'s the king of the jungle"). Never name the word.';
+    if (key === 'fill') return 'Words/fill — point at the GRAMMATICAL nature or sense of the missing word ("C\'est une action" / "It\'s an action word"). Never give the word.';
+    if (key === 'build') return 'Words/build — name what comes first or who acts ("Commence par qui fait l\'action" / "Start with who does the action").';
+    if (key === 'read') return 'Words/read — direct attention to the relevant part of the passage ("La réponse est dans la 2e phrase" / "The answer is in the second sentence"). Never quote it.';
+    return 'Words — give a category or grammatical clue. Never reveal the target word.';
+  }
+  if (module === 'keyboard') return 'Keyboard — locate the next key by row or finger ("Sur la rangée du milieu, main gauche" / "Middle row, left hand"). Never spell the answer.';
+  if (module === 'code') return 'Code — indicate the direction of the next step or the first block to place ("D\'abord à droite, puis vers le haut" / "First right, then up"). Never give the full sequence.';
+  if (module === 'translation') return 'Translation — evoke the root, a cognate, or context ("Comme « animal » en anglais" / "Same root as the French word"). Never give the translation.';
+  return 'Give a single helpful clue that nudges without revealing.';
 }
 
 /**
@@ -423,12 +455,19 @@ class AnthropicProvider implements AiProvider {
         distractors = coerced.distractors;
         config = coerced.config;
       }
+      // Hint is required in the prompt but the model occasionally drops it
+      // (especially under thinking-budget pressure). We pass it through
+      // verbatim when present — admins can edit it in the pool view — and
+      // leave it undefined when missing so the column stays NULL rather
+      // than getting filled with a brittle auto-generated fallback.
+      const hint: unknown = q.hint === null ? undefined : q.hint;
       return {
         type,
         lang: q.lang === 'both' ? 'both' : null,
         prompt,
         answer,
         distractors,
+        hint,
         difficulty: typeof q.difficulty === 'number' ? q.difficulty : 2,
         theme: q.theme ?? 'general',
         objective_ref: q.objective_ref ?? null,

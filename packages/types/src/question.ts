@@ -58,6 +58,13 @@ const QuestionRecordBaseSchema = z.object({
   answer: QuestionValueSchema,
   /** ≥ 2 plausible wrong answers where applicable (product §5). */
   distractors: z.array(DistractorSchema).default([]),
+  /**
+   * Optional hint surfaced to the kid after a wrong attempt — a short
+   * encouragement that nudges toward the answer WITHOUT revealing it. Same
+   * value shape as the prompt: bilingual `{ fr, en }` when `lang === 'both'`,
+   * bare string/number otherwise. Authoring norm is ≤80 characters per language.
+   */
+  hint: QuestionValueSchema.optional(),
   difficulty: DifficultySchema,
   concept_tags: z.array(z.string().min(1)).default([]),
   /** `null` = language-agnostic; `'both'` = language-dependent (FR+EN present). */
@@ -87,6 +94,15 @@ export const QuestionRecordSchema = QuestionRecordBaseSchema.refine(
   {
     error: "lang 'both' requires a bilingual { fr, en } prompt; lang null requires a bare prompt",
     path: ['prompt'],
+  },
+).refine(
+  // Hint, when present, must mirror the question's language stance: bilingual
+  // for `lang:'both'`, bare for `lang:null`. Keeps FR/EN parity at the schema
+  // level so a half-translated hint is rejected on insert, not at runtime.
+  (q) => q.hint === undefined || (q.lang === 'both' ? isBilingual(q.hint) : !isBilingual(q.hint)),
+  {
+    error: "lang 'both' requires a bilingual { fr, en } hint; lang null requires a bare hint",
+    path: ['hint'],
   },
 );
 export type QuestionRecord = z.infer<typeof QuestionRecordSchema>;

@@ -295,6 +295,10 @@ model Question {
   prompt       Json
   answer       Json
   distractors  Json           @default("[]")
+  // Short encouragement surfaced to the kid after a wrong attempt — bilingual
+  // {fr,en} for `lang:'both'` questions, bare for `lang:null`. See
+  // QuestionRecordSchema for the parity refinement.
+  hint         Json?
   difficulty   Int
   conceptTags  String[]       @default([]) @map("concept_tags")
   // null = language-agnostic; 'both' = language-dependent (FR+EN present).

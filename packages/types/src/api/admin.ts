@@ -199,6 +199,8 @@ export const AdminQuestionSchema = z.object({
   prompt: QuestionValueSchema,
   answer: QuestionValueSchema,
   distractors: z.array(DistractorSchema),
+  /** Optional hint surfaced to the kid after a wrong attempt — see QuestionRecord. */
+  hint: QuestionValueSchema.optional(),
   difficulty: DifficultySchema,
   lang: z.enum(['both']).nullable(),
   ratings: AdminQuestionRatingsSchema,

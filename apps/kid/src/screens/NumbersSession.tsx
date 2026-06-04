@@ -6,6 +6,7 @@ import { Bee, type BeeExpression } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { GeometryShape, shapeFromConfig, shapeFromLabel } from '../components/GeometryShape';
+import { HintLine } from '../components/HintLine';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { enqueueEvent, flushEvents } from '../lib/events';
@@ -308,7 +309,9 @@ export function NumbersSession({
           {feedback ? (
             <div className={`feedback-strip ${feedback === 'wrong' ? 'retry' : ''}`}>
               <Bee size={56} expression={feedback === 'correct' ? 'correct' : 'encourage'} wings />
-              <div style={{ flex: 1 }}>{feedback === 'correct' ? t('correctMsg') : t('tryAgainMsg')}</div>
+              <div style={{ flex: 1 }}>
+                <HintLine feedback={feedback} hint={q.hint} lang={lang} />
+              </div>
               <button className="btn" onClick={() => void next()}>
                 {feedback === 'correct' ? t('next') : t('retry')} <Icon name="arrow-right" />
               </button>

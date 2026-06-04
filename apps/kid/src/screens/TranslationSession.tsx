@@ -18,6 +18,7 @@ import { enqueueEvent, flushEvents } from '../lib/events';
 import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
+import { HintLine } from '../components/HintLine';
 
 const TOTAL = 7;
 
@@ -307,7 +308,7 @@ export function TranslationSession({
           {feedback ? (
             <div className={`feedback-strip ${feedback === 'wrong' ? 'retry' : ''}`}>
               <Bee size={56} expression={feedback === 'correct' ? 'correct' : 'encourage'} wings />
-              <div style={{ flex: 1 }}>{feedback === 'correct' ? t('correctMsg') : t('tryAgainMsg')}</div>
+              <div style={{ flex: 1 }}><HintLine feedback={feedback} hint={q.hint} lang={lang} /></div>
               <button className="btn" onClick={() => void next()}>
                 {feedback === 'correct' ? t('next') : t('retry')} <Icon name="arrow-right" />
               </button>

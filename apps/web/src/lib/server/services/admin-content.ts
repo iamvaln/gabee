@@ -114,6 +114,7 @@ type QuestionRow = {
   prompt: unknown;
   answer: unknown;
   distractors: unknown;
+  hint: unknown;
   difficulty: number;
   lang: string | null;
   ratings: unknown;
@@ -152,6 +153,7 @@ function mapAdminQuestion(row: QuestionRow): AdminQuestion {
     prompt: row.prompt,
     answer: row.answer,
     distractors: row.distractors,
+    hint: row.hint ?? undefined,
     difficulty: row.difficulty,
     lang: row.lang === 'both' ? 'both' : null,
     ratings,
@@ -556,6 +558,9 @@ async function insertCandidates(
       prompt: d.prompt as Prisma.InputJsonValue,
       answer: d.answer as Prisma.InputJsonValue,
       distractors: (d.distractors ?? []) as unknown as Prisma.InputJsonValue,
+      // Hint is optional in the schema; drop undefined so Prisma keeps the
+      // column as NULL rather than writing a JSON literal `null`.
+      hint: d.hint === undefined ? undefined : (d.hint as Prisma.InputJsonValue),
       difficulty: clampDifficulty(d.difficulty),
       conceptTags: d.concept_tags ?? [],
       lang: d.lang,

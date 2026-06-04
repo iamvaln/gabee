@@ -9,7 +9,7 @@ import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { enqueueEvent, flushEvents } from '../lib/events';
 import { useStore } from '../store';
-import { shuffle } from '../lib/util';
+import { shuffle, displayValue } from '../lib/util';
 
 const TOTAL = 5;
 
@@ -365,10 +365,14 @@ export function CodeFindPathSession({
 
   const m = MODULES.find((x) => x.id === 'code')!;
   const beeExpr: BeeExpression = feedback === 'correct' ? 'correct' : feedback === 'wrong' ? 'encourage' : 'focus';
+  // On 'wrong', prefer the per-question authored hint (Code is non-MCQ but
+  // the bee coach still surfaces a clue — direction of the next step, first
+  // block to place, etc.). Falls back to the generic "réessaie !" line when
+  // no hint is authored.
   const coach = feedback === 'correct'
     ? (lang === 'fr' ? 'Bravo !' : 'Well done!')
     : feedback === 'wrong'
-      ? (lang === 'fr' ? 'Réessaie !' : 'Try again!')
+      ? (q?.hint ? `💡 ${displayValue(q.hint, lang)}` : (lang === 'fr' ? 'Réessaie !' : 'Try again!'))
       : (lang === 'fr' ? 'Aide Gabee à trouver le chemin' : 'Help Gabee find the path');
 
   if (isLoading || !session || !q || !puzzle) {

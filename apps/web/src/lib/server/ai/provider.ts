@@ -74,6 +74,9 @@ export interface DraftedQuestion {
   prompt: unknown;
   answer: unknown;
   distractors: unknown[];
+  /** Short encouragement shown after a wrong attempt — nudges without
+   *  revealing. Bilingual {fr,en} when `lang === 'both'`, bare otherwise. */
+  hint?: unknown;
   difficulty: number;
   theme: string;
   objective_ref: string | null;

@@ -82,6 +82,7 @@ interface QuestionRow {
   prompt: unknown;
   answer: unknown;
   distractors: unknown;
+  hint: unknown;
   difficulty: number;
   conceptTags: string[];
   lang: string | null;
@@ -121,6 +122,7 @@ export function mapQuestion(row: QuestionRow): QuestionRecord {
     prompt: row.prompt,
     answer: row.answer,
     distractors: row.distractors,
+    hint: row.hint ?? undefined,
     difficulty: row.difficulty,
     concept_tags: row.conceptTags,
     lang: row.lang,
