@@ -8,7 +8,7 @@ import { useStore } from '../store';
 //  - find_path: arrange movement blocks (up/down/left/right) on a grid with obstacles
 //  - building_blocks: same engine + loop and conditional blocks
 // They do not mix within a single game and keep their progression independent.
-export type CodeSubMode = 'find_path' | 'building_blocks';
+export type CodeSubMode = 'find_path' | 'building_blocks' | 'draw';
 
 const SUB_MODES: { id: CodeSubMode; label: { fr: string; en: string }; sub: { fr: string; en: string }; icon: string }[] = [
   {
@@ -22,6 +22,12 @@ const SUB_MODES: { id: CodeSubMode; label: { fr: string; en: string }; sub: { fr
     label: { fr: 'Boucles et conditions', en: 'Loops and conditions' },
     sub: { fr: 'Programme avec des boucles', en: 'Program with loops' },
     icon: '🔁',
+  },
+  {
+    id: 'draw',
+    label: { fr: 'Tracé (démo)', en: 'Draw (demo)' },
+    sub: { fr: 'Programme Gabee pour dessiner', en: 'Program Gabee to draw' },
+    icon: '✏️',
   },
 ];
 
