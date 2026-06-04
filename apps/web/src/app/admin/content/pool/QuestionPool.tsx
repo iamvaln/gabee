@@ -156,7 +156,7 @@ export function QuestionPool({
           <AIcon name="lock" size={18} />
           <div>
             {L ? 'Le plan de ce niveau n’est pas encore accepté. ' : 'This level’s plan is not accepted yet. '}
-            <Link href={`/admin/content/plan?module=${data.module}&level=${data.level}`}>
+            <Link href={`/admin/content/plan?module=${data.module}&sub_mode=${encodeURIComponent(data.sub_mode)}&level=${data.level}`}>
               {L ? 'Acceptez le plan pour générer des questions.' : 'Accept the plan to generate questions.'}
             </Link>
           </div>
@@ -230,8 +230,11 @@ export function QuestionPool({
 
       {data.candidates.length > 0 && (
         <>
+          <div className="section-label mt16" style={{ marginBottom: 8 }}>
+            {L ? 'Candidats à évaluer' : 'Candidates to review'} · {data.candidates.length}
+          </div>
           <div
-            className="row gap8 mt16"
+            className="row gap8"
             style={{ flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}
           >
             <div className="row gap8" style={{ flexWrap: 'wrap', alignItems: 'center' }}>
