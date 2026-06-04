@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import type { LevelProgress } from '@gabee/types';
 import { Bee } from '../components/Bee';
 import { SkeletonLevelGrid } from '../components/Skeleton';
 import { Chrome } from '../components/Chrome';
@@ -9,6 +10,19 @@ import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
 import { lessonsForLevel, unitsForLevel, unitPassed } from '../lib/progression';
+import type { NumbersSubMode } from './NumbersHub';
+
+function levelsForSubMode(
+  track: { levels: LevelProgress[] } | undefined,
+  subMode: NumbersSubMode,
+): LevelProgress[] {
+  const t = track as unknown as {
+    bySubMode?: { arithmetic?: { levels?: LevelProgress[] }; geometry?: { levels?: LevelProgress[] } };
+    levels: LevelProgress[];
+  } | undefined;
+  if (t?.bySubMode?.[subMode]?.levels) return t.bySubMode[subMode]!.levels!;
+  return subMode === 'arithmetic' ? t?.levels ?? [] : [];
+}
 
 // A level's units: its configured lessons (gated in order), then a revision (if ≥ 2
 // lessons). The first unit is open; each next opens when the previous is passed.
@@ -17,26 +31,37 @@ export function NumbersLessonMap({
   onUnit,
   onHome,
   onBack,
+  subMode = 'arithmetic',
 }: {
   level: number;
   onUnit: (lesson: number, isRevision: boolean) => void;
   onHome: () => void;
   onBack: () => void;
+  subMode?: NumbersSubMode;
 }) {
   const { t } = useTranslation();
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
   const profile = useStore((s) => s.profile);
-  const levels = profile?.progress_by_module.numbers.levels ?? [];
+  const levels = levelsForSubMode(profile?.progress_by_module.numbers, subMode);
 
   const { data: bundle, isLoading } = useQuery({
     queryKey: ['bundle', 'numbers'],
     queryFn: () => api.getBundle('numbers'),
   });
 
+  const subModeQuestions = useMemo(() => {
+    if (!bundle) return [];
+    return bundle.questions.filter((q) =>
+      subMode === 'arithmetic'
+        ? q.sub_mode === 'arithmetic' || !q.sub_mode
+        : q.sub_mode === subMode,
+    );
+  }, [bundle, subMode]);
+
   const units = useMemo(
-    () => (bundle ? unitsForLevel(lessonsForLevel(bundle.questions, level)) : []),
-    [bundle, level],
+    () => unitsForLevel(lessonsForLevel(subModeQuestions, level)),
+    [subModeQuestions, level],
   );
 
   const m = MODULES.find((x) => x.id === 'numbers')!;

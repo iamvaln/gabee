@@ -12,6 +12,7 @@ import { SyncIndicator } from './components/SyncIndicator';
 import { Login } from './screens/Login';
 import { ProfileSelect } from './screens/ProfileSelect';
 import { Hub } from './screens/Hub';
+import { NumbersHub, type NumbersSubMode } from './screens/NumbersHub';
 import { NumbersLevelMap } from './screens/NumbersLevelMap';
 import { NumbersLessonMap } from './screens/NumbersLessonMap';
 import { NumbersSession } from './screens/NumbersSession';
@@ -75,11 +76,14 @@ interface PlayTarget {
 
 type Route =
   | { name: 'hub' }
-  // Numbers
-  | { name: 'levelmap' }
-  | { name: 'lessonmap'; level: number }
-  | ({ name: 'session'; trigger: 'new' | 'replay' } & PlayTarget)
-  | ({ name: 'summary'; score: number; total: number } & PlayTarget)
+  // Numbers sub-hub (Arithmetic + Geometry) — mirrors the Words/Keyboard/Code
+  // pattern. Legacy `levelmap`/`lessonmap`/`session`/`summary` routes remain
+  // for back-compat (deep links / cached state) and route into Arithmetic.
+  | { name: 'numbers_subhub' }
+  | { name: 'levelmap'; subMode?: NumbersSubMode }
+  | { name: 'lessonmap'; level: number; subMode?: NumbersSubMode }
+  | ({ name: 'session'; trigger: 'new' | 'replay'; subMode?: NumbersSubMode } & PlayTarget)
+  | ({ name: 'summary'; score: number; total: number; subMode?: NumbersSubMode } & PlayTarget)
   // Words sub-hub + 4 sub-modes (each: levelmap → lessonmap → session → summary)
   | { name: 'words_subhub' }
   | { name: 'words_picture_levelmap' }
@@ -172,17 +176,23 @@ export function App() {
   // The next play unit after (level, lesson) for a given module/sub-mode: the next unit
   // in the same level, else the first unit of the next configured level. Null when
   // there's nothing further. The bundle is filtered before so the same logic works for
-  // Numbers (no sub-mode) and Words sub-modes.
+  // Numbers (arithmetic/geometry) and Words sub-modes.
   function nextTarget(
     module: Module,
     level: number,
     lesson: number,
-    subMode?: 'picture' | 'fill' | 'build' | 'read',
+    subMode?: 'picture' | 'fill' | 'build' | 'read' | NumbersSubMode,
   ): PlayTarget | null {
     const bundle = queryClient.getQueryData<QuestionBundleResponse>(['bundle', module]);
     if (!bundle) return null;
     const questions = subMode
-      ? bundle.questions.filter((q) => q.sub_mode === subMode)
+      ? bundle.questions.filter((q) =>
+          // Numbers/arithmetic admits legacy rows without a sub_mode so the
+          // existing bundles keep flowing until they're explicitly re-tagged.
+          module === 'numbers' && subMode === 'arithmetic'
+            ? q.sub_mode === 'arithmetic' || !q.sub_mode
+            : q.sub_mode === subMode,
+        )
       : bundle.questions;
     const units = unitsForLevel(lessonsForLevel(questions, level));
     const idx = units.findIndex((u) => u.lesson === lesson);
@@ -362,7 +372,7 @@ export function App() {
   }, [route, profile, play]);
 
   function enterModule(m: Module) {
-    if (m === 'numbers') setRoute({ name: 'levelmap' });
+    if (m === 'numbers') setRoute({ name: 'numbers_subhub' });
     else if (m === 'words') setRoute({ name: 'words_subhub' });
     else if (m === 'translation') setRoute({ name: 'translation_levelmap' });
     else if (m === 'keyboard') setRoute({ name: 'keyboard_subhub' });
@@ -389,34 +399,51 @@ export function App() {
     screen = <ProfileSelect onPick={handlePick} />;
   } else {
     switch (route.name) {
-      case 'levelmap':
+      case 'numbers_subhub':
         screen = (
-          <NumbersLevelMap
-            onLevel={(level) => setRoute({ name: 'lessonmap', level })}
+          <NumbersHub
+            onSubMode={(sub) => setRoute({ name: 'levelmap', subMode: sub })}
             onHome={goHome}
             onBack={goHome}
           />
         );
         break;
-      case 'lessonmap':
+      case 'levelmap': {
+        const sm: NumbersSubMode = route.subMode ?? 'arithmetic';
         screen = (
-          <NumbersLessonMap
-            level={route.level}
-            onUnit={(lesson, isRevision) =>
-              setRoute({ name: 'session', level: route.level, lesson, isRevision, trigger: 'new' })
-            }
+          <NumbersLevelMap
+            subMode={sm}
+            onLevel={(level) => setRoute({ name: 'lessonmap', level, subMode: sm })}
             onHome={goHome}
-            onBack={() => setRoute({ name: 'levelmap' })}
+            onBack={() => setRoute({ name: 'numbers_subhub' })}
           />
         );
         break;
-      case 'session':
+      }
+      case 'lessonmap': {
+        const sm: NumbersSubMode = route.subMode ?? 'arithmetic';
+        screen = (
+          <NumbersLessonMap
+            level={route.level}
+            subMode={sm}
+            onUnit={(lesson, isRevision) =>
+              setRoute({ name: 'session', level: route.level, lesson, isRevision, trigger: 'new', subMode: sm })
+            }
+            onHome={goHome}
+            onBack={() => setRoute({ name: 'levelmap', subMode: sm })}
+          />
+        );
+        break;
+      }
+      case 'session': {
+        const sm: NumbersSubMode = route.subMode ?? 'arithmetic';
         screen = (
           <NumbersSession
             level={route.level}
             lesson={route.lesson}
             isRevision={route.isRevision}
             trigger={route.trigger}
+            subMode={sm}
             onDone={(score, total) =>
               setRoute({
                 name: 'summary',
@@ -425,15 +452,18 @@ export function App() {
                 isRevision: route.isRevision,
                 score,
                 total,
+                subMode: sm,
               })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'lessonmap', level: route.level })}
+            onBack={() => setRoute({ name: 'lessonmap', level: route.level, subMode: sm })}
           />
         );
         break;
+      }
       case 'summary': {
-        const next = nextTarget('numbers', route.level, route.lesson);
+        const sm: NumbersSubMode = route.subMode ?? 'arithmetic';
+        const next = nextTarget('numbers', route.level, route.lesson, sm);
         screen = (
           <Summary
             score={route.score}
@@ -445,10 +475,11 @@ export function App() {
                 lesson: route.lesson,
                 isRevision: route.isRevision,
                 trigger: 'replay',
+                subMode: sm,
               })
             }
             onNext={
-              next ? () => setRoute({ name: 'session', ...next, trigger: 'new' }) : undefined
+              next ? () => setRoute({ name: 'session', ...next, trigger: 'new', subMode: sm }) : undefined
             }
             onHome={goHome}
           />

@@ -93,16 +93,16 @@ interface QuestionRow {
 }
 
 /**
- * Phase 2A compatibility shim: the kid PWA still filters Words questions by the
- * legacy short key (`'picture' | 'fill' | 'build' | 'read'`), but stored values
- * can be either the dotted registry id (`words.picture`) or the short key. For
- * Words rows we emit only the part after the dot so the kid app keeps matching.
- * Non-Words modules don't drive kid-side filters yet; we still emit whatever's
- * stored (short key or dotted id) so admin tooling sees the truth.
+ * Sub-mode compatibility shim. Stored values can be either the registry dotted
+ * id (`words.picture`, `numbers.geometry`) or the legacy short key
+ * (`picture`, `geometry`). The kid PWA filters by the short key for every
+ * sub-moded module (Words, Numbers, Keyboard, Code), so we always strip the
+ * `<module>.` prefix on the way out. A literal `default` (no sub-mode) maps
+ * to `undefined` so the kid bundle treats it as "the whole module".
  */
-function compatSubModeForKid(module: string, subMode: string): string | undefined {
+function compatSubModeForKid(_module: string, subMode: string): string | undefined {
   if (!subMode || subMode === 'default') return undefined;
-  if (module === 'words' && subMode.includes('.')) {
+  if (subMode.includes('.')) {
     return subMode.split('.').pop() ?? subMode;
   }
   return subMode;

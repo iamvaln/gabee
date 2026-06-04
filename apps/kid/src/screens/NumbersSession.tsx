@@ -5,12 +5,14 @@ import type { QuestionValue, LevelProgress, LessonProgress } from '@gabee/types'
 import { Bee, type BeeExpression } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
+import { GeometryShape, shapeFromConfig } from '../components/GeometryShape';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { enqueueEvent, flushEvents } from '../lib/events';
 import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
+import type { NumbersSubMode } from './NumbersHub';
 
 const TOTAL = 7;
 
@@ -22,6 +24,7 @@ export function NumbersSession({
   onDone,
   onHome,
   onBack,
+  subMode = 'arithmetic',
 }: {
   level: number;
   /** Real lesson number, or REVISION_LESSON (4) for the revision. */
@@ -31,6 +34,7 @@ export function NumbersSession({
   onDone: (score: number, total: number) => void;
   onHome: () => void;
   onBack: () => void;
+  subMode?: NumbersSubMode;
 }) {
   const { t } = useTranslation();
   const lang = useStore((s) => s.lang);
@@ -46,15 +50,19 @@ export function NumbersSession({
   });
 
   // The 7-question session. A lesson draws from its own pool; a revision samples across
-  // all of the level's lessons (product §4.0).
+  // all of the level's lessons (product §4.0). The pool is sub-mode-scoped so the
+  // arithmetic and geometry tracks never mix; legacy rows without a sub_mode count
+  // toward arithmetic for back-compat.
   const session = useMemo(() => {
     if (!bundle) return null;
+    const inSubMode = (q: typeof bundle.questions[number]) =>
+      subMode === 'arithmetic' ? q.sub_mode === 'arithmetic' || !q.sub_mode : q.sub_mode === subMode;
     const pool = bundle.questions.filter(
-      (q) => q.level === level && (isRevision || q.lesson === lesson),
+      (q) => inSubMode(q) && q.level === level && (isRevision || q.lesson === lesson),
     );
     if (pool.length === 0) return null;
     return { questions: shuffle(pool).slice(0, Math.min(TOTAL, pool.length)) };
-  }, [bundle, level, lesson, isRevision]);
+  }, [bundle, level, lesson, isRevision, subMode]);
 
   const [qIdx, setQIdx] = useState(0);
   const [score, setScore] = useState(0);
@@ -124,13 +132,25 @@ export function NumbersSession({
     );
   }
 
-  // Persist progress: total_stars += correct answers; the played lesson's best rating +
-  // plays; the level rollup (plays, recently-seen ids). Offline keeps the local update.
+  // Persist progress against the Numbers track. Carries a sub-mode breakdown
+  // via a `bySubMode` extension on the track object (mirrors the Keyboard
+  // pattern in lib/healthy-use neighbouring screens). Phase-1 ProgressByModule
+  // doesn't know about `bySubMode`, so the field round-trips locally but the
+  // server currently strips it on sync — acceptable until the schema is
+  // widened. Arithmetic also writes to the bare `track.levels` for back-compat
+  // with older builds that still read it directly.
   async function persistProgress(correctCount: number, ratingStars: number) {
     if (!profile || !session) return;
     const now = new Date().toISOString();
-    const track = profile.progress_by_module.numbers;
-    const levels = [...track.levels];
+    const track = profile.progress_by_module.numbers as unknown as {
+      highest_level: number;
+      levels: LevelProgress[];
+      bySubMode?: { arithmetic?: { levels: LevelProgress[] }; geometry?: { levels: LevelProgress[] } };
+    };
+
+    const subLevels =
+      track.bySubMode?.[subMode]?.levels ?? (subMode === 'arithmetic' ? track.levels : []);
+    const levels = [...subLevels];
     const idx = levels.findIndex((l) => l.level === level);
     const prevLevel: LevelProgress =
       idx >= 0
@@ -164,9 +184,21 @@ export function NumbersSession({
     };
     if (idx >= 0) levels[idx] = updatedLevel;
     else levels.push(updatedLevel);
+
+    const bySubMode = {
+      ...track.bySubMode,
+      [subMode]: { levels },
+    };
+    const nextTrack = {
+      highest_level: Math.max(track.highest_level, level),
+      // Bare `levels` mirrors arithmetic for back-compat; geometry lives only
+      // under bySubMode.
+      levels: subMode === 'arithmetic' ? levels : track.levels,
+      bySubMode,
+    };
     const progress_by_module = {
       ...profile.progress_by_module,
-      numbers: { highest_level: Math.max(track.highest_level, level), levels },
+      numbers: nextTrack as unknown as typeof profile.progress_by_module.numbers,
     };
     const total_stars = profile.total_stars + correctCount;
 
@@ -242,13 +274,36 @@ export function NumbersSession({
       <div className="session-body">
         <div className="session-stage">
           <div className="session-prompt">
-            {level === 1 ? (
-              <div style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', lineHeight: 1.3 }}>
-                {displayValue(q.prompt, lang)}
-              </div>
-            ) : (
-              <span className="big-number">{displayValue(q.prompt, lang)}</span>
-            )}
+            {(() => {
+              // Geometry questions carry a `config.shape` (square, triangle…)
+              // that we draw above the textual prompt — see GeometryShape.tsx.
+              // Authoring contract: any number question with a shape config
+              // gets the SVG; otherwise we keep the existing text-only layout.
+              const shapeCfg = subMode === 'geometry' ? shapeFromConfig(q.config) : null;
+              if (shapeCfg?.shape) {
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                    <GeometryShape
+                      shape={shapeCfg.shape}
+                      size={shapeCfg.size ?? 180}
+                      fill={shapeCfg.fill}
+                      stroke={shapeCfg.stroke}
+                    />
+                    <div style={{ fontSize: 22, fontWeight: 700, textAlign: 'center', lineHeight: 1.3 }}>
+                      {displayValue(q.prompt, lang)}
+                    </div>
+                  </div>
+                );
+              }
+              if (level === 1) {
+                return (
+                  <div style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', lineHeight: 1.3 }}>
+                    {displayValue(q.prompt, lang)}
+                  </div>
+                );
+              }
+              return <span className="big-number">{displayValue(q.prompt, lang)}</span>;
+            })()}
           </div>
           {feedback ? (
             <div className={`feedback-strip ${feedback === 'wrong' ? 'retry' : ''}`}>

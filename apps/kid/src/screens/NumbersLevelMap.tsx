@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import type { LevelProgress } from '@gabee/types';
 import { Bee } from '../components/Bee';
 import { SkeletonLevelGrid } from '../components/Skeleton';
 import { Chrome } from '../components/Chrome';
@@ -9,11 +10,13 @@ import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
 import { lessonsForLevel, unitsForLevel, levelComplete } from '../lib/progression';
+import type { NumbersSubMode } from './NumbersHub';
 
-// Curriculum concept per Numbers level (spec §4.1). Only the levels that are actually
-// CONFIGURED (have published content) are shown to the player; the rest are invisible
-// (admin-only). Labels fall back to "Level N" for any not listed.
-const NUMBERS_LEVEL_LABELS: Record<number, { fr: string; en: string }> = {
+// Curriculum concept per Numbers · Arithmetic level (spec §4.1). Only the levels
+// that are actually CONFIGURED (have published content) are shown to the player;
+// the rest are invisible (admin-only). Labels fall back to "Level N" for any not
+// listed.
+const ARITHMETIC_LEVEL_LABELS: Record<number, { fr: string; en: string }> = {
   1: { fr: 'Compter', en: 'Count' },
   2: { fr: 'Dizaines', en: 'Tens' },
   3: { fr: 'Centaines', en: 'Hundreds' },
@@ -26,14 +29,42 @@ const NUMBERS_LEVEL_LABELS: Record<number, { fr: string; en: string }> = {
   10: { fr: 'Multiplier', en: 'Multiply' },
 };
 
+// Numbers · Geometry curriculum scaffold.
+const GEOMETRY_LEVEL_LABELS: Record<number, { fr: string; en: string }> = {
+  1: { fr: 'Formes simples', en: 'Simple shapes' },
+  2: { fr: 'Côtés et sommets', en: 'Sides & vertices' },
+  3: { fr: 'Symétrie', en: 'Symmetry' },
+  4: { fr: 'Périmètre', en: 'Perimeter' },
+  5: { fr: 'Aires', en: 'Areas' },
+};
+
+// Sub-mode-aware progress lookup. Numbers progress is stored under a single
+// `progress_by_module.numbers` track; we segment locally by sub-mode via the
+// `bySubMode` JSON extension — same pattern as Keyboard / Code. Falls back to
+// the bare track for legacy data (arithmetic only).
+function levelsForSubMode(
+  track: { levels: LevelProgress[] } | undefined,
+  subMode: NumbersSubMode,
+): LevelProgress[] {
+  const t = track as unknown as {
+    bySubMode?: { arithmetic?: { levels?: LevelProgress[] }; geometry?: { levels?: LevelProgress[] } };
+    levels: LevelProgress[];
+  } | undefined;
+  if (t?.bySubMode?.[subMode]?.levels) return t.bySubMode[subMode]!.levels!;
+  // Legacy back-compat: bare `track.levels` represents arithmetic.
+  return subMode === 'arithmetic' ? t?.levels ?? [] : [];
+}
+
 export function NumbersLevelMap({
   onLevel,
   onHome,
   onBack,
+  subMode = 'arithmetic',
 }: {
   onLevel: (level: number) => void;
   onHome: () => void;
   onBack: () => void;
+  subMode?: NumbersSubMode;
 }) {
   const { t } = useTranslation();
   const lang = useStore((s) => s.lang);
@@ -45,20 +76,30 @@ export function NumbersLevelMap({
     queryFn: () => api.getBundle('numbers'),
   });
 
-  // Configured levels = the distinct levels present in the published content.
+  // Configured levels = the distinct levels present in the published content
+  // FOR THIS SUB-MODE. Legacy rows without a sub_mode count toward arithmetic
+  // so existing bundles keep working until they're re-tagged.
+  const subModeQuestions = useMemo(() => {
+    if (!bundle) return [];
+    return bundle.questions.filter((q) =>
+      subMode === 'arithmetic'
+        ? q.sub_mode === 'arithmetic' || !q.sub_mode
+        : q.sub_mode === subMode,
+    );
+  }, [bundle, subMode]);
   const configuredLevels = useMemo(
-    () => (bundle ? [...new Set(bundle.questions.map((q) => q.level))].sort((a, b) => a - b) : []),
-    [bundle],
+    () => [...new Set(subModeQuestions.map((q) => q.level))].sort((a, b) => a - b),
+    [subModeQuestions],
   );
 
-  const levels = profile?.progress_by_module.numbers.levels ?? [];
+  const levels = levelsForSubMode(profile?.progress_by_module.numbers, subMode);
   // A level is "complete" when all its units (lessons + revision) are passed.
   const isComplete = (lvl: number) => {
     if (!bundle) return false;
-    return levelComplete(levels, lvl, unitsForLevel(lessonsForLevel(bundle.questions, lvl)));
+    return levelComplete(levels, lvl, unitsForLevel(lessonsForLevel(subModeQuestions, lvl)));
   };
-  const labelFor = (lvl: number) =>
-    NUMBERS_LEVEL_LABELS[lvl]?.[lang] ?? `${t('level')} ${lvl}`;
+  const LABELS = subMode === 'geometry' ? GEOMETRY_LEVEL_LABELS : ARITHMETIC_LEVEL_LABELS;
+  const labelFor = (lvl: number) => LABELS[lvl]?.[lang] ?? `${t('level')} ${lvl}`;
   const m = MODULES.find((x) => x.id === 'numbers')!;
 
   return (
