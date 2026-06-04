@@ -20,6 +20,20 @@ export const QuestionValueSchema = z.union([z.string().min(1), z.number(), Bilin
 export type QuestionValue = z.infer<typeof QuestionValueSchema>;
 
 /**
+ * The `answer` field is type-dependent (Curriculum v0.1):
+ * - most types: a {@link QuestionValue} (number / string / bilingual `{fr,en}`)
+ * - `build-sentence`: the ordered words per language `{ fr: string[], en: string[] }`
+ * - `code-grid`: the reference program — an array of op objects `[{op,…}]`
+ */
+export const BilingualWordsSchema = z.object({
+  fr: z.array(z.string()),
+  en: z.array(z.string()),
+});
+export const CodeProgramSchema = z.array(z.record(z.string(), z.unknown()));
+export const AnswerSchema = z.union([QuestionValueSchema, BilingualWordsSchema, CodeProgramSchema]);
+export type Answer = z.infer<typeof AnswerSchema>;
+
+/**
  * A wrong-answer option. Either a bare value (as in Appendix B.4's `[35, 47, 27]`)
  * or a tagged object so the chosen distractor rolls up by error category (product §9.2).
  */
@@ -52,10 +66,12 @@ const QuestionRecordBaseSchema = z.object({
   level: LevelSchema,
   /** Lessons 1-3 own pools; the revision (4) samples across them and has no pool of its own. */
   lesson: LessonSchema,
+  /** Optional pointer to the curriculum objective this question targets (doc ref). */
+  objective_ref: z.string().min(1).optional(),
   theme: z.string().min(1),
   type: QuestionTypeSchema,
   prompt: QuestionValueSchema,
-  answer: QuestionValueSchema,
+  answer: AnswerSchema,
   /** ≥ 2 plausible wrong answers where applicable (product §5). */
   distractors: z.array(DistractorSchema).default([]),
   /**
@@ -90,18 +106,20 @@ const QuestionRecordBaseSchema = z.object({
  * than shipping half-translated (product §5; brief conventions).
  */
 export const QuestionRecordSchema = QuestionRecordBaseSchema.refine(
-  (q) => (q.lang === 'both' ? isBilingual(q.prompt) : !isBilingual(q.prompt)),
+  // Curriculum v0.1: `prompt` is an INSTRUCTION (the content lives in `config`),
+  // so it may be bilingual even for language-agnostic items (e.g. "Type what you
+  // see" while the target letter `e` is the same in both languages). We therefore
+  // only require bilingual parity when the content IS language-dependent
+  // (`lang:'both'`); `lang:null` accepts a bilingual instruction or a bare prompt.
+  (q) => (q.lang === 'both' ? isBilingual(q.prompt) : true),
   {
-    error: "lang 'both' requires a bilingual { fr, en } prompt; lang null requires a bare prompt",
+    error: "lang 'both' requires a bilingual { fr, en } prompt",
     path: ['prompt'],
   },
 ).refine(
-  // Hint, when present, must mirror the question's language stance: bilingual
-  // for `lang:'both'`, bare for `lang:null`. Keeps FR/EN parity at the schema
-  // level so a half-translated hint is rejected on insert, not at runtime.
-  (q) => q.hint === undefined || (q.lang === 'both' ? isBilingual(q.hint) : !isBilingual(q.hint)),
+  (q) => q.hint === undefined || (q.lang === 'both' ? isBilingual(q.hint) : true),
   {
-    error: "lang 'both' requires a bilingual { fr, en } hint; lang null requires a bare hint",
+    error: "lang 'both' requires a bilingual { fr, en } hint",
     path: ['hint'],
   },
 );

@@ -1,16 +1,34 @@
 import 'dotenv/config';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { QuestionRecordSchema, type QuestionRecord } from '@gabee/types';
 import { Prisma } from '../src/generated/prisma/client';
 import { createPrismaClient } from '../src/client';
-import { allContent } from './content';
 
 /**
- * Phase 1 seed. Content lives in `prisma/content/*` per module. Every question is
- * validated through `QuestionRecordSchema` first, so a language-dependent question
- * missing a language fails the seed rather than shipping half-translated (product §5).
- * Numbers is the fully-fleshed flagship (the worked template); the other modules ship
- * a curated bilingual starter, to be expanded via the Phase-2 AI pipeline.
+ * Curriculum v0.1 seed. Question pools live in `prisma/seed-data/<module>.json`
+ * (the generated dataset, 15 sub_mode keys + theme). Every question is validated
+ * through `QuestionRecordSchema` first. This seed is a full RESET: it wipes the
+ * questions table and re-inserts the dataset, so stale rows from older sub_mode
+ * keys don't linger. See docs/gabee-seed-schema-v1.md for the content contract.
  */
+
+const SEED_DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), 'seed-data');
+const SEED_FILES = ['numbers', 'words', 'keyboard', 'code', 'translation'] as const;
+
+/** Load the per-module question pools from `seed-data/*.json` ({ questions: [...] }). */
+function loadDataset(): unknown[] {
+  const all: unknown[] = [];
+  for (const f of SEED_FILES) {
+    const parsed = JSON.parse(readFileSync(join(SEED_DATA_DIR, `${f}.json`), 'utf8')) as
+      | { questions?: unknown[] }
+      | unknown[];
+    const questions = Array.isArray(parsed) ? parsed : (parsed.questions ?? []);
+    all.push(...questions);
+  }
+  return all;
+}
 
 // Stable id for the single MVP curriculum (admin spec §1 — Phase-3-ready).
 const DEFAULT_CURRICULUM_ID = '00000000-0000-4000-8000-0000000000c0';
@@ -76,6 +94,7 @@ function toQuestionData(q: QuestionRecord) {
     subMode,
     level: q.level,
     lesson: q.lesson,
+    objectiveRef: q.objective_ref ?? null,
     theme: q.theme,
     type: q.type,
     prompt: q.prompt as Prisma.InputJsonValue,
@@ -95,12 +114,15 @@ function toQuestionData(q: QuestionRecord) {
 async function main(): Promise<void> {
   const prisma = createPrismaClient();
   try {
-    // Fail fast on duplicate ids before touching the DB.
+    // Load + validate the dataset; fail fast on duplicate ids before touching the DB.
+    const dataset = loadDataset();
+    const questions = dataset.map((raw) => QuestionRecordSchema.parse(raw)); // bilingual parity etc.
     const ids = new Set<string>();
-    for (const q of allContent) {
-      if (ids.has(q.id)) throw new Error(`Duplicate question id in content: ${q.id}`);
+    for (const q of questions) {
+      if (ids.has(q.id)) throw new Error(`Duplicate question id in dataset: ${q.id}`);
       ids.add(q.id);
     }
+    console.log(`✓ Loaded + validated ${questions.length} questions from seed-data/.`);
 
     // Sub-mode registry (Phase 2A) — seeded first so anything that joins on
     // sub_modes (admin queries, AI provider) can rely on the rows being present.
@@ -136,15 +158,20 @@ async function main(): Promise<void> {
     }
     console.log(`✓ Seeded curriculum + ${MODULE_DEFS.length} modules.`);
 
+    // Full reset: drop all existing questions so stale rows (old sub_mode keys)
+    // don't linger. Safe — nothing FKs into Question except Curriculum (Cascade);
+    // events/attempts reference question ids as plain strings.
+    const deleted = await prisma.question.deleteMany({});
+    console.log(`✓ Wiped ${deleted.count} existing questions.`);
+
     const byModule: Record<string, number> = {};
-    for (const raw of allContent) {
-      const q = QuestionRecordSchema.parse(raw); // validates + enforces bilingual parity
+    for (const q of questions) {
       const data = toQuestionData(q);
-      await prisma.question.upsert({ where: { id: q.id }, create: data, update: data });
+      await prisma.question.create({ data });
       byModule[q.module] = (byModule[q.module] ?? 0) + 1;
     }
 
-    console.log(`✓ Seeded ${allContent.length} questions:`);
+    console.log(`✓ Seeded ${questions.length} questions:`);
     for (const [module, count] of Object.entries(byModule).sort()) {
       console.log(`  ${module.padEnd(12)} ${count}`);
     }
