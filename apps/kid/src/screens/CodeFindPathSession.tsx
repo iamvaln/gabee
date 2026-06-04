@@ -137,6 +137,7 @@ export function CodeFindPathSession({
   const [beePos, setBeePos] = useState<Cell>({ x: 0, y: 0 });
   const [goalsHit, setGoalsHit] = useState<Cell[]>([]);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [overshot, setOvershot] = useState(false);
   const [score, setScore] = useState(0);
   const [attemptNum, setAttemptNum] = useState(1);
 
@@ -194,6 +195,7 @@ export function CodeFindPathSession({
     setBeePos(puzzle.start);
     setGoalsHit([]);
     setFeedback(null);
+    setOvershot(false);
     setAttemptNum(1);
     setRunning(false);
     levelStartRef.current = Date.now();
@@ -295,8 +297,15 @@ export function CodeFindPathSession({
         setGoalsHit([...hits]);
       }
     }
+    // Exact: the bee must FINISH on a goal — passing through and overshooting
+    // is a failure (the kid must program it to stop precisely on the star).
     const allHit = puzzle.goals.every((g) => hits.some((h) => eq(h, g)));
-    if (allHit) result = 'success';
+    const endedOnGoal = puzzle.goals.some((g) => eq(g, pos));
+    const solved = allHit && endedOnGoal;
+    // Touched every star but ran past the last one → tailored "stop on it" hint.
+    const overshot = allHit && !endedOnGoal;
+    setOvershot(overshot);
+    if (solved) result = 'success';
     void enqueueEvent(
       {
         name: 'code_run',
@@ -312,7 +321,7 @@ export function CodeFindPathSession({
       },
       ctx,
     );
-    if (allHit) {
+    if (solved) {
       void enqueueEvent(
         {
           name: 'code_level_solved',
@@ -349,6 +358,7 @@ export function CodeFindPathSession({
         setFeedback(null);
         setBeePos(puzzle.start);
         setGoalsHit([]);
+        setOvershot(false);
         setAttemptNum((n) => n + 1);
       }, 700);
     }
@@ -372,7 +382,9 @@ export function CodeFindPathSession({
   const coach = feedback === 'correct'
     ? (lang === 'fr' ? 'Bravo !' : 'Well done!')
     : feedback === 'wrong'
-      ? (q?.hint ? `💡 ${displayValue(q.hint, lang)}` : (lang === 'fr' ? 'Réessaie !' : 'Try again!'))
+      ? (overshot
+          ? (lang === 'fr' ? '💡 Tu as dépassé l’étoile — arrête-toi pile dessus !' : '💡 You passed the star — stop right on it!')
+          : q?.hint ? `💡 ${displayValue(q.hint, lang)}` : (lang === 'fr' ? 'Réessaie !' : 'Try again!'))
       : (lang === 'fr' ? 'Aide Gabee à trouver le chemin' : 'Help Gabee find the path');
 
   if (isLoading || !session || !q || !puzzle) {

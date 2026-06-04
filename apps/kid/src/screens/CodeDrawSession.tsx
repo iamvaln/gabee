@@ -179,11 +179,20 @@ export function CodeDrawSession({ onHome, onBack }: { onHome: () => void; onBack
       if (i >= states.length - 1) {
         if (timer.current) clearInterval(timer.current);
         setRunning(false);
-        const drawn = new Set<string>();
         const trail = states[states.length - 1]!.trail;
-        for (let k = 0; k < trail.length - 1; k++) drawn.add(segKey(trail[k]!, trail[k + 1]!));
-        const ok =
-          drawn.size === targetSegs.size && [...targetSegs].every((s) => drawn.has(s));
+        // Exact: every forward must lay down a BRAND-NEW target segment. Any
+        // off-shape move, any retrace of an already-drawn segment, any wasted
+        // forward (bumped the grid edge → no movement), or an incomplete shape
+        // is a failure — the program must trace the figure precisely, once.
+        const fwdCount = program.filter((b) => b === 'forward').length;
+        const drawn = new Set<string>();
+        let exact = fwdCount === trail.length - 1; // no no-op (wall-bump) forwards
+        for (let k = 0; exact && k < trail.length - 1; k++) {
+          const key = segKey(trail[k]!, trail[k + 1]!);
+          if (!targetSegs.has(key) || drawn.has(key)) { exact = false; break; }
+          drawn.add(key);
+        }
+        const ok = exact && drawn.size === targetSegs.size;
         setResult(ok ? 'ok' : 'fail');
       }
     }, 480);

@@ -142,6 +142,7 @@ export function CodeBuildingBlocksSession({
   const [beePos, setBeePos] = useState<Cell>({ x: 0, y: 0 });
   const [goalsHit, setGoalsHit] = useState<Cell[]>([]);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [overshot, setOvershot] = useState(false);
   const [score, setScore] = useState(0);
   // Active container: the program root (null), or a path into a nested loop/if body.
   // Path is an array of indices: [0] = first block, [2, 1] = block 2's body[1], etc.
@@ -198,6 +199,7 @@ export function CodeBuildingBlocksSession({
     setBeePos(puzzle.start);
     setGoalsHit([]);
     setFeedback(null);
+    setOvershot(false);
     setRunning(false);
     setActivePath([]);
     levelStartRef.current = Date.now();
@@ -282,8 +284,13 @@ export function CodeBuildingBlocksSession({
         setGoalsHit([...hits]);
       }
     }
+    // Exact: the bee must FINISH on a goal — overshooting the star is a failure.
     const allHit = puzzle.goals.every((g) => hits.some((h) => eq(h, g)));
-    if (allHit) result = 'success';
+    const endedOnGoal = puzzle.goals.some((g) => eq(g, pos));
+    const solved = allHit && endedOnGoal;
+    const overshot = allHit && !endedOnGoal;
+    setOvershot(overshot);
+    if (solved) result = 'success';
 
     void enqueueEvent(
       {
@@ -301,7 +308,7 @@ export function CodeBuildingBlocksSession({
       ctx,
     );
 
-    if (allHit) {
+    if (solved) {
       const final = countBlocks(program);
       void enqueueEvent(
         {
@@ -338,6 +345,7 @@ export function CodeBuildingBlocksSession({
         setFeedback(null);
         setBeePos(puzzle.start);
         setGoalsHit([]);
+        setOvershot(false);
       }, 700);
     }
   }
@@ -419,7 +427,9 @@ export function CodeBuildingBlocksSession({
   const coach = feedback === 'correct'
     ? (lang === 'fr' ? 'Bravo !' : 'Well done!')
     : feedback === 'wrong'
-      ? (q?.hint ? `💡 ${displayValue(q.hint, lang)}` : (lang === 'fr' ? 'Réessaie !' : 'Try again!'))
+      ? (overshot
+          ? (lang === 'fr' ? '💡 Tu as dépassé l’étoile — arrête-toi pile dessus !' : '💡 You passed the star — stop right on it!')
+          : q?.hint ? `💡 ${displayValue(q.hint, lang)}` : (lang === 'fr' ? 'Réessaie !' : 'Try again!'))
       : (lang === 'fr' ? 'Programme Gabee avec des boucles' : 'Program Gabee with loops');
 
   if (isLoading || !session || !q || !puzzle) {
