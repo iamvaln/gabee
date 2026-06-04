@@ -41,6 +41,7 @@ import { KeyboardScrollingLessonMap } from './screens/KeyboardScrollingLessonMap
 import { KeyboardScrollingSession } from './screens/KeyboardScrollingSession';
 import { CodeHub, type CodeSubMode } from './screens/CodeHub';
 import { CodeDrawSession } from './screens/CodeDrawSession';
+import { CodeActionsSession } from './screens/CodeActionsSession';
 import { CodeFindPathLevelMap } from './screens/CodeFindPathLevelMap';
 import { CodeFindPathLessonMap } from './screens/CodeFindPathLessonMap';
 import { CodeFindPathSession } from './screens/CodeFindPathSession';
@@ -130,6 +131,7 @@ type Route =
   | ({ name: 'code_building_blocks_summary'; score: number; total: number } & PlayTarget)
   // Draw (turtle) — self-contained prototype for visual validation (no backend yet)
   | { name: 'code_draw_demo' }
+  | { name: 'code_actions_demo' }
   // Settings
   | { name: 'settings' };
 
@@ -893,6 +895,7 @@ export function App() {
             onSubMode={(sub: CodeSubMode) => {
               if (sub === 'find_path') setRoute({ name: 'code_find_path_levelmap' });
               else if (sub === 'draw') setRoute({ name: 'code_draw_demo' });
+              else if (sub === 'actions') setRoute({ name: 'code_actions_demo' });
               else setRoute({ name: 'code_building_blocks_levelmap' });
             }}
             onHome={goHome}
@@ -902,6 +905,9 @@ export function App() {
         break;
       case 'code_draw_demo':
         screen = <CodeDrawSession onHome={goHome} onBack={() => setRoute({ name: 'code_subhub' })} />;
+        break;
+      case 'code_actions_demo':
+        screen = <CodeActionsSession onHome={goHome} onBack={() => setRoute({ name: 'code_subhub' })} />;
         break;
       case 'code_find_path_levelmap':
         screen = (
