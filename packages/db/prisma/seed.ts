@@ -15,38 +15,48 @@ import { allContent } from './content';
 // Stable id for the single MVP curriculum (admin spec §1 — Phase-3-ready).
 const DEFAULT_CURRICULUM_ID = '00000000-0000-4000-8000-0000000000c0';
 
-// Phase 2A sub-mode registry (11 rows). The id is `<module>.<key>` and is what the
-// admin UI, AI provider, and progress engine key off. `mechanic_hint` is fed verbatim
-// into the AI prompt to keep generations on-pattern.
+// Sub-mode registry (15 rows) — aligned to Curriculum v0.1 (docs/gabee-curriculum-v0.1.md).
+// The id is `<module>.<key>` and is what the admin UI, AI provider, and progress engine
+// key off. `mechanic_hint` is fed verbatim into the AI prompt to keep generations
+// on-pattern. Content/config contract: docs/gabee-seed-schema-v1.md.
 const SUB_MODE_DEFS = [
-  { id: 'numbers.arithmetic', module: 'numbers', key: 'arithmetic', name: { fr: 'Arithmétique', en: 'Arithmetic' }, languageDependent: true, displayOrder: 1, mechanicHint: 'MCQ-number — counting, addition, subtraction (per spec §4.1).' },
-  { id: 'numbers.geometry', module: 'numbers', key: 'geometry', name: { fr: 'Géométrie', en: 'Geometry' }, languageDependent: true, displayOrder: 2, mechanicHint: 'MCQ-number — shapes, sides, symmetry, area concepts.' },
-  { id: 'words.picture', module: 'words', key: 'picture', name: { fr: 'Image → mot', en: 'Picture → word' }, languageDependent: true, displayOrder: 1, mechanicHint: 'MCQ-image — single emoji prompt, bilingual word answers.' },
-  { id: 'words.fill', module: 'words', key: 'fill', name: { fr: 'Trouve le mot', en: 'Fill the blank' }, languageDependent: true, displayOrder: 2, mechanicHint: 'MCQ-word — sentence with `___`, bilingual word answers.' },
-  { id: 'words.build', module: 'words', key: 'build', name: { fr: 'Construis la phrase', en: 'Build the sentence' }, languageDependent: true, displayOrder: 3, mechanicHint: 'Build-sentence — answer is a single bilingual STRING, not an array.' },
-  { id: 'words.read', module: 'words', key: 'read', name: { fr: 'Lis et réponds', en: 'Read & answer' }, languageDependent: true, displayOrder: 4, mechanicHint: 'Read-answer — passage + `\\n` + comprehension question.' },
-  { id: 'keyboard.static', module: 'keyboard', key: 'static', name: { fr: 'Cible statique', en: 'Static target' }, languageDependent: true, displayOrder: 1, mechanicHint: 'Type a static target (letters → words → phrases).' },
-  { id: 'keyboard.scrolling', module: 'keyboard', key: 'scrolling', name: { fr: 'Défilement', en: 'Scrolling' }, languageDependent: true, displayOrder: 2, mechanicHint: 'Type words/phrases that scroll with time pressure.' },
-  { id: 'code.find_path', module: 'code', key: 'find_path', name: { fr: 'Trouve le chemin', en: 'Find the path' }, languageDependent: false, displayOrder: 1, mechanicHint: 'Movement-block grid puzzles (with obstacles).' },
-  { id: 'code.building_blocks', module: 'code', key: 'building_blocks', name: { fr: 'Blocs de construction', en: 'Building blocks' }, languageDependent: false, displayOrder: 2, mechanicHint: 'Block construction (loops, conditionals).' },
-  { id: 'translation.default', module: 'translation', key: 'default', name: { fr: 'Traduction', en: 'Translation' }, languageDependent: true, displayOrder: 1, mechanicHint: 'MCQ — bidirectional FR↔EN mixed per level.' },
+  // numbers — 4 parallel strands (mcq-number / mcq-word)
+  { id: 'numbers.counting', module: 'numbers', key: 'counting', name: { fr: 'Nombres & comptage', en: 'Numbers & counting' }, languageDependent: true, displayOrder: 1, mechanicHint: 'MCQ-number — recognise/count/order quantities; place value. config.object+count renders a collection.' },
+  { id: 'numbers.operations', module: 'numbers', key: 'operations', name: { fr: 'Opérations', en: 'Operations' }, languageDependent: true, displayOrder: 2, mechanicHint: 'MCQ-number — addition & subtraction (visual then mental).' },
+  { id: 'numbers.comparison', module: 'numbers', key: 'comparison', name: { fr: 'Comparer & ordonner', en: 'Compare & order' }, languageDependent: true, displayOrder: 3, mechanicHint: 'MCQ-number/word — compare with <,>,=, order and bracket numbers, sequences.' },
+  { id: 'numbers.word-problems', module: 'numbers', key: 'word-problems', name: { fr: 'Problèmes du quotidien', en: 'Everyday problems' }, languageDependent: true, displayOrder: 4, mechanicHint: 'MCQ-number — translate a real-life situation (objects, FCFA money, time) into an operation.' },
+  // words — 4 distinct mechanics, tracked per language
+  { id: 'words.picture', module: 'words', key: 'picture', name: { fr: 'Image → mot', en: 'Picture → word' }, languageDependent: true, displayOrder: 1, mechanicHint: 'MCQ-image — config.image shows an asset, pick the bilingual word.' },
+  { id: 'words.fill-blank', module: 'words', key: 'fill-blank', name: { fr: 'Texte à trou', en: 'Fill the blank' }, languageDependent: true, displayOrder: 2, mechanicHint: 'MCQ-word — config.sentence has `___`; pick the missing bilingual word.' },
+  { id: 'words.build-sentence', module: 'words', key: 'build-sentence', name: { fr: 'Construis la phrase', en: 'Build the sentence' }, languageDependent: true, displayOrder: 3, mechanicHint: 'Build-sentence — config.tokens (shuffled); answer is the ordered bilingual word array.' },
+  { id: 'words.read-answer', module: 'words', key: 'read-answer', name: { fr: 'Lis & réponds', en: 'Read & answer' }, languageDependent: true, displayOrder: 4, mechanicHint: 'Read-answer — config.passage to read; prompt is the comprehension question.' },
+  // keyboard — two play modes (precision vs fluency)
+  { id: 'keyboard.copy', module: 'keyboard', key: 'copy', name: { fr: 'Recopie', en: 'Copy' }, languageDependent: true, displayOrder: 1, mechanicHint: 'Typing — copy config.target with no time pressure (letters → words → phrases).' },
+  { id: 'keyboard.speed', module: 'keyboard', key: 'speed', name: { fr: 'Vitesse', en: 'Speed' }, languageDependent: true, displayOrder: 2, mechanicHint: 'Typing — type config.target before it scrolls off; config.scroll_speed sets the pace.' },
+  // code — 3 worlds, unified turtle-grid model (forward + turn_left/right + facing)
+  { id: 'code.maze', module: 'code', key: 'maze', name: { fr: 'Parcours', en: 'Maze' }, languageDependent: false, displayOrder: 1, mechanicHint: 'code-grid turtle — reach the star (finish exactly on it). config.grid/start/facing/goal/walls.' },
+  { id: 'code.draw', module: 'code', key: 'draw', name: { fr: 'Tracé', en: 'Draw' }, languageDependent: false, displayOrder: 2, mechanicHint: 'code-grid turtle — trace config.target.vertices exactly (no overshoot/retrace).' },
+  { id: 'code.actions', module: 'code', key: 'actions', name: { fr: 'Actions', en: 'Actions' }, languageDependent: false, displayOrder: 3, mechanicHint: 'code-grid turtle — pick/move/drop: deliver config.items to config.targets, no wasted block.' },
+  // translation — two directions, tracked separately
+  { id: 'translation.fr-en', module: 'translation', key: 'fr-en', name: { fr: 'FR → EN', en: 'FR → EN' }, languageDependent: true, displayOrder: 1, mechanicHint: 'Translation FR→EN — config.image (L1) or config.source; answer is the English string.' },
+  { id: 'translation.en-fr', module: 'translation', key: 'en-fr', name: { fr: 'EN → FR', en: 'EN → FR' }, languageDependent: true, displayOrder: 2, mechanicHint: 'Translation EN→FR — config.image (L1) or config.source; answer is the French string.' },
 ] as const;
 
 /** Default sub-mode key (short form) per module — used to tag questions that don't
  *  carry an explicit sub_mode in the curated content files. Mirrors the migration
  *  backfill, keeping Words rows on their existing short keys for kid-app back-compat. */
 const DEFAULT_SUBMODE_BY_MODULE: Record<string, string> = {
-  numbers: 'arithmetic',
-  words: 'picture', // Words rows in the content files always carry an explicit sub_mode.
-  keyboard: 'static',
-  code: 'find_path',
-  translation: 'default',
+  numbers: 'counting',
+  words: 'picture',
+  keyboard: 'copy',
+  code: 'maze',
+  translation: 'fr-en',
 };
 
 // The 5 fixed module identities (admin spec §5). Colors from gabee-design-spec §4.1.
 const MODULE_DEFS = [
   { id: 'numbers', slug: 'numbers', name: { fr: 'Nombres', en: 'Numbers' }, description: { fr: 'Compter, additionner, soustraire', en: 'Count, add, subtract' }, colorToken: '--module-numbers', icon: 'numbers', characteristics: { input_methods: ['mouse'], voiceover: false, event_types: ['question_shown', 'question_answered'] } },
-  { id: 'words', slug: 'words', name: { fr: 'Mots', en: 'Words' }, description: { fr: 'Lire, écrire, construire', en: 'Read, write, build' }, colorToken: '--module-words', icon: 'words', characteristics: { input_methods: ['mouse', 'drag'], sub_modes: [{ id: 'picture', name: { fr: 'Image → mot', en: 'Picture → word' } }, { id: 'fill', name: { fr: 'Trouve le mot', en: 'Fill the blank' } }, { id: 'build', name: { fr: 'Construis la phrase', en: 'Build the sentence' } }, { id: 'read', name: { fr: 'Lis et réponds', en: 'Read & answer' } }], voiceover: false, event_types: ['question_shown', 'question_answered', 'sentence_build'] } },
+  { id: 'words', slug: 'words', name: { fr: 'Mots', en: 'Words' }, description: { fr: 'Lire, écrire, construire', en: 'Read, write, build' }, colorToken: '--module-words', icon: 'words', characteristics: { input_methods: ['mouse', 'drag'], sub_modes: [{ id: 'picture', name: { fr: 'Image → mot', en: 'Picture → word' } }, { id: 'fill-blank', name: { fr: 'Texte à trou', en: 'Fill the blank' } }, { id: 'build-sentence', name: { fr: 'Construis la phrase', en: 'Build the sentence' } }, { id: 'read-answer', name: { fr: 'Lis & réponds', en: 'Read & answer' } }], voiceover: false, event_types: ['question_shown', 'question_answered', 'sentence_build'] } },
   { id: 'keyboard', slug: 'keyboard', name: { fr: 'Clavier', en: 'Keyboard' }, description: { fr: 'Taper avec les dix doigts', en: 'Type with all your fingers' }, colorToken: '--module-keyboard', icon: 'keyboard', characteristics: { input_methods: ['keyboard'], voiceover: true, event_types: ['typing_keystroke', 'typing_word_completed'] } },
   { id: 'code', slug: 'code', name: { fr: 'Code', en: 'Code' }, description: { fr: 'Programmer un robot', en: 'Move the robot' }, colorToken: '--module-code', icon: 'code', characteristics: { input_methods: ['mouse', 'drag'], voiceover: false, event_types: ['code_run', 'code_level_solved'] } },
   { id: 'translation', slug: 'translation', name: { fr: 'Traduction', en: 'Translate' }, description: { fr: 'Français ↔ Anglais', en: 'French ↔ English' }, colorToken: '--module-translation', icon: 'translation', characteristics: { input_methods: ['mouse'], voiceover: true, event_types: ['question_shown', 'question_answered'] } },

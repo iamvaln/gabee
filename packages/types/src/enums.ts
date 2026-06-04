@@ -19,9 +19,11 @@ export type Module = z.infer<typeof ModuleSchema>;
  * The registry is in the DB (`sub_modes` table, seeded by `prisma/seed.ts`); see
  * `packages/types/src/sub-mode.ts` for the per-row shape.
  */
+// Curriculum v0.1 keys include hyphens (`words.fill-blank`, `numbers.word-problems`,
+// `translation.fr-en`). Module part is plain lowercase; key part allows hyphens.
 export const SubModeKeySchema = z
   .string()
-  .regex(/^[a-z_]+\.[a-z_]+$/, 'subMode must be `<module>.<key>`');
+  .regex(/^[a-z]+\.[a-z][a-z_-]*$/, 'subMode must be `<module>.<key>`');
 export type SubModeKey = z.infer<typeof SubModeKeySchema>;
 
 /**
