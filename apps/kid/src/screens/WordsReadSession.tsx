@@ -62,7 +62,7 @@ export function WordsReadSession({
     if (!bundle) return null;
     const pool = bundle.questions.filter(
       (q) =>
-        q.sub_mode === 'read' &&
+        q.sub_mode === 'read-answer' &&
         q.level === level &&
         (isRevision || q.lesson === lesson),
     );
@@ -83,16 +83,19 @@ export function WordsReadSession({
 
   const q = session?.questions[qIdx];
   const ctx = { profileId: profile?.id ?? null, sessionId: play?.id ?? null };
-  const answerScalar = q ? scalarValue(q.answer, lang) : null;
+  const answerScalar = q ? scalarValue(q.answer as QuestionValue, lang) : null;
 
-  const promptText = q ? displayValue(q.prompt, lang) : '';
-  const { passage, question: comprehensionQ } = useMemo(
-    () => splitPassageAndQuestion(promptText),
-    [promptText],
-  );
+  // Curriculum v0.1: passage lives in config.passage; the prompt IS the question.
+  // Fall back to the legacy "passage\nquestion" packed prompt if config is absent.
+  const promptText = q ? String(displayValue(q.prompt, lang)) : '';
+  const { passage, question: comprehensionQ } = useMemo(() => {
+    const cfg = q?.config as { passage?: import('@gabee/types').QuestionValue } | undefined;
+    if (cfg?.passage) return { passage: String(displayValue(cfg.passage, lang)), question: promptText };
+    return splitPassageAndQuestion(promptText);
+  }, [q, lang, promptText]);
 
   const options = useMemo<QuestionValue[]>(
-    () => (q ? shuffle([q.answer, ...q.distractors.map(distractorValue)]) : []),
+    () => (q ? shuffle([q.answer as QuestionValue, ...q.distractors.map(distractorValue)]) : []),
     [q],
   );
 

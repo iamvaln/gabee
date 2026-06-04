@@ -53,7 +53,7 @@ export function WordsBuildSession({
     if (!bundle) return null;
     const pool = bundle.questions.filter(
       (q) =>
-        q.sub_mode === 'build' &&
+        q.sub_mode === 'build-sentence' &&
         q.level === level &&
         (isRevision || q.lesson === lesson),
     );
@@ -83,17 +83,24 @@ export function WordsBuildSession({
   const q = session?.questions[qIdx];
   const ctx = { profileId: profile?.id ?? null, sessionId: play?.id ?? null };
 
-  // Target words come from the seed `answer` (no trailing punctuation) split on
-  // whitespace; `prompt` carries the punctuated reference sentence used as the
-  // visible goal hint.
+  // Curriculum v0.1: `answer` is the ordered word array per language
+  // ({ fr:[…], en:[…] }, punctuation/capital included); `config.tokens` is the
+  // shuffled word bank. Fall back to the legacy whitespace-split string answer.
   const targetWords = useMemo<string[]>(() => {
     if (!q) return [];
-    const s = displayValue(q.answer, lang);
-    return s.trim().split(/\s+/);
+    const a = q.answer as { fr?: string[]; en?: string[] } | unknown;
+    const arr = a && typeof a === 'object' && Array.isArray((a as Record<string, unknown>)[lang])
+      ? ((a as Record<string, string[]>)[lang])
+      : null;
+    if (arr) return arr;
+    return String(displayValue(q.answer as never, lang)).trim().split(/\s+/);
   }, [q, lang]);
 
-  // Stable shuffled tile order for this question+attempt (re-shuffled on retry).
-  const tiles = useMemo<string[]>(() => shuffle(targetWords), [q?.id, attempt, lang]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Word bank: prefer the generator's config.tokens (already shuffled); else shuffle the target.
+  const tiles = useMemo<string[]>(() => {
+    const bank = (q?.config as { tokens?: { fr?: string[]; en?: string[] } } | undefined)?.tokens?.[lang];
+    return Array.isArray(bank) ? [...bank] : shuffle(targetWords);
+  }, [q?.id, attempt, lang]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!session || !q || startedRef.current || !profile) return;

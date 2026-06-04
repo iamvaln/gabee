@@ -12,6 +12,7 @@ import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
 import { HintLine } from '../components/HintLine';
+import { AssetGlyph } from '../components/AssetGlyph';
 
 const TOTAL = 7;
 
@@ -73,9 +74,9 @@ export function WordsPictureSession({
 
   const q = session?.questions[qIdx];
   const ctx = { profileId: profile?.id ?? null, sessionId: play?.id ?? null };
-  const answerScalar = q ? scalarValue(q.answer, lang) : null;
+  const answerScalar = q ? scalarValue(q.answer as QuestionValue, lang) : null;
   const options = useMemo<QuestionValue[]>(
-    () => (q ? shuffle([q.answer, ...q.distractors.map(distractorValue)]) : []),
+    () => (q ? shuffle([q.answer as QuestionValue, ...q.distractors.map(distractorValue)]) : []),
     [q],
   );
 
@@ -241,9 +242,11 @@ export function WordsPictureSession({
       </div>
       <div className="session-body">
         <div className="session-stage">
-          <div className="session-prompt">
-            {/* Picture prompt: the seed uses an emoji as the image — rendered large. */}
-            <span style={{ fontSize: 140, lineHeight: 1, display: 'inline-block' }}>
+          <div className="session-prompt" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+            {/* Image → word: render the asset from config.image; the prompt is the
+                instruction ("Quel est ce mot ?"). */}
+            <AssetGlyph name={(q.config as { image?: string } | undefined)?.image} size={140} />
+            <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-2)' }}>
               {displayValue(q.prompt, lang)}
             </span>
           </div>

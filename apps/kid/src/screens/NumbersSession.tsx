@@ -7,6 +7,7 @@ import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { GeometryShape, shapeFromConfig, shapeFromLabel } from '../components/GeometryShape';
 import { HintLine } from '../components/HintLine';
+import { AssetGlyph } from '../components/AssetGlyph';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { enqueueEvent, flushEvents } from '../lib/events';
@@ -78,11 +79,11 @@ export function NumbersSession({
 
   const q = session?.questions[qIdx];
   const ctx = { profileId: profile?.id ?? null, sessionId: play?.id ?? null };
-  const answerScalar = q ? scalarValue(q.answer, lang) : null;
+  const answerScalar = q ? scalarValue(q.answer as QuestionValue, lang) : null;
   // Options are raw values (rendered per-language at display time), so this doesn't
   // depend on `lang` — only re-shuffle when the question changes.
   const options = useMemo<QuestionValue[]>(
-    () => (q ? shuffle([q.answer, ...q.distractors.map(distractorValue)]) : []),
+    () => (q ? shuffle([q.answer as QuestionValue, ...q.distractors.map(distractorValue)]) : []),
     [q],
   );
 
@@ -276,34 +277,45 @@ export function NumbersSession({
         <div className="session-stage">
           <div className="session-prompt">
             {(() => {
-              // Geometry questions carry a `config.shape` (square, triangle…)
-              // that we draw above the textual prompt — see GeometryShape.tsx.
-              // Authoring contract: any number question with a shape config
-              // gets the SVG; otherwise we keep the existing text-only layout.
-              const shapeCfg = subMode === 'geometry' ? shapeFromConfig(q.config) : null;
-              if (shapeCfg?.shape) {
+              const cfg = q.config as { object?: string; count?: number } | undefined;
+              // Counting: render a collection of `count` copies of the object asset
+              // above the instruction prompt ("Combien y a-t-il de chats ?").
+              if (cfg?.object && typeof cfg.count === 'number') {
+                const n = Math.max(0, Math.min(cfg.count, 20));
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-                    <GeometryShape
-                      shape={shapeCfg.shape}
-                      size={shapeCfg.size ?? 180}
-                      fill={shapeCfg.fill}
-                      stroke={shapeCfg.stroke}
-                    />
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 440 }}>
+                      {Array.from({ length: n }).map((_, i) => (
+                        <AssetGlyph key={i} name={cfg.object} size={52} />
+                      ))}
+                    </div>
                     <div style={{ fontSize: 22, fontWeight: 700, textAlign: 'center', lineHeight: 1.3 }}>
                       {displayValue(q.prompt, lang)}
                     </div>
                   </div>
                 );
               }
-              if (level === 1) {
+              // Geometry shape questions carry a `config.shape` (square, triangle…).
+              const shapeCfg = shapeFromConfig(q.config);
+              if (shapeCfg?.shape) {
                 return (
-                  <div style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', lineHeight: 1.3 }}>
-                    {displayValue(q.prompt, lang)}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                    <GeometryShape shape={shapeCfg.shape} size={shapeCfg.size ?? 180} fill={shapeCfg.fill} stroke={shapeCfg.stroke} />
+                    <div style={{ fontSize: 22, fontWeight: 700, textAlign: 'center', lineHeight: 1.3 }}>
+                      {displayValue(q.prompt, lang)}
+                    </div>
                   </div>
                 );
               }
-              return <span className="big-number">{displayValue(q.prompt, lang)}</span>;
+              // Otherwise the prompt carries the full question. Short expressions
+              // ("5 + 0 = ?") render big; sentences ("Awa a 6 mangues…") as text.
+              const text = String(displayValue(q.prompt, lang));
+              if (text.length <= 12) return <span className="big-number">{text}</span>;
+              return (
+                <div style={{ fontSize: 30, fontWeight: 800, textAlign: 'center', lineHeight: 1.3, maxWidth: 560 }}>
+                  {text}
+                </div>
+              );
             })()}
           </div>
           {feedback ? (

@@ -54,7 +54,7 @@ export function WordsFillSession({
     if (!bundle) return null;
     const pool = bundle.questions.filter(
       (q) =>
-        q.sub_mode === 'fill' &&
+        q.sub_mode === 'fill-blank' &&
         q.level === level &&
         (isRevision || q.lesson === lesson),
     );
@@ -75,9 +75,9 @@ export function WordsFillSession({
 
   const q = session?.questions[qIdx];
   const ctx = { profileId: profile?.id ?? null, sessionId: play?.id ?? null };
-  const answerScalar = q ? scalarValue(q.answer, lang) : null;
+  const answerScalar = q ? scalarValue(q.answer as QuestionValue, lang) : null;
   const options = useMemo<QuestionValue[]>(
-    () => (q ? shuffle([q.answer, ...q.distractors.map(distractorValue)]) : []),
+    () => (q ? shuffle([q.answer as QuestionValue, ...q.distractors.map(distractorValue)]) : []),
     [q],
   );
 
@@ -85,7 +85,9 @@ export function WordsFillSession({
   // text + pill + text (the answer word slot is the highlighted gap).
   const promptParts = useMemo(() => {
     if (!q) return null;
-    const text = String(displayValue(q.prompt, lang));
+    // The sentence-with-blank lives in config.sentence (prompt is the instruction).
+    const cfg = q.config as { sentence?: import('@gabee/types').QuestionValue } | undefined;
+    const text = String(displayValue(cfg?.sentence ?? q.prompt, lang));
     const idx = text.indexOf(BLANK_TOKEN);
     if (idx < 0) return { before: text, after: '' };
     return { before: text.slice(0, idx), after: text.slice(idx + BLANK_TOKEN.length) };
@@ -258,8 +260,9 @@ export function WordsFillSession({
       </div>
       <div className="session-body">
         <div className="session-stage">
-          <div className="session-prompt">
-            {/* Fill prompt: render the sentence as text with the missing word as a styled
+          <div className="session-prompt" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-2)' }}>{displayValue(q.prompt, lang)}</span>
+            {/* Fill: render config.sentence as text with the missing word as a styled
                 pill so the gap is visually obvious. Sized for sentence reading, not emoji. */}
             <span style={{ fontSize: 40, lineHeight: 1.35, fontWeight: 600, display: 'inline-block', maxWidth: 760, textAlign: 'center' }}>
               <span>{promptParts.before}</span>

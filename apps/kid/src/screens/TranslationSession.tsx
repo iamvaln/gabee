@@ -18,6 +18,7 @@ import { enqueueEvent, flushEvents } from '../lib/events';
 import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
+import { AssetGlyph } from '../components/AssetGlyph';
 import { HintLine } from '../components/HintLine';
 
 const TOTAL = 7;
@@ -39,6 +40,11 @@ function hashBit(id: string): 0 | 1 {
 // the direction the question was authored as — giving "mixed within level"
 // (product §4.5) directly from the data, with a deterministic fallback.
 function directionFor(q: QuestionRecord): TranslationDirection {
+  // Curriculum v0.1: direction is explicit in config (and the sub_mode key).
+  const dir = (q.config as { direction?: string } | undefined)?.direction ?? q.sub_mode;
+  if (dir === 'fr-en') return 'fr_to_en';
+  if (dir === 'en-fr') return 'en_to_fr';
+  // Legacy fallback: infer from which prompt side equals the scalar answer.
   const ans = String(q.answer);
   const p = q.prompt;
   if (typeof p === 'object' && p !== null) {
@@ -117,7 +123,7 @@ export function TranslationSession({
   // the picked scalar against the answer scalar without going through lang.
   const answerScalar = q ? String(q.answer) : null;
   const options = useMemo<QuestionValue[]>(
-    () => (q ? shuffle([q.answer, ...q.distractors.map(distractorValue)]) : []),
+    () => (q ? shuffle([q.answer as QuestionValue, ...q.distractors.map(distractorValue)]) : []),
     [q],
   );
 
@@ -301,8 +307,19 @@ export function TranslationSession({
             >
               {badgeLabel(dir)}
             </span>
-            <div style={{ fontSize: 56, lineHeight: 1.1, fontWeight: 700 }}>
-              {displayValue(q.prompt, src)}
+            {/* Source to translate: an image (L1) or the source-language word/phrase
+                (config.source). The prompt is the instruction, shown small below. */}
+            {(() => {
+              const cfg = q.config as { image?: string; source?: string } | undefined;
+              if (cfg?.image) return <AssetGlyph name={cfg.image} size={120} />;
+              return (
+                <div style={{ fontSize: 56, lineHeight: 1.1, fontWeight: 700 }}>
+                  {cfg?.source ?? displayValue(q.prompt, src)}
+                </div>
+              );
+            })()}
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-2)', marginTop: 10 }}>
+              {displayValue(q.prompt, lang)}
             </div>
           </div>
           {feedback ? (
