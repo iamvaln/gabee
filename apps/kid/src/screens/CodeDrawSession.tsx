@@ -89,6 +89,10 @@ const PAD = 28;
 function px(n: number): number {
   return PAD + n * CELL;
 }
+// Heading → arrow rotation (deg) and unit step, so the bee shows where it faces.
+const HEAD_DEG: Record<Heading, number> = { right: 0, down: 90, left: 180, up: 270 };
+const HEAD_DX: Record<Heading, number> = { right: 1, left: -1, up: 0, down: 0 };
+const HEAD_DY: Record<Heading, number> = { up: -1, down: 1, left: 0, right: 0 };
 
 export function CodeDrawSession({ onHome, onBack }: { onHome: () => void; onBack: () => void }) {
   const lang = useStore((s) => s.lang);
@@ -177,10 +181,12 @@ export function CodeDrawSession({ onHome, onBack }: { onHome: () => void; onBack
   const cur = states[Math.min(frame, states.length - 1)]!;
   const w = px(puzzle.cols - 1) + PAD;
   const h = px(puzzle.rows - 1) + PAD;
-  const PALETTE: { b: Block; label: string }[] = [
-    { b: 'forward', label: L ? '⬆ Avance' : '⬆ Forward' },
-    { b: 'left', label: L ? '↺ Tourne' : '↺ Turn' },
-    { b: 'right', label: L ? '↻ Tourne' : '↻ Turn' },
+  // Forward follows the bee's heading (shown by the arrow on the bee), so no
+  // fixed compass arrow here — that misled even adult testers. Turns are explicit.
+  const PALETTE: { b: Block; label: string; glyph: string }[] = [
+    { b: 'forward', label: L ? 'Avance' : 'Forward', glyph: '🐝' },
+    { b: 'left', label: L ? 'Tourne' : 'Turn', glyph: '↺' },
+    { b: 'right', label: L ? 'Tourne' : 'Turn', glyph: '↻' },
   ];
 
   return (
@@ -202,50 +208,75 @@ export function CodeDrawSession({ onHome, onBack }: { onHome: () => void; onBack
       </div>
 
       <div className="level-body" style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'center' }}>
-        {/* Stage */}
-        <svg width={w} height={h} style={{ background: '#FFFBEC', borderRadius: 16, flexShrink: 0 }}>
-          {/* grid dots */}
-          {Array.from({ length: puzzle.rows }).map((_, y) =>
-            Array.from({ length: puzzle.cols }).map((_, x) => (
-              <circle key={`${x},${y}`} cx={px(x)} cy={px(y)} r={2.5} fill="#D8D2BE" />
-            )),
-          )}
-          {/* ghost target */}
-          <polyline
-            points={puzzle.target.map((p) => `${px(p.x)},${px(p.y)}`).join(' ')}
-            fill="none"
-            stroke="#BBEAF2"
-            strokeWidth={10}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeDasharray="2 14"
-            opacity={0.9}
-          />
-          {/* drawn trail so far */}
-          {cur.trail.length > 1 && (
+        {/* Stage — SVG grid + faint target + drawn trail, with the Gabee mascot overlaid. */}
+        <div style={{ position: 'relative', width: w, height: h, flexShrink: 0 }}>
+          <svg width={w} height={h} style={{ background: '#FFFBEC', borderRadius: 16, border: '3px solid #FCD34D', display: 'block' }}>
+            {/* grid lines (match find_path's filled grid) */}
+            {Array.from({ length: puzzle.cols }).map((_, x) => (
+              <line key={`v${x}`} x1={px(x)} y1={px(0)} x2={px(x)} y2={px(puzzle.rows - 1)} stroke="#EFE7CB" strokeWidth={1.5} />
+            ))}
+            {Array.from({ length: puzzle.rows }).map((_, y) => (
+              <line key={`h${y}`} x1={px(0)} y1={px(y)} x2={px(puzzle.cols - 1)} y2={px(y)} stroke="#EFE7CB" strokeWidth={1.5} />
+            ))}
+            {/* target shape to reproduce — clear faint outline + vertices */}
             <polyline
-              points={cur.trail.map((p) => `${px(p.x)},${px(p.y)}`).join(' ')}
+              points={puzzle.target.map((p) => `${px(p.x)},${px(p.y)}`).join(' ')}
               fill="none"
-              stroke="var(--mascot-admin, #F5A623)"
-              strokeWidth={6}
+              stroke="#9AD8E6"
+              strokeWidth={14}
               strokeLinecap="round"
               strokeLinejoin="round"
+              opacity={0.4}
             />
-          )}
-          {/* bee */}
-          <circle cx={px(cur.pos.x)} cy={px(cur.pos.y)} r={12} fill="#FFB400" stroke="#1f2937" strokeWidth={2} />
-          <text x={px(cur.pos.x)} y={px(cur.pos.y) + 5} textAnchor="middle" fontSize="14">🐝</text>
-        </svg>
+            {puzzle.target.map((p, i) => (
+              <circle key={i} cx={px(p.x)} cy={px(p.y)} r={4} fill="#5BB9CC" opacity={0.55} />
+            ))}
+            {/* start marker */}
+            <circle cx={px(puzzle.start.x)} cy={px(puzzle.start.y)} r={9} fill="none" stroke="#5BB9CC" strokeWidth={2.5} />
+            {/* drawn trail so far */}
+            {cur.trail.length > 1 && (
+              <polyline
+                points={cur.trail.map((p) => `${px(p.x)},${px(p.y)}`).join(' ')}
+                fill="none"
+                stroke="#F5A623"
+                strokeWidth={7}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
+            {/* heading arrow — shows which way "Avance" will go */}
+            <path
+              d="M -7 -8 L 9 0 L -7 8 Z"
+              fill="#20242E"
+              transform={`translate(${px(cur.pos.x) + HEAD_DX[cur.heading] * 20} ${px(cur.pos.y) + HEAD_DY[cur.heading] * 20}) rotate(${HEAD_DEG[cur.heading]})`}
+            />
+          </svg>
+          {/* Gabee mascot at the bee's cell */}
+          <div style={{ position: 'absolute', left: px(cur.pos.x) - 17, top: px(cur.pos.y) - 27, pointerEvents: 'none' }}>
+            <Bee size={34} expression={result === 'ok' ? 'celebrate' : 'focus'} wings={false} />
+          </div>
+        </div>
 
         {/* Controls */}
         <div style={{ minWidth: 260, maxWidth: 320 }}>
           <div className="section-label" style={{ marginBottom: 8 }}>
             {L ? 'Blocs (clique pour ajouter)' : 'Blocks (click to add)'}
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-            {PALETTE.map((p) => (
-              <button key={p.b} className="btn secondary" disabled={running} onClick={() => addBlock(p.b)}>
-                {p.label}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
+            {PALETTE.map((p, i) => (
+              <button
+                key={i}
+                disabled={running}
+                onClick={() => addBlock(p.b)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                  width: 80, height: 72, borderRadius: 14, border: '2px solid #CFE8EF',
+                  background: '#EAF7FB', cursor: running ? 'default' : 'pointer',
+                  fontWeight: 800, color: '#20242E', opacity: running ? 0.5 : 1,
+                }}
+              >
+                <span style={{ fontSize: 26, lineHeight: 1 }}>{p.glyph}</span>
+                <span style={{ fontSize: 13 }}>{p.label}</span>
               </button>
             ))}
           </div>
@@ -283,30 +314,55 @@ export function CodeDrawSession({ onHome, onBack }: { onHome: () => void; onBack
             </button>
           </div>
 
-          {result === 'ok' && (
-            <div className="banner" style={{ marginTop: 16, background: '#DCFCE7', color: '#166534' }}>
-              {L ? '✨ Bravo ! Forme réussie.' : '✨ Nice! Shape complete.'}
-              <div style={{ marginTop: 8 }}>
-                <button
-                  className="btn brand sm"
-                  onClick={() => {
-                    reset();
-                    setProgram([]);
-                    setPuzzleIdx((i) => (i + 1) % PUZZLES.length);
-                  }}
-                >
-                  {L ? 'Forme suivante →' : 'Next shape →'}
-                </button>
-              </div>
-            </div>
-          )}
-          {result === 'fail' && (
-            <div className="banner" style={{ marginTop: 16, background: '#FEF3C7', color: '#92400E' }}>
-              {L ? 'Pas tout à fait — réessaie le tracé.' : 'Not quite — try the trace again.'}
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Result — centered overlay so the "next" CTA is always visible (responsive). */}
+      {result && !running && (
+        <div
+          onClick={() => result === 'fail' && setResult(null)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(20,36,46,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white', borderRadius: 20, padding: '28px 32px', textAlign: 'center',
+              maxWidth: 360, boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+            }}
+          >
+            <div style={{ marginBottom: 8 }}>
+              <Bee size={72} expression={result === 'ok' ? 'celebrate' : 'encourage'} wings bob />
+            </div>
+            <h2 style={{ margin: '4px 0 6px' }}>
+              {result === 'ok' ? (L ? '✨ Bravo !' : '✨ Nice!') : (L ? 'Presque !' : 'Almost!')}
+            </h2>
+            <p className="sub" style={{ margin: '0 0 18px', color: 'var(--text-2)' }}>
+              {result === 'ok'
+                ? (L ? 'Tu as reproduit la forme.' : 'You reproduced the shape.')
+                : (L ? 'Le tracé ne couvre pas encore la forme. Réessaie !' : "The trace doesn't cover the shape yet. Try again!")}
+            </p>
+            {result === 'ok' ? (
+              <button
+                className="btn brand block lg"
+                onClick={() => {
+                  reset();
+                  setProgram([]);
+                  setPuzzleIdx((i) => (i + 1) % PUZZLES.length);
+                }}
+              >
+                {L ? 'Forme suivante →' : 'Next shape →'}
+              </button>
+            ) : (
+              <button className="btn brand block lg" onClick={() => setResult(null)}>
+                {L ? 'Réessayer' : 'Try again'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
