@@ -158,3 +158,47 @@ export function shapeFromConfig(config: unknown): GeometryShapeConfig | null {
     size: typeof c.size === 'number' ? c.size : undefined,
   };
 }
+
+/**
+ * Map a textual answer/distractor value (the kid sees as a button label) to a
+ * known shape, so geometry options can be drawn visually instead of as words.
+ * Accepts the bare shape ID ('square'), the EN name ('Square'), or the FR
+ * name ('Carré'). Returns null if no shape matches — the caller then falls
+ * back to the textual label (e.g. for "how many sides?" numeric answers).
+ */
+export function shapeFromLabel(label: string): GeometryShapeName | null {
+  const norm = label
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, ''); // strip diacritics so "carré" → "carre"
+  return SHAPE_BY_LABEL[norm] ?? null;
+}
+
+// Bilingual lookup, normalised (lowercase, no diacritics). Add new entries
+// alongside the shape definitions above when extending the palette.
+const SHAPE_BY_LABEL: Record<string, GeometryShapeName> = {
+  // EN
+  triangle: 'triangle',
+  square: 'square',
+  rectangle: 'rectangle',
+  circle: 'circle',
+  oval: 'oval',
+  ellipse: 'oval',
+  diamond: 'diamond',
+  rhombus: 'diamond',
+  trapezoid: 'trapezoid',
+  trapezium: 'trapezoid',
+  pentagon: 'pentagon',
+  hexagon: 'hexagon',
+  star: 'star',
+  // FR (normalised — "carré" → "carre", "étoile" → "etoile")
+  carre: 'square',
+  cercle: 'circle',
+  ovale: 'oval',
+  losange: 'diamond',
+  trapeze: 'trapezoid',
+  pentagone: 'pentagon',
+  hexagone: 'hexagon',
+  etoile: 'star',
+};

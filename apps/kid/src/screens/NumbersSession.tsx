@@ -5,7 +5,7 @@ import type { QuestionValue, LevelProgress, LessonProgress } from '@gabee/types'
 import { Bee, type BeeExpression } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
-import { GeometryShape, shapeFromConfig } from '../components/GeometryShape';
+import { GeometryShape, shapeFromConfig, shapeFromLabel } from '../components/GeometryShape';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { enqueueEvent, flushEvents } from '../lib/events';
@@ -318,9 +318,28 @@ export function NumbersSession({
               {options.map((opt, i) => {
                 const chosen = scalarValue(opt, lang);
                 const state = picked === chosen ? (chosen === answerScalar ? 'correct' : 'wrong') : '';
+                const label = displayValue(opt, lang);
+                // In Geometry, an option whose label matches a known shape
+                // (FR or EN, e.g. "Carré" / "Square") is drawn as an SVG —
+                // so "Which shape is a square?" actually shows the three
+                // shapes to compare instead of being a reading test. Numeric
+                // / non-shape answers (e.g. "how many sides?") fall back to
+                // the textual label.
+                const shape = subMode === 'geometry' ? shapeFromLabel(label) : null;
                 return (
-                  <button key={i} className={`answer-btn ${state}`} onClick={() => pick(opt)}>
-                    {displayValue(opt, lang)}
+                  <button
+                    key={i}
+                    className={`answer-btn ${state}`}
+                    onClick={() => pick(opt)}
+                    aria-label={label}
+                  >
+                    {shape ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <GeometryShape shape={shape} size={84} />
+                      </span>
+                    ) : (
+                      label
+                    )}
                   </button>
                 );
               })}
