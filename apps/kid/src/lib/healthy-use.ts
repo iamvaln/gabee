@@ -27,6 +27,12 @@ interface HealthyUseState {
   // Live session timers (reset on session_start).
   sessionStartedAt: number | null;
   lastLookAwayAt: number | null;
+  // Pause stack: backgrounded tab and idle-lock are independent reasons to
+  // freeze the session clock. We refcount them so the clock only resumes when
+  // BOTH conditions clear. `pausedAt` is set when the count rises from 0→1
+  // and consumed when it falls back to 0 to compute the active-time shift.
+  pauseCount: number;
+  pausedAt: number | null;
   // Computed signals.
   softReached: boolean;
   hardCapReached: boolean;
@@ -42,6 +48,8 @@ interface HealthyUseState {
   tick: () => void;
   acknowledgeSoft: () => void;
   acknowledgeLookAway: () => void;
+  pauseTimer: () => void;
+  resumeTimer: () => void;
 }
 
 const TICK_MS = 5_000;
@@ -86,6 +94,8 @@ export const useHealthyUse = create<HealthyUseState>((set, get) => ({
   profileId: null,
   sessionStartedAt: null,
   lastLookAwayAt: null,
+  pauseCount: 0,
+  pausedAt: null,
   softReached: false,
   hardCapReached: false,
   lookAwayDue: false,
@@ -118,6 +128,8 @@ export const useHealthyUse = create<HealthyUseState>((set, get) => ({
       softReached: false,
       hardCapReached: false,
       lookAwayDue: false,
+      pauseCount: 0,
+      pausedAt: null,
     });
     tickTimer = setInterval(() => get().tick(), TICK_MS);
   },
@@ -125,7 +137,7 @@ export const useHealthyUse = create<HealthyUseState>((set, get) => ({
   endSession() {
     if (tickTimer !== null) clearInterval(tickTimer);
     tickTimer = null;
-    set({ sessionStartedAt: null, lastLookAwayAt: null });
+    set({ sessionStartedAt: null, lastLookAwayAt: null, pauseCount: 0, pausedAt: null });
   },
 
   noteLessonCompleted() {
@@ -142,6 +154,7 @@ export const useHealthyUse = create<HealthyUseState>((set, get) => ({
 
   tick() {
     const s = get();
+    if (s.pauseCount > 0) return; // frozen while backgrounded or idle-locked
     if (!s.sessionStartedAt || !s.limits) return;
     const elapsedMs = Date.now() - s.sessionStartedAt;
     const elapsedMin = elapsedMs / 60_000;
@@ -180,5 +193,47 @@ export const useHealthyUse = create<HealthyUseState>((set, get) => ({
 
   acknowledgeLookAway() {
     set({ lookAwayDue: false, lastLookAwayAt: Date.now() });
+  },
+
+  // Pause/resume — wired in App.tsx to the visibility + idle-lock signals.
+  // The session clock should ONLY accumulate active play time: a kid who
+  // backgrounds the tab or walks away for 5 min shouldn't return to a fired
+  // look-away (Bug 3). Refcounted so simultaneous reasons (idle + hidden)
+  // don't unbalance.
+  pauseTimer() {
+    const s = get();
+    set({
+      pauseCount: s.pauseCount + 1,
+      pausedAt: s.pauseCount === 0 ? Date.now() : s.pausedAt,
+    });
+  },
+
+  resumeTimer() {
+    const s = get();
+    if (s.pauseCount <= 0) return;
+    const nextCount = s.pauseCount - 1;
+    if (nextCount > 0) {
+      set({ pauseCount: nextCount });
+      return;
+    }
+    // Truly resuming: shift session + look-away timestamps forward by the
+    // paused duration so wall-clock elapsed = active play time. On a long
+    // pause (>60s — kid walked away, tab was minimised for hours, etc.)
+    // also drop any lookAwayDue that fired in the meantime so the kid
+    // doesn't return to a stale overlay (Bug 2).
+    const pausedAt = s.pausedAt ?? Date.now();
+    const delta = Math.max(0, Date.now() - pausedAt);
+    const longPause = delta > 60_000;
+    set({
+      pauseCount: 0,
+      pausedAt: null,
+      sessionStartedAt: s.sessionStartedAt !== null ? s.sessionStartedAt + delta : null,
+      lastLookAwayAt: longPause
+        ? Date.now()
+        : s.lastLookAwayAt !== null
+        ? s.lastLookAwayAt + delta
+        : null,
+      lookAwayDue: longPause ? false : s.lookAwayDue,
+    });
   },
 }));

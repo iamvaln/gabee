@@ -4,9 +4,14 @@ import type { ChildProfile } from '@gabee/types';
 import { Bee } from '../components/Bee';
 import { ProfileAvatar } from '../components/Chrome';
 import { api } from '../lib/api';
+import { useStore } from '../store';
+import { useInstall } from '../lib/install';
 
 export function ProfileSelect({ onPick }: { onPick: (profile: ChildProfile) => void }) {
   const { t } = useTranslation();
+  const lang = useStore((s) => s.lang);
+  const L = lang === 'fr';
+  const install = useInstall();
   const { data, isLoading, isError } = useQuery({
     queryKey: ['profiles'],
     queryFn: () => api.getProfiles(),
@@ -31,6 +36,55 @@ export function ProfileSelect({ onPick }: { onPick: (profile: ChildProfile) => v
           </button>
         ))}
       </div>
+
+      {/* PWA install — surfaced here so the parent sees it the moment device
+          pairing completes (the kid app's first screen post-pair is this
+          picker). Settings keeps the same card as a fallback. Hidden once
+          the app is running in standalone mode or on a browser without
+          installability support. */}
+      {install.kind !== 'installed' && install.kind !== 'unavailable' && (
+        <div
+          style={{
+            marginTop: 24,
+            padding: 16,
+            borderRadius: 14,
+            background: '#EFF6FF',
+            border: '1px solid #BFDBFE',
+            maxWidth: 520,
+            textAlign: 'left',
+          }}
+        >
+          <strong style={{ fontSize: 15, color: '#0f172a' }}>
+            {L ? 'Installer Gabee sur cet appareil' : 'Install Gabee on this device'}
+          </strong>
+          <div style={{ fontSize: 13, opacity: 0.85, marginTop: 4, marginBottom: 12, color: '#0f172a' }}>
+            {L
+              ? 'Pour que ton enfant ouvre Gabee comme une vraie app, sans la barre du navigateur.'
+              : 'So your kid opens Gabee like a real app, with no browser bar.'}
+          </div>
+          {install.kind === 'available' ? (
+            <button className="btn mint" onClick={() => void install.prompt()}>
+              {L ? 'Installer maintenant' : 'Install now'}
+            </button>
+          ) : (
+            <div style={{ fontSize: 13, lineHeight: 1.6, color: '#0f172a' }}>
+              {L ? (
+                <>
+                  <strong>Sur iPhone/iPad :</strong> touche{' '}
+                  <span style={{ fontWeight: 700 }}>Partager</span> dans Safari, puis{' '}
+                  <span style={{ fontWeight: 700 }}>« Sur l’écran d’accueil »</span>.
+                </>
+              ) : (
+                <>
+                  <strong>On iPhone/iPad:</strong> tap{' '}
+                  <span style={{ fontWeight: 700 }}>Share</span> in Safari, then{' '}
+                  <span style={{ fontWeight: 700 }}>"Add to Home Screen"</span>.
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

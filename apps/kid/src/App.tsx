@@ -165,6 +165,8 @@ export function App() {
   const loadLimitsFor = useHealthyUse((s) => s.loadLimitsFor);
   const startSessionTimer = useHealthyUse((s) => s.startSession);
   const endSessionTimer = useHealthyUse((s) => s.endSession);
+  const pauseSessionTimer = useHealthyUse((s) => s.pauseTimer);
+  const resumeSessionTimer = useHealthyUse((s) => s.resumeTimer);
   const noteLessonCompleted = useHealthyUse((s) => s.noteLessonCompleted);
 
   // The next play unit after (level, lesson) for a given module/sub-mode: the next unit
@@ -234,12 +236,24 @@ export function App() {
   // real play time, not first-background time. Only `pagehide` (close) and a
   // long background (>15 min, configured in lib/session.ts) end the sitting.
   // Returning from a long background mints a new session_id automatically.
+  //
+  // Healthy-use timer is paused while backgrounded so the look-away interval
+  // and soft/hard caps only count active play time. A long background that
+  // mints a fresh sitting resets the timer outright (instead of catching up
+  // stale wall-clock time).
   useEffect(() => {
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') {
         noteBackground();
+        pauseSessionTimer();
       } else {
-        void noteForeground();
+        void noteForeground().then((res) => {
+          if (res.newSession) {
+            startSessionTimer();
+          } else {
+            resumeSessionTimer();
+          }
+        });
       }
     };
     const onPagehide = () => {
@@ -251,7 +265,7 @@ export function App() {
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('pagehide', onPagehide);
     };
-  }, []);
+  }, [pauseSessionTimer, resumeSessionTimer, startSessionTimer]);
 
   // Idle tracker (product §6.3). Activity listeners installed once at mount;
   // re-armed on profile pick. After 3 min of no input → LockScreen renders.
@@ -268,6 +282,14 @@ export function App() {
     if (profile) armIdle();
     else disarmIdle();
   }, [profile?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pause healthy-use accumulation while the idle lock is up so the kid who
+  // walked away (sibling errand etc.) doesn't return to a fired look-away —
+  // the timer only counts active play time (Bug 3).
+  useEffect(() => {
+    if (idleLocked) pauseSessionTimer();
+    else resumeSessionTimer();
+  }, [idleLocked, pauseSessionTimer, resumeSessionTimer]);
 
   function handlePick(p: ChildProfile) {
     setProfile(p);
