@@ -40,7 +40,7 @@ export function WordsFillLevelMap({
 
   // Fill sub-mode only — Words bundles all 4 sub-modes together.
   const fill = useMemo(
-    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'fill') : []),
+    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'fill-blank') : []),
     [bundle],
   );
   const configuredLevels = useMemo(

@@ -125,7 +125,7 @@ export function CodeFindPathSession({
   const session = useMemo(() => {
     if (!bundle) return null;
     const pool = bundle.questions.filter(
-      (q) => q.sub_mode === 'find_path' && q.level === level && (isRevision || q.lesson === lesson),
+      (q) => q.sub_mode === 'maze' && q.level === level && (isRevision || q.lesson === lesson),
     );
     if (pool.length === 0) return null;
     return { questions: shuffle(pool).slice(0, Math.min(TOTAL, pool.length)) };

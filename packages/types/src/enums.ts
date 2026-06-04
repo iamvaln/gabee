@@ -31,8 +31,8 @@ export type SubModeKey = z.infer<typeof SubModeKeySchema>;
  * to the dotted-id form (`words.picture` etc.), but the kid PWA still consumes the
  * short keys — kept here for back-compat shims and event payloads.
  */
-export const LEGACY_WORDS_SUB_MODES = ['picture', 'fill', 'build', 'read'] as const;
-export const WordsSubModeSchema = z.enum(LEGACY_WORDS_SUB_MODES);
+export const WORDS_SUB_MODES = ['picture', 'fill-blank', 'build-sentence', 'read-answer'] as const;
+export const WordsSubModeSchema = z.enum(WORDS_SUB_MODES);
 export type WordsSubMode = z.infer<typeof WordsSubModeSchema>;
 
 /**

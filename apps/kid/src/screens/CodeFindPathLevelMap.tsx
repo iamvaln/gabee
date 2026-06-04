@@ -49,7 +49,7 @@ export function CodeFindPathLevelMap({
   // Code bundle returns all sub-modes; filter to find_path only (seed sub_mode keys
   // are the bare short form — `find_path` / `building_blocks`).
   const findPath = useMemo(
-    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'find_path') : []),
+    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'maze') : []),
     [bundle],
   );
   const configuredLevels = useMemo(

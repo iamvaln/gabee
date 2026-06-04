@@ -26,7 +26,7 @@ export function NumbersSession({
   onDone,
   onHome,
   onBack,
-  subMode = 'arithmetic',
+  subMode = 'counting',
 }: {
   level: number;
   /** Real lesson number, or REVISION_LESSON (4) for the revision. */
@@ -57,10 +57,8 @@ export function NumbersSession({
   // toward arithmetic for back-compat.
   const session = useMemo(() => {
     if (!bundle) return null;
-    const inSubMode = (q: typeof bundle.questions[number]) =>
-      subMode === 'arithmetic' ? q.sub_mode === 'arithmetic' || !q.sub_mode : q.sub_mode === subMode;
     const pool = bundle.questions.filter(
-      (q) => inSubMode(q) && q.level === level && (isRevision || q.lesson === lesson),
+      (q) => q.sub_mode === subMode && q.level === level && (isRevision || q.lesson === lesson),
     );
     if (pool.length === 0) return null;
     return { questions: shuffle(pool).slice(0, Math.min(TOTAL, pool.length)) };
@@ -147,11 +145,12 @@ export function NumbersSession({
     const track = profile.progress_by_module.numbers as unknown as {
       highest_level: number;
       levels: LevelProgress[];
-      bySubMode?: { arithmetic?: { levels: LevelProgress[] }; geometry?: { levels: LevelProgress[] } };
+      bySubMode?: Record<string, { levels: LevelProgress[] }>;
     };
 
-    const subLevels =
-      track.bySubMode?.[subMode]?.levels ?? (subMode === 'arithmetic' ? track.levels : []);
+    // Each strand (counting/operations/comparison/word-problems) tracks under its
+    // own bySubMode bucket; the legacy top-level `levels` is left untouched.
+    const subLevels = track.bySubMode?.[subMode]?.levels ?? [];
     const levels = [...subLevels];
     const idx = levels.findIndex((l) => l.level === level);
     const prevLevel: LevelProgress =
@@ -193,9 +192,8 @@ export function NumbersSession({
     };
     const nextTrack = {
       highest_level: Math.max(track.highest_level, level),
-      // Bare `levels` mirrors arithmetic for back-compat; geometry lives only
-      // under bySubMode.
-      levels: subMode === 'arithmetic' ? levels : track.levels,
+      // Legacy top-level `levels` is preserved as-is; strands live under bySubMode.
+      levels: track.levels,
       bySubMode,
     };
     const progress_by_module = {
@@ -340,7 +338,9 @@ export function NumbersSession({
                 // shapes to compare instead of being a reading test. Numeric
                 // / non-shape answers (e.g. "how many sides?") fall back to
                 // the textual label.
-                const shape = subMode === 'geometry' ? shapeFromLabel(label) : null;
+                // Shape-themed questions (theme="shapes") render each shape-word
+                // option as an SVG so it's a visual comparison, not a reading test.
+                const shape = q.theme === 'shapes' ? shapeFromLabel(label) : null;
                 return (
                   <button
                     key={i}

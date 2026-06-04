@@ -186,18 +186,12 @@ export function App() {
     module: Module,
     level: number,
     lesson: number,
-    subMode?: 'picture' | 'fill' | 'build' | 'read' | NumbersSubMode,
+    subMode?: 'picture' | 'fill-blank' | 'build-sentence' | 'read-answer' | NumbersSubMode,
   ): PlayTarget | null {
     const bundle = queryClient.getQueryData<QuestionBundleResponse>(['bundle', module]);
     if (!bundle) return null;
     const questions = subMode
-      ? bundle.questions.filter((q) =>
-          // Numbers/arithmetic admits legacy rows without a sub_mode so the
-          // existing bundles keep flowing until they're explicitly re-tagged.
-          module === 'numbers' && subMode === 'arithmetic'
-            ? q.sub_mode === 'arithmetic' || !q.sub_mode
-            : q.sub_mode === subMode,
-        )
+      ? bundle.questions.filter((q) => q.sub_mode === subMode)
       : bundle.questions;
     const units = unitsForLevel(lessonsForLevel(questions, level));
     const idx = units.findIndex((u) => u.lesson === lesson);
@@ -414,7 +408,7 @@ export function App() {
         );
         break;
       case 'levelmap': {
-        const sm: NumbersSubMode = route.subMode ?? 'arithmetic';
+        const sm: NumbersSubMode = route.subMode ?? 'counting';
         screen = (
           <NumbersLevelMap
             subMode={sm}
@@ -426,7 +420,7 @@ export function App() {
         break;
       }
       case 'lessonmap': {
-        const sm: NumbersSubMode = route.subMode ?? 'arithmetic';
+        const sm: NumbersSubMode = route.subMode ?? 'counting';
         screen = (
           <NumbersLessonMap
             level={route.level}
@@ -441,7 +435,7 @@ export function App() {
         break;
       }
       case 'session': {
-        const sm: NumbersSubMode = route.subMode ?? 'arithmetic';
+        const sm: NumbersSubMode = route.subMode ?? 'counting';
         screen = (
           <NumbersSession
             level={route.level}
@@ -467,7 +461,7 @@ export function App() {
         break;
       }
       case 'summary': {
-        const sm: NumbersSubMode = route.subMode ?? 'arithmetic';
+        const sm: NumbersSubMode = route.subMode ?? 'counting';
         const next = nextTarget('numbers', route.level, route.lesson, sm);
         screen = (
           <Summary
@@ -607,7 +601,7 @@ export function App() {
         );
         break;
       case 'words_fill_summary': {
-        const next = nextTarget('words', route.level, route.lesson, 'fill');
+        const next = nextTarget('words', route.level, route.lesson, 'fill-blank');
         screen = (
           <Summary
             score={route.score}
@@ -659,7 +653,7 @@ export function App() {
         );
         break;
       case 'words_build_summary': {
-        const next = nextTarget('words', route.level, route.lesson, 'build');
+        const next = nextTarget('words', route.level, route.lesson, 'build-sentence');
         screen = (
           <Summary
             score={route.score}
@@ -711,7 +705,7 @@ export function App() {
         );
         break;
       case 'words_read_summary': {
-        const next = nextTarget('words', route.level, route.lesson, 'read');
+        const next = nextTarget('words', route.level, route.lesson, 'read-answer');
         screen = (
           <Summary
             score={route.score}

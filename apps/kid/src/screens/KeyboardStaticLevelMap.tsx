@@ -57,7 +57,7 @@ export function KeyboardStaticLevelMap({
 
   // Static sub-mode only — Keyboard bundles both sub-modes together.
   const staticQs = useMemo(
-    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'static') : []),
+    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'copy') : []),
     [bundle],
   );
   const configuredLevels = useMemo(

@@ -33,7 +33,7 @@ export function WordsFillLessonMap({
   });
 
   const fill = useMemo(
-    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'fill') : []),
+    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'fill-blank') : []),
     [bundle],
   );
   const units = useMemo(

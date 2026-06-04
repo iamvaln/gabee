@@ -12,30 +12,37 @@ import { useStore } from '../store';
 import { lessonsForLevel, unitsForLevel, levelComplete } from '../lib/progression';
 import type { NumbersSubMode } from './NumbersHub';
 
-// Curriculum concept per Numbers · Arithmetic level (spec §4.1). Only the levels
-// that are actually CONFIGURED (have published content) are shown to the player;
-// the rest are invisible (admin-only). Labels fall back to "Level N" for any not
-// listed.
-const ARITHMETIC_LEVEL_LABELS: Record<number, { fr: string; en: string }> = {
-  1: { fr: 'Compter', en: 'Count' },
-  2: { fr: 'Dizaines', en: 'Tens' },
-  3: { fr: 'Centaines', en: 'Hundreds' },
-  4: { fr: 'Additionner', en: 'Add' },
-  5: { fr: 'Additions', en: 'Add to 100' },
-  6: { fr: 'Additions +', en: 'Add to 200' },
-  7: { fr: 'Soustraire', en: 'Subtract' },
-  8: { fr: 'Soustractions', en: 'Subtract to 200' },
-  9: { fr: 'Comparer', en: 'Compare' },
-  10: { fr: 'Multiplier', en: 'Multiply' },
-};
-
-// Numbers · Geometry curriculum scaffold.
-const GEOMETRY_LEVEL_LABELS: Record<number, { fr: string; en: string }> = {
-  1: { fr: 'Formes simples', en: 'Simple shapes' },
-  2: { fr: 'Côtés et sommets', en: 'Sides & vertices' },
-  3: { fr: 'Symétrie', en: 'Symmetry' },
-  4: { fr: 'Périmètre', en: 'Perimeter' },
-  5: { fr: 'Aires', en: 'Areas' },
+// Curriculum v0.1 level labels per Numbers strand (L1-L5). Only CONFIGURED levels
+// (with published content) are shown; labels fall back to "Level N" otherwise.
+const NUMBERS_LEVEL_LABELS: Record<NumbersSubMode, Record<number, { fr: string; en: string }>> = {
+  counting: {
+    1: { fr: 'Jusqu’à 5', en: 'Up to 5' },
+    2: { fr: 'Jusqu’à 10', en: 'Up to 10' },
+    3: { fr: 'Jusqu’à 20', en: 'Up to 20' },
+    4: { fr: 'Jusqu’à 100', en: 'Up to 100' },
+    5: { fr: 'Pairs & suites', en: 'Even & sequences' },
+  },
+  operations: {
+    1: { fr: 'Additions ≤ 5', en: 'Add to 5' },
+    2: { fr: 'Additions ≤ 10', en: 'Add to 10' },
+    3: { fr: 'Soustractions', en: 'Subtract' },
+    4: { fr: 'Additions ≤ 20', en: 'Add to 20' },
+    5: { fr: 'Soustractions ≤ 20', en: 'Subtract to 20' },
+  },
+  comparison: {
+    1: { fr: 'Plus / moins', en: 'More / less' },
+    2: { fr: '<, >, =', en: '<, >, =' },
+    3: { fr: 'Ranger', en: 'Order' },
+    4: { fr: 'Suites', en: 'Sequences' },
+    5: { fr: 'Encadrer', en: 'Bracket' },
+  },
+  'word-problems': {
+    1: { fr: 'Ajouter', en: 'Add' },
+    2: { fr: 'Retirer', en: 'Take away' },
+    3: { fr: 'Monnaie', en: 'Money' },
+    4: { fr: 'Le temps', en: 'Time' },
+    5: { fr: 'Deux étapes', en: 'Two steps' },
+  },
 };
 
 // Sub-mode-aware progress lookup. Numbers progress is stored under a single
@@ -47,19 +54,17 @@ function levelsForSubMode(
   subMode: NumbersSubMode,
 ): LevelProgress[] {
   const t = track as unknown as {
-    bySubMode?: { arithmetic?: { levels?: LevelProgress[] }; geometry?: { levels?: LevelProgress[] } };
+    bySubMode?: Record<string, { levels?: LevelProgress[] }>;
     levels: LevelProgress[];
   } | undefined;
-  if (t?.bySubMode?.[subMode]?.levels) return t.bySubMode[subMode]!.levels!;
-  // Legacy back-compat: bare `track.levels` represents arithmetic.
-  return subMode === 'arithmetic' ? t?.levels ?? [] : [];
+  return t?.bySubMode?.[subMode]?.levels ?? [];
 }
 
 export function NumbersLevelMap({
   onLevel,
   onHome,
   onBack,
-  subMode = 'arithmetic',
+  subMode = 'counting',
 }: {
   onLevel: (level: number) => void;
   onHome: () => void;
@@ -82,9 +87,7 @@ export function NumbersLevelMap({
   const subModeQuestions = useMemo(() => {
     if (!bundle) return [];
     return bundle.questions.filter((q) =>
-      subMode === 'arithmetic'
-        ? q.sub_mode === 'arithmetic' || !q.sub_mode
-        : q.sub_mode === subMode,
+      q.sub_mode === subMode,
     );
   }, [bundle, subMode]);
   const configuredLevels = useMemo(
@@ -98,7 +101,7 @@ export function NumbersLevelMap({
     if (!bundle) return false;
     return levelComplete(levels, lvl, unitsForLevel(lessonsForLevel(subModeQuestions, lvl)));
   };
-  const LABELS = subMode === 'geometry' ? GEOMETRY_LEVEL_LABELS : ARITHMETIC_LEVEL_LABELS;
+  const LABELS = NUMBERS_LEVEL_LABELS[subMode] ?? {};
   const labelFor = (lvl: number) => LABELS[lvl]?.[lang] ?? `${t('level')} ${lvl}`;
   const m = MODULES.find((x) => x.id === 'numbers')!;
 

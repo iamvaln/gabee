@@ -39,7 +39,7 @@ export function KeyboardStaticLessonMap({
   });
 
   const staticQs = useMemo(
-    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'static') : []),
+    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'copy') : []),
     [bundle],
   );
   const units = useMemo(

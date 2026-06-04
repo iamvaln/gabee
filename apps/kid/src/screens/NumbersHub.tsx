@@ -7,7 +7,9 @@ import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
 
-export type NumbersSubMode = 'arithmetic' | 'geometry';
+// Curriculum v0.1 §1: four parallel numbers strands (a kid can attack Operations
+// without finishing Counting). Each has its own level track + question pool.
+export type NumbersSubMode = 'counting' | 'operations' | 'comparison' | 'word-problems';
 
 const SUB_MODES: {
   id: NumbersSubMode;
@@ -16,16 +18,28 @@ const SUB_MODES: {
   icon: string;
 }[] = [
   {
-    id: 'arithmetic',
-    label: { fr: 'Arithmétique', en: 'Arithmetic' },
-    sub: { fr: 'Compter, additionner, soustraire', en: 'Count, add, subtract' },
+    id: 'counting',
+    label: { fr: 'Nombres & comptage', en: 'Numbers & counting' },
+    sub: { fr: 'Compter et reconnaître les quantités', en: 'Count and recognise quantities' },
+    icon: '🔢',
+  },
+  {
+    id: 'operations',
+    label: { fr: 'Opérations', en: 'Operations' },
+    sub: { fr: 'Additionner et soustraire', en: 'Add and subtract' },
     icon: '➕',
   },
   {
-    id: 'geometry',
-    label: { fr: 'Géométrie', en: 'Geometry' },
-    sub: { fr: 'Formes, côtés, symétrie', en: 'Shapes, sides, symmetry' },
-    icon: '▲',
+    id: 'comparison',
+    label: { fr: 'Comparer & ordonner', en: 'Compare & order' },
+    sub: { fr: 'Plus, moins, ranger', en: 'More, less, order' },
+    icon: '⚖️',
+  },
+  {
+    id: 'word-problems',
+    label: { fr: 'Problèmes du quotidien', en: 'Everyday problems' },
+    sub: { fr: 'Monnaie, temps, situations', en: 'Money, time, situations' },
+    icon: '🧩',
   },
 ];
 
@@ -59,9 +73,9 @@ export function NumbersHub({
   const playable = useMemo<Set<NumbersSubMode>>(() => {
     const set = new Set<NumbersSubMode>();
     if (!bundle) return set;
+    const known = new Set<string>(SUB_MODES.map((s) => s.id));
     for (const q of bundle.questions) {
-      if (q.sub_mode === 'geometry') set.add('geometry');
-      else set.add('arithmetic');
+      if (known.has(q.sub_mode)) set.add(q.sub_mode as NumbersSubMode);
     }
     return set;
   }, [bundle]);

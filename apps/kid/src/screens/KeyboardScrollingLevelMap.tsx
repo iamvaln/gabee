@@ -43,7 +43,7 @@ export function KeyboardScrollingLevelMap({
   });
 
   const scrollingQs = useMemo(
-    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'scrolling') : []),
+    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'speed') : []),
     [bundle],
   );
   const configuredLevels = useMemo(

@@ -55,7 +55,7 @@ export function KeyboardStaticSession({
     if (!bundle) return null;
     const pool = bundle.questions.filter(
       (q) =>
-        q.sub_mode === 'static' &&
+        q.sub_mode === 'copy' &&
         q.level === level &&
         (isRevision || q.lesson === lesson),
     );

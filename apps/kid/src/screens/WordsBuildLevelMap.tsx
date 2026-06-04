@@ -47,7 +47,7 @@ export function WordsBuildLevelMap({
 
   // Build sub-mode only — Words bundles all 4 sub-modes together.
   const build = useMemo(
-    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'build') : []),
+    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'build-sentence') : []),
     [bundle],
   );
   const configuredLevels = useMemo(

@@ -111,7 +111,7 @@ export function WordsBuildSession({
       {
         name: 'lesson_started',
         module: 'words',
-        sub_mode: 'build',
+        sub_mode: 'build-sentence',
         level,
         lesson,
         trigger,
@@ -138,7 +138,7 @@ export function WordsBuildSession({
       {
         name: 'question_shown',
         module: 'words',
-        sub_mode: 'build',
+        sub_mode: 'build-sentence',
         level,
         lesson,
         question_id: q.id,
@@ -167,7 +167,7 @@ export function WordsBuildSession({
       {
         name: 'question_answered',
         module: 'words',
-        sub_mode: 'build',
+        sub_mode: 'build-sentence',
         level,
         lesson,
         question_id: q.id,
@@ -283,7 +283,7 @@ export function WordsBuildSession({
         {
           name: 'lesson_completed',
           module: 'words',
-          sub_mode: 'build',
+          sub_mode: 'build-sentence',
           level,
           lesson,
           stars,

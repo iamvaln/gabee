@@ -38,7 +38,7 @@ export function CodeFindPathLessonMap({
   });
 
   const findPath = useMemo(
-    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'find_path') : []),
+    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'maze') : []),
     [bundle],
   );
   const units = useMemo(

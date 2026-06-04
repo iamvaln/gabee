@@ -99,7 +99,7 @@ export function WordsFillSession({
     lessonStartRef.current = Date.now();
     const position = nextLessonPosition();
     void enqueueEvent(
-      { name: 'lesson_started', module: 'words', sub_mode: 'fill', level, lesson, trigger, position_in_session: position },
+      { name: 'lesson_started', module: 'words', sub_mode: 'fill-blank', level, lesson, trigger, position_in_session: position },
       ctx,
     );
   }, [session, q, profile]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -111,7 +111,7 @@ export function WordsFillSession({
     shownRef.current = key;
     questionStartRef.current = Date.now();
     void enqueueEvent(
-      { name: 'question_shown', module: 'words', sub_mode: 'fill', level, lesson, question_id: q.id, type: q.type, attempt_num: attempt },
+      { name: 'question_shown', module: 'words', sub_mode: 'fill-blank', level, lesson, question_id: q.id, type: q.type, attempt_num: attempt },
       ctx,
     );
   }, [q, attempt, session, profile]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -126,7 +126,7 @@ export function WordsFillSession({
       {
         name: 'question_answered',
         module: 'words',
-        sub_mode: 'fill',
+        sub_mode: 'fill-blank',
         level,
         lesson,
         question_id: q.id,
@@ -211,7 +211,7 @@ export function WordsFillSession({
       const total = session.questions.length;
       const stars = Math.max(1, Math.min(3, Math.round((newScore / total) * 3)));
       void enqueueEvent(
-        { name: 'lesson_completed', module: 'words', sub_mode: 'fill', level, lesson, stars, duration_s: Math.round((Date.now() - lessonStartRef.current) / 1000) },
+        { name: 'lesson_completed', module: 'words', sub_mode: 'fill-blank', level, lesson, stars, duration_s: Math.round((Date.now() - lessonStartRef.current) / 1000) },
         ctx,
       );
       await flushEvents();

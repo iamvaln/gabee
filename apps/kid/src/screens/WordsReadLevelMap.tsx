@@ -39,7 +39,7 @@ export function WordsReadLevelMap({
   });
 
   const read = useMemo(
-    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'read') : []),
+    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'read-answer') : []),
     [bundle],
   );
   const configuredLevels = useMemo(

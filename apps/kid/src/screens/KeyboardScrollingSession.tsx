@@ -54,7 +54,7 @@ export function KeyboardScrollingSession({
     if (!bundle) return null;
     const pool = bundle.questions.filter(
       (q) =>
-        q.sub_mode === 'scrolling' &&
+        q.sub_mode === 'speed' &&
         q.level === level &&
         (isRevision || q.lesson === lesson),
     );

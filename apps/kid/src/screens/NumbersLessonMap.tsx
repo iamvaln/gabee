@@ -17,11 +17,10 @@ function levelsForSubMode(
   subMode: NumbersSubMode,
 ): LevelProgress[] {
   const t = track as unknown as {
-    bySubMode?: { arithmetic?: { levels?: LevelProgress[] }; geometry?: { levels?: LevelProgress[] } };
+    bySubMode?: Record<string, { levels?: LevelProgress[] }>;
     levels: LevelProgress[];
   } | undefined;
-  if (t?.bySubMode?.[subMode]?.levels) return t.bySubMode[subMode]!.levels!;
-  return subMode === 'arithmetic' ? t?.levels ?? [] : [];
+  return t?.bySubMode?.[subMode]?.levels ?? [];
 }
 
 // A level's units: its configured lessons (gated in order), then a revision (if ≥ 2
@@ -31,7 +30,7 @@ export function NumbersLessonMap({
   onUnit,
   onHome,
   onBack,
-  subMode = 'arithmetic',
+  subMode = 'counting',
 }: {
   level: number;
   onUnit: (lesson: number, isRevision: boolean) => void;
@@ -53,9 +52,7 @@ export function NumbersLessonMap({
   const subModeQuestions = useMemo(() => {
     if (!bundle) return [];
     return bundle.questions.filter((q) =>
-      subMode === 'arithmetic'
-        ? q.sub_mode === 'arithmetic' || !q.sub_mode
-        : q.sub_mode === subMode,
+      q.sub_mode === subMode,
     );
   }, [bundle, subMode]);
 
