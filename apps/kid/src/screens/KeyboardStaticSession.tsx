@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import type { LevelProgress, LessonProgress, QuestionRecord } from '@gabee/types';
+import type { LevelProgress, LessonProgress, QuestionRecord, QuestionValue } from '@gabee/types';
 import { Bee, type BeeExpression } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
@@ -91,8 +91,14 @@ export function KeyboardStaticSession({
   const q = session?.questions[qIdx];
   const ctx = { profileId: profile?.id ?? null, sessionId: play?.id ?? null };
 
-  // The target string for the current question, rendered in the active language.
-  const target = useMemo(() => (q ? displayValue(q.prompt, lang) : ''), [q, lang]);
+  // The target string to type lives in `config.target` (Curriculum v0.1: `prompt`
+  // is the instruction, not the content — see question.ts). May be a bare string
+  // ("a", ".") for letter/digit/punctuation levels or a bilingual { fr, en } for
+  // word/sentence levels; displayValue handles both.
+  const target = useMemo(() => {
+    const t = (q?.config as { target?: QuestionValue } | undefined)?.target;
+    return t != null ? displayValue(t, lang) : '';
+  }, [q, lang]);
   // Word boundaries: indices of every char that closes a word (space chars + final).
   const wordBounds = useMemo(() => {
     const out: number[] = [];
@@ -429,7 +435,7 @@ export function KeyboardStaticSession({
               })}
             </div>
             <div style={{ fontSize: 14, color: '#64748b' }}>
-              {lang === 'fr' ? 'Tape la lettre allumée' : 'Type the lit letter'}
+              {lang === 'fr' ? 'Tape la lettre en surbrillance' : 'Type the highlighted letter'}
             </div>
             </div>
           </div>

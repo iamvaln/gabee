@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import type { LevelProgress, LessonProgress, QuestionRecord } from '@gabee/types';
+import type { LevelProgress, LessonProgress, QuestionRecord, QuestionValue } from '@gabee/types';
 import { Bee, type BeeExpression } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
@@ -94,7 +94,12 @@ export function KeyboardScrollingSession({
 
   const q = session?.questions[qIdx];
   const ctx = { profileId: profile?.id ?? null, sessionId: play?.id ?? null };
-  const target = useMemo(() => (q ? displayValue(q.prompt, lang) : ''), [q, lang]);
+  // Target to type lives in `config.target` (prompt is the instruction — see
+  // question.ts). Bare string for letter/bigram levels, bilingual for word/sentence.
+  const target = useMemo(() => {
+    const t = (q?.config as { target?: QuestionValue } | undefined)?.target;
+    return t != null ? displayValue(t, lang) : '';
+  }, [q, lang]);
 
   // lesson_started — once when session is ready.
   useEffect(() => {
