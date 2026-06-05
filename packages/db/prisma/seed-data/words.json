@@ -35620,8 +35620,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "banane",
@@ -35672,8 +35672,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "ananas",
@@ -35724,8 +35724,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "singe",
@@ -35776,8 +35776,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "abeille",
@@ -35828,8 +35828,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "soleil",
@@ -35880,8 +35880,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "lune",
@@ -35932,8 +35932,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "pain",
@@ -35984,8 +35984,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "ami",
@@ -36036,8 +36036,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "chaise",
@@ -36088,8 +36088,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "raisin",
@@ -36140,8 +36140,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "pomme",
@@ -36192,8 +36192,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "livre",
@@ -36244,8 +36244,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "pastèque",
@@ -36296,8 +36296,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "oignon",
@@ -36348,8 +36348,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "perroquet",
@@ -36400,8 +36400,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "fleur",
@@ -36452,8 +36452,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "hibou",
@@ -36504,8 +36504,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "lait",
@@ -36556,8 +36556,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "arbre",
@@ -36608,8 +36608,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "poisson",
@@ -36660,8 +36660,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "maison",
@@ -36712,8 +36712,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "crabe",
@@ -36764,8 +36764,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "chien",
@@ -36816,8 +36816,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "carotte",
@@ -36868,8 +36868,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "eau",
@@ -36920,8 +36920,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "serpent",
@@ -36972,8 +36972,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "ballon",
@@ -37024,8 +37024,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "chat",
@@ -37076,8 +37076,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "lion",
@@ -37128,8 +37128,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "voiture",
@@ -37180,8 +37180,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "table",
@@ -37232,8 +37232,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "éléphant",
@@ -37284,8 +37284,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "girafe",
@@ -37336,8 +37336,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "lit",
@@ -37388,8 +37388,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "papillon",
@@ -37440,8 +37440,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "tomate",
@@ -37492,8 +37492,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "citron",
@@ -37544,8 +37544,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "tortue",
@@ -37596,8 +37596,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "pied",
@@ -37648,8 +37648,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "école",
@@ -37700,8 +37700,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "porte",
@@ -37752,8 +37752,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "étoile",
@@ -37804,8 +37804,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "oiseau",
@@ -37856,8 +37856,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "grenouille",
@@ -37908,8 +37908,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "fraise",
@@ -37960,8 +37960,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "main",
@@ -38012,8 +38012,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "banane",
@@ -38064,8 +38064,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "ananas",
@@ -38116,8 +38116,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "singe",
@@ -38168,8 +38168,8 @@
       "type": "mcq-image",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "abeille",
@@ -38220,8 +38220,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "poisson",
@@ -38272,8 +38272,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "pomme",
@@ -38324,8 +38324,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "ballon",
@@ -38376,8 +38376,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "papillon",
@@ -38428,8 +38428,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "pastèque",
@@ -38480,8 +38480,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "lait",
@@ -38532,8 +38532,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "école",
@@ -38584,8 +38584,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "arbre",
@@ -38636,8 +38636,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "main",
@@ -38688,8 +38688,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "raisin",
@@ -38740,8 +38740,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "citron",
@@ -38792,8 +38792,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "abeille",
@@ -38844,8 +38844,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "oignon",
@@ -38896,8 +38896,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "maison",
@@ -38948,8 +38948,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "porte",
@@ -39000,8 +39000,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "pain",
@@ -39052,8 +39052,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "girafe",
@@ -39104,8 +39104,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "pied",
@@ -39156,8 +39156,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "lion",
@@ -39208,8 +39208,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "oiseau",
@@ -39260,8 +39260,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "eau",
@@ -39312,8 +39312,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "ananas",
@@ -39364,8 +39364,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "chien",
@@ -39416,8 +39416,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "table",
@@ -39468,8 +39468,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "chaise",
@@ -39520,8 +39520,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "ami",
@@ -39572,8 +39572,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "fleur",
@@ -39624,8 +39624,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "serpent",
@@ -39676,8 +39676,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "voiture",
@@ -39728,8 +39728,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "soleil",
@@ -39780,8 +39780,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "chat",
@@ -39832,8 +39832,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "livre",
@@ -39884,8 +39884,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "carotte",
@@ -39936,8 +39936,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "crabe",
@@ -39988,8 +39988,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "fraise",
@@ -40040,8 +40040,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "singe",
@@ -40092,8 +40092,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "tomate",
@@ -40144,8 +40144,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "grenouille",
@@ -40196,8 +40196,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "lit",
@@ -40248,8 +40248,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "perroquet",
@@ -40300,8 +40300,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "étoile",
@@ -40352,8 +40352,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "banane",
@@ -40404,8 +40404,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "lune",
@@ -40456,8 +40456,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "éléphant",
@@ -40508,8 +40508,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "hibou",
@@ -40560,8 +40560,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "tortue",
@@ -40612,8 +40612,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "poisson",
@@ -40664,8 +40664,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "pomme",
@@ -40716,8 +40716,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "ballon",
@@ -40768,8 +40768,8 @@
       "type": "mcq-image",
       "objective_ref": "2",
       "prompt": {
-        "fr": "Quel est ce mot ?",
-        "en": "What is this word?"
+        "fr": "Quel mot désigne cet objet ?",
+        "en": "Which word names this object?"
       },
       "answer": {
         "fr": "papillon",
