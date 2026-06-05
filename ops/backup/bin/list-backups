@@ -1,0 +1,16 @@
+#!/bin/bash
+# Quick "what's in the bucket" command. Mostly used as a sanity check after
+# changing R2 creds — if list returns nothing or 403s, the next backup
+# would silently fail until someone looks.
+set -euo pipefail
+
+: "${R2_ENDPOINT:?R2_ENDPOINT is required}"
+: "${R2_BUCKET:?R2_BUCKET is required}"
+
+PREFIX=${R2_PREFIX:-backups}
+
+echo "s3://${R2_BUCKET}/${PREFIX}/"
+aws s3 ls "s3://${R2_BUCKET}/${PREFIX}/" \
+  --endpoint-url "${R2_ENDPOINT}" \
+  --human-readable \
+  --summarize

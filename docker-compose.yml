@@ -64,6 +64,34 @@ services:
       - traefik.http.routers.gabee-web.tls.certresolver=le
       - traefik.http.services.gabee-web.loadbalancer.server.port=3000
 
+  # ── DB backup sidecar: nightly pg_dump → Cloudflare R2 ──────────────────────
+  # Default mode is the long-running scheduler (loop). Restore + one-off
+  # backups are imperative — see docs/backups.md. Lives on the internal net
+  # only; never exposed via Traefik.
+  backup:
+    build:
+      context: ./ops/backup
+    image: ${REGISTRY:-ghcr.io/iamvaln}/gabee-backup:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      R2_ENDPOINT: ${R2_ENDPOINT}
+      R2_BUCKET: ${R2_BUCKET}
+      R2_PREFIX: ${R2_PREFIX:-backups}
+      # AWS SDK reads creds from these names; we map the R2_* env vars onto
+      # them here so the user-facing names stay R2-flavoured.
+      AWS_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      BACKUP_SCHEDULE_HOUR_UTC: ${BACKUP_SCHEDULE_HOUR_UTC:-3}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [internal]
+
   # ── Kid PWA (static, served by nginx) ───────────────────────────────────────
   kid:
     build:

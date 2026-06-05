@@ -1,0 +1,75 @@
+#!/bin/bash
+# One-shot backup: pg_dump → gzip → R2 upload → prune.
+# Errors are loud and immediately propagate (no try/swallow). Callers handle
+# the rc — the loop logs and continues; an ad-hoc `docker compose run --rm
+# backup backup` exits non-zero so CI / operator can react.
+set -euo pipefail
+
+: "${PGHOST:?PGHOST is required}"
+: "${PGUSER:?PGUSER is required}"
+: "${PGPASSWORD:?PGPASSWORD is required}"
+: "${PGDATABASE:?PGDATABASE is required}"
+: "${R2_ENDPOINT:?R2_ENDPOINT is required}"
+: "${R2_BUCKET:?R2_BUCKET is required}"
+: "${AWS_ACCESS_KEY_ID:?AWS_ACCESS_KEY_ID is required (set R2_ACCESS_KEY_ID via compose)}"
+: "${AWS_SECRET_ACCESS_KEY:?AWS_SECRET_ACCESS_KEY is required (set R2_SECRET_ACCESS_KEY via compose)}"
+
+PREFIX=${R2_PREFIX:-backups}
+RETENTION=${BACKUP_RETENTION_DAYS:-14}
+TS=$(date -u +%Y%m%dT%H%M%SZ)
+NAME="gabee-${TS}.sql.gz"
+TMP="/tmp/${NAME}"
+KEY="${PREFIX}/${NAME}"
+
+echo "[backup] dumping ${PGDATABASE}@${PGHOST} → ${TMP}"
+# --clean --if-exists: the resulting SQL drops + recreates objects, so
+# restoring into an existing DB is idempotent. --no-owner / --no-acl: we
+# don't carry role grants across environments.
+pg_dump \
+  --host="${PGHOST}" \
+  --username="${PGUSER}" \
+  --dbname="${PGDATABASE}" \
+  --no-owner \
+  --no-acl \
+  --clean \
+  --if-exists \
+  --format=plain \
+  | gzip -9 > "${TMP}"
+
+size=$(stat -c %s "${TMP}" 2>/dev/null || stat -f %z "${TMP}")
+echo "[backup] dump complete (${size} bytes) → uploading to s3://${R2_BUCKET}/${KEY}"
+
+aws s3 cp "${TMP}" "s3://${R2_BUCKET}/${KEY}" \
+  --endpoint-url "${R2_ENDPOINT}" \
+  --no-progress
+
+rm -f "${TMP}"
+echo "[backup] uploaded ${KEY}"
+
+# Prune. R2's S3 `ls` returns lines of the form:
+#   2026-06-04 03:00:01  4823017 backups/gabee-20260604T030001Z.sql.gz
+# Filenames embed the dump timestamp (YYYYMMDD), so we compare against the
+# cutoff date as an integer — no fragile date-string parsing across the wire.
+echo "[backup] pruning > ${RETENTION} days old"
+cutoff_epoch=$(awk -v t="$(date -u +%s)" -v d="${RETENTION}" 'BEGIN { print t - d*86400 }')
+cutoff_yyyymmdd=$(date -u -d "@${cutoff_epoch}" +%Y%m%d)
+
+pruned=0
+while IFS= read -r line; do
+  # Skip the prefix's own "PRE …/" lines and blanks.
+  case "$line" in '' | *' PRE '*) continue ;; esac
+  fname=$(printf '%s\n' "$line" | awk '{print $NF}')
+  # Defensive: only touch keys matching our naming scheme.
+  case "$fname" in gabee-*.sql.gz) ;; *) continue ;; esac
+  fdate=$(printf '%s\n' "$fname" | sed -n 's/^gabee-\([0-9]\{8\}\)T.*$/\1/p')
+  [ -z "$fdate" ] && continue
+  if [ "$fdate" -lt "$cutoff_yyyymmdd" ]; then
+    echo "[backup] prune s3://${R2_BUCKET}/${PREFIX}/${fname}"
+    aws s3 rm "s3://${R2_BUCKET}/${PREFIX}/${fname}" \
+      --endpoint-url "${R2_ENDPOINT}" \
+      --no-progress
+    pruned=$((pruned + 1))
+  fi
+done < <(aws s3 ls "s3://${R2_BUCKET}/${PREFIX}/" --endpoint-url "${R2_ENDPOINT}")
+echo "[backup] pruned ${pruned} old backup(s)"
+echo "[backup] done"
