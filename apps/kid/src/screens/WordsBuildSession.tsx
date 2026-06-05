@@ -11,6 +11,7 @@ import { enqueueEvent, flushEvents } from '../lib/events';
 import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { selectSession } from '../lib/selectSession';
+import { getSeen, markSeen } from '../lib/seen';
 import { ageFromBirthDate } from '../lib/age';
 import { shuffle, displayValue } from '../lib/util';
 import { HintLine } from '../components/HintLine';
@@ -53,14 +54,10 @@ export function WordsBuildSession({
 
   const session = useMemo(() => {
     if (!bundle) return null;
-    const pool = bundle.questions.filter(
-      (q) =>
-        q.sub_mode === 'build-sentence' &&
-        q.level === level &&
-        (isRevision || q.lesson === lesson),
-    );
+    const pool = bundle.questions.filter((q) => q.sub_mode === 'build-sentence' && q.level === level);
     if (pool.length === 0) return null;
-    return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL) };
+    const seen = getSeen(profile?.id ?? null, 'words:build-sentence', level);
+    return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL, seen) };
   }, [bundle, level, lesson, isRevision]);
 
   const [qIdx, setQIdx] = useState(0);
@@ -236,6 +233,7 @@ export function WordsBuildSession({
     if (li >= 0) lessons[li] = updatedLesson;
     else lessons.push(updatedLesson);
 
+    markSeen(profile.id, 'words:build-sentence', level, session.questions.map((q) => q.id));
     const seen = Array.from(
       new Set([...prevLevel.seen_question_ids, ...session.questions.map((q) => q.id)]),
     ).slice(-80);

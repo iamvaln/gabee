@@ -13,6 +13,7 @@ import { useStore } from '../store';
 import { selectSession } from '../lib/selectSession';
 import { ageFromBirthDate } from '../lib/age';
 import { displayValue } from '../lib/util';
+import { getSeen, markSeen } from '../lib/seen';
 import { HintLine } from '../components/HintLine';
 
 const TOTAL = 7;
@@ -54,14 +55,10 @@ export function KeyboardScrollingSession({
 
   const session = useMemo(() => {
     if (!bundle) return null;
-    const pool = bundle.questions.filter(
-      (q) =>
-        q.sub_mode === 'speed' &&
-        q.level === level &&
-        (isRevision || q.lesson === lesson),
-    );
+    const pool = bundle.questions.filter((q) => q.sub_mode === 'speed' && q.level === level);
     if (pool.length === 0) return null;
-    return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL) };
+    const seen = getSeen(profile?.id ?? null, 'keyboard:speed', level);
+    return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL, seen) };
   }, [bundle, level, lesson, isRevision]);
 
   const speedPxPerS = SCROLL_SPEED_BY_LEVEL[level] ?? 60;
@@ -168,6 +165,7 @@ export function KeyboardScrollingSession({
     if (li >= 0) lessons[li] = updatedLesson;
     else lessons.push(updatedLesson);
 
+    markSeen(profile.id, 'keyboard:speed', level, session.questions.map((q) => q.id));
     const seen = Array.from(
       new Set([...prevLevel.seen_question_ids, ...session.questions.map((q) => q.id)]),
     ).slice(-80);

@@ -1,25 +1,37 @@
 import { shuffle } from './util';
 
 /**
- * Pick the questions for a session (Curriculum v0.1 reco C — age-based selection).
+ * Pick the questions for one session (Curriculum v0.1 reco C + seed-schema §4).
  *
- * When the kid's age is known, prefer questions whose age band contains it
- * (`age_min ≤ age ≤ age_max`; an absent bound = open). Fall back to the full pool
- * when the age-appropriate subset is too small to fill a session, so a pool is
- * never starved. With no age, behaves like a plain shuffle+slice.
+ * The LEVEL pool is the universe — age and "already seen" only ORDER it, they
+ * never EXCLUDE a level's questions. Priority tiers (each shuffled), filling up
+ * to `total`:
+ *   1. unseen ∩ in-my-age-band
+ *   2. unseen ∩ out-of-band
+ *   3. seen   ∩ in-band
+ *   4. seen   ∩ out-of-band
+ *
+ * So: a 10-year-old at a low level still sees its (younger) questions; a 6-year-old
+ * at a high level sees its (older) questions; we start with age-appropriate ones,
+ * move to the rest once those run out, and only repeat already-seen questions once
+ * the whole pool is exhausted. With no age, the age tiers collapse (all in-band).
  */
-export function selectSession<T extends { age_min?: number | null; age_max?: number | null }>(
+export function selectSession<T extends { id: string; age_min?: number | null; age_max?: number | null }>(
   pool: T[],
   age: number | null,
   total: number,
+  seen?: ReadonlySet<string>,
 ): T[] {
-  let base = pool;
-  if (age != null) {
-    const inBand = pool.filter(
-      (q) =>
-        (q.age_min == null || age >= q.age_min) && (q.age_max == null || age <= q.age_max),
-    );
-    if (inBand.length >= total) base = inBand;
-  }
-  return shuffle(base).slice(0, Math.min(total, base.length));
+  const inBand = (q: T) =>
+    age == null || ((q.age_min == null || age >= q.age_min) && (q.age_max == null || age <= q.age_max));
+  const isSeen = (q: T) => !!seen && seen.has(q.id);
+
+  const tiers = [
+    pool.filter((q) => !isSeen(q) && inBand(q)),
+    pool.filter((q) => !isSeen(q) && !inBand(q)),
+    pool.filter((q) => isSeen(q) && inBand(q)),
+    pool.filter((q) => isSeen(q) && !inBand(q)),
+  ];
+  const ordered = tiers.flatMap((t) => shuffle(t));
+  return ordered.slice(0, Math.min(total, ordered.length));
 }

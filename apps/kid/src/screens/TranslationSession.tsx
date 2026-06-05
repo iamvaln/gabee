@@ -18,6 +18,7 @@ import { enqueueEvent, flushEvents } from '../lib/events';
 import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { selectSession } from '../lib/selectSession';
+import { getSeen, markSeen } from '../lib/seen';
 import { ageFromBirthDate } from '../lib/age';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
 import { AssetGlyph } from '../components/AssetGlyph';
@@ -99,11 +100,11 @@ export function TranslationSession({
 
   const session = useMemo(() => {
     if (!bundle) return null;
-    const pool = bundle.questions.filter(
-      (q) => q.level === level && (isRevision || q.lesson === lesson),
-    );
+    // Both directions (en-fr + fr-en) are mixed within a level pool by design.
+    const pool = bundle.questions.filter((q) => q.level === level);
     if (pool.length === 0) return null;
-    return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL) };
+    const seen = getSeen(profile?.id ?? null, 'translation', level);
+    return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL, seen) };
   }, [bundle, level, lesson, isRevision]);
 
   const [qIdx, setQIdx] = useState(0);
@@ -200,6 +201,7 @@ export function TranslationSession({
     if (li >= 0) lessons[li] = updatedLesson;
     else lessons.push(updatedLesson);
 
+    markSeen(profile.id, 'translation', level, session.questions.map((q) => q.id));
     const seen = Array.from(
       new Set([...prevLevel.seen_question_ids, ...session.questions.map((q) => q.id)]),
     ).slice(-80);

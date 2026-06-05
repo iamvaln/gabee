@@ -9,6 +9,7 @@ import { api } from '../lib/api';
 import { enqueueEvent, flushEvents } from '../lib/events';
 import { useStore } from '../store';
 import { selectSession } from '../lib/selectSession';
+import { getSeen, markSeen } from '../lib/seen';
 import { ageFromBirthDate } from '../lib/age';
 import {
   parsePuzzle,
@@ -110,11 +111,10 @@ export function CodeTurtleSession({
 
   const session = useMemo(() => {
     if (!bundle) return null;
-    const pool = bundle.questions.filter(
-      (q) => q.sub_mode === world && q.level === level && (isRevision || q.lesson === lesson),
-    );
+    const pool = bundle.questions.filter((q) => q.sub_mode === world && q.level === level);
     if (pool.length === 0) return null;
-    return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL) };
+    const seen = getSeen(profile?.id ?? null, `code:${world}`, level);
+    return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL, seen) };
   }, [bundle, world, level, lesson, isRevision]);
 
   const [qIdx, setQIdx] = useState(0);
@@ -193,6 +193,7 @@ export function CodeTurtleSession({
     };
     if (li >= 0) lessons[li] = updatedLesson;
     else lessons.push(updatedLesson);
+    markSeen(profileId, `code:${world}`, level, session.questions.map((qq) => qq.id));
     const seen = Array.from(
       new Set([...prevLevel.seen_question_ids, ...session.questions.map((qq) => qq.id)]),
     ).slice(-80);

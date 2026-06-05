@@ -13,12 +13,20 @@ export function sortedUnique(nums: number[]): number[] {
   return [...new Set(nums)].sort((a, b) => a - b);
 }
 
-/** Distinct lesson numbers configured for a level, from the bundle's questions. */
+// Curriculum v0.1 (seed-schema principle 4): the data holds ONE pool per
+// (module, sub_mode, level) — every question is `lesson: 1`. The lesson layer
+// (3 lessons + a revision) is SYNTHESISED app-side: each unit samples the
+// level's pool. So a level with any content always offers 3 lessons + revision,
+// regardless of the `lesson` field on the rows.
+export const LESSONS_PER_LEVEL = 3;
+
+/** The synthesised lesson numbers for a level: 1..3 when the level has a pool. */
 export function lessonsForLevel(
-  questions: { level: number; lesson: number }[],
+  questions: { level: number }[],
   level: number,
 ): number[] {
-  return sortedUnique(questions.filter((q) => q.level === level).map((q) => q.lesson));
+  const hasPool = questions.some((q) => q.level === level);
+  return hasPool ? Array.from({ length: LESSONS_PER_LEVEL }, (_, i) => i + 1) : [];
 }
 
 /** The ordered play units for a level: lessons, then a revision if ≥ 2 lessons. */
