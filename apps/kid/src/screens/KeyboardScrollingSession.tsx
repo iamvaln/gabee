@@ -10,7 +10,9 @@ import { api } from '../lib/api';
 import { enqueueEvent, flushEvents } from '../lib/events';
 import { sync } from '../lib/sync';
 import { useStore } from '../store';
-import { shuffle, displayValue } from '../lib/util';
+import { selectSession } from '../lib/selectSession';
+import { ageFromBirthDate } from '../lib/age';
+import { displayValue } from '../lib/util';
 import { HintLine } from '../components/HintLine';
 
 const TOTAL = 7;
@@ -59,7 +61,7 @@ export function KeyboardScrollingSession({
         (isRevision || q.lesson === lesson),
     );
     if (pool.length === 0) return null;
-    return { questions: shuffle(pool).slice(0, Math.min(TOTAL, pool.length)) };
+    return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL) };
   }, [bundle, level, lesson, isRevision]);
 
   const speedPxPerS = SCROLL_SPEED_BY_LEVEL[level] ?? 60;

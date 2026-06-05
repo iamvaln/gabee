@@ -17,6 +17,8 @@ import { api } from '../lib/api';
 import { enqueueEvent, flushEvents } from '../lib/events';
 import { sync } from '../lib/sync';
 import { useStore } from '../store';
+import { selectSession } from '../lib/selectSession';
+import { ageFromBirthDate } from '../lib/age';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
 import { AssetGlyph } from '../components/AssetGlyph';
 import { HintLine } from '../components/HintLine';
@@ -101,7 +103,7 @@ export function TranslationSession({
       (q) => q.level === level && (isRevision || q.lesson === lesson),
     );
     if (pool.length === 0) return null;
-    return { questions: shuffle(pool).slice(0, Math.min(TOTAL, pool.length)) };
+    return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL) };
   }, [bundle, level, lesson, isRevision]);
 
   const [qIdx, setQIdx] = useState(0);

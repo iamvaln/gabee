@@ -82,6 +82,8 @@ interface QuestionRow {
   lesson: number;
   theme: string;
   type: string;
+  ageMin: number | null;
+  ageMax: number | null;
   prompt: unknown;
   answer: unknown;
   distractors: unknown;
@@ -122,6 +124,8 @@ export function mapQuestion(row: QuestionRow): QuestionRecord {
     lesson: row.lesson,
     theme: row.theme,
     type: row.type,
+    age_min: row.ageMin ?? undefined,
+    age_max: row.ageMax ?? undefined,
     prompt: row.prompt,
     answer: row.answer,
     distractors: row.distractors,

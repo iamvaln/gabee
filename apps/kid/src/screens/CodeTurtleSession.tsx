@@ -8,7 +8,8 @@ import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { enqueueEvent, flushEvents } from '../lib/events';
 import { useStore } from '../store';
-import { shuffle } from '../lib/util';
+import { selectSession } from '../lib/selectSession';
+import { ageFromBirthDate } from '../lib/age';
 import {
   parsePuzzle,
   runProgram,
@@ -113,7 +114,7 @@ export function CodeTurtleSession({
       (q) => q.sub_mode === world && q.level === level && (isRevision || q.lesson === lesson),
     );
     if (pool.length === 0) return null;
-    return { questions: shuffle(pool).slice(0, Math.min(TOTAL, pool.length)) };
+    return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL) };
   }, [bundle, world, level, lesson, isRevision]);
 
   const [qIdx, setQIdx] = useState(0);
