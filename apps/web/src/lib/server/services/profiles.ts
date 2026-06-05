@@ -65,6 +65,7 @@ export async function createProfile(
         name: input.name,
         avatar: input.avatar,
         language: input.language,
+        birthDate: input.birth_date ? new Date(input.birth_date) : null,
         audioEnabled: input.audio_enabled ?? true,
         progressByModule: defaultProgressByModule(),
         progressByModulePerLanguage: defaultProgressByModulePerLanguage(),
@@ -103,6 +104,7 @@ export async function updateProfile(
       ...(input.name !== undefined ? { name: input.name } : {}),
       ...(input.avatar !== undefined ? { avatar: input.avatar } : {}),
       ...(input.language !== undefined ? { language: input.language } : {}),
+      ...(input.birth_date !== undefined ? { birthDate: new Date(input.birth_date) } : {}),
       ...(input.audio_enabled !== undefined ? { audioEnabled: input.audio_enabled } : {}),
     },
   });

@@ -19,6 +19,8 @@ export const CreateProfileRequestSchema = z.object({
   name: z.string().min(2).max(20),
   avatar: AvatarSchema,
   language: LanguageSchema,
+  /** ISO date (YYYY-MM-DD); the add-kid form requires it, optional here for API back-compat. */
+  birth_date: z.iso.date().optional(),
   audio_enabled: z.boolean().optional(),
   /**
    * Co-parent extension policy on new-kid creation (parent spec §7.1, co-parent §10).
@@ -40,6 +42,7 @@ export const UpdateProfileRequestSchema = z
     name: z.string().min(2).max(20),
     avatar: AvatarSchema,
     language: LanguageSchema,
+    birth_date: z.iso.date(),
     audio_enabled: z.boolean(),
   })
   .partial();

@@ -107,10 +107,8 @@ function AddKidModal({ lang, onClose }: { lang: Language; onClose: () => void })
     })();
   }, []);
 
-  // birthday/school/objectives/extra: collected per spec §7.2 but not yet
-  // persisted server-side. Kept in state so the form behaves as designed and
-  // the data is ready when the API accepts them.
-  void birthday;
+  // school/objectives/extra: collected per spec §7.2 but not yet persisted
+  // server-side. birthday IS now persisted (drives age-based content selection).
   void school;
   void objectives;
   void extra;
@@ -132,6 +130,7 @@ function AddKidModal({ lang, onClose }: { lang: Language; onClose: () => void })
           name: name.trim(),
           avatar,
           language,
+          birth_date: birthday || undefined,
           // Only send the flag when we actually surfaced the choice — keeps
           // the request minimal for parents with no co-parents (server
           // defaults to `true` for backwards compat).

@@ -7,6 +7,7 @@ import { AddChildForm } from './add-child-form';
 import { HomeClassificationCard } from './_components/home-classification-card';
 import { HomeKidsPulse, type KidPulse } from './_components/home-kids-pulse';
 import { HomeAggregates, type AggregatesData } from './_components/home-aggregates';
+import { ageFromBirthDate } from '@/lib/age';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,8 +76,7 @@ export default async function ParentHome() {
       id: c.id,
       name: c.name,
       avatar: c.avatar,
-      // No birthday on ChildProfile yet — age unavailable until Phase 2.
-      age: null,
+      age: ageFromBirthDate(c.birth_date),
       todaySessions: a?.sessions ?? 0,
       todayMinutes: Math.round((a?.durationS ?? 0) / 60),
       modulesPlayedToday: a?.modules ?? new Set<string>(),

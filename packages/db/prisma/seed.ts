@@ -95,6 +95,8 @@ function toQuestionData(q: QuestionRecord) {
     level: q.level,
     lesson: q.lesson,
     objectiveRef: q.objective_ref ?? null,
+    ageMin: q.age_min ?? null,
+    ageMax: q.age_max ?? null,
     theme: q.theme,
     type: q.type,
     prompt: q.prompt as Prisma.InputJsonValue,

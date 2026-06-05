@@ -238,6 +238,9 @@ model ChildProfile {
   name                        String
   avatar                      Avatar
   language                    Language
+  // Collected at add-kid (required in the form); drives age-based content
+  // selection. Nullable for profiles created before this field existed.
+  birthDate                   DateTime?               @map("birth_date") @db.Date
   audioEnabled                Boolean                 @default(true) @map("audio_enabled")
   createdAt                   DateTime                @default(now()) @map("created_at")
   lastActiveAt                DateTime?               @map("last_active_at")
@@ -292,6 +295,9 @@ model Question {
   theme        String
   type         String
   objectiveRef String?        @map("objective_ref")
+  // Age suitability band (years) for age-based selection — null = no constraint.
+  ageMin       Int?           @map("age_min")
+  ageMax       Int?           @map("age_max")
   prompt       Json
   answer       Json
   distractors  Json           @default("[]")

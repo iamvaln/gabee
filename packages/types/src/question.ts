@@ -68,6 +68,9 @@ const QuestionRecordBaseSchema = z.object({
   lesson: LessonSchema,
   /** Optional pointer to the curriculum objective this question targets (doc ref). */
   objective_ref: z.string().min(1).optional(),
+  /** Age suitability band (years) for age-based selection — omit = no constraint. */
+  age_min: z.number().int().min(1).max(18).optional(),
+  age_max: z.number().int().min(1).max(18).optional(),
   theme: z.string().min(1),
   type: QuestionTypeSchema,
   prompt: QuestionValueSchema,
