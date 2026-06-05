@@ -36009,890 +36009,6 @@
       "status": "candidate"
     },
     {
-      "id": "words-picture-l3-l1-001",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "jaune",
-        "en": "yellow"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "noir",
-            "en": "black"
-          }
-        },
-        {
-          "value": {
-            "fr": "marron",
-            "en": "brown"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Regarde bien la couleur.",
-        "en": "Look at the colour."
-      },
-      "difficulty": 2,
-      "age_min": 6,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "banana"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-002",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "orange",
-        "en": "orange"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "vert",
-            "en": "green"
-          }
-        },
-        {
-          "value": {
-            "fr": "rose",
-            "en": "pink"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Regarde bien la couleur.",
-        "en": "Look at the colour."
-      },
-      "difficulty": 2,
-      "age_min": 6,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "carrot"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-003",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "rouge",
-        "en": "red"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "gris",
-            "en": "grey"
-          }
-        },
-        {
-          "value": {
-            "fr": "noir",
-            "en": "black"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Regarde bien la couleur.",
-        "en": "Look at the colour."
-      },
-      "difficulty": 2,
-      "age_min": 6,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "tomato"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-004",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "rouge",
-        "en": "red"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "marron",
-            "en": "brown"
-          }
-        },
-        {
-          "value": {
-            "fr": "roux",
-            "en": "ginger"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Regarde bien la couleur.",
-        "en": "Look at the colour."
-      },
-      "difficulty": 2,
-      "age_min": 6,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "strawberry"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-005",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "jaune",
-        "en": "yellow"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "orange",
-            "en": "orange"
-          }
-        },
-        {
-          "value": {
-            "fr": "noir",
-            "en": "black"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Regarde bien la couleur.",
-        "en": "Look at the colour."
-      },
-      "difficulty": 2,
-      "age_min": 6,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "lemon"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-006",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "jaune",
-        "en": "yellow"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "marron",
-            "en": "brown"
-          }
-        },
-        {
-          "value": {
-            "fr": "gris",
-            "en": "grey"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Regarde bien la couleur.",
-        "en": "Look at the colour."
-      },
-      "difficulty": 2,
-      "age_min": 7,
-      "age_max": 9,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "sun"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-007",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "vert",
-        "en": "green"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "bleu",
-            "en": "blue"
-          }
-        },
-        {
-          "value": {
-            "fr": "rose",
-            "en": "pink"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Regarde bien la couleur.",
-        "en": "Look at the colour."
-      },
-      "difficulty": 2,
-      "age_min": 6,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "tree"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-008",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "vert",
-        "en": "green"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "gris",
-            "en": "grey"
-          }
-        },
-        {
-          "value": {
-            "fr": "rouge",
-            "en": "red"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Regarde bien la couleur.",
-        "en": "Look at the colour."
-      },
-      "difficulty": 2,
-      "age_min": 7,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "grapes"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-009",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "vert",
-        "en": "green"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "orange",
-            "en": "orange"
-          }
-        },
-        {
-          "value": {
-            "fr": "roux",
-            "en": "ginger"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Regarde bien la couleur.",
-        "en": "Look at the colour."
-      },
-      "difficulty": 2,
-      "age_min": 7,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "watermelon"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-010",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "vert",
-        "en": "green"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "jaune",
-            "en": "yellow"
-          }
-        },
-        {
-          "value": {
-            "fr": "blanc",
-            "en": "white"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Regarde bien la couleur.",
-        "en": "Look at the colour."
-      },
-      "difficulty": 2,
-      "age_min": 6,
-      "age_max": 9,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "frog"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-011",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "rouge",
-        "en": "red"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "orange",
-            "en": "orange"
-          }
-        },
-        {
-          "value": {
-            "fr": "rose",
-            "en": "pink"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Regarde bien la couleur.",
-        "en": "Look at the colour."
-      },
-      "difficulty": 2,
-      "age_min": 6,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "apple"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-012",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "grand",
-        "en": "big"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "petit",
-            "en": "little"
-          }
-        },
-        {
-          "value": {
-            "fr": "gros",
-            "en": "fat"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Pense à sa taille.",
-        "en": "Think about its size."
-      },
-      "difficulty": 2,
-      "age_min": 7,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "elephant"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-013",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "grand",
-        "en": "tall"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "petit",
-            "en": "little"
-          }
-        },
-        {
-          "value": {
-            "fr": "gros",
-            "en": "fat"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Pense à sa taille.",
-        "en": "Think about its size."
-      },
-      "difficulty": 2,
-      "age_min": 7,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "giraffe"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-014",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "grand",
-        "en": "big"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "petit",
-            "en": "little"
-          }
-        },
-        {
-          "value": {
-            "fr": "gros",
-            "en": "fat"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Pense à sa taille.",
-        "en": "Think about its size."
-      },
-      "difficulty": 2,
-      "age_min": 6,
-      "age_max": 9,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "lion"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-015",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "petit",
-        "en": "small"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "grand",
-            "en": "big"
-          }
-        },
-        {
-          "value": {
-            "fr": "gros",
-            "en": "fat"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Pense à sa taille.",
-        "en": "Think about its size."
-      },
-      "difficulty": 2,
-      "age_min": 6,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "bee"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-016",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "petit",
-        "en": "small"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "grand",
-            "en": "big"
-          }
-        },
-        {
-          "value": {
-            "fr": "gros",
-            "en": "fat"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Pense à sa taille.",
-        "en": "Think about its size."
-      },
-      "difficulty": 2,
-      "age_min": 7,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "butterfly"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
-      "id": "words-picture-l3-l1-017",
-      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
-      "module": "words",
-      "sub_mode": "picture",
-      "level": 3,
-      "lesson": 1,
-      "theme": "adjectives",
-      "type": "mcq-image",
-      "objective_ref": "3",
-      "prompt": {
-        "fr": "Quel mot décrit l'image ?",
-        "en": "Which word describes it?"
-      },
-      "answer": {
-        "fr": "grand",
-        "en": "long"
-      },
-      "distractors": [
-        {
-          "value": {
-            "fr": "petit",
-            "en": "little"
-          }
-        },
-        {
-          "value": {
-            "fr": "gros",
-            "en": "fat"
-          }
-        }
-      ],
-      "hint": {
-        "fr": "Pense à sa taille.",
-        "en": "Think about its size."
-      },
-      "difficulty": 2,
-      "age_min": 6,
-      "age_max": 8,
-      "concept_tags": [
-        "adjectives",
-        "picture"
-      ],
-      "lang": "both",
-      "config": {
-        "image": "snake"
-      },
-      "created_by": "ai",
-      "ratings": [],
-      "avg_rating": null,
-      "status": "candidate"
-    },
-    {
       "id": "words-read-answer-l1-l1-001",
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "words",
@@ -54996,6 +54112,2406 @@
       "lang": "both",
       "config": {
         "image": "drink"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-001",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "orange",
+        "en": "orange"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        },
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "carrot"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-002",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "gris",
+        "en": "grey"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "jaune",
+            "en": "yellow"
+          }
+        },
+        {
+          "value": {
+            "fr": "vert",
+            "en": "green"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "elephant"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-003",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "grand",
+        "en": "big"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        },
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "giraffe"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-004",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "vert",
+        "en": "green"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "bleu",
+            "en": "blue"
+          }
+        },
+        {
+          "value": {
+            "fr": "petit",
+            "en": "small"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "tree"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-005",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "jaune",
+        "en": "yellow"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        },
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "sun"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-006",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "jaune",
+        "en": "yellow"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        },
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "lemon"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-007",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        },
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "lemon"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-008",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "vert",
+        "en": "green"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "orange",
+            "en": "orange"
+          }
+        },
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "watermelon"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-009",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "grand",
+        "en": "big"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "rouge",
+            "en": "red"
+          }
+        },
+        {
+          "value": {
+            "fr": "vert",
+            "en": "green"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "lion"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-010",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "rouge",
+        "en": "red"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        },
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "strawberry"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-011",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "jaune",
+        "en": "yellow"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        },
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "banana"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-012",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "blanc",
+        "en": "white"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "vert",
+            "en": "green"
+          }
+        },
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "milk"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-013",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "bleu",
+            "en": "blue"
+          }
+        },
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "frog"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-014",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "jaune",
+            "en": "yellow"
+          }
+        },
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "butterfly"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-015",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "vert",
+            "en": "green"
+          }
+        },
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "butterfly"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-016",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "bleu",
+            "en": "blue"
+          }
+        },
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "lemon"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-017",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "rouge",
+            "en": "red"
+          }
+        },
+        {
+          "value": {
+            "fr": "vert",
+            "en": "green"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "bee"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-018",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "jaune",
+            "en": "yellow"
+          }
+        },
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "tomato"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-019",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "rouge",
+        "en": "red"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "orange",
+            "en": "orange"
+          }
+        },
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "strawberry"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-020",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "jaune",
+            "en": "yellow"
+          }
+        },
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "frog"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-021",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "jaune",
+            "en": "yellow"
+          }
+        },
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "strawberry"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-022",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "blanc",
+        "en": "white"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "jaune",
+            "en": "yellow"
+          }
+        },
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "milk"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-023",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "vert",
+        "en": "green"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "bleu",
+            "en": "blue"
+          }
+        },
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "watermelon"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-024",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "marron",
+        "en": "brown"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "jaune",
+            "en": "yellow"
+          }
+        },
+        {
+          "value": {
+            "fr": "vert",
+            "en": "green"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "monkey"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-025",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "jaune",
+        "en": "yellow"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        },
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "banana"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-026",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "grand",
+        "en": "big"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "bleu",
+            "en": "blue"
+          }
+        },
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "elephant"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-027",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "vert",
+        "en": "green"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "rouge",
+            "en": "red"
+          }
+        },
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "frog"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-028",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "grand",
+        "en": "big"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        },
+        {
+          "value": {
+            "fr": "petit",
+            "en": "small"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "lion"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-029",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "vert",
+            "en": "green"
+          }
+        },
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "crab"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-030",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "vert",
+        "en": "green"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        },
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "frog"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-031",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "grand",
+        "en": "big"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "bleu",
+            "en": "blue"
+          }
+        },
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "giraffe"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-032",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "marron",
+        "en": "brown"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "vert",
+            "en": "green"
+          }
+        },
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "monkey"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-033",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "jaune",
+        "en": "yellow"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        },
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "lemon"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-034",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "jaune",
+        "en": "yellow"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "bleu",
+            "en": "blue"
+          }
+        },
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "banana"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-035",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "jaune",
+        "en": "yellow"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "vert",
+            "en": "green"
+          }
+        },
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "sun"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-036",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        },
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "crab"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-037",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "rouge",
+        "en": "red"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        },
+        {
+          "value": {
+            "fr": "bleu",
+            "en": "blue"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "crab"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-038",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "rouge",
+        "en": "red"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        },
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "tomato"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-039",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "grand",
+        "en": "big"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        },
+        {
+          "value": {
+            "fr": "petit",
+            "en": "small"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "tree"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-040",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "bleu",
+        "en": "blue"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "jaune",
+            "en": "yellow"
+          }
+        },
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "water"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-041",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "grand",
+        "en": "big"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "orange",
+            "en": "orange"
+          }
+        },
+        {
+          "value": {
+            "fr": "blanc",
+            "en": "white"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "elephant"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-042",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "rouge",
+        "en": "red"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "jaune",
+            "en": "yellow"
+          }
+        },
+        {
+          "value": {
+            "fr": "marron",
+            "en": "brown"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "crab"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-043",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "bleu",
+            "en": "blue"
+          }
+        },
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "strawberry"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-044",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "rouge",
+        "en": "red"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "jaune",
+            "en": "yellow"
+          }
+        },
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "tomato"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-045",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "vert",
+        "en": "green"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "bleu",
+            "en": "blue"
+          }
+        },
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "tree"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-046",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "grand",
+        "en": "big"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "rouge",
+            "en": "red"
+          }
+        },
+        {
+          "value": {
+            "fr": "jaune",
+            "en": "yellow"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "tree"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-047",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "bleu",
+        "en": "blue"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "jaune",
+            "en": "yellow"
+          }
+        },
+        {
+          "value": {
+            "fr": "noir",
+            "en": "black"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "water"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-048",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "orange",
+        "en": "orange"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        },
+        {
+          "value": {
+            "fr": "grand",
+            "en": "big"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 8,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "carrot"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-049",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "petit",
+        "en": "small"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "bleu",
+            "en": "blue"
+          }
+        },
+        {
+          "value": {
+            "fr": "gris",
+            "en": "grey"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 6,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "tomato"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l3-l1-050",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 3,
+      "lesson": 1,
+      "theme": "adjectives",
+      "type": "mcq-image",
+      "objective_ref": "3",
+      "prompt": {
+        "fr": "Quel mot décrit l'image ?",
+        "en": "Which word describes it?"
+      },
+      "answer": {
+        "fr": "gris",
+        "en": "grey"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "rouge",
+            "en": "red"
+          }
+        },
+        {
+          "value": {
+            "fr": "bleu",
+            "en": "blue"
+          }
+        }
+      ],
+      "difficulty": 2,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "adjectives",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "elephant"
       },
       "created_by": "ai",
       "ratings": [],
