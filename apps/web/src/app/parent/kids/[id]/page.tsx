@@ -75,6 +75,7 @@ export default async function KidDetailPage({
         <div>
           <div className="kh-name">{kid.name}</div>
           <div className="kh-meta">
+            {kid.age != null ? `${kid.age} ${lang === 'fr' ? 'ans' : 'yo'} · ` : ''}
             {kid.language.toUpperCase()} ·{' '}
             {kid.last_active_at
               ? `${lang === 'fr' ? 'Actif' : 'Active'} ${formatRelative(kid.last_active_at, lang)}`

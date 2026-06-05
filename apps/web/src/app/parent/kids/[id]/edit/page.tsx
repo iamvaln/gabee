@@ -46,6 +46,7 @@ export default async function EditKidPage({ params }: { params: Promise<{ id: st
         name={kid.name}
         avatar={kid.avatar}
         language={kid.language}
+        birthDate={kid.birth_date}
       />
     </div>
   );

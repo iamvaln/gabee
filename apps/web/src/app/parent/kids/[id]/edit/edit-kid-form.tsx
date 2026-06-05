@@ -14,6 +14,7 @@ interface Props {
   name: string;
   avatar: string;
   language: Language;
+  birthDate: string | null;
 }
 
 /**
@@ -29,10 +30,11 @@ export function EditKidForm({
   name: initialName,
   avatar: initialAvatar,
   language: initialLanguage,
+  birthDate: initialBirthDate,
 }: Props) {
   const router = useRouter();
   const [name, setName] = useState(initialName);
-  const [birthday, setBirthday] = useState('');
+  const [birthday, setBirthday] = useState(initialBirthDate ?? '');
   const [avatar, setAvatar] = useState<Avatar>(
     (AVATARS as readonly string[]).includes(initialAvatar) ? (initialAvatar as Avatar) : 'avatar_1',
   );
@@ -44,7 +46,6 @@ export function EditKidForm({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  void birthday;
   void school;
   void objectives;
   void extra;
@@ -63,7 +64,7 @@ export function EditKidForm({
       const res = await fetch(`/api/profiles/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), avatar, language }),
+        body: JSON.stringify({ name: name.trim(), avatar, language, ...(birthday ? { birth_date: birthday } : {}) }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);

@@ -234,6 +234,10 @@ function questionsSystemPrompt(input: GenerateQuestionsInput, registryHint: stri
       : 'Each question is language-AGNOSTIC: set "lang":null and provide prompt/answer as bare strings or numbers (no {fr,en}).',
     'Provide at least 2 plausible distractors per question where the type uses choices.',
     'difficulty is an integer 1-5. theme is a short kebab-case tag. objective_ref references one of the plan objectives (its 1-based index as a string) or null.',
+    // Self-verification — the admin reviews candidates, but every answer must be
+    // provably correct first. Catches the common failure (a plausible-looking but
+    // wrong answer or an unsolvable code puzzle) before it reaches the queue.
+    'VERIFY EVERY ANSWER before emitting it: re-solve the item yourself and confirm the answer is unambiguously correct and that no distractor is also correct. For "code-grid", mentally SIMULATE your `answer` program step by step on the grid and confirm it solves the puzzle exactly (maze: finishes on the star without hitting a wall; draw: traces the shape with no overshoot/retrace; actions: each item ends on its target, hands empty). Discard or fix any question whose answer you cannot confirm. Never emit an unverified or unsolvable question.',
     // Hint authoring rules — one per question, mirrors the question\'s lang
     // stance, never reveals the answer. Module-specific style guidance below.
     'Every question MUST include a "hint" — a SINGLE short sentence (≤80 characters per language) that nudges the kid toward the answer WITHOUT revealing it.',

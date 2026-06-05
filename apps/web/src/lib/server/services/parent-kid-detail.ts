@@ -1,6 +1,7 @@
 import type { Module } from '@gabee/types';
 import { prisma } from '../db';
 import { assertParentCanAccessKid } from '../kid-access';
+import { ageFromBirthDate } from '../../age';
 
 /**
  * Parent → Kid detail data (parent spec §7.3). Owns the per-kid queries that back
@@ -40,6 +41,9 @@ export interface KidSummary {
   name: string;
   avatar: string;
   language: 'fr' | 'en';
+  /** ISO date (YYYY-MM-DD) or null; `age` is the derived whole-years value. */
+  birth_date: string | null;
+  age: number | null;
   created_at: string;
   last_active_at: string | null;
   /** Per-module highest unlocked level — derived from `progressByModule` JSON. */
@@ -143,6 +147,8 @@ export async function listKidSummaries(parentId: string): Promise<KidSummary[]> 
     name: r.name,
     avatar: r.avatar,
     language: r.language,
+    birth_date: r.birthDate ? r.birthDate.toISOString().slice(0, 10) : null,
+    age: r.birthDate ? ageFromBirthDate(r.birthDate.toISOString().slice(0, 10)) : null,
     created_at: r.createdAt.toISOString(),
     last_active_at: r.lastActiveAt ? r.lastActiveAt.toISOString() : null,
     levels: levelsFromProgress(r.progressByModule, r.progressByModulePerLanguage),
@@ -162,6 +168,8 @@ export async function getKidSummary(parentId: string, kidId: string): Promise<Ki
     name: r.name,
     avatar: r.avatar,
     language: r.language,
+    birth_date: r.birthDate ? r.birthDate.toISOString().slice(0, 10) : null,
+    age: r.birthDate ? ageFromBirthDate(r.birthDate.toISOString().slice(0, 10)) : null,
     created_at: r.createdAt.toISOString(),
     last_active_at: r.lastActiveAt ? r.lastActiveAt.toISOString() : null,
     levels: levelsFromProgress(r.progressByModule, r.progressByModulePerLanguage),

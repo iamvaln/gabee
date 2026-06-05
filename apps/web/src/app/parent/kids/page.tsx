@@ -151,7 +151,10 @@ function KidCard({ kid, lang }: { kid: KidSummary; lang: Language }) {
         <KidAvatar avatar={kid.avatar} size={56} />
         <div>
           <div className="kc-name">{kid.name}</div>
-          <div className="kc-age">{kid.language.toUpperCase()}</div>
+          <div className="kc-age">
+            {kid.age != null ? `${kid.age} ${lang === 'fr' ? 'ans' : 'yo'} · ` : ''}
+            {kid.language.toUpperCase()}
+          </div>
         </div>
       </div>
       <div className="kc-chips">
