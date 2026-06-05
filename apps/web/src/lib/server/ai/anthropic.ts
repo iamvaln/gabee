@@ -93,40 +93,40 @@ function planUserPrompt(input: StreamPlanInput): string {
 /** Words sub-mode short-key → rendering type. Kept typed (not DB-driven) so the
  *  derive-type step in `generateQuestions` stays exhaustive: the kid app already
  *  has matching renderers and these mappings are quality-critical. */
-const TYPE_BY_WORDS_SUBMODE: Record<'picture' | 'fill' | 'build' | 'read', string> = {
+type WordsKey = 'picture' | 'fill-blank' | 'build-sentence' | 'read-answer';
+
+const TYPE_BY_WORDS_SUBMODE: Record<WordsKey, string> = {
   picture: 'mcq-image',
-  fill: 'mcq-word',
-  build: 'build-sentence',
-  read: 'read-answer',
+  'fill-blank': 'mcq-word',
+  'build-sentence': 'build-sentence',
+  'read-answer': 'read-answer',
 };
 
-/** Detailed shape guidance per Words sub-mode — quality-critical, hand-tuned. */
-const WORDS_SUBMODE_SHAPE: Record<'picture' | 'fill' | 'build' | 'read', string> = {
+/** Detailed shape guidance per Words sub-mode — content lives in `config`, the
+ *  prompt is the instruction (Curriculum v0.1 — docs/gabee-seed-schema-v1.md §3). */
+const WORDS_SUBMODE_SHAPE: Record<WordsKey, string> = {
   picture:
-    'sub_mode "picture", type "mcq-image": `prompt` is a single emoji depicting the answer word (same emoji in fr and en — e.g. {"fr":"🦊","en":"🦊"}). `answer` and each distractor are bilingual {"fr","en"} single words.',
-  fill:
-    'sub_mode "fill", type "mcq-word": `prompt` is a bilingual sentence with the placeholder "___" where the target word goes (e.g. {"fr":"Le chat boit du ___.","en":"The cat drinks ___."}). `answer` and each distractor are bilingual {"fr","en"} single words.',
-  build:
-    'sub_mode "build", type "build-sentence": `answer` is the target sentence as a SINGLE BILINGUAL STRING (NEVER an array of words and NEVER with a trailing period) — e.g. {"fr":"Le chat dort sur le canapé","en":"The cat sleeps on the sofa"}. `prompt` is a short bilingual instruction (e.g. {"fr":"Remets les mots dans l\'ordre.","en":"Put the words in order."}). Leave `distractors` empty.',
-  read:
-    'sub_mode "read", type "read-answer": `prompt` is bilingual passage followed by a literal "\\n" and then the comprehension question — e.g. {"fr":"Léa a une pomme rouge.\\nQuelle est la couleur de la pomme ?","en":"Lea has a red apple.\\nWhat colour is the apple?"}. `answer` and each distractor are bilingual {"fr","en"} short phrases.',
+    'sub_mode "picture", type "mcq-image": `config.image` is an asset KEY from the allowed vocabulary depicting the answer word (e.g. "fox"). `prompt` is a bilingual INSTRUCTION (e.g. {"fr":"Quel est ce mot ?","en":"What is this word?"}). `answer` and each distractor are bilingual {"fr","en"} single words.',
+  'fill-blank':
+    'sub_mode "fill-blank", type "mcq-word": `config.sentence` is a bilingual sentence with the placeholder "___" where the target word goes (e.g. {"fr":"Le chat boit du ___.","en":"The cat drinks ___."}). `prompt` is a bilingual instruction (e.g. {"fr":"Choisis le mot qui manque.","en":"Choose the missing word."}). `answer` and each distractor are bilingual {"fr","en"} single words.',
+  'build-sentence':
+    'sub_mode "build-sentence", type "build-sentence": `answer` is the ordered word ARRAY per language — {"fr":["Maman","lit","."],"en":["Mum","reads","."]} (include the capitalised first word and a final-punctuation token where relevant). `config.tokens` is the SAME words shuffled, {"fr":[...],"en":[...]}. `prompt` is a bilingual instruction. Leave `distractors` empty.',
+  'read-answer':
+    'sub_mode "read-answer", type "read-answer": `config.passage` is the bilingual passage to read (e.g. {"fr":"Léa a une pomme rouge.","en":"Lea has a red apple."}). `prompt` is the bilingual comprehension QUESTION. `answer` and each distractor are bilingual {"fr","en"} short phrases.',
 };
 
 /**
- * Normalise a sub-mode input (registry id like `words.picture` OR legacy short key
- * like `picture`) to the short key — the form Words renderers + back-compat shims
- * use. Returns `null` if the input doesn't look like a Words sub-mode.
+ * Normalise a sub-mode input (registry id like `words.picture` OR the bare key)
+ * to the Words key. Returns `null` if it isn't a Words sub-mode.
  */
-function toWordsSubModeKey(raw: string | undefined): 'picture' | 'fill' | 'build' | 'read' | null {
+function toWordsSubModeKey(raw: string | undefined): WordsKey | null {
   if (!raw) return null;
   const key = raw.includes('.') ? raw.split('.').pop() ?? '' : raw;
-  return key in TYPE_BY_WORDS_SUBMODE
-    ? (key as 'picture' | 'fill' | 'build' | 'read')
-    : null;
+  return key in TYPE_BY_WORDS_SUBMODE ? (key as WordsKey) : null;
 }
 
 /** Words batch guidance — either pinned to one sub-mode or "vary across the 4". */
-function wordsSubModeGuidance(pinned: 'picture' | 'fill' | 'build' | 'read' | null): string {
+function wordsSubModeGuidance(pinned: WordsKey | null): string {
   if (pinned) {
     return [
       `EVERY question MUST use sub_mode "${pinned}" with the matching shape:`,
@@ -136,9 +136,9 @@ function wordsSubModeGuidance(pinned: 'picture' | 'fill' | 'build' | 'read' | nu
   return [
     'Vary the 4 Words sub-modes EVENLY across the batch. Set sub_mode + type per question per the shapes below:',
     '- ' + WORDS_SUBMODE_SHAPE.picture,
-    '- ' + WORDS_SUBMODE_SHAPE.fill,
-    '- ' + WORDS_SUBMODE_SHAPE.build,
-    '- ' + WORDS_SUBMODE_SHAPE.read,
+    '- ' + WORDS_SUBMODE_SHAPE['fill-blank'],
+    '- ' + WORDS_SUBMODE_SHAPE['build-sentence'],
+    '- ' + WORDS_SUBMODE_SHAPE['read-answer'],
   ].join('\n');
 }
 
@@ -148,28 +148,64 @@ function wordsSubModeGuidance(pinned: 'picture' | 'fill' | 'build' | 'read' | nu
  * renderer + content shape. Other modules use the module-default type and an
  * optional registry hint when a sub-mode is pinned.
  */
-/** Code-grid canonical shape (seed §code-l1-l1-001). The kid app renders the grid
- *  from `config`; `prompt`/`answer`/`distractors` are flat metadata. */
-const CODE_GRID_GUIDE = [
-  'Each question MUST use type "code-grid" with this EXACT shape:',
-  '- prompt: a NUMBER = the optimal block count (e.g. 2, 4, 6). NEVER an object or array.',
-  '- answer: the literal STRING "★" — it represents the goal the bee must reach. ALWAYS exactly this character, never a sequence.',
-  '- distractors: [] (empty array — Code is not MCQ).',
-  '- lang: null (Code is language-agnostic).',
-  '- config: an OBJECT describing the puzzle:',
-  '  { "grid": { "cols": 5, "rows": 5 },',
-  '    "start": { "x": 0, "y": 4 },',
-  '    "goals": [ { "x": 2, "y": 4 } ],',
-  '    "obstacles": [ { "x": 1, "y": 3 } ],',
-  '    "optimal_blocks": 2,',
-  '    "optimal_program": ["right", "right"] }',
-  '  • grid.cols/rows: integers, typically 5×5 at L1-3 up to 7×7+ at L8+.',
-  '  • start, goals[i], obstacles[i]: cells {x,y} with 0 ≤ x < cols and 0 ≤ y < rows.',
-  '  • optimal_program: a sequence of move tokens. Valid tokens depend on sub-mode:',
-  '      - sub_mode "find_path": "up", "down", "left", "right".',
-  '      - sub_mode "building_blocks": those plus "loop_start"/"loop_end" with an optional repeat count, "if_obstacle", etc.',
-  '  • optimal_blocks: a number equal to the count of TOP-LEVEL blocks in optimal_program (count a loop as ONE block).',
-].join('\n');
+/**
+ * Code-grid guidance — UNIFIED TURTLE model (Curriculum v0.1 §4, see
+ * docs/gabee-seed-schema-v1.md §4). Coordinates are [x,y], origin top-left,
+ * x→right, y→down. `answer` is the reference program (op array). The puzzle lives
+ * in `config`; `prompt` is a short bilingual instruction.
+ */
+const CODE_GRID_COMMON = [
+  'Each question MUST use type "code-grid":',
+  '- prompt: a short bilingual INSTRUCTION (e.g. {"fr":"Programme l’abeille…","en":"Program the bee…"}).',
+  '- distractors: [] (empty — Code is not MCQ).',
+  '- config.grid = { "w": <cols>, "h": <rows> }; config.start = [x,y]; config.facing = "N"|"E"|"S"|"W".',
+  '- Coordinates are [x,y], origin top-left (x→right, y→down).',
+  '- answer = the reference program: an array of ops that EXACTLY solves the puzzle. Op vocabulary:',
+  '    {"op":"forward"} · {"op":"turn","dir":"left"|"right"} · {"op":"pick"} · {"op":"drop"}',
+  '    {"op":"repeat","n":N,"body":[...]} · {"op":"if","cond":"wall_ahead"|"cell_occupied"|"can_pick","then":[...],"else":[...]}',
+];
+const CODE_WORLD_GUIDE: Record<'maze' | 'draw' | 'actions', string[]> = {
+  maze: [
+    'World "maze": reach the star, finishing EXACTLY on it (overshooting fails).',
+    '- config.goal = [x,y] (one star); config.walls = [[x,y],...].',
+    '- blocks: ["forward","turn_left","turn_right"] (+ "if"/"repeat" at higher levels).',
+  ],
+  draw: [
+    'World "draw": trace the target shape EXACTLY (no overshoot or retrace).',
+    '- config.target = { "vertices": [[x,y],...] } — a polyline on the grid (use "paths":[[...],[...]] for broken strokes).',
+    '- blocks: ["forward","turn_left","turn_right"] (+ "pen_up"/"pen_down","repeat" at higher levels).',
+  ],
+  actions: [
+    'World "actions": pick up each item and drop it on its target.',
+    '- config.items = [[x,y],...]; config.targets = [[x,y],...] (items[i] → targets[i]); config.obstacles = [[x,y],...].',
+    '- blocks: ["forward","turn_left","turn_right","pick","drop"] (+ "jump","if","repeat" at higher levels).',
+  ],
+};
+function codeGridGuidance(world: 'maze' | 'draw' | 'actions' | null): string {
+  const worlds = world ? [world] : (['maze', 'draw', 'actions'] as const);
+  return [...CODE_GRID_COMMON, ...worlds.flatMap((w) => CODE_WORLD_GUIDE[w])].join('\n');
+}
+
+/** Strip a dotted registry id (`words.picture`) to its bare key (`picture`). */
+function bareKey(raw: string | undefined): string | null {
+  if (!raw) return null;
+  return raw.includes('.') ? raw.split('.').pop() ?? null : raw;
+}
+function codeWorldOf(raw: string | undefined): 'maze' | 'draw' | 'actions' | null {
+  const k = bareKey(raw);
+  return k === 'maze' || k === 'draw' || k === 'actions' ? k : null;
+}
+
+/** Per-module content-shape note (numbers/translation/keyboard) — the content
+ *  lives in `config` per the v0.1 contract; the prompt is the instruction. */
+const MODULE_SHAPE_NOTE: Record<string, string> = {
+  numbers:
+    'numbers: `prompt` is the full bilingual question text (e.g. "5 + 0 = ?", "Combien y a-t-il de chats ?"); `answer` is the number (or a bilingual word for parity/comparison). For a counting collection add config {"object":<asset key>,"count":N,"layout":"scatter"}.',
+  translation:
+    'translation: config.direction = "fr-en"|"en-fr"; at L1 use config.image (asset key), at L2+ use config.source (the source-language word/phrase). `prompt` is a bilingual instruction; `answer` is the TARGET-language string; distractors are target-language strings.',
+  keyboard:
+    'keyboard: config.target is the text to type — a bare string for a single letter/digit/punctuation (lang null), or {"fr","en"} for a word/phrase (lang both); add config.tolerance {"case":bool,"accents":bool}; for "speed" add config.scroll_speed "slow"|"medium"|"fast". `answer` mirrors config.target; `prompt` is a short instruction.',
+};
 
 function typeAndSubModeRule(
   input: GenerateQuestionsInput,
@@ -179,11 +215,12 @@ function typeAndSubModeRule(
   if (input.module === 'words') {
     return wordsSubModeGuidance(toWordsSubModeKey(input.subMode));
   }
-  if (input.module === 'code') return CODE_GRID_GUIDE;
-  const base = `Each question MUST use type "${typeHint}". Leave sub_mode null/absent.`;
-  return registryHint
-    ? `${base}\nSub-mode mechanic for this batch: ${registryHint}`
-    : base;
+  if (input.module === 'code') return codeGridGuidance(codeWorldOf(input.subMode));
+  const base = `Each question MUST use type "${typeHint}" and sub_mode "${bareKey(input.subMode) ?? '(per the plan)'}".`;
+  const shape = MODULE_SHAPE_NOTE[input.module];
+  return [base, shape, registryHint ? `Sub-mode mechanic: ${registryHint}` : null]
+    .filter(Boolean)
+    .join('\n');
 }
 
 function questionsSystemPrompt(input: GenerateQuestionsInput, registryHint: string | null): string {
@@ -207,7 +244,7 @@ function questionsSystemPrompt(input: GenerateQuestionsInput, registryHint: stri
       : 'When "lang":null, "hint" is a bare string.',
     `Hint style for this module: ${hintStyleFor(input.module, input.subMode)}`,
     'Respond with ONLY a JSON array, no prose, no markdown fences. Each element:',
-    '{"type":"...","sub_mode":"picture|fill|build|read|null","lang":"both"|null,"prompt":...,"answer":...,"distractors":[...],"hint":...,"difficulty":1-5,"theme":"...","objective_ref":"1"|null,"concept_tags":["..."]}',
+    '{"type":"...","sub_mode":"<the batch sub_mode key>","lang":"both"|null,"prompt":...,"answer":...,"distractors":[...],"config":{...},"hint":...,"difficulty":1-5,"theme":"...","objective_ref":"1"|null,"concept_tags":["..."]}',
   ].join('\n');
 }
 
@@ -216,20 +253,22 @@ function questionsSystemPrompt(input: GenerateQuestionsInput, registryHint: stri
 // changes the kind of help that\'s useful (Numbers arithmetic vs geometry,
 // each Words sub-mode).
 function hintStyleFor(module: string, subMode: string | undefined): string {
-  const key = subMode?.includes('.') ? subMode.split('.').pop() ?? '' : subMode ?? '';
+  const key = bareKey(subMode) ?? '';
   if (module === 'numbers') {
-    if (key === 'geometry') return 'Geometry — draw attention to a visible property of the shape ("Compte les côtés un par un" / "Look at the corners — count them"). Never name the shape.';
-    return 'Arithmetic — decompose the calculation or point to a landmark number ("Commence par 10 + 5, puis ajoute" / "Start with 10 + 5, then add the rest"). Never give the result.';
+    if (key === 'counting') return 'Counting — invite counting one by one or by groups ("Compte-les un par un" / "Count them one by one"). Never give the number.';
+    if (key === 'comparison') return 'Comparison — point to which group/number is bigger or to the rule ("Regarde lequel en a le plus" / "Look at which has more"). Never give the answer.';
+    if (key === 'word-problems') return 'Word problems — name the operation hidden in the story ("On ajoute ou on retire ?" / "Are we adding or taking away?"). Never give the result.';
+    return 'Operations — decompose the calculation or point to a landmark number ("Commence par 10 + 5, puis ajoute" / "Start with 10 + 5, then add the rest"). Never give the result.';
   }
   if (module === 'words') {
     if (key === 'picture') return 'Words/picture — evoke the category or a characteristic of the depicted thing ("C\'est le roi de la jungle" / "It\'s the king of the jungle"). Never name the word.';
-    if (key === 'fill') return 'Words/fill — point at the GRAMMATICAL nature or sense of the missing word ("C\'est une action" / "It\'s an action word"). Never give the word.';
-    if (key === 'build') return 'Words/build — name what comes first or who acts ("Commence par qui fait l\'action" / "Start with who does the action").';
-    if (key === 'read') return 'Words/read — direct attention to the relevant part of the passage ("La réponse est dans la 2e phrase" / "The answer is in the second sentence"). Never quote it.';
+    if (key === 'fill-blank') return 'Words/fill-blank — point at the GRAMMATICAL nature or sense of the missing word ("C\'est une action" / "It\'s an action word"). Never give the word.';
+    if (key === 'build-sentence') return 'Words/build-sentence — name what comes first or who acts ("Commence par qui fait l\'action" / "Start with who does the action").';
+    if (key === 'read-answer') return 'Words/read-answer — direct attention to the relevant part of the passage ("La réponse est dans la 2e phrase" / "The answer is in the second sentence"). Never quote it.';
     return 'Words — give a category or grammatical clue. Never reveal the target word.';
   }
   if (module === 'keyboard') return 'Keyboard — locate the next key by row or finger ("Sur la rangée du milieu, main gauche" / "Middle row, left hand"). Never spell the answer.';
-  if (module === 'code') return 'Code — indicate the direction of the next step or the first block to place ("D\'abord à droite, puis vers le haut" / "First right, then up"). Never give the full sequence.';
+  if (module === 'code') return 'Code — indicate the heading of the next step or the first block to place ("D\'abord avance, puis tourne à droite" / "First go forward, then turn right"). Never give the full sequence.';
   if (module === 'translation') return 'Translation — evoke the root, a cognate, or context ("Comme « animal » en anglais" / "Same root as the French word"). Never give the translation.';
   return 'Give a single helpful clue that nudges without revealing.';
 }
@@ -281,10 +320,11 @@ const QUESTION_TYPE_BY_MODULE: Record<string, string> = {
   code: 'code-grid',
   translation: 'translation',
 };
-// Modules whose questions carry natural-language text → generated bilingually
-// ({fr,en} with parity). Everything EXCEPT `code` (whose puzzles are symbolic —
-// grids/blocks, prompt is just "★" — and are genuinely language-agnostic).
-const LANG_BOTH_MODULES = new Set(['words', 'translation', 'numbers', 'keyboard']);
+// Modules generated bilingually ({fr,en} with parity). Curriculum v0.1: the Code
+// prompt is a bilingual INSTRUCTION (the puzzle itself lives in config), so Code
+// joins the bilingual set. Truly language-agnostic items (e.g. a typed letter)
+// still set lang:null per the per-item shape note.
+const LANG_BOTH_MODULES = new Set(['words', 'translation', 'numbers', 'keyboard', 'code']);
 
 // ─── Parsing helpers ─────────────────────────────────────────────────────────
 
@@ -299,17 +339,18 @@ function parseJson(text: string): unknown {
 }
 
 /**
- * Defensive: the model occasionally returns `build-sentence` answers as arrays of
- * words (e.g. `{"fr":["Le","chat","dort"]}`) instead of the bilingual single string
- * the kid app + contracts expect. Join with spaces so the row passes Zod validation
- * downstream. Recurses into bilingual `{fr,en}` shapes; pass-through for anything else.
+ * Curriculum v0.1: a `build-sentence` answer is the ordered word ARRAY per language
+ * (`{"fr":["Maman","lit","."],"en":[...]}`). The model sometimes emits a single
+ * string instead — split it into word tokens so the row matches the contract.
+ * Recurses into bilingual `{fr,en}`; arrays and other shapes pass through.
  */
-function coerceWordsArrays(v: unknown): unknown {
-  if (Array.isArray(v)) return v.map((x) => String(x)).join(' ');
+function coerceToWordArrays(v: unknown): unknown {
+  if (typeof v === 'string') return v.trim().split(/\s+/).filter(Boolean);
+  if (Array.isArray(v)) return v;
   if (v && typeof v === 'object') {
     const out: Record<string, unknown> = {};
     for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
-      out[k] = coerceWordsArrays(val);
+      out[k] = coerceToWordArrays(val);
     }
     return out;
   }
@@ -317,10 +358,10 @@ function coerceWordsArrays(v: unknown): unknown {
 }
 
 /**
- * Code-grid canonical shape per the seed: `prompt` is the optimal-block count
- * (number), `answer` is the literal goal marker `"★"`, `distractors` is empty,
- * and the puzzle definition lives in `config`. The AI commonly drifts (returns
- * the move sequence as `answer`) — pull it back into config + reset `answer`.
+ * Curriculum v0.1 code-grid shape: `prompt` is a bilingual instruction, `answer`
+ * is the reference program (op array), `distractors` is empty, and the puzzle
+ * lives in `config`. Defensive only — ensure distractors is empty and config is an
+ * object; leave the (validated downstream) prompt/answer as the model produced.
  */
 function coerceCodeGrid(q: Partial<DraftedQuestion>): {
   prompt: unknown;
@@ -329,34 +370,9 @@ function coerceCodeGrid(q: Partial<DraftedQuestion>): {
   config: unknown;
 } {
   const cfgIn = (q as { config?: unknown }).config;
-  let config: Record<string, unknown> | undefined =
-    cfgIn && typeof cfgIn === 'object' && !Array.isArray(cfgIn)
-      ? { ...(cfgIn as Record<string, unknown>) }
-      : undefined;
-
-  // Answer drifted into an array? It's the move sequence — relocate to config.
-  let answer: unknown = q.answer;
-  if (Array.isArray(answer)) {
-    config = config ?? {};
-    if (!config.optimal_program) config.optimal_program = answer;
-    answer = '★';
-  } else if (typeof answer !== 'string') {
-    answer = '★';
-  }
-
-  // Prompt should be the optimal_blocks count. If the AI shoved an object/string
-  // in there, prefer the number from config; fall back to a small default.
-  let prompt: unknown = q.prompt;
-  if (typeof prompt !== 'number') {
-    const opt = config?.optimal_blocks;
-    const program = config?.optimal_program;
-    if (typeof opt === 'number') prompt = opt;
-    else if (Array.isArray(program)) prompt = program.length;
-    else prompt = 2;
-  }
-
-  // distractors aren't used for code-grid; ensure empty array.
-  return { prompt, answer, distractors: [], config };
+  const config =
+    cfgIn && typeof cfgIn === 'object' && !Array.isArray(cfgIn) ? cfgIn : {};
+  return { prompt: q.prompt, answer: q.answer, distractors: [], config };
 }
 
 // ─── Provider implementation ───────────────────────────────────────────────
@@ -441,13 +457,13 @@ class AnthropicProvider implements AiProvider {
         wordsKey
           ? TYPE_BY_WORDS_SUBMODE[wordsKey]
           : (q.type ?? QUESTION_TYPE_BY_MODULE[input.module] ?? 'mcq-number');
-      // build-sentence: AI occasionally emits arrays of words — coerce to a single
-      // space-joined string (the kid app + contracts expect a string).
-      let prompt: unknown = type === 'build-sentence' ? coerceWordsArrays(q.prompt) : q.prompt;
-      let answer: unknown = type === 'build-sentence' ? coerceWordsArrays(q.answer) : q.answer;
+      // build-sentence: the answer is the ordered word ARRAY per language; coerce a
+      // stray string into word tokens. The prompt stays the instruction.
+      let prompt: unknown = q.prompt;
+      let answer: unknown = type === 'build-sentence' ? coerceToWordArrays(q.answer) : q.answer;
       let distractors: unknown[] = Array.isArray(q.distractors) ? q.distractors : [];
       let config: unknown = q.config;
-      // code-grid: AI drifts (returns move sequence as answer) — normalise to seed shape.
+      // code-grid: ensure empty distractors + object config (puzzle lives in config).
       if (type === 'code-grid') {
         const coerced = coerceCodeGrid(q);
         prompt = coerced.prompt;

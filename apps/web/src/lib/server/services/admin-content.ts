@@ -37,14 +37,14 @@ const POOL_LESSON = 1;
  * same `(module, sub_mode)` slots.
  */
 const DEFAULT_SUBMODE_BY_MODULE: Record<Module, string> = {
-  numbers: 'arithmetic',
+  numbers: 'counting',
   words: 'picture',
-  keyboard: 'static',
-  code: 'find_path',
-  translation: 'default',
+  keyboard: 'copy',
+  code: 'maze',
+  translation: 'fr-en',
 };
 
-const WORDS_SUBMODE_KEYS = new Set(['picture', 'fill', 'build', 'read']);
+const WORDS_SUBMODE_KEYS = new Set(['picture', 'fill-blank', 'build-sentence', 'read-answer']);
 
 /** Normalise a sub-mode input (dotted id like `words.picture`, short key like
  *  `picture`, or undefined) to the persistence form: the short key for Words
