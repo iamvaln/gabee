@@ -52401,6 +52401,2606 @@
       "ratings": [],
       "avg_rating": null,
       "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-001",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "nage",
+        "en": "swims"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "grimpe",
+            "en": "climbs"
+          }
+        },
+        {
+          "value": {
+            "fr": "boit",
+            "en": "drinks"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "swim"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-002",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "lit",
+        "en": "reads"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marche",
+            "en": "walks"
+          }
+        },
+        {
+          "value": {
+            "fr": "chante",
+            "en": "sings"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "read"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-003",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "grimpe",
+        "en": "climbs"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "court",
+            "en": "runs"
+          }
+        },
+        {
+          "value": {
+            "fr": "saute",
+            "en": "jumps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "climb"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-004",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "dort",
+        "en": "sleeps"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "court",
+            "en": "runs"
+          }
+        },
+        {
+          "value": {
+            "fr": "chante",
+            "en": "sings"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "sleep"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-005",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "marche",
+        "en": "walks"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "nage",
+            "en": "swims"
+          }
+        },
+        {
+          "value": {
+            "fr": "grimpe",
+            "en": "climbs"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "walk"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-006",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "boit",
+        "en": "drinks"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "vole",
+            "en": "flies"
+          }
+        },
+        {
+          "value": {
+            "fr": "saute",
+            "en": "jumps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "drink"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-007",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "vole",
+        "en": "flies"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "court",
+            "en": "runs"
+          }
+        },
+        {
+          "value": {
+            "fr": "saute",
+            "en": "jumps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "fly"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-008",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "chante",
+        "en": "sings"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "mange",
+            "en": "eats"
+          }
+        },
+        {
+          "value": {
+            "fr": "vole",
+            "en": "flies"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "sing"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-009",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "chante",
+        "en": "sings"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "mange",
+            "en": "eats"
+          }
+        },
+        {
+          "value": {
+            "fr": "lit",
+            "en": "reads"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "sing"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-010",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "danse",
+        "en": "dances"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "nage",
+            "en": "swims"
+          }
+        },
+        {
+          "value": {
+            "fr": "mange",
+            "en": "eats"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "dance"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-011",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "dort",
+        "en": "sleeps"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "court",
+            "en": "runs"
+          }
+        },
+        {
+          "value": {
+            "fr": "marche",
+            "en": "walks"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "sleep"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-012",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "nage",
+        "en": "swims"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "court",
+            "en": "runs"
+          }
+        },
+        {
+          "value": {
+            "fr": "boit",
+            "en": "drinks"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "swim"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-013",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "saute",
+        "en": "jumps"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marche",
+            "en": "walks"
+          }
+        },
+        {
+          "value": {
+            "fr": "vole",
+            "en": "flies"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "jump"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-014",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "court",
+        "en": "runs"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "nage",
+            "en": "swims"
+          }
+        },
+        {
+          "value": {
+            "fr": "mange",
+            "en": "eats"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "run"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-015",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "court",
+        "en": "runs"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marche",
+            "en": "walks"
+          }
+        },
+        {
+          "value": {
+            "fr": "vole",
+            "en": "flies"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "run"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-016",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "dort",
+        "en": "sleeps"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "mange",
+            "en": "eats"
+          }
+        },
+        {
+          "value": {
+            "fr": "boit",
+            "en": "drinks"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "sleep"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-017",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "lit",
+        "en": "reads"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "vole",
+            "en": "flies"
+          }
+        },
+        {
+          "value": {
+            "fr": "saute",
+            "en": "jumps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "read"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-018",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "saute",
+        "en": "jumps"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "danse",
+            "en": "dances"
+          }
+        },
+        {
+          "value": {
+            "fr": "vole",
+            "en": "flies"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "jump"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-019",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "mange",
+        "en": "eats"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "nage",
+            "en": "swims"
+          }
+        },
+        {
+          "value": {
+            "fr": "saute",
+            "en": "jumps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "eat"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-020",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "mange",
+        "en": "eats"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "danse",
+            "en": "dances"
+          }
+        },
+        {
+          "value": {
+            "fr": "saute",
+            "en": "jumps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "eat"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-021",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "danse",
+        "en": "dances"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "dort",
+            "en": "sleeps"
+          }
+        },
+        {
+          "value": {
+            "fr": "lit",
+            "en": "reads"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "dance"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-022",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "court",
+        "en": "runs"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "chante",
+            "en": "sings"
+          }
+        },
+        {
+          "value": {
+            "fr": "lit",
+            "en": "reads"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "run"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-023",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "vole",
+        "en": "flies"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "court",
+            "en": "runs"
+          }
+        },
+        {
+          "value": {
+            "fr": "dort",
+            "en": "sleeps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "fly"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-024",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "marche",
+        "en": "walks"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "nage",
+            "en": "swims"
+          }
+        },
+        {
+          "value": {
+            "fr": "vole",
+            "en": "flies"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "walk"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-025",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "marche",
+        "en": "walks"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "mange",
+            "en": "eats"
+          }
+        },
+        {
+          "value": {
+            "fr": "chante",
+            "en": "sings"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "walk"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-026",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "danse",
+        "en": "dances"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "grimpe",
+            "en": "climbs"
+          }
+        },
+        {
+          "value": {
+            "fr": "chante",
+            "en": "sings"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "dance"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-027",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "grimpe",
+        "en": "climbs"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "chante",
+            "en": "sings"
+          }
+        },
+        {
+          "value": {
+            "fr": "saute",
+            "en": "jumps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "climb"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-028",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "boit",
+        "en": "drinks"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "nage",
+            "en": "swims"
+          }
+        },
+        {
+          "value": {
+            "fr": "mange",
+            "en": "eats"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "drink"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-029",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "grimpe",
+        "en": "climbs"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "court",
+            "en": "runs"
+          }
+        },
+        {
+          "value": {
+            "fr": "dort",
+            "en": "sleeps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "climb"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-030",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "saute",
+        "en": "jumps"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "danse",
+            "en": "dances"
+          }
+        },
+        {
+          "value": {
+            "fr": "chante",
+            "en": "sings"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "jump"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-031",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "lit",
+        "en": "reads"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "court",
+            "en": "runs"
+          }
+        },
+        {
+          "value": {
+            "fr": "dort",
+            "en": "sleeps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "read"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-032",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "mange",
+        "en": "eats"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "court",
+            "en": "runs"
+          }
+        },
+        {
+          "value": {
+            "fr": "boit",
+            "en": "drinks"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "eat"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-033",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "court",
+        "en": "runs"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "nage",
+            "en": "swims"
+          }
+        },
+        {
+          "value": {
+            "fr": "vole",
+            "en": "flies"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "run"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-034",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "saute",
+        "en": "jumps"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "court",
+            "en": "runs"
+          }
+        },
+        {
+          "value": {
+            "fr": "chante",
+            "en": "sings"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "jump"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-035",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "vole",
+        "en": "flies"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "nage",
+            "en": "swims"
+          }
+        },
+        {
+          "value": {
+            "fr": "danse",
+            "en": "dances"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "fly"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-036",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "mange",
+        "en": "eats"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "danse",
+            "en": "dances"
+          }
+        },
+        {
+          "value": {
+            "fr": "boit",
+            "en": "drinks"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "eat"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-037",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "chante",
+        "en": "sings"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marche",
+            "en": "walks"
+          }
+        },
+        {
+          "value": {
+            "fr": "saute",
+            "en": "jumps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "sing"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-038",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "vole",
+        "en": "flies"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "mange",
+            "en": "eats"
+          }
+        },
+        {
+          "value": {
+            "fr": "saute",
+            "en": "jumps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "fly"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-039",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "nage",
+        "en": "swims"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marche",
+            "en": "walks"
+          }
+        },
+        {
+          "value": {
+            "fr": "dort",
+            "en": "sleeps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "swim"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-040",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "grimpe",
+        "en": "climbs"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "danse",
+            "en": "dances"
+          }
+        },
+        {
+          "value": {
+            "fr": "lit",
+            "en": "reads"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "climb"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-041",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "boit",
+        "en": "drinks"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "nage",
+            "en": "swims"
+          }
+        },
+        {
+          "value": {
+            "fr": "lit",
+            "en": "reads"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "drink"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-042",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "danse",
+        "en": "dances"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marche",
+            "en": "walks"
+          }
+        },
+        {
+          "value": {
+            "fr": "lit",
+            "en": "reads"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "dance"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-043",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "mange",
+        "en": "eats"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marche",
+            "en": "walks"
+          }
+        },
+        {
+          "value": {
+            "fr": "chante",
+            "en": "sings"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "eat"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-044",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "lit",
+        "en": "reads"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "grimpe",
+            "en": "climbs"
+          }
+        },
+        {
+          "value": {
+            "fr": "marche",
+            "en": "walks"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "read"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-045",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "nage",
+        "en": "swims"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "boit",
+            "en": "drinks"
+          }
+        },
+        {
+          "value": {
+            "fr": "vole",
+            "en": "flies"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "swim"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-046",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "nage",
+        "en": "swims"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "dort",
+            "en": "sleeps"
+          }
+        },
+        {
+          "value": {
+            "fr": "boit",
+            "en": "drinks"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "swim"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-047",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "dort",
+        "en": "sleeps"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "nage",
+            "en": "swims"
+          }
+        },
+        {
+          "value": {
+            "fr": "boit",
+            "en": "drinks"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "sleep"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-048",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "marche",
+        "en": "walks"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "grimpe",
+            "en": "climbs"
+          }
+        },
+        {
+          "value": {
+            "fr": "dort",
+            "en": "sleeps"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 8,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "walk"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-049",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "chante",
+        "en": "sings"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "dort",
+            "en": "sleeps"
+          }
+        },
+        {
+          "value": {
+            "fr": "mange",
+            "en": "eats"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "sing"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "words-picture-l4-l1-050",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "words",
+      "sub_mode": "picture",
+      "level": 4,
+      "lesson": 1,
+      "theme": "verbs",
+      "type": "mcq-image",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Quelle action vois-tu ?",
+        "en": "Which action do you see?"
+      },
+      "answer": {
+        "fr": "boit",
+        "en": "drinks"
+      },
+      "distractors": [
+        {
+          "value": {
+            "fr": "marche",
+            "en": "walks"
+          }
+        },
+        {
+          "value": {
+            "fr": "vole",
+            "en": "flies"
+          }
+        }
+      ],
+      "hint": {
+        "fr": "Regarde ce qu'il fait.",
+        "en": "Look at what it is doing."
+      },
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 10,
+      "concept_tags": [
+        "verbs",
+        "picture"
+      ],
+      "lang": "both",
+      "config": {
+        "image": "drink"
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
     }
   ]
 }
