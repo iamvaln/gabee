@@ -55,7 +55,7 @@ async function recordUsage(
 
 // ─── Prompt builders ─────────────────────────────────────────────────────────
 
-const AGE_BAND = 'children aged 6 to 8';
+const AGE_BAND = 'children aged 5 to 10';
 
 function planSystemPrompt(): string {
   return [
@@ -238,7 +238,7 @@ function questionsSystemPrompt(input: GenerateQuestionsInput, registryHint: stri
     // stance, never reveals the answer. Module-specific style guidance below.
     'Every question MUST include a "hint" — a SINGLE short sentence (≤80 characters per language) that nudges the kid toward the answer WITHOUT revealing it.',
     'The hint should evoke an associated idea, a concrete clue, or a simple step. It must NEVER restate the answer, the prompt, or any distractor verbatim.',
-    'Tone: warm, encouraging, addressed to a 6-8 year old (tutoie en français).',
+    'Tone: warm, encouraging, addressed to a 5-10 year old (tutoie en français).',
     bilingual
       ? 'When "lang":"both", "hint" is bilingual {"fr","en"} with full parity.'
       : 'When "lang":null, "hint" is a bare string.',
