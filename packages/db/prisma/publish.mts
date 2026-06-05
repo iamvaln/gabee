@@ -90,6 +90,44 @@ function solves(world: string, config: any, program: any[]): boolean {
     items.map((p) => `${p.x},${p.y}`).sort().join('|') === targets.map((p) => `${p.x},${p.y}`).sort().join('|');
 }
 
+// ─── Numbers arithmetic verifier ────────────────────────────────────────────
+// Recompute the expected answer from `config` where possible. Returns 'wrong'
+// only when we CAN compute it and it disagrees; 'ok'/'unknown' both pass (we
+// never hold a question we can't prove wrong — e.g. parity/tens/time word answers).
+function numbersExpected(c: any, pFr: string, pEn: string): number | null {
+  if (!c || typeof c !== 'object') return null;
+  if (typeof c.a === 'number' && typeof c.b === 'number' && typeof c.op === 'string') {
+    if (c.op === '+') return c.a + c.b;
+    if (c.op === '-') return c.a - c.b;
+    if (c.op === '×' || c.op === 'x' || c.op === '*') return c.a * c.b;
+    return null;
+  }
+  if (typeof c.a === 'number' && typeof c.result === 'number' && c.missing === 'b') {
+    return c.op === '+' ? c.result - c.a : c.a - c.result;
+  }
+  if (typeof c.object === 'string' && typeof c.count === 'number') return c.count;
+  if (Array.isArray(c.numbers) && c.numbers.every((n: unknown) => typeof n === 'number')) {
+    const fr = pFr.toLowerCase(), en = pEn.toLowerCase();
+    if (fr.includes('grand') || en.includes('largest') || en.includes('biggest')) return Math.max(...c.numbers);
+    if (fr.includes('petit') || en.includes('smallest')) return Math.min(...c.numbers);
+    return null;
+  }
+  if (Array.isArray(c.sequence) && typeof c.blank === 'number' && typeof c.step === 'number') {
+    const prev = c.sequence[c.blank - 1];
+    if (typeof prev === 'number') return prev + c.step;
+    const next = c.sequence[c.blank + 1];
+    if (typeof next === 'number') return next - c.step;
+    return null;
+  }
+  return null;
+}
+function numbersWrong(c: unknown, answer: unknown, prompt: unknown): boolean {
+  const p = (prompt ?? {}) as { fr?: string; en?: string };
+  const exp = numbersExpected(c, p.fr ?? '', p.en ?? '');
+  if (exp == null) return false; // not checkable → don't hold
+  return !(typeof answer === 'number' && answer === exp);
+}
+
 async function main(): Promise<void> {
   const prisma = createPrismaClient();
   try {
@@ -108,12 +146,28 @@ async function main(): Promise<void> {
     console.log(`✓ Code: confirmed ${solvable.length}/${codeRows.length} solvable.`);
     for (const [k, n] of Object.entries(dropped).sort()) console.log(`  ⚠ held (unsolvable answer): ${k} — ${n}`);
 
-    // Non-code: confirm wholesale.
+    // Numbers: confirm only the arithmetically-correct ones (recompute from config).
+    const numRows = await prisma.question.findMany({
+      where: { module: 'numbers' },
+      select: { id: true, subMode: true, level: true, config: true, answer: true, prompt: true },
+    });
+    const numOk: string[] = [];
+    const numDropped: Record<string, number> = {};
+    for (const r of numRows) {
+      if (numbersWrong(r.config as unknown, r.answer as unknown, r.prompt as unknown)) {
+        numDropped[`${r.subMode} L${r.level}`] = (numDropped[`${r.subMode} L${r.level}`] ?? 0) + 1;
+      } else numOk.push(r.id);
+    }
+    await prisma.question.updateMany({ where: { id: { in: numOk } }, data: { status: 'confirmed' } });
+    console.log(`✓ Numbers: confirmed ${numOk.length}/${numRows.length} (arithmetic verified).`);
+    for (const [k, n] of Object.entries(numDropped).sort()) console.log(`  ⚠ held (wrong answer): ${k} — ${n}`);
+
+    // Words / keyboard / translation: confirm wholesale (semantic — prompt + admin review).
     const promoted = await prisma.question.updateMany({
-      where: { status: 'candidate', module: { not: 'code' } },
+      where: { status: 'candidate', module: { in: ['words', 'keyboard', 'translation'] } },
       data: { status: 'confirmed' },
     });
-    console.log(`✓ Non-code: confirmed ${promoted.count}.`);
+    console.log(`✓ Words/keyboard/translation: confirmed ${promoted.count}.`);
 
     for (const module of MODULES) {
       const confirmed = await prisma.question.findMany({ where: { module, status: 'confirmed' }, select: { id: true } });
