@@ -18,6 +18,10 @@ const EMOJI: Record<string, string> = {
   moon: '🌙', onion: '🧅', owl: '🦉', parrot: '🦜', pineapple: '🍍', school: '🏫',
   snake: '🐍', star: '⭐', strawberry: '🍓', sun: '☀️', table: '🍽️', tomato: '🍅',
   tree: '🌳', turtle: '🐢', water: '💧', watermelon: '🍉',
+  // Action keys (Words · picture L4 — "Quelle action vois-tu ?"). Only verbs with
+  // a clear, child-readable emoji; the generator must restrict L4 to these.
+  run: '🏃', swim: '🏊', climb: '🧗', walk: '🚶', dance: '💃', sleep: '😴',
+  eat: '😋', drink: '🥤', sing: '🎤', fly: '🕊️', read: '📚', jump: '🤸',
 };
 
 const COLOR: Record<string, string> = {
