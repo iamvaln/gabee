@@ -259,6 +259,20 @@ export function KeyboardStaticSession({
 
   // Advance to the next prompt (or end the lesson). Triggered by the user
   // tapping "Next" after the per-question feedback strip.
+  // Enter advances past the feedback strip — same as tapping "Next" — so a child
+  // can stay on the keyboard between questions (no reach for the mouse).
+  useEffect(() => {
+    if (!feedback) return;
+    const onEnter = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        void next();
+      }
+    };
+    window.addEventListener('keydown', onEnter);
+    return () => window.removeEventListener('keydown', onEnter);
+  }, [feedback]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function next() {
     if (!session) return;
     const inc = questionScoreRef.current > 0 ? 1 : 0;

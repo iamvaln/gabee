@@ -221,6 +221,19 @@ export function WordsReadSession({
     });
   }
 
+  // Enter advances past the feedback strip — same as tapping "Next".
+  useEffect(() => {
+    if (!feedback) return;
+    const onEnter = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        void next();
+      }
+    };
+    window.addEventListener('keydown', onEnter);
+    return () => window.removeEventListener('keydown', onEnter);
+  }, [feedback]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function next() {
     if (!session) return;
     if (feedback === 'wrong') {
