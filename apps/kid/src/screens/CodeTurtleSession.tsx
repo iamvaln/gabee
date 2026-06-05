@@ -26,21 +26,44 @@ const TOTAL = 5;
 // movement model is the unified turtle (forward + turn). The kid builds a flat
 // primitive program; success is the world's exact rule (see lib/turtle.ts).
 
-type PrimKey = 'forward' | 'left' | 'right' | 'pick' | 'drop';
-const GLYPH: Record<PrimKey, string> = { forward: '↑', left: '↺', right: '↻', pick: '✋', drop: '📥' };
+type PrimKey = 'forward' | 'left' | 'right' | 'pick' | 'drop' | 'penup' | 'pendown' | 'jump';
+const GLYPH: Record<PrimKey, string> = {
+  forward: '↑', left: '↺', right: '↻', pick: '✋', drop: '📥', penup: '✏️', pendown: '✏️', jump: '⤴️',
+};
+// Prims that show a text label under the glyph (the arrows are self-evident).
+const LABELLED: Record<string, { fr: string; en: string }> = {
+  pick: { fr: 'Ramasse', en: 'Pick' },
+  drop: { fr: 'Pose', en: 'Drop' },
+  penup: { fr: 'Lève', en: 'Pen up' },
+  pendown: { fr: 'Baisse', en: 'Pen down' },
+  jump: { fr: 'Saute', en: 'Jump' },
+};
 function primKey(p: Prim): PrimKey {
   if (p.op === 'turn') return p.dir;
+  if (p.op === 'pen') return p.state === 'up' ? 'penup' : 'pendown';
   return p.op as PrimKey;
 }
 function makePrim(k: PrimKey): Prim {
   if (k === 'left' || k === 'right') return { op: 'turn', dir: k };
+  if (k === 'penup') return { op: 'pen', state: 'up' };
+  if (k === 'pendown') return { op: 'pen', state: 'down' };
   return { op: k } as Prim;
 }
-const WORLD_BANK: Record<CodeWorld, PrimKey[]> = {
-  maze: ['forward', 'left', 'right'],
-  draw: ['forward', 'left', 'right'],
-  actions: ['forward', 'left', 'right', 'pick', 'drop'],
+// Seed config.blocks token → kid PrimKey. `if`/`repeat` are excluded (the kid
+// builds flat programs; loops/conditions unroll).
+const BLOCK_TO_PRIM: Record<string, PrimKey | null> = {
+  forward: 'forward', turn_left: 'left', turn_right: 'right', pick: 'pick', drop: 'drop',
+  pen_up: 'penup', pen_down: 'pendown', jump: 'jump', if: null, repeat: null,
 };
+function paletteFor(blocks: string[]): PrimKey[] {
+  const seen = new Set<PrimKey>();
+  const out: PrimKey[] = [];
+  for (const b of blocks) {
+    const k = BLOCK_TO_PRIM[b];
+    if (k && !seen.has(k)) { seen.add(k); out.push(k); }
+  }
+  return out.length ? out : ['forward', 'left', 'right'];
+}
 
 function localKey(world: CodeWorld): string {
   return `code.${world}`;
@@ -318,23 +341,23 @@ export function CodeTurtleSession({
                     aria-label={`remove ${k}`}
                   >
                     <span style={{ fontSize: 18 }}>{GLYPH[k]}</span>
-                    {k === 'pick' || k === 'drop' ? (L ? (k === 'pick' ? 'Ramasse' : 'Pose') : k) : ''}
+                    {LABELLED[k] ? LABELLED[k]![lang] : ''}
                   </button>
                 );
               })
             )}
           </div>
 
-          {/* Block bank */}
+          {/* Block bank — derived from this puzzle's config.blocks */}
           <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-            {WORLD_BANK[world].map((k) => (
+            {paletteFor(puzzle.blocks).map((k) => (
               <button
                 key={k}
                 onClick={() => addBlock(k)}
                 disabled={running || result !== null}
                 style={{
                   minWidth: 56, height: 60, padding: '0 10px', borderRadius: 12,
-                  background: k === 'pick' || k === 'drop' ? '#FDE9C8' : '#BBEAF2',
+                  background: LABELLED[k] ? '#FDE9C8' : '#BBEAF2',
                   color: '#0f172a', border: '2px solid #0f172a',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
                   fontWeight: 700, cursor: running || result ? 'default' : 'pointer',
@@ -342,9 +365,7 @@ export function CodeTurtleSession({
                 aria-label={k}
               >
                 <span style={{ fontSize: 24, lineHeight: 1 }}>{GLYPH[k]}</span>
-                {(k === 'pick' || k === 'drop') && (
-                  <span style={{ fontSize: 11 }}>{L ? (k === 'pick' ? 'Ramasse' : 'Pose') : k}</span>
-                )}
+                {LABELLED[k] && <span style={{ fontSize: 11 }}>{LABELLED[k]![lang]}</span>}
               </button>
             ))}
           </div>
@@ -469,9 +490,10 @@ function DrawGrid({
           <polyline key={`t${i}`} points={path.map((p) => `${px(p.x)},${px(p.y)}`).join(' ')} fill="none" stroke="#9AD8E6" strokeWidth={14} strokeLinecap="round" strokeLinejoin="round" opacity={0.4} />
         ))}
         <circle cx={px(puzzle.start.x)} cy={px(puzzle.start.y)} r={9} fill="none" stroke="#5BB9CC" strokeWidth={2.5} />
-        {cur.trail.length > 1 && (
-          <polyline points={cur.trail.map((p) => `${px(p.x)},${px(p.y)}`).join(' ')} fill="none" stroke="#F5A623" strokeWidth={7} strokeLinecap="round" strokeLinejoin="round" />
-        )}
+        {/* Pen-down segments drawn so far (handles pen-up gaps naturally). */}
+        {cur.drawn.map((s, i) => (
+          <line key={`d${i}`} x1={px(s.a.x)} y1={px(s.a.y)} x2={px(s.b.x)} y2={px(s.b.y)} stroke="#F5A623" strokeWidth={7} strokeLinecap="round" />
+        ))}
       </svg>
       <div style={{
         position: 'absolute', left: px(cur.pos.x) - beeSize / 2, top: px(cur.pos.y) - beeSize * 0.8,

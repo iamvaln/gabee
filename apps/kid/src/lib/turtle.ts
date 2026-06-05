@@ -1,27 +1,37 @@
 /**
  * Shared turtle engine for the three Code worlds (Curriculum v0.1 §4):
  *   maze    — reach the star, finishing exactly on it
- *   draw    — trace the target shape exactly (no overshoot / retrace)
- *   actions — pick up items and drop them on their targets
+ *   draw    — trace the target shape exactly (pen up/down for gaps)
+ *   actions — pick up items and drop them on their targets (jump over obstacles)
  *
- * One movement model across all three (the doc's "virage"): forward + turn-left +
- * turn-right with a heading. Coordinates are [x,y], origin top-left, x→right,
- * y→down. The kid builds a FLAT program of primitive ops; loops/conditions are an
- * efficiency concern (measured later), so every puzzle is solvable by unrolling.
+ * One movement model across all three: forward + turn-left + turn-right with a
+ * heading, plus pen (draw) and jump (actions). Coordinates are [x,y], origin
+ * top-left, x→right, y→down.
  *
- * Config shapes come straight from the seed (docs/gabee-seed-schema-v1.md §4).
+ * The kid builds a FLAT program of primitive ops (no repeat/if — those stay in
+ * the seed `answer` and unroll). `runProgram` is nonetheless a FULL interpreter
+ * (it executes repeat/if too) so the same code verifies the seed reference
+ * programs. The per-puzzle palette comes from `config.blocks`.
  */
 
 export type Heading = 'N' | 'E' | 'S' | 'W';
 export type Cell = { x: number; y: number };
 export type CodeWorld = 'maze' | 'draw' | 'actions';
 
-/** Primitive ops the kid can place (no repeat/if — those stay in the seed `answer`). */
+/** Flat primitives the kid can place (palette is derived from config.blocks). */
 export type Prim =
   | { op: 'forward' }
   | { op: 'turn'; dir: 'left' | 'right' }
   | { op: 'pick' }
-  | { op: 'drop' };
+  | { op: 'drop' }
+  | { op: 'pen'; state: 'up' | 'down' }
+  | { op: 'jump' };
+
+/** Full op set, including the control structures the seed `answer` may use. */
+export type Op =
+  | Prim
+  | { op: 'repeat'; n: number; body: Op[] }
+  | { op: 'if'; cond: string; then: Op[]; else?: Op[] };
 
 const ORDER: Heading[] = ['N', 'E', 'S', 'W'];
 const DELTA: Record<Heading, Cell> = {
@@ -34,9 +44,9 @@ export function turn(h: Heading, dir: 'left' | 'right'): Heading {
   const i = ORDER.indexOf(h);
   return ORDER[(i + (dir === 'right' ? 1 : 3)) % 4]!;
 }
-function ahead(pos: Cell, h: Heading): Cell {
+function ahead(pos: Cell, h: Heading, n = 1): Cell {
   const d = DELTA[h];
-  return { x: pos.x + d.x, y: pos.y + d.y };
+  return { x: pos.x + d.x * n, y: pos.y + d.y * n };
 }
 function eq(a: Cell, b: Cell): boolean {
   return a.x === b.x && a.y === b.y;
@@ -57,13 +67,10 @@ export interface Puzzle {
   start: Cell;
   facing: Heading;
   blocks: string[];
-  // maze
   goal?: Cell;
   walls?: Cell[];
-  // draw — target as the set of unit segments to cover
   targetSegs?: Set<string>;
-  targetVertices?: Cell[][]; // for rendering the ghost outline
-  // actions
+  targetVertices?: Cell[][];
   items?: Cell[];
   targets?: Cell[];
   obstacles?: Cell[];
@@ -122,97 +129,131 @@ export function parsePuzzle(world: CodeWorld, config: unknown): Puzzle {
   return base;
 }
 
+export interface Seg { a: Cell; b: Cell }
 export interface Frame {
   pos: Cell;
   heading: Heading;
-  carrying: number | null; // index into items
+  carrying: number | null;
   items: Cell[];
-  trail: Cell[]; // visited cells (draw shows the polyline)
+  penDown: boolean;
+  /** Pen-down segments drawn so far (draw world) — rendered as the trail. */
+  drawn: Seg[];
 }
 
 export interface RunResult {
-  frames: Frame[]; // frames[0] = initial state; one per executed primitive
+  frames: Frame[];
   success: boolean;
 }
 
 /**
- * Execute a flat primitive program against a puzzle, recording one frame per op
- * for animation, and computing per-world success.
+ * Execute a program (flat primitives, or the full op set with repeat/if) against
+ * a puzzle, recording one frame per executed primitive for animation, and
+ * computing per-world success.
  *
- * Exactness (agreed rules):
- *  - maze: finishes ON the goal, no wall/edge bump
- *  - draw: every forward lays a brand-new target segment; all covered, none extra
- *  - actions: every item delivered to a target, hands empty (waste tolerated —
- *    clean loops carry a trailing repositioning move)
+ * Exactness: maze finishes ON the goal with no wall/edge bump; draw's pen-down
+ * segments equal the target exactly (each drawn once, none off-shape); actions
+ * delivers every item to a target with empty hands (wasted moves tolerated —
+ * clean loops carry a trailing repositioning step).
  */
-export function runProgram(puzzle: Puzzle, program: Prim[]): RunResult {
+export function runProgram(puzzle: Puzzle, program: Op[]): RunResult {
   let pos = { ...puzzle.start };
   let heading = puzzle.facing;
   let carrying: number | null = null;
+  let penDown = true;
   const items = (puzzle.items ?? []).map((c) => ({ ...c }));
   const walls = puzzle.walls ?? [];
   const obstacles = puzzle.obstacles ?? [];
-  const blocked = (c: Cell) =>
-    !inGrid(c, puzzle.w, puzzle.h) ||
-    walls.some((wc) => eq(wc, c)) ||
-    obstacles.some((o) => eq(o, c));
+  const isWall = (c: Cell) => walls.some((w) => eq(w, c));
+  const isObstacle = (c: Cell) => obstacles.some((o) => eq(o, c));
+  const blocked = (c: Cell) => !inGrid(c, puzzle.w, puzzle.h) || isWall(c) || isObstacle(c);
 
-  const trail: Cell[] = [{ ...pos }];
-  const drawn: string[] = [];
+  const drawn: Seg[] = [];
+  const drawnKeys: string[] = [];
   let wasted = 0;
-  const frames: Frame[] = [
-    { pos: { ...pos }, heading, carrying, items: items.map((c) => ({ ...c })), trail: [...trail] },
-  ];
+  const frames: Frame[] = [];
+  const snapshot = () => frames.push({
+    pos: { ...pos }, heading, carrying, items: items.map((c) => ({ ...c })), penDown, drawn: drawn.map((s) => ({ ...s })),
+  });
+  snapshot(); // initial
 
-  for (const op of program) {
-    if (op.op === 'turn') {
-      heading = turn(heading, op.dir);
-    } else if (op.op === 'forward') {
-      const nxt = ahead(pos, heading);
-      if (blocked(nxt)) {
-        wasted += 1; // bumped a wall/edge → no move
-      } else {
-        if (puzzle.world === 'draw') drawn.push(segKey(pos, nxt));
-        pos = nxt;
-        trail.push({ ...pos });
-        if (carrying !== null) items[carrying] = { ...pos };
+  const cond = (name: string): boolean => {
+    const nxt = ahead(pos, heading);
+    if (name === 'wall_ahead') return blocked(nxt);
+    if (name === 'cell_occupied') return isObstacle(nxt);
+    if (name === 'can_pick') return items.some((it, i) => i !== carrying && eq(it, pos));
+    return false;
+  };
+
+  const exec = (ops: Op[]): void => {
+    for (const op of ops) {
+      switch (op.op) {
+        case 'turn':
+          heading = turn(heading, op.dir);
+          snapshot();
+          break;
+        case 'forward': {
+          const nxt = ahead(pos, heading);
+          if (blocked(nxt)) { wasted += 1; }
+          else {
+            if (puzzle.world === 'draw' && penDown) { drawn.push({ a: { ...pos }, b: { ...nxt } }); drawnKeys.push(segKey(pos, nxt)); }
+            pos = nxt;
+            if (carrying !== null) items[carrying] = { ...pos };
+          }
+          snapshot();
+          break;
+        }
+        case 'jump': {
+          const nxt = ahead(pos, heading, 2);
+          if (!inGrid(nxt, puzzle.w, puzzle.h) || isWall(nxt) || isObstacle(nxt)) { wasted += 1; }
+          else { pos = nxt; if (carrying !== null) items[carrying] = { ...pos }; }
+          snapshot();
+          break;
+        }
+        case 'pick': {
+          const idx = items.findIndex((it, i) => i !== carrying && eq(it, pos));
+          if (carrying !== null || idx < 0) wasted += 1;
+          else carrying = idx;
+          snapshot();
+          break;
+        }
+        case 'drop':
+          if (carrying === null) wasted += 1;
+          else carrying = null;
+          snapshot();
+          break;
+        case 'pen':
+          penDown = op.state === 'down';
+          snapshot();
+          break;
+        case 'repeat':
+          for (let i = 0; i < op.n; i++) exec(op.body);
+          break;
+        case 'if':
+          exec(cond(op.cond) ? op.then : (op.else ?? []));
+          break;
       }
-    } else if (op.op === 'pick') {
-      const idx = items.findIndex((it, i) => i !== carrying && eq(it, pos));
-      if (carrying !== null || idx < 0) wasted += 1;
-      else carrying = idx;
-    } else if (op.op === 'drop') {
-      if (carrying === null) wasted += 1;
-      else carrying = null;
     }
-    frames.push({
-      pos: { ...pos },
-      heading,
-      carrying,
-      items: items.map((c) => ({ ...c })),
-      trail: [...trail],
-    });
-  }
+  };
+  exec(program);
 
   let success: boolean;
   if (puzzle.world === 'maze') {
     success = wasted === 0 && !!puzzle.goal && eq(pos, puzzle.goal);
   } else if (puzzle.world === 'draw') {
     const target = puzzle.targetSegs ?? new Set<string>();
-    const uniq = new Set(drawn);
+    const uniq = new Set(drawnKeys);
     success =
       wasted === 0 &&
-      drawn.length === target.size &&
-      uniq.size === drawn.length &&
+      drawnKeys.length === target.size &&
+      uniq.size === drawnKeys.length &&
       [...uniq].every((s) => target.has(s));
   } else {
     const targets = puzzle.targets ?? [];
-    const delivered =
+    success =
       carrying === null &&
       targets.length === items.length &&
       [...items].map((c) => `${c.x},${c.y}`).sort().join('|') ===
         [...targets].map((c) => `${c.x},${c.y}`).sort().join('|');
-    success = delivered;
   }
   return { frames, success };
 }
