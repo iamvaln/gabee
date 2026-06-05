@@ -82,21 +82,23 @@ describe('QuestionRecord', () => {
     assert.equal(result.success, false);
   });
 
-  it('rejects lang null with a bilingual prompt', () => {
+  it('accepts lang null with a bilingual instruction prompt (Curriculum v0.1: prompt = instruction)', () => {
     const result = QuestionRecordSchema.safeParse({
-      id: 'bad-2',
-      module: 'numbers',
+      id: 'ok-instruction',
+      module: 'keyboard',
+      sub_mode: 'copy',
       level: 1,
       lesson: 1,
-      theme: 'count',
-      type: 'mcq-number',
-      prompt: { fr: 'douze', en: 'twelve' },
-      answer: 12,
+      theme: 'letters',
+      type: 'typing',
+      prompt: { fr: 'Tape ce que tu vois.', en: 'Type what you see.' },
+      answer: 'e',
       difficulty: 1,
       lang: null,
+      config: { target: 'e' },
       created_by: 'ai',
     });
-    assert.equal(result.success, false);
+    assert.equal(result.success, true);
   });
 });
 
