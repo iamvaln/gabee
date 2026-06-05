@@ -228,6 +228,11 @@ function questionsSystemPrompt(input: GenerateQuestionsInput, registryHint: stri
   return [
     `You are a bilingual (French/English) question author for Gabee, a learning app for ${AGE_BAND}.`,
     `Generate candidate questions for the "${input.moduleName.en}" module, grounded ONLY in the accepted level plan provided.`,
+    // Real-world plausibility — sentences/scenes must be TRUE and natural for a
+    // young child. The subject and its action/attribute must fit (a monkey or a
+    // cat climbs, a lion does NOT; the sky is blue, not green). No nonsense or
+    // surreal pairings, even if grammatically valid.
+    'PLAUSIBILITY: every sentence, scene and answer must be factually correct and natural for a young child — the subject must plausibly do the action / have the attribute (e.g. "Le singe grimpe" ✓, "Le lion grimpe" ✗). Reject implausible or surreal pairings even when grammatically valid.',
     typeAndSubModeRule(input, registryHint),
     bilingual
       ? 'Each question is language-DEPENDENT: set "lang":"both" and provide prompt/answer as {"fr","en"} pairs with full parity.'
