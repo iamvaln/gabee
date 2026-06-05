@@ -8,30 +8,26 @@ import { useStore } from '../store';
 //  - find_path: arrange movement blocks (up/down/left/right) on a grid with obstacles
 //  - building_blocks: same engine + loop and conditional blocks
 // They do not mix within a single game and keep their progression independent.
-export type CodeSubMode = 'find_path' | 'building_blocks' | 'draw' | 'actions';
+// Curriculum v0.1 §4: three Code worlds, one unified turtle model. Each ramps the
+// same concepts (sequences → conditions → loops → combo → debug) in its universe.
+export type CodeSubMode = 'maze' | 'draw' | 'actions';
 
 const SUB_MODES: { id: CodeSubMode; label: { fr: string; en: string }; sub: { fr: string; en: string }; icon: string }[] = [
   {
-    id: 'find_path',
-    label: { fr: 'Trouver le chemin', en: 'Find the path' },
+    id: 'maze',
+    label: { fr: 'Parcours', en: 'Maze' },
     sub: { fr: 'Aide Gabee à atteindre l’étoile', en: 'Guide Gabee to the star' },
     icon: '🧭',
   },
   {
-    id: 'building_blocks',
-    label: { fr: 'Boucles et conditions', en: 'Loops and conditions' },
-    sub: { fr: 'Programme avec des boucles', en: 'Program with loops' },
-    icon: '🔁',
-  },
-  {
     id: 'draw',
-    label: { fr: 'Tracé (démo)', en: 'Draw (demo)' },
+    label: { fr: 'Tracé', en: 'Draw' },
     sub: { fr: 'Programme Gabee pour dessiner', en: 'Program Gabee to draw' },
     icon: '✏️',
   },
   {
     id: 'actions',
-    label: { fr: 'Actions (démo)', en: 'Actions (demo)' },
+    label: { fr: 'Actions', en: 'Actions' },
     sub: { fr: 'Ramasse, déplace et pose', en: 'Pick up, move and drop' },
     icon: '🧺',
   },

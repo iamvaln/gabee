@@ -9,14 +9,21 @@ import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
 import { lessonsForLevel, unitsForLevel, unitPassed } from '../lib/progression';
-import { readLocalTrack, CODE_BUILDING_BLOCKS_KEY } from './CodeFindPathSession';
+import { readLocalTrack } from '../lib/codeTrack';
+import { CODE_WORLD_TITLE } from './CodeWorldLevelMap';
+import type { CodeWorld } from '../lib/turtle';
 
-export function CodeBuildingBlocksLessonMap({
+// Generic Code world lesson map: a level's lessons (gated in order) + a revision
+// if ≥ 2 lessons. Reads the per-world localStorage track (Code sync track lumps
+// worlds together, so independent gating lives locally).
+export function CodeWorldLessonMap({
+  world,
   level,
   onUnit,
   onHome,
   onBack,
 }: {
+  world: CodeWorld;
   level: number;
   onUnit: (lesson: number, isRevision: boolean) => void;
   onHome: () => void;
@@ -26,22 +33,18 @@ export function CodeBuildingBlocksLessonMap({
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
   const profile = useStore((s) => s.profile);
-  const localTrack = readLocalTrack(CODE_BUILDING_BLOCKS_KEY, profile?.id ?? null);
-  const levels = localTrack.levels;
+  const levels = readLocalTrack(`code.${world}`, profile?.id ?? null).levels;
 
   const { data: bundle, isLoading } = useQuery({
     queryKey: ['bundle', 'code'],
     queryFn: () => api.getBundle('code'),
   });
 
-  const buildingBlocks = useMemo(
-    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'building_blocks') : []),
-    [bundle],
+  const worldQs = useMemo(
+    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === world) : []),
+    [bundle, world],
   );
-  const units = useMemo(
-    () => unitsForLevel(lessonsForLevel(buildingBlocks, level)),
-    [buildingBlocks, level],
-  );
+  const units = useMemo(() => unitsForLevel(lessonsForLevel(worldQs, level)), [worldQs, level]);
 
   const m = MODULES.find((x) => x.id === 'code')!;
   let lessonCount = 0;
@@ -52,7 +55,7 @@ export function CodeBuildingBlocksLessonMap({
       <div className="levelmap-hero" data-module="code">
         <Bee size={72} expression="focus" wings />
         <div>
-          <h1>{lang === 'fr' ? 'Boucles et conditions' : 'Loops & conditions'}</h1>
+          <h1>{CODE_WORLD_TITLE[world][lang]}</h1>
           <p>{t('pickLevel')}</p>
         </div>
       </div>

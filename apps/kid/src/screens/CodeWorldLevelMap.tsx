@@ -9,21 +9,32 @@ import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
 import { lessonsForLevel, unitsForLevel, levelComplete } from '../lib/progression';
-import { readLocalTrack, CODE_BUILDING_BLOCKS_KEY } from './CodeFindPathSession';
+import { readLocalTrack } from '../lib/codeTrack';
+import type { CodeWorld } from '../lib/turtle';
 
-const BUILDING_BLOCKS_LEVEL_LABELS: Record<number, { fr: string; en: string }> = {
-  1: { fr: 'Boucles simples', en: 'Simple loops' },
-  2: { fr: 'Boucles longues', en: 'Longer loops' },
-  3: { fr: 'Conditions', en: 'Conditions' },
-  4: { fr: 'Boucles et conditions', en: 'Loops & conditions' },
-  10: { fr: 'Maîtrise', en: 'Mastery' },
+// The concept ramp is shared across the three Code worlds (Curriculum v0.1 §4):
+// sequences → conditions → loops → loops+conditions → debugging.
+const CODE_LEVEL_LABELS: Record<number, { fr: string; en: string }> = {
+  1: { fr: 'Séquences', en: 'Sequences' },
+  2: { fr: 'Conditions', en: 'Conditions' },
+  3: { fr: 'Boucles', en: 'Loops' },
+  4: { fr: 'Boucles + conditions', en: 'Loops + conditions' },
+  5: { fr: 'Débogage', en: 'Debugging' },
 };
 
-export function CodeBuildingBlocksLevelMap({
+export const CODE_WORLD_TITLE: Record<CodeWorld, { fr: string; en: string }> = {
+  maze: { fr: 'Parcours', en: 'Maze' },
+  draw: { fr: 'Tracé', en: 'Draw' },
+  actions: { fr: 'Actions', en: 'Actions' },
+};
+
+export function CodeWorldLevelMap({
+  world,
   onLevel,
   onHome,
   onBack,
 }: {
+  world: CodeWorld;
   onLevel: (level: number) => void;
   onHome: () => void;
   onBack: () => void;
@@ -38,20 +49,21 @@ export function CodeBuildingBlocksLevelMap({
     queryFn: () => api.getBundle('code'),
   });
 
-  const buildingBlocks = useMemo(
-    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === 'building_blocks') : []),
-    [bundle],
+  const worldQs = useMemo(
+    () => (bundle ? bundle.questions.filter((q) => q.sub_mode === world) : []),
+    [bundle, world],
   );
   const configuredLevels = useMemo(
-    () => [...new Set(buildingBlocks.map((q) => q.level))].sort((a, b) => a - b),
-    [buildingBlocks],
+    () => [...new Set(worldQs.map((q) => q.level))].sort((a, b) => a - b),
+    [worldQs],
   );
 
-  const localTrack = readLocalTrack(CODE_BUILDING_BLOCKS_KEY, profile?.id ?? null);
-  const levels = localTrack.levels;
+  // Code is language-agnostic; per-world progression is tracked in localStorage so
+  // the three worlds gate independently.
+  const levels = readLocalTrack(`code.${world}`, profile?.id ?? null).levels;
   const isComplete = (lvl: number) =>
-    levelComplete(levels, lvl, unitsForLevel(lessonsForLevel(buildingBlocks, lvl)));
-  const labelFor = (lvl: number) => BUILDING_BLOCKS_LEVEL_LABELS[lvl]?.[lang] ?? `${t('level')} ${lvl}`;
+    levelComplete(levels, lvl, unitsForLevel(lessonsForLevel(worldQs, lvl)));
+  const labelFor = (lvl: number) => CODE_LEVEL_LABELS[lvl]?.[lang] ?? `${t('level')} ${lvl}`;
   const m = MODULES.find((x) => x.id === 'code')!;
 
   return (
@@ -60,7 +72,7 @@ export function CodeBuildingBlocksLevelMap({
       <div className="levelmap-hero" data-module="code">
         <Bee size={72} expression="focus" wings />
         <div>
-          <h1>{lang === 'fr' ? 'Boucles et conditions' : 'Loops & conditions'}</h1>
+          <h1>{CODE_WORLD_TITLE[world][lang]}</h1>
           <p>{t('pickLevel')}</p>
         </div>
       </div>

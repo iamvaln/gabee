@@ -40,14 +40,10 @@ import { KeyboardScrollingLevelMap } from './screens/KeyboardScrollingLevelMap';
 import { KeyboardScrollingLessonMap } from './screens/KeyboardScrollingLessonMap';
 import { KeyboardScrollingSession } from './screens/KeyboardScrollingSession';
 import { CodeHub, type CodeSubMode } from './screens/CodeHub';
-import { CodeDrawSession } from './screens/CodeDrawSession';
-import { CodeActionsSession } from './screens/CodeActionsSession';
-import { CodeFindPathLevelMap } from './screens/CodeFindPathLevelMap';
-import { CodeFindPathLessonMap } from './screens/CodeFindPathLessonMap';
-import { CodeFindPathSession } from './screens/CodeFindPathSession';
-import { CodeBuildingBlocksLevelMap } from './screens/CodeBuildingBlocksLevelMap';
-import { CodeBuildingBlocksLessonMap } from './screens/CodeBuildingBlocksLessonMap';
-import { CodeBuildingBlocksSession } from './screens/CodeBuildingBlocksSession';
+import { CodeWorldLevelMap } from './screens/CodeWorldLevelMap';
+import { CodeWorldLessonMap } from './screens/CodeWorldLessonMap';
+import { CodeTurtleSession } from './screens/CodeTurtleSession';
+import type { CodeWorld } from './lib/turtle';
 import { Settings } from './screens/Settings';
 import { Summary } from './screens/Summary';
 import { LookAwayOverlay } from './components/LookAwayOverlay';
@@ -119,19 +115,12 @@ type Route =
   | { name: 'keyboard_scrolling_lessonmap'; level: number }
   | ({ name: 'keyboard_scrolling_session'; trigger: 'new' | 'replay' } & PlayTarget)
   | ({ name: 'keyboard_scrolling_summary'; score: number; total: number } & PlayTarget)
-  // Code
+  // Code — three worlds (maze / draw / actions), one unified turtle session
   | { name: 'code_subhub' }
-  | { name: 'code_find_path_levelmap' }
-  | { name: 'code_find_path_lessonmap'; level: number }
-  | ({ name: 'code_find_path_session'; trigger: 'new' | 'replay' } & PlayTarget)
-  | ({ name: 'code_find_path_summary'; score: number; total: number } & PlayTarget)
-  | { name: 'code_building_blocks_levelmap' }
-  | { name: 'code_building_blocks_lessonmap'; level: number }
-  | ({ name: 'code_building_blocks_session'; trigger: 'new' | 'replay' } & PlayTarget)
-  | ({ name: 'code_building_blocks_summary'; score: number; total: number } & PlayTarget)
-  // Draw (turtle) — self-contained prototype for visual validation (no backend yet)
-  | { name: 'code_draw_demo' }
-  | { name: 'code_actions_demo' }
+  | { name: 'code_levelmap'; world: CodeWorld }
+  | { name: 'code_lessonmap'; world: CodeWorld; level: number }
+  | ({ name: 'code_session'; world: CodeWorld; trigger: 'new' | 'replay' } & PlayTarget)
+  | ({ name: 'code_summary'; world: CodeWorld; score: number; total: number } & PlayTarget)
   // Settings
   | { name: 'settings' };
 
@@ -160,8 +149,7 @@ export function App() {
     name === 'translation_summary' ||
     name === 'keyboard_static_summary' ||
     name === 'keyboard_scrolling_summary' ||
-    name === 'code_find_path_summary' ||
-    name === 'code_building_blocks_summary';
+    name === 'code_summary';
 
   // Healthy-use overlays (product §6.3). Soft/hard caps + look-away + daily lock.
   const limits = useHealthyUse((s) => s.limits);
@@ -886,117 +874,60 @@ export function App() {
       case 'code_subhub':
         screen = (
           <CodeHub
-            onSubMode={(sub: CodeSubMode) => {
-              if (sub === 'find_path') setRoute({ name: 'code_find_path_levelmap' });
-              else if (sub === 'draw') setRoute({ name: 'code_draw_demo' });
-              else if (sub === 'actions') setRoute({ name: 'code_actions_demo' });
-              else setRoute({ name: 'code_building_blocks_levelmap' });
-            }}
+            onSubMode={(sub: CodeSubMode) => setRoute({ name: 'code_levelmap', world: sub })}
             onHome={goHome}
             onBack={goHome}
           />
         );
         break;
-      case 'code_draw_demo':
-        screen = <CodeDrawSession onHome={goHome} onBack={() => setRoute({ name: 'code_subhub' })} />;
-        break;
-      case 'code_actions_demo':
-        screen = <CodeActionsSession onHome={goHome} onBack={() => setRoute({ name: 'code_subhub' })} />;
-        break;
-      case 'code_find_path_levelmap':
+      case 'code_levelmap':
         screen = (
-          <CodeFindPathLevelMap
-            onLevel={(level) => setRoute({ name: 'code_find_path_lessonmap', level })}
+          <CodeWorldLevelMap
+            world={route.world}
+            onLevel={(level) => setRoute({ name: 'code_lessonmap', world: route.world, level })}
             onHome={goHome}
             onBack={() => setRoute({ name: 'code_subhub' })}
           />
         );
         break;
-      case 'code_find_path_lessonmap':
+      case 'code_lessonmap':
         screen = (
-          <CodeFindPathLessonMap
+          <CodeWorldLessonMap
+            world={route.world}
             level={route.level}
             onUnit={(lesson, isRevision) =>
-              setRoute({ name: 'code_find_path_session', level: route.level, lesson, isRevision, trigger: 'new' })
+              setRoute({ name: 'code_session', world: route.world, level: route.level, lesson, isRevision, trigger: 'new' })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'code_find_path_levelmap' })}
+            onBack={() => setRoute({ name: 'code_levelmap', world: route.world })}
           />
         );
         break;
-      case 'code_find_path_session':
+      case 'code_session':
         screen = (
-          <CodeFindPathSession
+          <CodeTurtleSession
+            world={route.world}
             level={route.level}
             lesson={route.lesson}
             isRevision={route.isRevision}
             trigger={route.trigger}
             onDone={(score, total) =>
-              setRoute({ name: 'code_find_path_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
+              setRoute({ name: 'code_summary', world: route.world, level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'code_find_path_lessonmap', level: route.level })}
+            onBack={() => setRoute({ name: 'code_lessonmap', world: route.world, level: route.level })}
           />
         );
         break;
-      case 'code_find_path_summary':
+      case 'code_summary':
         screen = (
           <Summary
             score={route.score}
             total={route.total}
             onAgain={() =>
-              setRoute({ name: 'code_find_path_session', level: route.level, lesson: route.lesson, isRevision: route.isRevision, trigger: 'replay' })
+              setRoute({ name: 'code_session', world: route.world, level: route.level, lesson: route.lesson, isRevision: route.isRevision, trigger: 'replay' })
             }
-            onNext={() => setRoute({ name: 'code_find_path_lessonmap', level: route.level })}
-            onHome={goHome}
-          />
-        );
-        break;
-      case 'code_building_blocks_levelmap':
-        screen = (
-          <CodeBuildingBlocksLevelMap
-            onLevel={(level) => setRoute({ name: 'code_building_blocks_lessonmap', level })}
-            onHome={goHome}
-            onBack={() => setRoute({ name: 'code_subhub' })}
-          />
-        );
-        break;
-      case 'code_building_blocks_lessonmap':
-        screen = (
-          <CodeBuildingBlocksLessonMap
-            level={route.level}
-            onUnit={(lesson, isRevision) =>
-              setRoute({ name: 'code_building_blocks_session', level: route.level, lesson, isRevision, trigger: 'new' })
-            }
-            onHome={goHome}
-            onBack={() => setRoute({ name: 'code_building_blocks_levelmap' })}
-          />
-        );
-        break;
-      case 'code_building_blocks_session':
-        screen = (
-          <CodeBuildingBlocksSession
-            level={route.level}
-            lesson={route.lesson}
-            isRevision={route.isRevision}
-            trigger={route.trigger}
-            onDone={(score, total) =>
-              setRoute({ name: 'code_building_blocks_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
-            }
-            onHome={goHome}
-            onBack={() => setRoute({ name: 'code_building_blocks_lessonmap', level: route.level })}
-          />
-        );
-        break;
-      case 'code_building_blocks_summary':
-        screen = (
-          <Summary
-            score={route.score}
-            total={route.total}
-            onAgain={() =>
-              setRoute({ name: 'code_building_blocks_session', level: route.level, lesson: route.lesson, isRevision: route.isRevision, trigger: 'replay' })
-            }
-            onNext={() => setRoute({ name: 'code_building_blocks_lessonmap', level: route.level })}
+            onNext={() => setRoute({ name: 'code_lessonmap', world: route.world, level: route.level })}
             onHome={goHome}
           />
         );
