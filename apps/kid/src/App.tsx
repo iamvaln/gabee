@@ -48,6 +48,10 @@ import { Settings } from './screens/Settings';
 import { Summary } from './screens/Summary';
 import { LookAwayOverlay } from './components/LookAwayOverlay';
 import { DailyLockScreen } from './components/DailyLockScreen';
+import { BottomNav, type KidTab } from './components/BottomNav';
+import { Carte } from './screens/Carte';
+import { Coffre } from './screens/Coffre';
+import { nextLessonFor } from './lib/nextLesson';
 import { useHealthyUse } from './lib/healthy-use';
 import { bumpStreak } from './lib/streak';
 import { MessageBandeau } from './components/MessageBandeau';
@@ -132,12 +136,42 @@ export function App() {
   const startPlay = useStore((s) => s.startPlay);
   const queryClient = useQueryClient();
   const [route, setRoute] = useState<Route>({ name: 'hub' });
+  // Bottom-nav tab (Apprendre / Carte / Coffre). Routing-wise these are
+  // orthogonal to `route` — every tab has its own home. Switching tabs
+  // resets `route` to the tab's root; sessions and summaries hide the nav
+  // entirely so play stays full-screen.
+  const [tab, setTab] = useState<KidTab>('apprendre');
   // Parent → kid messages (changes-v1 §1 / parent spec §8.4). `pendingMsg` is the
   // oldest unread cached locally; the mint bandeau surfaces it between lessons.
   // `readerOpen` flips when the kid taps the bandeau.
   const [pendingMsg, setPendingMsg] = useState<LocalMessage | null>(null);
   const [readerOpen, setReaderOpen] = useState(false);
   const play = useStore((s) => s.play);
+
+  // Full-screen "focus" routes — sessions, summaries, settings. The bottom
+  // nav hides on these so play stays immersive. Everything else is a
+  // "browse" route where the nav is visible (hub, sub-hubs, level/lesson
+  // maps).
+  const isFocusRoute = (name: Route['name']): boolean =>
+    name === 'session' ||
+    name === 'summary' ||
+    name === 'words_picture_session' ||
+    name === 'words_picture_summary' ||
+    name === 'words_fill_session' ||
+    name === 'words_fill_summary' ||
+    name === 'words_build_session' ||
+    name === 'words_build_summary' ||
+    name === 'words_read_session' ||
+    name === 'words_read_summary' ||
+    name === 'translation_session' ||
+    name === 'translation_summary' ||
+    name === 'keyboard_static_session' ||
+    name === 'keyboard_static_summary' ||
+    name === 'keyboard_scrolling_session' ||
+    name === 'keyboard_scrolling_summary' ||
+    name === 'code_session' ||
+    name === 'code_summary' ||
+    name === 'settings';
 
   // Summary screens = the moment between lessons where the bandeau is allowed.
   const isSummaryScreen = (name: Route['name']): boolean =>
@@ -389,7 +423,29 @@ export function App() {
       case 'numbers_subhub':
         screen = (
           <NumbersHub
-            onSubMode={(sub) => setRoute({ name: 'levelmap', subMode: sub })}
+            // Sub-mode pick = AUTO-START. The kid no longer has to climb
+            // through a level map / lesson map — we look up the next lesson
+            // that isn't 3-starred yet for this (sub-mode) track and drop
+            // them straight in. The Carte tab keeps the full map for
+            // anyone who wants to replay or browse.
+            onSubMode={(sub) => {
+              const bundle = queryClient.getQueryData<QuestionBundleResponse>(['bundle', 'numbers']);
+              const next = profile ? nextLessonFor(bundle, profile, 'numbers', sub, lang) : null;
+              if (next) {
+                setRoute({
+                  name: 'session',
+                  level: next.level,
+                  lesson: next.lesson,
+                  isRevision: next.isRevision,
+                  trigger: 'new',
+                  subMode: sub,
+                });
+              } else {
+                // No more unmastered lessons → drop into the level map as a
+                // replay browser. Beats a silent dead-end.
+                setRoute({ name: 'levelmap', subMode: sub });
+              }
+            }}
             onHome={goHome}
             onBack={goHome}
           />
@@ -939,6 +995,16 @@ export function App() {
       default:
         screen = <Hub onModule={enterModule} onSettings={goSettings} />;
     }
+
+    // Tab override: Carte + Coffre live alongside Apprendre as siblings
+    // under the same bottom nav. Carte taps into the existing per-module
+    // level maps via `enterModule`, so replay still works without
+    // duplicating navigation code.
+    if (tab === 'carte' && !isFocusRoute(route.name)) {
+      screen = <Carte onModule={enterModule} />;
+    } else if (tab === 'coffre' && !isFocusRoute(route.name)) {
+      screen = <Coffre />;
+    }
   }
 
   // Daily lock takes precedence over EVERY screen (post-profile-pick).
@@ -948,6 +1014,11 @@ export function App() {
   // profile and routes to ProfileSelect.
   const showIdleLock = !!profile && idleLocked && !showDailyLock;
 
+  // Bottom nav visibility — present on browse routes once the kid is past
+  // login/profile-pick, hidden during sessions / summaries / the daily lock
+  // so play stays full-screen.
+  const showBottomNav = !!token && !!profile && !showDailyLock && !isFocusRoute(route.name);
+
   return (
     <div className={STAGE_CLASS}>
       <div className="kid-frame">
@@ -955,6 +1026,20 @@ export function App() {
           <DailyLockScreen lang={lang} onHome={goHome} dailyTotalCapMin={limits!.daily_total_cap_min} />
         ) : (
           screen
+        )}
+        {showBottomNav && (
+          <BottomNav
+            tab={tab}
+            lang={lang}
+            onChange={(next) => {
+              setTab(next);
+              // Reset route to the tab's home so re-entering the tab is a
+              // predictable starting point — never the bottom of a stale
+              // back-stack from a previous tab.
+              if (next === 'apprendre') setRoute({ name: 'hub' });
+              else setRoute({ name: 'hub' }); // Carte/Coffre override via the tab check above
+            }}
+          />
         )}
         {showIdleLock && profile && (
           <LockScreen
