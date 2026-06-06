@@ -50,6 +50,7 @@ import { LookAwayOverlay } from './components/LookAwayOverlay';
 import { DailyLockScreen } from './components/DailyLockScreen';
 import { BottomNav, type KidTab } from './components/BottomNav';
 import { Carte } from './screens/Carte';
+import { CarteRoad, type CarteRoadPlay } from './screens/CarteRoad';
 import { Coffre } from './screens/Coffre';
 import { nextLessonFor } from './lib/nextLesson';
 import { useHealthyUse } from './lib/healthy-use';
@@ -78,6 +79,10 @@ interface PlayTarget {
 
 type Route =
   | { name: 'hub' }
+  // Carte → road view for one module. The road takes over the canvas and
+  // handles its own sub-mode pills; tapping a stop fires onPlay which we
+  // route to the right module-specific session below.
+  | { name: 'carte_road'; module: Module }
   // Numbers sub-hub (Arithmetic + Geometry) — mirrors the Words/Keyboard/Code
   // pattern. Legacy `levelmap`/`lessonmap`/`session`/`summary` routes remain
   // for back-compat (deep links / cached state) and route into Arithmetic.
@@ -420,6 +425,55 @@ export function App() {
     screen = <ProfileSelect onPick={handlePick} />;
   } else {
     switch (route.name) {
+      case 'carte_road': {
+        // Per-module road view (Carte tab). The road handles sub-mode pills
+        // internally; tapping a stop fires `onPlay({ subMode, level, lesson,
+        // isRevision })` which we route to the right module-specific
+        // session below. Keep this switch in sync with the session route
+        // names — when a module gains a new sub-mode session route, add it
+        // here so taps from the road reach play.
+        const m = route.module;
+        const goCarte = () => setRoute({ name: 'hub' });
+        const handlePlay = (p: CarteRoadPlay) => {
+          const payload = {
+            level: p.level,
+            lesson: p.lesson,
+            isRevision: p.isRevision,
+            trigger: 'replay' as const,
+          };
+          switch (m) {
+            case 'numbers':
+              setRoute({
+                name: 'session',
+                subMode: (p.subMode ?? 'counting') as NumbersSubMode,
+                ...payload,
+              });
+              return;
+            case 'words':
+              if (p.subMode === 'picture') setRoute({ name: 'words_picture_session', ...payload });
+              else if (p.subMode === 'fill-blank') setRoute({ name: 'words_fill_session', ...payload });
+              else if (p.subMode === 'build-sentence') setRoute({ name: 'words_build_session', ...payload });
+              else if (p.subMode === 'read-answer') setRoute({ name: 'words_read_session', ...payload });
+              return;
+            case 'keyboard':
+              if (p.subMode === 'copy') setRoute({ name: 'keyboard_static_session', ...payload });
+              else if (p.subMode === 'speed') setRoute({ name: 'keyboard_scrolling_session', ...payload });
+              return;
+            case 'code': {
+              const world = (p.subMode === 'draw' || p.subMode === 'actions' ? p.subMode : 'maze') as CodeWorld;
+              setRoute({ name: 'code_session', world, ...payload });
+              return;
+            }
+            case 'translation':
+              setRoute({ name: 'translation_session', ...payload });
+              return;
+          }
+        };
+        screen = (
+          <CarteRoad module={m} onPlay={handlePlay} onBack={goCarte} onHome={goCarte} />
+        );
+        break;
+      }
       case 'numbers_subhub':
         screen = (
           <NumbersHub
@@ -1007,8 +1061,15 @@ export function App() {
     // Without this gate, tapping a module on Carte would look broken
     // because the Carte component would re-render itself.
     if (route.name === 'hub') {
-      if (tab === 'carte') screen = <Carte onModule={enterModule} />;
-      else if (tab === 'coffre') screen = <Coffre />;
+      if (tab === 'carte') {
+        screen = (
+          <Carte
+            onModule={(m) => setRoute({ name: 'carte_road', module: m })}
+          />
+        );
+      } else if (tab === 'coffre') {
+        screen = <Coffre />;
+      }
     }
   }
 

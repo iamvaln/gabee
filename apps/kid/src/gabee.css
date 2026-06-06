@@ -1600,3 +1600,176 @@ a:focus-visible,
   opacity: 0.95;
   line-height: 1.4;
 }
+
+/* ─── Carte tab — winding "road" of lesson stops ─────────────────────────── */
+.carte-road {
+  padding-bottom: 80px; /* leave room for the bottom nav */
+}
+.carte-road-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px 16px;
+}
+.carte-road-head h1 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 2px 0;
+}
+.carte-road-head p {
+  font-size: 13px;
+  opacity: 0.7;
+  margin: 0;
+}
+
+/* Sub-mode pill row (Numbers/Words/Keyboard/Code have multiple strands) */
+.carte-road-pills {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+  scrollbar-width: none;
+}
+.carte-road-pills::-webkit-scrollbar { display: none; }
+.carte-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1.5px solid #E2E8F0;
+  background: white;
+  font-weight: 700;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: transform 120ms ease, background 120ms ease;
+}
+.carte-pill .ic { font-size: 16px; line-height: 1; }
+.carte-pill:hover:not(:disabled) { transform: translateY(-1px); }
+.carte-pill.active {
+  background: var(--color-brand, #FACC15);
+  color: #0f172a;
+  border-color: var(--color-brand, #FACC15);
+}
+.carte-pill.soon { opacity: 0.45; cursor: not-allowed; }
+
+/* The road itself — vertical column of stops with alternating offsets */
+.carte-road-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 8px 0 32px;
+  position: relative;
+}
+.road-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.road-level-banner {
+  align-self: center;
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin: 18px 0 10px;
+}
+
+/* Stop = circle + stars row, offset-Nth class shifts horizontally for zig-zag.
+   The connector line between stops is drawn by ::before on .road-stop. */
+.road-stop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0;
+  align-self: center;
+  transition: transform 200ms ease;
+}
+.road-stop.offset-0 { transform: translateX(-32%); }
+.road-stop.offset-1 { transform: translateX(-12%); }
+.road-stop.offset-2 { transform: translateX(12%); }
+.road-stop.offset-3 { transform: translateX(32%); }
+
+.road-stop .stop {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid #0f172a;
+  background: #FACC15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 22px;
+  color: #0f172a;
+  cursor: pointer;
+  box-shadow: 0 4px 0 0 #0f172a;
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+.road-stop .stop:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 0 #0f172a;
+}
+.road-stop .stop:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 2px 0 0 #0f172a;
+}
+.road-stop .stop.done {
+  background: #34D399; /* mint */
+  color: white;
+}
+.road-stop .stop.open {
+  background: #FACC15;
+  animation: stop-pulse 2.4s ease-in-out infinite;
+}
+.road-stop .stop.locked {
+  background: #E2E8F0;
+  color: #94A3B8;
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 0 0 #CBD5E1;
+  cursor: not-allowed;
+}
+.road-stop .stop.revision {
+  background: #A78BFA; /* lavender — set the revision apart */
+  color: white;
+}
+.road-stop .stop.revision.done { background: #7C3AED; }
+.road-stop .stop.revision.locked {
+  background: #E2E8F0;
+  color: #94A3B8;
+}
+
+.road-stop .stars {
+  display: flex;
+  gap: 2px;
+  font-size: 12px;
+  line-height: 1;
+}
+.road-stop .stars .star {
+  color: #CBD5E1;
+}
+.road-stop .stars .star.on {
+  color: #F59E0B;
+  text-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+}
+
+@keyframes stop-pulse {
+  0%, 100% { box-shadow: 0 4px 0 0 #0f172a, 0 0 0 0 rgba(250, 204, 21, 0.6); }
+  50%      { box-shadow: 0 4px 0 0 #0f172a, 0 0 0 14px rgba(250, 204, 21, 0); }
+}
+
+.carte-road-empty {
+  text-align: center;
+  padding: 32px;
+  font-weight: 700;
+  opacity: 0.6;
+}

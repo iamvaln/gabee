@@ -7,12 +7,17 @@ export interface ModuleDef {
   tagline: { fr: string; en: string };
 }
 
+// Order shown in the Hub + Carte tile grids. Set per product/UX decision —
+// Keyboard first so a new kid starts on the lowest-friction mechanic (a
+// physical key press = immediate feedback), then progresses to Code,
+// Translation, Numbers, and Words. Reorder by editing this array; nothing
+// else in the kid app encodes a module ordering.
 export const MODULES: ModuleDef[] = [
-  { id: 'numbers', label: { fr: 'Nombres', en: 'Numbers' }, sub: { fr: 'Compter, additionner', en: 'Count, add, subtract' }, tagline: { fr: 'Gabee compte avec toi', en: 'Gabee counts with you' } },
-  { id: 'words', label: { fr: 'Mots', en: 'Words' }, sub: { fr: 'Lire, écrire, comprendre', en: 'Read, write, build' }, tagline: { fr: 'Gabee découvre les mots', en: 'Gabee discovers words' } },
   { id: 'keyboard', label: { fr: 'Clavier', en: 'Keyboard' }, sub: { fr: 'Taper avec les dix doigts', en: 'Type with all your fingers' }, tagline: { fr: 'Gabee apprend à taper', en: 'Gabee learns to type' } },
   { id: 'code', label: { fr: 'Code', en: 'Code' }, sub: { fr: 'Programmer un robot', en: 'Move the robot' }, tagline: { fr: 'Gabee programme avec toi', en: 'Gabee codes with you' } },
   { id: 'translation', label: { fr: 'Traduction', en: 'Translate' }, sub: { fr: 'Français ↔ Anglais', en: 'French ↔ English' }, tagline: { fr: 'Gabee parle deux langues', en: 'Gabee speaks two languages' } },
+  { id: 'numbers', label: { fr: 'Nombres', en: 'Numbers' }, sub: { fr: 'Compter, additionner', en: 'Count, add, subtract' }, tagline: { fr: 'Gabee compte avec toi', en: 'Gabee counts with you' } },
+  { id: 'words', label: { fr: 'Mots', en: 'Words' }, sub: { fr: 'Lire, écrire, comprendre', en: 'Read, write, build' }, tagline: { fr: 'Gabee découvre les mots', en: 'Gabee discovers words' } },
 ];
 
 export const MODULE_ICONS: Record<Module, React.ReactNode> = {
