@@ -16,7 +16,13 @@ import { useStore } from '../store';
 // here so the kid sees the global picture at a glance.
 const PLAYABLE_MODULES = new Set<Module>(['numbers', 'words', 'translation', 'keyboard', 'code']);
 
-export function Carte({ onModule }: { onModule: (m: Module) => void }) {
+export function Carte({
+  onModule,
+  onSettings,
+}: {
+  onModule: (m: Module) => void;
+  onSettings?: () => void;
+}) {
   const { t } = useTranslation();
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
@@ -25,7 +31,7 @@ export function Carte({ onModule }: { onModule: (m: Module) => void }) {
 
   return (
     <div className="home-screen">
-      <Chrome lang={lang} setLang={setLang} showWordmark profile={profile} hideHome />
+      <Chrome lang={lang} setLang={setLang} showWordmark profile={profile} hideHome onSettings={onSettings} />
       <div className="home-greeting">
         <Bee size={72} expression="focus" wings />
         <div>

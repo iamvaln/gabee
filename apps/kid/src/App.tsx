@@ -470,7 +470,13 @@ export function App() {
           }
         };
         screen = (
-          <CarteRoad module={m} onPlay={handlePlay} onBack={goCarte} onHome={goCarte} />
+          <CarteRoad
+            module={m}
+            onPlay={handlePlay}
+            onBack={goCarte}
+            onHome={goCarte}
+            onSettings={goSettings}
+          />
         );
         break;
       }
@@ -1065,10 +1071,11 @@ export function App() {
         screen = (
           <Carte
             onModule={(m) => setRoute({ name: 'carte_road', module: m })}
+            onSettings={goSettings}
           />
         );
       } else if (tab === 'coffre') {
-        screen = <Coffre />;
+        screen = <Coffre onSettings={goSettings} />;
       }
     }
   }

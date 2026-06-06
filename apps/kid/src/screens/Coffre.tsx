@@ -11,7 +11,7 @@ import { evaluateMilestones } from '../lib/milestones';
 // Milestones are DERIVED from the profile on the fly (see lib/milestones),
 // so unlocking has no persistence step — playing a lesson updates the
 // underlying counts, this screen reflects them next render.
-export function Coffre() {
+export function Coffre({ onSettings }: { onSettings?: () => void }) {
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
   const profile = useStore((s) => s.profile);
@@ -27,7 +27,7 @@ export function Coffre() {
 
   return (
     <div className="home-screen">
-      <Chrome lang={lang} setLang={setLang} showWordmark profile={profile} hideHome />
+      <Chrome lang={lang} setLang={setLang} showWordmark profile={profile} hideHome onSettings={onSettings} />
       <div className="home-greeting">
         <Bee size={72} expression="correct" wings bob />
         <div>

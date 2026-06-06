@@ -98,11 +98,13 @@ export function CarteRoad({
   onPlay,
   onBack,
   onHome,
+  onSettings,
 }: {
   module: Module;
   onPlay: (play: CarteRoadPlay) => void;
   onBack: () => void;
   onHome: () => void;
+  onSettings?: () => void;
 }) {
   const { t } = useTranslation();
   const lang = useStore((s) => s.lang);
@@ -142,7 +144,7 @@ export function CarteRoad({
 
   return (
     <div className="home-screen carte-road" data-module={module}>
-      <Chrome lang={lang} setLang={setLang} title={mDef.label[lang]} onBack={onBack} onHome={onHome} profile={profile} />
+      <Chrome lang={lang} setLang={setLang} title={mDef.label[lang]} onBack={onBack} onHome={onHome} profile={profile} onSettings={onSettings} />
 
       <div className="carte-road-head">
         <Bee size={56} expression="focus" wings />
