@@ -423,12 +423,16 @@ export function App() {
       case 'numbers_subhub':
         screen = (
           <NumbersHub
-            // Sub-mode pick = AUTO-START. The kid no longer has to climb
-            // through a level map / lesson map — we look up the next lesson
-            // that isn't 3-starred yet for this (sub-mode) track and drop
-            // them straight in. The Carte tab keeps the full map for
-            // anyone who wants to replay or browse.
+            // Apprendre tab = AUTO-START the next unmastered lesson — no
+            // level/lesson picker between the sub-mode tap and play.
+            // Carte tab = replay browser: open the level map so the kid
+            // can pick exactly what to replay. Either way the sub-mode
+            // pick stays a deliberate choice (which strand to focus on).
             onSubMode={(sub) => {
+              if (tab === 'carte') {
+                setRoute({ name: 'levelmap', subMode: sub });
+                return;
+              }
               const bundle = queryClient.getQueryData<QuestionBundleResponse>(['bundle', 'numbers']);
               const next = profile ? nextLessonFor(bundle, profile, 'numbers', sub, lang) : null;
               if (next) {
@@ -441,8 +445,8 @@ export function App() {
                   subMode: sub,
                 });
               } else {
-                // No more unmastered lessons → drop into the level map as a
-                // replay browser. Beats a silent dead-end.
+                // Everything is 3-starred — fall back to the level map so
+                // the kid can pick a lesson to replay. Beats a dead-end.
                 setRoute({ name: 'levelmap', subMode: sub });
               }
             }}
@@ -996,14 +1000,15 @@ export function App() {
         screen = <Hub onModule={enterModule} onSettings={goSettings} />;
     }
 
-    // Tab override: Carte + Coffre live alongside Apprendre as siblings
-    // under the same bottom nav. Carte taps into the existing per-module
-    // level maps via `enterModule`, so replay still works without
-    // duplicating navigation code.
-    if (tab === 'carte' && !isFocusRoute(route.name)) {
-      screen = <Carte onModule={enterModule} />;
-    } else if (tab === 'coffre' && !isFocusRoute(route.name)) {
-      screen = <Coffre />;
+    // Tab override applies ONLY at the tab's root (`route.name === 'hub'`).
+    // The moment the kid taps a module from Carte / Coffre we let the
+    // normal route render — the bottom nav keeps the active tab lit, but
+    // the deeper screen (sub-hub, level map…) takes over the canvas.
+    // Without this gate, tapping a module on Carte would look broken
+    // because the Carte component would re-render itself.
+    if (route.name === 'hub') {
+      if (tab === 'carte') screen = <Carte onModule={enterModule} />;
+      else if (tab === 'coffre') screen = <Coffre />;
     }
   }
 
