@@ -90,6 +90,13 @@ html, body {
 }
 .kid-frame {
   width: min(100%, 1280px);
+  /* Cap the height to the viewport so the frame ALWAYS fits without the
+     outer page scrolling, even on a 1366×768 / 1440×900 laptop where
+     1280×800 wouldn't. `aspect-ratio` still preserves 16:10 — when the
+     height cap kicks in, the browser narrows the width proportionally.
+     Subtract 2× .app-stage padding so the centred frame keeps its
+     breathing room above/below. */
+  max-height: calc(100dvh - 48px);
   aspect-ratio: 16 / 10;
   background: var(--surface);
   border-radius: 24px;
@@ -1037,13 +1044,23 @@ a:focus-visible,
   display: flex;
   flex-direction: column;
   background: var(--surface);
+  /* HARD no-scroll: a kid (6-10 y.o.) won't scroll to find the Next button,
+     so prompt + answers + feedback strip must all fit on screen at once.
+     overflow: hidden + min-height: 0 lets the flex children shrink to fit
+     instead of overflowing their container. Fluid sizes below (clamp on
+     fonts/paddings) absorb the squeeze. */
+  overflow: hidden;
+  min-height: 0;
 }
 .session-progress {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 18px 48px;
+  /* Fluid vertical padding: shrinks on a tight laptop so the progress bar
+     doesn't eat the room the answers need. */
+  padding: clamp(10px, 1.8vh, 18px) clamp(20px, 4vw, 48px);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 .session-progress .dots {
   display: flex;
@@ -1071,29 +1088,38 @@ a:focus-visible,
   flex: 1;
   display: grid;
   grid-template-columns: 1fr 200px;
-  gap: 24px;
-  padding: 28px 48px 36px;
+  /* Fluid gap + vertical padding: shrink as the viewport gets shorter so
+     the body keeps a sane breathing room without ever forcing a scroll. */
+  gap: clamp(16px, 2.5vh, 24px);
+  padding: clamp(16px, 3vh, 28px) clamp(20px, 4vw, 48px) clamp(20px, 3.5vh, 36px);
   min-height: 0;
+  overflow: hidden;
 }
 .session-stage {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: clamp(12px, 2vh, 24px);
   min-height: 0;
+  overflow: hidden;
 }
 .session-prompt {
   background: var(--surface-muted);
   border-radius: var(--radius-xl);
-  padding: 32px;
+  padding: clamp(16px, 3vh, 32px);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
+  /* No floor: let the prompt area shrink so the answers + feedback strip
+     always have room. Content scales via clamp() on .big-number below. */
+  min-height: 0;
   text-align: center;
-  flex: 1;
+  flex: 1 1 0;
+  overflow: hidden;
 }
 .session-prompt .big-number {
-  font-size: 92px;
+  /* Scales with the viewport HEIGHT so the prompt always fits between
+     progress bar and answer buttons — no matter the laptop size. */
+  font-size: clamp(40px, 10vh, 92px);
   font-weight: 800;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
@@ -1134,19 +1160,25 @@ a:focus-visible,
 .session-answers {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  gap: clamp(8px, 1.5vh, 14px);
+  /* Answers are the "must remain visible" zone. flex-shrink: 0 inside the
+     session-stage flex column protects them from being squeezed by a tall
+     prompt — the prompt shrinks first (its font/padding clamp down). */
+  flex-shrink: 0;
 }
 .answer-btn {
   background: var(--surface);
   border: 2.5px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 22px 24px;
+  padding: clamp(10px, 2vh, 22px) clamp(14px, 2vw, 24px);
   font-family: inherit;
   font-weight: 800;
-  font-size: 32px;
+  font-size: clamp(18px, 3vh, 32px);
   color: var(--color-ink);
   cursor: pointer;
-  min-height: 80px;
+  /* Min height was 80px which adds up to ~180px+ for a 2-row grid + gap;
+     on a short laptop this used to push the prompt under the chrome. */
+  min-height: clamp(48px, 7vh, 80px);
   transition: all var(--motion-fast) var(--easing);
 }
 .answer-btn:hover {
@@ -1164,17 +1196,20 @@ a:focus-visible,
   color: var(--feedback-retry);
 }
 
-/* Feedback strip */
+/* Feedback strip — replaces the answer grid once the kid picks. The Next
+   button lives here, so it MUST stay visible without a scroll. flex-shrink:
+   0 inside the session-stage flex column protects it from compression. */
 .feedback-strip {
   background: linear-gradient(90deg, var(--color-brand), #FFD66E);
   color: var(--color-ink);
-  padding: 18px 32px;
+  padding: clamp(12px, 2vh, 18px) clamp(16px, 3vw, 32px);
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: clamp(10px, 1.5vw, 16px);
   font-weight: 800;
-  font-size: 22px;
+  font-size: clamp(16px, 2.5vh, 22px);
   border-radius: var(--radius-xl);
+  flex-shrink: 0;
 }
 .feedback-strip.retry {
   background: #FFE5E4;
