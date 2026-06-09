@@ -62,9 +62,16 @@ html, body {
   transition-duration: 0.001ms !important;
 }
 
-/* Frame */
+/* Frame.
+   - Desktop: a centred "device frame" with a max-width and 16:10 aspect ratio,
+     so the kid app looks like a tablet inside a browser window.
+   - Mobile/tablet (< 900px): edge-to-edge full-viewport. We use `100dvh`
+     (dynamic viewport height) so iOS Safari's collapsible address bar
+     doesn't push the bottom nav offscreen. No outer padding, no rounded
+     corners, no shadow — the OS provides its own chrome. Honour the device
+     safe-area insets so the notch / home-bar don't clip content. */
 .app-stage {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -75,7 +82,7 @@ html, body {
 }
 .app-embedded .kid-frame {
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   max-width: none;
   border-radius: 0;
   box-shadow: none;
@@ -93,7 +100,19 @@ html, body {
   flex-direction: column;
 }
 @media (max-width: 900px) {
-  .kid-frame { aspect-ratio: auto; min-height: 720px; }
+  .app-stage { padding: 0; }
+  .kid-frame {
+    width: 100%;
+    height: 100dvh;
+    max-width: 100%;
+    aspect-ratio: auto;
+    min-height: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
 }
 
 /* App chrome */
@@ -636,7 +655,12 @@ a:focus-visible,
   padding: 32px 48px 40px;
   gap: 24px;
   position: relative;
-  overflow: hidden;
+  /* Vertical scroll INSIDE the frame so a tall Coffre / Carte list reaches
+     all milestones / road stops; horizontal stays clipped so a stray child
+     never widens the layout. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
 }
 .home-greeting {
   display: flex;
@@ -711,9 +735,20 @@ a:focus-visible,
 @media (max-width: 900px) {
   .home-greeting { flex-wrap: wrap; row-gap: 12px; }
   .home-stats { width: 100%; flex-wrap: wrap; }
-  .session-body { grid-template-columns: 1fr; padding: 20px 24px 28px; }
+  .home-screen { padding: 20px 16px 24px; gap: 16px; }
+  .session-body { grid-template-columns: 1fr; padding: 16px 16px 20px; gap: 16px; }
   .session-aside { flex-direction: row; gap: 16px; }
-  .session-progress { padding: 14px 24px; }
+  .session-progress { padding: 12px 16px; }
+  .session-prompt { padding: 20px; min-height: 140px; }
+  .session-prompt .big-number { font-size: 64px; }
+  .levelmap-hero { padding: 18px 20px 22px; }
+  .levelmap-hero h1 { font-size: 26px; }
+  .level-body { padding: 18px 16px 24px; align-items: flex-start; overflow-y: auto; min-height: 0; }
+  /* Profile picker: the base is a flex+wrap row with .profile-card min-
+     width: 180px; on a narrow screen 2 cards already exceed the viewport.
+     Lowering min-width lets cards reflow to 2 per row on phones. */
+  .profile-grid { gap: 16px; }
+  .profile-card { min-width: 0; flex: 1 1 140px; max-width: 220px; }
 }
 
 /* Today recap on session summary */
@@ -782,8 +817,11 @@ a:focus-visible,
 /* Module grid */
 .module-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 18px;
+  /* Auto-fit lets the grid reflow as the viewport narrows: at 1280px the
+     5 modules sit on one row; on a phone they drop to 2 cols. The 140px
+     min keeps each tile a comfortable tap target. */
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
   flex: 1;
   min-height: 0;
 }
@@ -872,8 +910,10 @@ a:focus-visible,
 }
 .level-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 18px;
+  /* Same reflow trick as .module-grid — auto-fit with a min that keeps the
+     level tile big enough for a finger. */
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 14px;
   width: 100%;
   max-width: 720px;
 }
