@@ -53,6 +53,7 @@ import { Carte } from './screens/Carte';
 import { CarteRoad, type CarteRoadPlay } from './screens/CarteRoad';
 import { Coffre } from './screens/Coffre';
 import { nextLessonFor, type NextLesson } from './lib/nextLesson';
+import { api } from './lib/api';
 import { useHealthyUse } from './lib/healthy-use';
 import { bumpStreak } from './lib/streak';
 import { MessageBandeau } from './components/MessageBandeau';
@@ -404,7 +405,7 @@ export function App() {
     else if (m === 'code') setRoute({ name: 'code_subhub' });
     // Translation has no sub-mode pick — Apprendre auto-starts the next lesson.
     else if (m === 'translation')
-      startOrBrowse(
+      void startOrBrowse(
         'translation',
         null,
         (n) => setRoute({ name: 'translation_session', level: n.level, lesson: n.lesson, isRevision: n.isRevision, trigger: 'new' }),
@@ -417,15 +418,28 @@ export function App() {
   // level map when everything is mastered, or when browsing via the Carte tab
   // (the Carte road is the replay surface). `dataSubMode` is the value stored in
   // `q.sub_mode` (e.g. 'fill-blank'), not the hub's short key.
-  function startOrBrowse(
+  async function startOrBrowse(
     module: Module,
     dataSubMode: string | null,
     toSession: (n: NextLesson) => void,
     toLevelMap: () => void,
   ) {
     if (tab === 'carte') { toLevelMap(); return; }
-    const bundle = queryClient.getQueryData<QuestionBundleResponse>(['bundle', module]);
-    const next = profile ? nextLessonFor(bundle, profile, module, dataSubMode, lang) : null;
+    if (!profile) { toLevelMap(); return; }
+    // The hub doesn't fetch the bundle, so the cache is usually empty here —
+    // ensureQueryData returns the cached copy or fetches it. Without this the
+    // auto-start silently fell back to the picker on a cold module open.
+    let bundle: QuestionBundleResponse | undefined;
+    try {
+      bundle = await queryClient.ensureQueryData<QuestionBundleResponse>({
+        queryKey: ['bundle', module],
+        queryFn: () => api.getBundle(module),
+      });
+    } catch {
+      toLevelMap();
+      return;
+    }
+    const next = nextLessonFor(bundle, profile, module, dataSubMode, lang);
     if (next) toSession(next);
     else toLevelMap();
   }
@@ -513,28 +527,11 @@ export function App() {
             // Carte tab = replay browser: open the level map so the kid
             // can pick exactly what to replay. Either way the sub-mode
             // pick stays a deliberate choice (which strand to focus on).
-            onSubMode={(sub) => {
-              if (tab === 'carte') {
-                setRoute({ name: 'levelmap', subMode: sub });
-                return;
-              }
-              const bundle = queryClient.getQueryData<QuestionBundleResponse>(['bundle', 'numbers']);
-              const next = profile ? nextLessonFor(bundle, profile, 'numbers', sub, lang) : null;
-              if (next) {
-                setRoute({
-                  name: 'session',
-                  level: next.level,
-                  lesson: next.lesson,
-                  isRevision: next.isRevision,
-                  trigger: 'new',
-                  subMode: sub,
-                });
-              } else {
-                // Everything is 3-starred — fall back to the level map so
-                // the kid can pick a lesson to replay. Beats a dead-end.
-                setRoute({ name: 'levelmap', subMode: sub });
-              }
-            }}
+            onSubMode={(sub) =>
+              void startOrBrowse('numbers', sub,
+                (n) => setRoute({ name: 'session', level: n.level, lesson: n.lesson, isRevision: n.isRevision, trigger: 'new', subMode: sub }),
+                () => setRoute({ name: 'levelmap', subMode: sub }))
+            }
             onHome={goHome}
             onBack={goHome}
           />
@@ -623,19 +620,19 @@ export function App() {
           <WordsHub
             onSubMode={(sub) => {
               if (sub === 'picture')
-                startOrBrowse('words', 'picture',
+                void startOrBrowse('words', 'picture',
                   (n) => setRoute({ name: 'words_picture_session', level: n.level, lesson: n.lesson, isRevision: n.isRevision, trigger: 'new' }),
                   () => setRoute({ name: 'words_picture_levelmap' }));
               else if (sub === 'fill')
-                startOrBrowse('words', 'fill-blank',
+                void startOrBrowse('words', 'fill-blank',
                   (n) => setRoute({ name: 'words_fill_session', level: n.level, lesson: n.lesson, isRevision: n.isRevision, trigger: 'new' }),
                   () => setRoute({ name: 'words_fill_levelmap' }));
               else if (sub === 'build')
-                startOrBrowse('words', 'build-sentence',
+                void startOrBrowse('words', 'build-sentence',
                   (n) => setRoute({ name: 'words_build_session', level: n.level, lesson: n.lesson, isRevision: n.isRevision, trigger: 'new' }),
                   () => setRoute({ name: 'words_build_levelmap' }));
               else if (sub === 'read')
-                startOrBrowse('words', 'read-answer',
+                void startOrBrowse('words', 'read-answer',
                   (n) => setRoute({ name: 'words_read_session', level: n.level, lesson: n.lesson, isRevision: n.isRevision, trigger: 'new' }),
                   () => setRoute({ name: 'words_read_levelmap' }));
             }}
@@ -922,11 +919,11 @@ export function App() {
           <KeyboardHub
             onSubMode={(sub: KeyboardSubMode) => {
               if (sub === 'static')
-                startOrBrowse('keyboard', 'copy',
+                void startOrBrowse('keyboard', 'copy',
                   (n) => setRoute({ name: 'keyboard_static_session', level: n.level, lesson: n.lesson, isRevision: n.isRevision, trigger: 'new' }),
                   () => setRoute({ name: 'keyboard_static_levelmap' }));
               else
-                startOrBrowse('keyboard', 'speed',
+                void startOrBrowse('keyboard', 'speed',
                   (n) => setRoute({ name: 'keyboard_scrolling_session', level: n.level, lesson: n.lesson, isRevision: n.isRevision, trigger: 'new' }),
                   () => setRoute({ name: 'keyboard_scrolling_levelmap' }));
             }}
@@ -1038,7 +1035,7 @@ export function App() {
         screen = (
           <CodeHub
             onSubMode={(sub: CodeSubMode) =>
-              startOrBrowse('code', sub,
+              void startOrBrowse('code', sub,
                 (n) => setRoute({ name: 'code_session', world: sub, level: n.level, lesson: n.lesson, isRevision: n.isRevision, trigger: 'new' }),
                 () => setRoute({ name: 'code_levelmap', world: sub }))
             }
