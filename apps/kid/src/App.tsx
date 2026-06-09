@@ -585,7 +585,7 @@ export function App() {
               })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'lessonmap', level: route.level, subMode: sm })}
+            onBack={goHome}
           />
         );
         break;
@@ -680,7 +680,7 @@ export function App() {
               })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'words_picture_lessonmap', level: route.level })}
+            onBack={goHome}
           />
         );
         break;
@@ -738,7 +738,7 @@ export function App() {
               setRoute({ name: 'words_fill_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'words_fill_lessonmap', level: route.level })}
+            onBack={goHome}
           />
         );
         break;
@@ -790,7 +790,7 @@ export function App() {
               setRoute({ name: 'words_build_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'words_build_lessonmap', level: route.level })}
+            onBack={goHome}
           />
         );
         break;
@@ -842,7 +842,7 @@ export function App() {
               setRoute({ name: 'words_read_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'words_read_lessonmap', level: route.level })}
+            onBack={goHome}
           />
         );
         break;
@@ -894,7 +894,7 @@ export function App() {
               setRoute({ name: 'translation_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'translation_lessonmap', level: route.level })}
+            onBack={goHome}
           />
         );
         break;
@@ -964,7 +964,7 @@ export function App() {
               setRoute({ name: 'keyboard_static_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'keyboard_static_lessonmap', level: route.level })}
+            onBack={goHome}
           />
         );
         break;
@@ -1013,7 +1013,7 @@ export function App() {
               setRoute({ name: 'keyboard_scrolling_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'keyboard_scrolling_lessonmap', level: route.level })}
+            onBack={goHome}
           />
         );
         break;
@@ -1079,7 +1079,7 @@ export function App() {
               setRoute({ name: 'code_summary', world: route.world, level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'code_lessonmap', world: route.world, level: route.level })}
+            onBack={goHome}
           />
         );
         break;
