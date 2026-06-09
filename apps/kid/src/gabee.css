@@ -1731,13 +1731,19 @@ a:focus-visible,
 }
 .carte-pill.soon { opacity: 0.45; cursor: not-allowed; }
 
-/* The road itself — vertical column of stops with alternating offsets */
+/* The road itself — vertical column of stops with alternating offsets.
+   max-width keeps the journey legible on a wide laptop (the eye doesn't
+   sweep across 1200 px between two consecutive stops); margin: 0 auto
+   centres it within the screen padding. */
 .carte-road-list {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   padding: 8px 0 32px;
   position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
 }
 .road-row {
   display: flex;
@@ -1758,7 +1764,9 @@ a:focus-visible,
 }
 
 /* Stop = circle + stars row, offset-Nth class shifts horizontally for zig-zag.
-   The connector line between stops is drawn by ::before on .road-stop. */
+   The offset is `margin-left` as a % of the parent (.road-row), so it scales
+   with the road width instead of the 64-px button width. With 4 positions
+   evenly across the row, the journey actually looks like a winding path. */
 .road-stop {
   position: relative;
   display: flex;
@@ -1766,13 +1774,14 @@ a:focus-visible,
   align-items: center;
   gap: 6px;
   padding: 10px 0;
-  align-self: center;
-  transition: transform 200ms ease;
+  align-self: flex-start;
+  width: max-content;
+  transition: margin-left 200ms ease;
 }
-.road-stop.offset-0 { transform: translateX(-32%); }
-.road-stop.offset-1 { transform: translateX(-12%); }
-.road-stop.offset-2 { transform: translateX(12%); }
-.road-stop.offset-3 { transform: translateX(32%); }
+.road-stop.offset-0 { margin-left: 8%; }
+.road-stop.offset-1 { margin-left: 32%; }
+.road-stop.offset-2 { margin-left: 56%; }
+.road-stop.offset-3 { margin-left: 80%; }
 
 .road-stop .stop {
   width: 64px;

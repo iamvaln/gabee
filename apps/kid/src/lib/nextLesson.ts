@@ -1,5 +1,6 @@
 import type { ChildProfile, LevelProgress, Module, QuestionBundleResponse } from '@gabee/types';
 import { findLevelProgress, lessonsForLevel, sortedUnique, unitsForLevel } from './progression';
+import { readLocalTrack } from './codeTrack';
 
 // Auto-pick the next lesson to play for a (module, subMode) pair. Same
 // algorithm everywhere: walk configured levels in order, return the first
@@ -81,9 +82,16 @@ export function getProgressLevels(
       const track = profile.progress_by_module_per_language.translation;
       return track?.[lang]?.levels ?? [];
     }
-    case 'numbers':
-    case 'keyboard':
     case 'code': {
+      // Code keeps its progression in localStorage per world (maze / draw /
+      // actions), NOT in the synced progress_by_module.code track — see
+      // lib/codeTrack.ts. Read from there so the road shows the stars the
+      // kid actually earned.
+      if (!subMode) return [];
+      return readLocalTrack(`code.${subMode}`, profile.id).levels;
+    }
+    case 'numbers':
+    case 'keyboard': {
       const track = profile.progress_by_module[module] as unknown as TrackWithSubMode | undefined;
       if (subMode) return track?.bySubMode?.[subMode]?.levels ?? [];
       return track?.levels ?? [];
