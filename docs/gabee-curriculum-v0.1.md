@@ -3,6 +3,7 @@
 **Ancrage difficulté :** SIL → CE2 (plancher = enfant qui lit déjà ; plafond = CE2).
 **Progression :** chaque sous-module rampe du trivial vers le coriace sur 10 niveaux. Ci-dessous, les **5 premiers** (≈ SIL → CP/CE1).
 **Definition of success (DoS) :** réussite sur une session de 7 questions piochées dans un pool ≥ 20, sauf mention contraire.
+**Runtime (leçons, sélection, dédup) :** voir [`gabee-session-runtime-v0.1.md`](gabee-session-runtime-v0.1.md) — chaque niveau est joué en 3 leçons + 1 révision synthétisées côté app à partir du pool du niveau.
 
 ---
 

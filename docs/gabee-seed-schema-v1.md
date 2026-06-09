@@ -14,7 +14,7 @@
    - `lang: "both"` → `prompt`, `hint`, et toute valeur textuelle = objet `{ "fr": …, "en": … }`.
    - `lang: null` → valeurs **nues** (chaîne/nombre), contenu **agnostique de langue** (ex : frappe d'une lettre, d'un chiffre).
    - ⚠️ contrainte stricte (validée à l'insert) : `lang:"both"` ⇒ prompt bilingue ; `lang:null` ⇒ prompt nu.
-4. **Pool = `(module, sub_mode, level)`**, **≥ 20 questions** (DoS : session de 7 piochée dans le pool). Garde **`lesson: 1`** pour tout (les leçons 1-3 et la révision échantillonnent le pool du niveau — géré côté app).
+4. **Pool = `(module, sub_mode, level)`**, **≥ 20 questions** (DoS : session de 7 piochée dans le pool). Garde **`lesson: 1`** pour tout (les leçons 1-3 et la révision échantillonnent le pool du niveau — géré côté app). Détail du runtime (synthèse leçons, sélection par paliers, dédup) : [`gabee-session-runtime-v0.1.md`](gabee-session-runtime-v0.1.md).
 5. **Statut** `"candidate"` ; `created_by` `"ai"` ; `ratings: []` ; `avg_rating: null`.
 
 ---
