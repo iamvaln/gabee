@@ -43,10 +43,11 @@ export async function consumePairToken(): Promise<ClaimDevicePairResponse | null
     const result = await api.claimPairToken(token, {
       user_agent_hint: navigator.userAgent.slice(0, 160),
     });
+    // Link claim returns a device-bound bearer, so the device is fully
+    // paired — `needsDeviceLink` defaults to false, no prompt needed.
     useStore.getState().setAuth(
       result.token,
       { id: result.parent.id, email: result.parent.email },
-      result.device_id,
     );
     // Pre-warm the offline cache: ask for persisted storage + pull every module
     // bundle so the kid can play immediately, even if the network drops mid-

@@ -462,18 +462,20 @@ export function App() {
     setRoute({ name: 'hub' });
   };
 
-  // Device-link state for routing. After a parent email/password sign-in we
-  // hold a session JWT but no device link — gate ProfileSelect on
-  // LinkDeviceCode so the parent can finish pairing without re-logging-in.
-  // Skipping the link (Plus tard) sets the in-session sentinel so we don't
-  // loop on the prompt for the rest of this run.
-  const deviceLinkId = useStore((s) => s.deviceLinkId);
+  // Device-link gate. `needsDeviceLink` is set true only by a fresh
+  // email/password login on this very device (Login.tsx) — so a session JWT
+  // can be swapped for a long-lived device-bound bearer before play. It
+  // defaults to false, which means pre-existing rehydrated tokens (paired
+  // before this field existed) skip the prompt entirely — no regression.
+  // Skipping the prompt (Plus tard) sets an in-session sentinel so we don't
+  // re-prompt on the next render, but a refresh re-prompts.
+  const needsDeviceLink = useStore((s) => s.needsDeviceLink);
   const deviceLinkSkipped = useStore((s) => s.deviceLinkSkipped);
 
   let screen: React.ReactNode;
   if (!token) {
     screen = <Login />;
-  } else if (!deviceLinkId && !deviceLinkSkipped) {
+  } else if (needsDeviceLink && !deviceLinkSkipped) {
     screen = <LinkDeviceCode />;
   } else if (!profile) {
     screen = <ProfileSelect onPick={handlePick} />;

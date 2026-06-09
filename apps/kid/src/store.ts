@@ -20,12 +20,16 @@ interface AppState {
   token: string | null;
   parent: ParentRef | null;
   /**
-   * Device-link id once the device has been paired (link or short-code path).
-   * `null` means we hold a regular parent-session JWT but the device itself
-   * isn't bound — App.tsx routes to LinkDeviceCode in that case so the
-   * parent can finish pairing without re-logging-in.
+   * `true` when the kid app holds a parent SESSION JWT (from email/password
+   * login on this device) that hasn't been swapped for a device-bound bearer
+   * yet — App.tsx routes to LinkDeviceCode in that case.
+   *
+   * Default is `false` — critically, pre-existing users (paired before this
+   * field existed) keep the default after rehydrate, so they're NOT
+   * re-prompted to pair. Only an explicit `setAuth(..., needsDeviceLink: true)`
+   * from the Login screen flips it on.
    */
-  deviceLinkId: string | null;
+  needsDeviceLink: boolean;
   /**
    * In-session sentinel: when the parent taps "Skip" on LinkDeviceCode we
    * remember it so we don't re-prompt them on the next render. NOT persisted —
@@ -38,9 +42,8 @@ interface AppState {
   play: PlaySession | null;
 
   setLang: (lang: Language) => void;
-  setAuth: (token: string, parent: ParentRef, deviceLinkId?: string | null) => void;
+  setAuth: (token: string, parent: ParentRef, needsDeviceLink?: boolean) => void;
   clearAuth: () => void;
-  setDeviceLinkId: (id: string | null) => void;
   skipDeviceLink: () => void;
   setProfile: (profile: ChildProfile | null) => void;
   /** Start (or reuse) the current play session; returns its id. */
@@ -56,23 +59,22 @@ export const useStore = create<AppState>()(
       lang: 'fr',
       token: null,
       parent: null,
-      deviceLinkId: null,
+      needsDeviceLink: false,
       deviceLinkSkipped: false,
       profile: null,
       play: null,
 
       setLang: (lang) => set({ lang }),
-      setAuth: (token, parent, deviceLinkId = null) => {
+      setAuth: (token, parent, needsDeviceLink = false) => {
         setApiToken(token);
         // A fresh setAuth resets the in-session skip flag — switching accounts
         // or re-pairing should re-prompt for device linking.
-        set({ token, parent, deviceLinkId, deviceLinkSkipped: false });
+        set({ token, parent, needsDeviceLink, deviceLinkSkipped: false });
       },
       clearAuth: () => {
         setApiToken(null);
-        set({ token: null, parent: null, deviceLinkId: null, deviceLinkSkipped: false, profile: null, play: null });
+        set({ token: null, parent: null, needsDeviceLink: false, deviceLinkSkipped: false, profile: null, play: null });
       },
-      setDeviceLinkId: (id) => set({ deviceLinkId: id }),
       skipDeviceLink: () => set({ deviceLinkSkipped: true }),
       setProfile: (profile) => set({ profile }),
       startPlay: () => {
@@ -94,7 +96,7 @@ export const useStore = create<AppState>()(
     {
       name: 'gabee-kid-store',
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ lang: s.lang, token: s.token, parent: s.parent, deviceLinkId: s.deviceLinkId }),
+      partialize: (s) => ({ lang: s.lang, token: s.token, parent: s.parent, needsDeviceLink: s.needsDeviceLink }),
       onRehydrateStorage: () => (state) => {
         if (state?.token) setApiToken(state.token);
       },

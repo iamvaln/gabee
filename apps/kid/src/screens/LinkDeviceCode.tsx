@@ -53,9 +53,10 @@ export function LinkDeviceCode() {
       const res = await api.claimPairCode(raw, {
         user_agent_hint: navigator.userAgent.slice(0, 160),
       });
-      // Swap the parent session JWT for the long-lived device-bound bearer
-      // and record the device_id so we don't show this screen again.
-      setAuth(res.token, { id: res.parent.id, email: res.parent.email }, res.device_id);
+      // Swap the parent session JWT for the long-lived device-bound bearer.
+      // Default `needsDeviceLink: false` flips the gate off so we never
+      // show this screen again for this device.
+      setAuth(res.token, { id: res.parent.id, email: res.parent.email });
     } catch (err) {
       const code = err instanceof ApiError ? err.code : 'error';
       if (code === 'pair_code_invalid') {

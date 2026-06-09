@@ -43,7 +43,10 @@ export function Login() {
     setError(null);
     try {
       const res = await api.login(email, password);
-      setAuth(res.token, { id: res.parent.id, email: res.parent.email });
+      // `needsDeviceLink: true` — this token is a parent session JWT, not a
+      // device-bound bearer. App.tsx routes to LinkDeviceCode so the parent
+      // can swap it for a long-lived bearer via the short-code path.
+      setAuth(res.token, { id: res.parent.id, email: res.parent.email }, true);
     } catch (err) {
       setError(err instanceof ApiError ? t('loginFailed') : t('loginFailed'));
       setBusy(false);
