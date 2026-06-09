@@ -445,6 +445,10 @@ export function App() {
   }
 
   const goHome = () => setRoute({ name: 'hub' });
+  // Back out of a session: on the Carte tab return to that module's road (the
+  // replay surface the kid came from); on Apprendre return to the home grid.
+  const sessionBack = (module: Module) =>
+    setRoute(tab === 'carte' ? { name: 'carte_road', module } : { name: 'hub' });
   const goSettings = () => setRoute({ name: 'settings' });
   // Kid hands the device to a sibling. End the session timer + emit session_end
   // for clean parent-side accounting, drop the profile (the device-paired token
@@ -585,7 +589,7 @@ export function App() {
               })
             }
             onHome={goHome}
-            onBack={goHome}
+            onBack={() => sessionBack('numbers')}
           />
         );
         break;
@@ -680,7 +684,7 @@ export function App() {
               })
             }
             onHome={goHome}
-            onBack={goHome}
+            onBack={() => sessionBack('words')}
           />
         );
         break;
@@ -738,7 +742,7 @@ export function App() {
               setRoute({ name: 'words_fill_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={goHome}
+            onBack={() => sessionBack('words')}
           />
         );
         break;
@@ -790,7 +794,7 @@ export function App() {
               setRoute({ name: 'words_build_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={goHome}
+            onBack={() => sessionBack('words')}
           />
         );
         break;
@@ -842,7 +846,7 @@ export function App() {
               setRoute({ name: 'words_read_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={goHome}
+            onBack={() => sessionBack('words')}
           />
         );
         break;
@@ -894,7 +898,7 @@ export function App() {
               setRoute({ name: 'translation_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={goHome}
+            onBack={() => sessionBack('translation')}
           />
         );
         break;
@@ -964,7 +968,7 @@ export function App() {
               setRoute({ name: 'keyboard_static_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={goHome}
+            onBack={() => sessionBack('keyboard')}
           />
         );
         break;
@@ -1013,7 +1017,7 @@ export function App() {
               setRoute({ name: 'keyboard_scrolling_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={goHome}
+            onBack={() => sessionBack('keyboard')}
           />
         );
         break;
@@ -1079,7 +1083,7 @@ export function App() {
               setRoute({ name: 'code_summary', world: route.world, level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
-            onBack={goHome}
+            onBack={() => sessionBack('code')}
           />
         );
         break;
