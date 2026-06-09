@@ -105,15 +105,40 @@ export async function revokeDevice(parentId: string, deviceId: string): Promise<
 
 export interface CreatePairTokenInput {
   parentId: string;
-  /** Where the link is emailed; defaults to the parent's own email upstream. */
-  targetEmail: string;
+  /** Where the link is emailed. Optional now — when omitted (the in-app "show
+   *  the code" path), we skip the email send and just return the link +
+   *  short_code so the parent can read it aloud / show on screen. */
+  targetEmail?: string;
   /** Friendly device label ("Home computer"). */
   label: string;
 }
 
 export interface CreatePairTokenResult {
   pair_url: string;
+  short_code: string;
   expires_at: string;
+}
+
+// Code charset: A-Z + 0-9, 36 chars. With 6-char codes that's 36^6 ≈ 2.2B
+// combinations, and the active code is gated by parent JWT on claim, so brute
+// force is infeasible even at zero rate-limit. Format: `XXX-XXX` — the dash
+// is purely cosmetic (server normalises on lookup).
+const CODE_CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+function generateShortCode(): string {
+  const bytes = randomBytes(6);
+  let raw = '';
+  for (let i = 0; i < 6; i++) raw += CODE_CHARSET[bytes[i]! % CODE_CHARSET.length];
+  return `${raw.slice(0, 3)}-${raw.slice(3)}`;
+}
+
+/** Strip everything that isn't an alphanumeric, upper-case, return null when
+ *  the result isn't a valid 6-char code. Accepts both `A8K3R7` and `A8K-3R7`
+ *  on the wire so a parent who omits the dash still gets in. */
+export function normaliseShortCode(input: string): string | null {
+  const clean = input.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (clean.length !== 6) return null;
+  return `${clean.slice(0, 3)}-${clean.slice(3)}`;
 }
 
 /**
@@ -152,38 +177,60 @@ export async function createPairToken(
     .setJti(randomBytes(16).toString('hex'))
     .sign(secret);
 
-  await prisma.devicePairToken.create({
-    data: {
-      id: rowId,
-      parentId: input.parentId,
-      token: jwt,
-      targetEmail: input.targetEmail,
-      expiresAt,
-    },
-  });
+  // Generate a short_code with a tiny retry loop: the partial unique index
+  // only enforces uniqueness on UNUSED tokens, so collisions are vanishingly
+  // rare but not literally impossible. A handful of retries handles the
+  // worst case without throwing back to the caller.
+  let shortCode = generateShortCode();
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      await prisma.devicePairToken.create({
+        data: {
+          id: rowId,
+          parentId: input.parentId,
+          token: jwt,
+          shortCode,
+          targetEmail: input.targetEmail ?? parent.email,
+          expiresAt,
+        },
+      });
+      break;
+    } catch (e) {
+      // Prisma throws P2002 on unique-constraint violation. Retry with a
+      // fresh code; anything else escalates.
+      const code = (e as { code?: string }).code;
+      if (code === 'P2002' && attempt < 4) {
+        shortCode = generateShortCode();
+        continue;
+      }
+      throw e;
+    }
+  }
 
   const pairUrl = `${KID_APP_URL}/?pair=${encodeURIComponent(jwt)}`;
 
-  // Send the email; the mailgun helper no-ops in dev so this never blocks
-  // the API response.
-  const display =
-    (parent.displayNameForKids || '').trim() ||
-    parent.email.split('@')[0] ||
-    parent.email;
-  try {
-    await sendDevicePairLink({
-      target_email: input.targetEmail,
-      parent_display: display,
-      label: input.label,
-      pair_url: pairUrl,
-      expires_at: expiresAt.toISOString(),
-    });
-  } catch {
-    // Logged inside the helper; intentionally swallow so the parent can still
-    // copy the link from the response.
+  // Send the email only when a target was provided. The in-app "show the
+  // code" path passes no email — the parent reads the link/code on screen.
+  if (input.targetEmail) {
+    const display =
+      (parent.displayNameForKids || '').trim() ||
+      parent.email.split('@')[0] ||
+      parent.email;
+    try {
+      await sendDevicePairLink({
+        target_email: input.targetEmail,
+        parent_display: display,
+        label: input.label,
+        pair_url: pairUrl,
+        expires_at: expiresAt.toISOString(),
+      });
+    } catch {
+      // Logged inside the helper; intentionally swallow so the parent can still
+      // copy the link from the response.
+    }
   }
 
-  return { pair_url: pairUrl, expires_at: expiresAt.toISOString() };
+  return { pair_url: pairUrl, short_code: shortCode, expires_at: expiresAt.toISOString() };
 }
 
 // ─── Pair-token claim (kid PWA) ──────────────────────────────────────────────
@@ -295,6 +342,109 @@ export async function claimPairToken(
           payload: {
             device_id: deviceId,
             label,
+          } satisfies Prisma.InputJsonValue,
+        },
+      }),
+    ),
+  ]);
+
+  return {
+    token: bearer,
+    expires_at: bearerExpiry.toISOString(),
+    device_id: deviceId,
+    parent: { id: parent.id, email: parent.email },
+  };
+}
+
+// ─── Short-code claim (kid PWA after parent login) ──────────────────────────
+
+export interface ClaimPairCodeInput {
+  /** The signed-in parent from the bearer token. The code alone is useless —
+   *  the parent_id from JWT is the actual gate against brute force. */
+  parentId: string;
+  /** Raw user input — normaliseShortCode strips the dash + uppercases. */
+  rawCode: string;
+  userAgentHint?: string;
+}
+
+/**
+ * Consume a short-code pair token. The caller MUST have a valid parent JWT;
+ * the route handler enforces it. We look up the row by (parentId, shortCode,
+ * not used, not expired) — codes are unique per parent's active set thanks
+ * to the partial index on the table. On success, mints the device-bearer
+ * and writes the same DeviceLink + activity rows as `claimPairToken`.
+ */
+export async function claimByCode(
+  input: ClaimPairCodeInput,
+): Promise<ClaimDevicePairResponse> {
+  const code = normaliseShortCode(input.rawCode);
+  if (!code) throw new HttpError(400, 'invalid_code', 'Code is invalid');
+
+  const row = await prisma.devicePairToken.findFirst({
+    where: {
+      parentId: input.parentId,
+      shortCode: code,
+      usedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+  });
+  // Same opaque error for "no such code" vs "wrong parent" — leaking the
+  // distinction would let an attacker enumerate codes by trying them under
+  // a known-empty parent account.
+  if (!row) throw new HttpError(404, 'pair_code_invalid', 'Code is invalid or expired');
+
+  const parent = await prisma.parentAccount.findUnique({
+    where: { id: row.parentId },
+    select: { id: true, email: true },
+  });
+  if (!parent) throw new HttpError(404, 'parent_not_found', 'Parent account no longer exists');
+
+  // The label was signed into the JWT at mint time and isn't stored as a
+  // column. Decode it from the JWT lazily — best effort; fall back to a
+  // default if the JWT is somehow malformed (shouldn't happen for a row we
+  // just minted, but keeps the response shape stable).
+  const claims = await verifyPairTokenJwt(row.token);
+  const label = (claims?.label ?? '').trim() || 'Family device';
+
+  const deviceId = randomUUID();
+  const refreshTokenId = randomUUID();
+  const now = new Date();
+  const { token: bearer, expiresAt: bearerExpiry } = await mintDeviceBearer(
+    parent.id,
+    parent.email,
+  );
+
+  const kids = await prisma.childProfile.findMany({
+    where: { parentId: parent.id },
+    select: { id: true },
+  });
+
+  await prisma.$transaction([
+    prisma.deviceLink.create({
+      data: {
+        id: deviceId,
+        parentId: parent.id,
+        label,
+        userAgentHint: input.userAgentHint ?? null,
+        refreshTokenId,
+        pairedAt: now,
+        lastActiveAt: now,
+      },
+    }),
+    prisma.devicePairToken.update({
+      where: { id: row.id },
+      data: { usedAt: now, resultingDeviceId: deviceId },
+    }),
+    ...kids.map((kid) =>
+      prisma.familyActivityLog.create({
+        data: {
+          childId: kid.id,
+          actorParentId: parent.id,
+          action: 'device_paired',
+          payload: {
+            device_id: deviceId,
+            label,
+            via: 'short_code',
           } satisfies Prisma.InputJsonValue,
         },
       }),

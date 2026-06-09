@@ -10,6 +10,7 @@ import { useIdle, installIdleListeners } from './lib/idle';
 import { LockScreen } from './components/LockScreen';
 import { SyncIndicator } from './components/SyncIndicator';
 import { Login } from './screens/Login';
+import { LinkDeviceCode } from './screens/LinkDeviceCode';
 import { ProfileSelect } from './screens/ProfileSelect';
 import { Hub } from './screens/Hub';
 import { NumbersHub, type NumbersSubMode } from './screens/NumbersHub';
@@ -461,9 +462,19 @@ export function App() {
     setRoute({ name: 'hub' });
   };
 
+  // Device-link state for routing. After a parent email/password sign-in we
+  // hold a session JWT but no device link — gate ProfileSelect on
+  // LinkDeviceCode so the parent can finish pairing without re-logging-in.
+  // Skipping the link (Plus tard) sets the in-session sentinel so we don't
+  // loop on the prompt for the rest of this run.
+  const deviceLinkId = useStore((s) => s.deviceLinkId);
+  const deviceLinkSkipped = useStore((s) => s.deviceLinkSkipped);
+
   let screen: React.ReactNode;
   if (!token) {
     screen = <Login />;
+  } else if (!deviceLinkId && !deviceLinkSkipped) {
+    screen = <LinkDeviceCode />;
   } else if (!profile) {
     screen = <ProfileSelect onPick={handlePick} />;
   } else {

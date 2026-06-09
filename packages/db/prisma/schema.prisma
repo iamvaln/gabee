@@ -696,6 +696,12 @@ model DevicePairToken {
   id             String    @id @default(uuid()) @db.Uuid
   parentId       String    @map("parent_id") @db.Uuid
   token          String    @unique
+  /// 6-char (XXX-XXX) human-typable code for the parent to enter on the kid
+  /// device AFTER signing in. Optional for back-compat with older link-only
+  /// rows; new rows always carry it. Uniqueness is partial — only on
+  /// unused tokens (see the migration's partial index) so re-issued codes
+  /// don't collide with consumed ones.
+  shortCode      String?   @map("short_code")
   targetEmail    String    @map("target_email")
   expiresAt      DateTime  @map("expires_at")
   usedAt         DateTime? @map("used_at")

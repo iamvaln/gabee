@@ -2,6 +2,7 @@ import {
   AuthSessionResponseSchema,
   BundleManifestResponseSchema,
   ClaimDevicePairResponseSchema,
+  type ClaimPairCodeRequest,
   ListProfilesResponseSchema,
   QuestionBundleResponseSchema,
   IngestEventsResponseSchema,
@@ -102,6 +103,22 @@ export const api = {
     const body: ClaimDevicePairRequest = { token, ...extra };
     return ClaimDevicePairResponseSchema.parse(
       await request('/api/pair/claim', { method: 'POST', body: JSON.stringify(body) }),
+    );
+  },
+  /**
+   * Short-code pair claim. Called AFTER the parent has signed in on the kid
+   * device with email/password — the bearer that goes in the Authorization
+   * header is the actual auth gate (the code alone is useless without it).
+   * On success, returns a fresh ~180d device-bound bearer that should
+   * replace the parent session JWT in the store.
+   */
+  async claimPairCode(
+    code: string,
+    extra?: Pick<ClaimPairCodeRequest, 'user_agent_hint'>,
+  ): Promise<ClaimDevicePairResponse> {
+    const body: ClaimPairCodeRequest = { code, ...extra };
+    return ClaimDevicePairResponseSchema.parse(
+      await request('/api/pair/claim-code', { method: 'POST', body: JSON.stringify(body) }),
     );
   },
   async getProfiles(): Promise<ListProfilesResponse> {

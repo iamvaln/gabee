@@ -10,6 +10,12 @@ import type {
 import type { SettingsAccount, SettingsLang } from './settings-tabs';
 import { CopyButton } from '../_components/copy-button';
 
+// Public origin of the kid PWA, baked into the build (see env.production —
+// `NEXT_PUBLIC_KID_APP_URL`). Used in the pair-modal "Option 1" steps so the
+// parent reads the exact host to type on the kid device, not a placeholder.
+const KID_APP_URL =
+  process.env.NEXT_PUBLIC_KID_APP_URL ?? 'http://localhost:5173';
+
 /**
  * Parent spec §10.4 — Paired devices (ST3). Lists the parent's active
  * `DeviceLink` rows (GET /api/devices) and surfaces a "Pair a new device"
@@ -257,17 +263,22 @@ function PairModal({
   const [result, setResult] = useState<SendPairLinkResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const validEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+  // Email is now OPTIONAL — parents who'll use the code path can leave it
+  // blank, no link is emailed and the response just carries the code + URL
+  // to display on screen. If they fill it, it still has to look like an
+  // email so a typo doesn't silently 400 at the API.
+  const trimmedEmail = email.trim();
+  const emailOk = trimmedEmail.length === 0 || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(trimmedEmail);
   const validLabel = label.trim().length >= 1 && label.trim().length <= 50;
-  const canSubmit = validEmail && validLabel && !submitting;
+  const canSubmit = emailOk && validLabel && !submitting;
 
   async function submit() {
     setSubmitting(true);
     setError(null);
     try {
       const body: SendPairLinkRequest = {
-        target_email: email.trim(),
         label: label.trim(),
+        ...(trimmedEmail ? { target_email: trimmedEmail } : {}),
       };
       const res = await fetch('/api/devices/pair', {
         method: 'POST',
@@ -304,8 +315,8 @@ function PairModal({
           <h2>
             {result
               ? L
-                ? 'Lien envoyé'
-                : 'Link sent'
+                ? 'Appareil prêt à connecter'
+                : 'Device ready to pair'
               : L
                 ? 'Connecter un appareil'
                 : 'Pair a new device'}
@@ -337,7 +348,7 @@ function PairModal({
               </p>
               <div className="field">
                 <label htmlFor="pair-email">
-                  {L ? 'Adresse d’envoi' : 'Send the link to'}
+                  {L ? 'Adresse d’envoi (optionnel)' : 'Send the link to (optional)'}
                 </label>
                 <input
                   id="pair-email"
@@ -350,8 +361,8 @@ function PairModal({
                 />
                 <span className="hint">
                   {L
-                    ? 'Par défaut, votre propre adresse. Vous pouvez l’ouvrir là où vous lirez l’email sur l’appareil.'
-                    : 'Defaults to your own email. Use whatever inbox you can open on the device.'}
+                    ? 'Laisser vide pour récupérer un code à taper directement sur l’appareil enfant.'
+                    : 'Leave blank to just get a code to type on the kid device.'}
                 </span>
               </div>
               <div className="field">
@@ -392,11 +403,80 @@ function PairModal({
                 }}
               >
                 {L
-                  ? 'Nous avons envoyé le lien à usage unique. Ouvrez-le sur l’appareil que vous voulez connecter — l’appli enfant se chargera automatiquement.'
-                  : "We've sent the one-time link. Open it on the device you want to pair — the kid app will sign in automatically."}
+                  ? 'Deux chemins possibles — choisissez le plus pratique pour vous. Les deux finissent par le même appareil connecté.'
+                  : 'Two paths — pick whichever is easier. Both end with the same paired device.'}
               </p>
+
+              {/* Option 1 — short code. Primary path; reads aloud, types fast.
+                  The parent enters it on the kid device AFTER signing in there
+                  with email/password — that login is the brute-force gate, so
+                  the code itself can be human-friendly. */}
               <div className="field">
-                <label>{L ? 'Lien de connexion (à usage unique)' : 'Pair link (one-time use)'}</label>
+                <label>{L ? 'Option 1 — Code à taper' : 'Option 1 — Type the code'}</label>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    background: 'var(--bg-2)',
+                    border: '2px solid var(--surface-3)',
+                    borderRadius: 14,
+                    padding: '14px 18px',
+                    marginBottom: 10,
+                  }}
+                >
+                  <span
+                    style={{
+                      flex: 1,
+                      fontFamily: 'ui-monospace, monospace',
+                      fontWeight: 800,
+                      fontSize: 32,
+                      letterSpacing: 4,
+                      color: 'var(--text-1)',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {result.short_code}
+                  </span>
+                  <CopyButton value={result.short_code} lang={L ? 'fr' : 'en'} />
+                </div>
+                <ol
+                  style={{
+                    margin: '8px 0 0',
+                    paddingLeft: 20,
+                    fontSize: 13,
+                    color: 'var(--text-2)',
+                    fontWeight: 600,
+                    lineHeight: 1.7,
+                  }}
+                >
+                  <li>
+                    {L ? 'Sur l’appareil enfant, ouvrez ' : 'On the kid device, open '}
+                    <a
+                      href={KID_APP_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 700 }}
+                    >
+                      {KID_APP_URL.replace(/^https?:\/\//, '')}
+                    </a>
+                  </li>
+                  <li>
+                    {L
+                      ? 'Connectez-vous avec votre email parent.'
+                      : 'Sign in with your parent email.'}
+                  </li>
+                  <li>
+                    {L ? 'Tapez le code ci-dessus.' : 'Type the code above.'}
+                  </li>
+                </ol>
+              </div>
+
+              {/* Option 2 — link. Still shown for one-tap on the same machine
+                  / when the kid device has email open. The same DevicePairToken
+                  row backs both paths; consuming one invalidates the other. */}
+              <div className="field">
+                <label>{L ? 'Option 2 — Lien à usage unique' : 'Option 2 — One-time link'}</label>
                 <div
                   style={{
                     display: 'flex',
@@ -416,8 +496,8 @@ function PairModal({
                 </div>
                 <span className="hint">
                   {L
-                    ? `Expire le ${new Date(result.expires_at).toLocaleString('fr-FR')}. Si l’email n’arrive pas, copiez ce lien.`
-                    : `Expires ${new Date(result.expires_at).toLocaleString('en-GB')}. If the email doesn't arrive, copy this link.`}
+                    ? `Expire le ${new Date(result.expires_at).toLocaleString('fr-FR')}. ${email.trim() ? 'Le lien a aussi été envoyé par email.' : ''}`
+                    : `Expires ${new Date(result.expires_at).toLocaleString('en-GB')}. ${email.trim() ? 'The link was also emailed.' : ''}`}
                 </span>
               </div>
             </>

@@ -19,14 +19,29 @@ interface AppState {
   /** Device-paired parent JWT (persisted) — the bearer for API calls. */
   token: string | null;
   parent: ParentRef | null;
+  /**
+   * Device-link id once the device has been paired (link or short-code path).
+   * `null` means we hold a regular parent-session JWT but the device itself
+   * isn't bound — App.tsx routes to LinkDeviceCode in that case so the
+   * parent can finish pairing without re-logging-in.
+   */
+  deviceLinkId: string | null;
+  /**
+   * In-session sentinel: when the parent taps "Skip" on LinkDeviceCode we
+   * remember it so we don't re-prompt them on the next render. NOT persisted —
+   * a refresh re-prompts, which is desirable for a half-finished pair.
+   */
+  deviceLinkSkipped: boolean;
   /** Selected child profile (re-picked each launch; not persisted). */
   profile: ChildProfile | null;
   /** Current play sitting (a session = one or more lessons). */
   play: PlaySession | null;
 
   setLang: (lang: Language) => void;
-  setAuth: (token: string, parent: ParentRef) => void;
+  setAuth: (token: string, parent: ParentRef, deviceLinkId?: string | null) => void;
   clearAuth: () => void;
+  setDeviceLinkId: (id: string | null) => void;
+  skipDeviceLink: () => void;
   setProfile: (profile: ChildProfile | null) => void;
   /** Start (or reuse) the current play session; returns its id. */
   startPlay: () => string;
@@ -41,18 +56,24 @@ export const useStore = create<AppState>()(
       lang: 'fr',
       token: null,
       parent: null,
+      deviceLinkId: null,
+      deviceLinkSkipped: false,
       profile: null,
       play: null,
 
       setLang: (lang) => set({ lang }),
-      setAuth: (token, parent) => {
+      setAuth: (token, parent, deviceLinkId = null) => {
         setApiToken(token);
-        set({ token, parent });
+        // A fresh setAuth resets the in-session skip flag — switching accounts
+        // or re-pairing should re-prompt for device linking.
+        set({ token, parent, deviceLinkId, deviceLinkSkipped: false });
       },
       clearAuth: () => {
         setApiToken(null);
-        set({ token: null, parent: null, profile: null, play: null });
+        set({ token: null, parent: null, deviceLinkId: null, deviceLinkSkipped: false, profile: null, play: null });
       },
+      setDeviceLinkId: (id) => set({ deviceLinkId: id }),
+      skipDeviceLink: () => set({ deviceLinkSkipped: true }),
       setProfile: (profile) => set({ profile }),
       startPlay: () => {
         const existing = get().play;
@@ -73,7 +94,7 @@ export const useStore = create<AppState>()(
     {
       name: 'gabee-kid-store',
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ lang: s.lang, token: s.token, parent: s.parent }),
+      partialize: (s) => ({ lang: s.lang, token: s.token, parent: s.parent, deviceLinkId: s.deviceLinkId }),
       onRehydrateStorage: () => (state) => {
         if (state?.token) setApiToken(state.token);
       },

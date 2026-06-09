@@ -104,8 +104,10 @@ export const DevicesListResponseSchema = z.object({
 export type DevicesListResponse = z.infer<typeof DevicesListResponseSchema>;
 
 export const SendPairLinkRequestSchema = z.object({
-  /** Where the email lands; defaults to the parent's own email server-side. */
-  target_email: z.email(),
+  /** Where the email lands. Optional now — if omitted, the server skips the
+   *  email send and just returns the link + short_code in the response, which
+   *  is the right shape for the in-app "show the code" path. */
+  target_email: z.email().optional(),
   /** Friendly device label the parent picks ahead of time. */
   label: z.string().min(1).max(50),
 });
@@ -114,6 +116,10 @@ export type SendPairLinkRequest = z.infer<typeof SendPairLinkRequestSchema>;
 export const SendPairLinkResponseSchema = z.object({
   /** Echoed back so a dev can copy it from the response when no Mailgun is wired. */
   pair_url: z.url(),
+  /** 6-char human-typable code (`XXX-XXX`). The parent reads it to the
+   *  device-holder; the kid PWA accepts it via /api/pair/claim-code AFTER a
+   *  parent login — that login is the actual gate against brute force. */
+  short_code: z.string().regex(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/),
   expires_at: z.iso.datetime(),
 });
 export type SendPairLinkResponse = z.infer<typeof SendPairLinkResponseSchema>;
@@ -124,6 +130,13 @@ export const ClaimDevicePairRequestSchema = z.object({
   user_agent_hint: z.string().max(160).optional(),
 });
 export type ClaimDevicePairRequest = z.infer<typeof ClaimDevicePairRequestSchema>;
+
+export const ClaimPairCodeRequestSchema = z.object({
+  /** Accepted in any case / with or without the dash — server normalises. */
+  code: z.string().min(6).max(8),
+  user_agent_hint: z.string().max(160).optional(),
+});
+export type ClaimPairCodeRequest = z.infer<typeof ClaimPairCodeRequestSchema>;
 
 export const ClaimDevicePairResponseSchema = z.object({
   /** A standard parent-bearer JWT scoped to the paired account. The kid app keeps it. */
