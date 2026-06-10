@@ -101,6 +101,43 @@ export function getProgressLevels(
   }
 }
 
+// Sub-hub tile "Reprendre · Niveau N" / "Commencer" / "Done" hint —
+// shared between every *Hub.tsx so the same words land in front of the kid
+// regardless of which strand they're looking at. The kind drives the tile
+// chip; level is only meaningful for 'resume'.
+export type SubModeHint =
+  | { kind: 'start' }
+  | { kind: 'resume'; level: number }
+  | { kind: 'done' };
+
+/**
+ * Compute the resume hint for a sub-hub tile. Returns:
+ *  - 'start' when the kid has never earned a star in this strand (or has no
+ *    next lesson but no progress either — first-time view).
+ *  - 'resume' + the level number when the kid has played at least one
+ *    lesson here and isn't yet 3-starred everywhere.
+ *  - 'done' when nextLessonFor returns null (every unit is 3-starred).
+ */
+export function subModeHint(
+  bundle: QuestionBundleResponse | undefined | null,
+  profile: ChildProfile,
+  module: Module,
+  subMode: string | null,
+  lang: Lang,
+): SubModeHint {
+  const levels = getProgressLevels(profile, module, subMode, lang);
+  const hasProgress = levels.some((lvl) =>
+    lvl.lessons.some((l) => l.stars >= 1),
+  );
+  const next = pickNextLesson(bundle, levels, subMode);
+  if (!next) {
+    return hasProgress ? { kind: 'done' } : { kind: 'start' };
+  }
+  return hasProgress
+    ? { kind: 'resume', level: next.level }
+    : { kind: 'start' };
+}
+
 /**
  * Convenience wrapper: auto-pick directly from the profile + the bundle the
  * caller already has. Returns the same NextLesson shape, or null when the

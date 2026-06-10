@@ -899,6 +899,30 @@ a:focus-visible,
 .module-tile:hover { transform: translateY(-5px); box-shadow: 0 11px 0 var(--color-ink); }
 .module-tile:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--color-ink); }
 .module-tile:disabled { opacity: .55; cursor: not-allowed; box-shadow: 0 6px 0 var(--color-ink); transform: none; }
+
+/* Sub-hub tile resume hint — small chip in the bottom-right corner of a
+   strand tile showing where the kid would land: "▸ Reprendre · Niveau N",
+   "✦ Commencer", or "★ Tout fait". Uses an ink-on-white pill against the
+   module-coloured tile so it reads even on the busy colours. */
+.module-tile .tile-hint {
+  position: absolute;
+  bottom: clamp(10px, 2vw, 14px);
+  right: clamp(10px, 2vw, 14px);
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--color-ink);
+  border: 2px solid var(--color-ink);
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  z-index: 1;
+}
+.module-tile .tile-hint[data-state='done'] { background: #FFF1C9; }
+.module-tile .tile-hint[data-state='resume'] { background: var(--surface); }
 .module-tile .icon {
   width: 56px;
   height: 56px;

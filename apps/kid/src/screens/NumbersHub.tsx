@@ -6,6 +6,7 @@ import { Chrome } from '../components/Chrome';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
+import { subModeHint } from '../lib/nextLesson';
 
 // Curriculum v0.1 §1: four parallel numbers strands (a kid can attack Operations
 // without finishing Counting). Each has its own level track + question pool.
@@ -97,6 +98,11 @@ export function NumbersHub({
         <div className="module-grid">
           {SUB_MODES.map((s) => {
             const isPlayable = playable.has(s.id);
+            // Resume hint only meaningful for playable strands. The chip
+            // copy is computed once per render — cheap, profile-local.
+            const hint = isPlayable && profile
+              ? subModeHint(bundle, profile, 'numbers', s.id, lang)
+              : null;
             return (
               <button
                 key={s.id}
@@ -114,6 +120,15 @@ export function NumbersHub({
                     {isPlayable ? '' : soon}
                   </div>
                 </div>
+                {hint && (
+                  <span className="tile-hint" data-state={hint.kind}>
+                    {hint.kind === 'resume'
+                      ? `▸ ${t('subhubResume')} · ${t('level')} ${hint.level}`
+                      : hint.kind === 'start'
+                        ? `✦ ${t('subhubStart')}`
+                        : `★ ${t('subhubDone')}`}
+                  </span>
+                )}
               </button>
             );
           })}
