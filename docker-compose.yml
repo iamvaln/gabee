@@ -53,6 +53,17 @@ services:
       migrate:
         condition: service_completed_successfully
     networks: [internal, web]
+    healthcheck:
+      # Hit the favicon (cheap, no DB) to confirm Next.js is actually
+      # serving — the cron-digest sidecar's `depends_on: service_healthy`
+      # gates on this so its startup poke doesn't fire mid-boot. The image
+      # is node:20-slim (no wget/curl), so we use node's built-in http
+      # module — anything < 500 is a healthy serve, network errors fail.
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/favicon.ico', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     labels:
       - traefik.enable=true
       - traefik.docker.network=web
@@ -112,7 +123,7 @@ services:
       CRON_DIGEST_HOUR_UTC: ${CRON_DIGEST_HOUR_UTC:-9}
     depends_on:
       web:
-        condition: service_started
+        condition: service_healthy
     networks: [internal]
 
   # ── Kid PWA (static, served by nginx) ───────────────────────────────────────
