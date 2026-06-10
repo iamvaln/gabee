@@ -719,6 +719,10 @@ model NotificationPrefs {
   classificationDigest NotificationDigestCadence @default(daily) @map("classification_digest")
   weeklySummary      Boolean                   @default(true) @map("weekly_summary")
   feedbackResponse   Boolean                   @default(true) @map("feedback_response")
+  /// Set by the digest cron sidecar on successful send. Drives the per-parent
+  /// dedupe — the cron fires daily but a parent on `weekly` only gets a mail
+  /// every 7 days. Null = never sent; treated as immediately due.
+  lastClassificationDigestSentAt DateTime?     @map("last_classification_digest_sent_at")
   updatedAt          DateTime                  @updatedAt @map("updated_at")
 
   parent ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)

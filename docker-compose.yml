@@ -92,6 +92,29 @@ services:
         condition: service_healthy
     networks: [internal]
 
+  # ── Classification-digest cron sidecar ─────────────────────────────────────
+  # Pokes /api/cron/classification-digest once a day. The endpoint reads
+  # notification_prefs, dedupes per-parent cadence, and emails the parents
+  # who have pending classifications. The sidecar is intentionally dumb —
+  # all the logic lives in the Next service so it's TypeScript + typed
+  # against the same DB layer the rest of the app uses.
+  cron-digest:
+    build:
+      context: ./ops/cron-digest
+    image: ${REGISTRY:-ghcr.io/iamvaln}/gabee-cron-digest:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      # Internal: stays on the internal network, so we hit the `web`
+      # service directly without round-tripping through Traefik. Path
+      # mirrors the API route.
+      CRON_DIGEST_URL: http://web:3000/api/cron/classification-digest
+      CRON_SECRET: ${CRON_SECRET}
+      CRON_DIGEST_HOUR_UTC: ${CRON_DIGEST_HOUR_UTC:-9}
+    depends_on:
+      web:
+        condition: service_started
+    networks: [internal]
+
   # ── Kid PWA (static, served by nginx) ───────────────────────────────────────
   kid:
     build:

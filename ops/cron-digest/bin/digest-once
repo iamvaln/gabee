@@ -1,0 +1,32 @@
+#!/bin/bash
+# One-shot — POST the classification-digest endpoint and pretty-print the
+# response. Exit 0 on HTTP 200, non-zero otherwise so the loop's logging
+# can flag the failure.
+set -euo pipefail
+
+: "${CRON_DIGEST_URL:?CRON_DIGEST_URL is required (e.g. http://web:3000/api/cron/classification-digest)}"
+: "${CRON_SECRET:?CRON_SECRET is required (shared with the web service)}"
+
+echo "[digest] POST ${CRON_DIGEST_URL}"
+
+# `--fail-with-body` prints the response on non-2xx then exits non-zero —
+# both the body and the rc are visible in the loop log on failure.
+response=$(
+  curl --silent --show-error --fail-with-body \
+    --max-time 60 \
+    -X POST "${CRON_DIGEST_URL}" \
+    -H "Authorization: Bearer ${CRON_SECRET}"
+)
+rc=$?
+
+if [ "$rc" -ne 0 ]; then
+  echo "[digest] FAILED (curl rc=$rc): ${response}" >&2
+  exit "$rc"
+fi
+
+# Pretty-print the summary when jq's available; otherwise dump the raw body.
+if command -v jq >/dev/null 2>&1; then
+  echo "$response" | jq -c '.summary'
+else
+  echo "$response"
+fi

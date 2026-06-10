@@ -1,7 +1,9 @@
-import type { ClassificationItem, InitiationLabel, PendingSession } from '@gabee/types';
+import type { ClassificationItem, InitiationLabel, NotificationDigestCadence, PendingSession } from '@gabee/types';
 import { prisma } from '../db';
 import { accessibleKidIds } from '../kid-access';
 import { mapPendingSession } from '../mappers';
+import { sendClassificationDigest } from '../mailgun';
+import { PARENT_APP_URL } from '../env';
 
 /**
  * Sessions awaiting a label for any kid this parent can access — direct
@@ -62,4 +64,104 @@ export async function classifySessions(
     }
   }
   return results;
+}
+
+// ─── Classification digest — invoked by the cron sidecar ─────────────────────
+
+/** Days between sends for each NotificationDigestCadence value. `off` is
+ *  filtered out before this is read; the value here is sentinel. */
+const CADENCE_DAYS: Record<NotificationDigestCadence, number> = {
+  off: Infinity,
+  daily: 1,
+  every_2_days: 2,
+  weekly: 7,
+};
+
+export interface DigestRunResult {
+  scanned: number;
+  due: number;
+  sent: number;
+  skipped_no_pending: number;
+  failed: number;
+}
+
+/**
+ * For each parent who opted into a classification digest, send an email
+ * listing pending session classifications — if any AND if their cadence is
+ * due since their last successful send. Idempotent: re-running within the
+ * cadence window for the same parent is a no-op.
+ *
+ * Designed for an external scheduler (the `cron-digest` sidecar) to call
+ * once a day. Returns a small counters object so the caller can log /
+ * surface the run summary without parsing logs.
+ */
+export async function runClassificationDigest(now: Date = new Date()): Promise<DigestRunResult> {
+  const prefs = await prisma.notificationPrefs.findMany({
+    where: { classificationDigest: { not: 'off' } },
+    include: { parent: { select: { id: true, email: true, displayNameForKids: true } } },
+  });
+
+  const result: DigestRunResult = {
+    scanned: prefs.length,
+    due: 0,
+    sent: 0,
+    skipped_no_pending: 0,
+    failed: 0,
+  };
+
+  // Deeplink the email CTA at the classify page on the parent host. Fall back
+  // to a relative path when PARENT_APP_URL isn't configured (dev), even
+  // though the cron is unlikely to fire there.
+  const classifyUrl = `${PARENT_APP_URL ?? ''}/parent/classify`;
+
+  for (const row of prefs) {
+    const cadence = row.classificationDigest as NotificationDigestCadence;
+    const sinceLastMs = row.lastClassificationDigestSentAt
+      ? now.getTime() - row.lastClassificationDigestSentAt.getTime()
+      : Infinity;
+    const dueMs = CADENCE_DAYS[cadence] * 24 * 60 * 60 * 1000;
+    // Subtract a 1h grace so a cron that fires at 08:00:00 on day N and 07:59:59
+    // on day N+1 still sends — clock jitter, DST nudges, runner startup delay.
+    if (sinceLastMs < dueMs - 60 * 60 * 1000) continue;
+    result.due += 1;
+
+    const ids = await accessibleKidIds(row.parentId);
+    if (ids.length === 0) {
+      result.skipped_no_pending += 1;
+      continue;
+    }
+    const pendingCount = await prisma.sessionClassification.count({
+      where: { label: null, profileId: { in: ids } },
+    });
+    if (pendingCount === 0) {
+      // No pending = don't mail; we'd just be spamming. Also DON'T bump the
+      // sent_at — we want the next eligible run with content to fire normally.
+      result.skipped_no_pending += 1;
+      continue;
+    }
+
+    try {
+      const display =
+        (row.parent.displayNameForKids || '').trim() ||
+        row.parent.email.split('@')[0] ||
+        row.parent.email;
+      await sendClassificationDigest({
+        to: row.parent.email,
+        parent_display: display,
+        pending_count: pendingCount,
+        cadence,
+        classify_url: classifyUrl,
+      });
+      await prisma.notificationPrefs.update({
+        where: { parentId: row.parentId },
+        data: { lastClassificationDigestSentAt: now },
+      });
+      result.sent += 1;
+    } catch (e) {
+      console.error(`[digest] send failed for parent ${row.parentId}:`, e);
+      result.failed += 1;
+    }
+  }
+
+  return result;
 }

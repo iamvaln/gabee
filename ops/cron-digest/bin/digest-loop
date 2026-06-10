@@ -1,0 +1,39 @@
+#!/bin/bash
+# Long-running scheduler — sleeps until the next CRON_DIGEST_HOUR_UTC,
+# pokes the endpoint, repeats. Logs the run summary so `docker compose logs
+# cron-digest` shows recent activity.
+set -euo pipefail
+
+HOUR=${CRON_DIGEST_HOUR_UTC:-9}
+
+echo "[digest-loop] started — daily at ${HOUR}:00 UTC, target ${CRON_DIGEST_URL:-unset}"
+
+# Startup run so any misconfig (missing secret, unreachable web, mailer
+# busted) surfaces within seconds of deploy instead of waking the operator
+# the next morning. Failure here doesn't abort the loop.
+if digest-once; then
+  echo "[digest-loop] startup poke OK"
+else
+  echo "[digest-loop] startup poke FAILED (rc=$?) — will retry on schedule" >&2
+fi
+
+while true; do
+  current_h=$(date -u +%H)
+  current_m=$(date -u +%M)
+  current_s=$(date -u +%S)
+  now=$((10#$current_h * 3600 + 10#$current_m * 60 + 10#$current_s))
+  target=$((HOUR * 3600))
+  if [ "$target" -le "$now" ]; then
+    target=$((target + 86400))
+  fi
+  sleep_s=$((target - now))
+
+  echo "[digest-loop] next poke in ${sleep_s}s ($(date -u -d "@$(($(date -u +%s) + sleep_s))" +'%Y-%m-%dT%H:%M:%SZ'))"
+  sleep "$sleep_s"
+
+  if digest-once; then
+    echo "[digest-loop] scheduled poke OK"
+  else
+    echo "[digest-loop] scheduled poke FAILED (rc=$?) — will retry next cycle" >&2
+  fi
+done

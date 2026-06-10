@@ -170,3 +170,54 @@ export async function sendDevicePairLink(input: DevicePairLinkEmail): Promise<vo
 
   await sendEmail({ to: target_email, subject, html, text });
 }
+
+interface ClassificationDigestEmail {
+  to: string;
+  parent_display: string;
+  pending_count: number;
+  cadence: 'daily' | 'every_2_days' | 'weekly' | 'off';
+  classify_url: string;
+}
+
+/**
+ * Recurring digest mail nudging a parent to classify any of their kids'
+ * sessions that haven't been labelled yet (product §13.2 + parent spec §4.3).
+ * The cadence is picked by the parent in Notifications settings; the cron
+ * sidecar fires this once a day and the service skips parents whose cadence
+ * isn't yet due since their last successful send.
+ */
+export async function sendClassificationDigest(input: ClassificationDigestEmail): Promise<void> {
+  const { to, parent_display, pending_count, classify_url } = input;
+  const sessionWord = pending_count === 1 ? 'session' : 'sessions';
+  const subject = `${pending_count} ${sessionWord} to classify · Gabee`;
+
+  const text = [
+    `Hi ${parent_display},`,
+    ``,
+    `${pending_count} ${sessionWord} from your kids ${pending_count === 1 ? 'is' : 'are'} waiting for your classification.`,
+    `Open Gabee to label them — it takes a few taps and powers the family feed.`,
+    ``,
+    classify_url,
+    ``,
+    `You can change the cadence (daily / every 2 days / weekly / off) from Settings → Notifications.`,
+  ].join('\n');
+
+  const html = `<!doctype html><html><body style="font-family:system-ui,-apple-system,sans-serif;color:#1A2E2A;padding:24px;max-width:520px;margin:0 auto;">
+  <h1 style="font-size:22px;margin:0 0 12px;">${pending_count} ${escapeHtml(sessionWord)} to classify</h1>
+  <p style="font-size:15px;line-height:1.5;">
+    Hi <strong>${escapeHtml(parent_display)}</strong> — ${pending_count} ${escapeHtml(sessionWord)} from your kids ${pending_count === 1 ? 'is' : 'are'}
+    waiting for a quick classification.
+  </p>
+  <p style="margin:24px 0;">
+    <a href="${classify_url}" style="display:inline-block;background:#5CC9A6;color:#0E3A33;font-weight:800;text-decoration:none;padding:12px 20px;border-radius:10px;">
+      Classify ${pending_count === 1 ? 'it' : 'them'} now
+    </a>
+  </p>
+  <p style="font-size:12px;color:#8A9794;">
+    You can change the cadence (daily / every 2 days / weekly / off) from
+    Settings → Notifications on parents.gabee.app.
+  </p>
+</body></html>`;
+
+  await sendEmail({ to, subject, html, text });
+}

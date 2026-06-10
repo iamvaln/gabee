@@ -1,0 +1,16 @@
+#!/bin/bash
+# Dispatcher — same shape as the backup sidecar so ops shortcuts work the
+# same way:
+#   docker compose run --rm cron-digest run
+#   docker compose run --rm cron-digest shell
+set -euo pipefail
+
+cmd="${1:-loop}"
+shift || true
+
+case "$cmd" in
+  loop)  exec digest-loop ;;
+  run)   exec digest-once ;;
+  shell) exec /bin/bash ;;
+  *)     exec "$cmd" "$@" ;;
+esac

@@ -53,6 +53,12 @@ const envSchema = z.object({
   //   COOKIE_DOMAIN_ADMIN=admin.gabee.app
   COOKIE_DOMAIN_PARENT: z.string().optional(),
   COOKIE_DOMAIN_ADMIN: z.string().optional(),
+
+  // Shared secret for cron endpoints — the cron-digest sidecar passes it
+  // via `Authorization: Bearer <secret>` and the route gates on it. When
+  // unset, the cron endpoints refuse every request (fail-closed). Generate
+  // with `openssl rand -hex 32`.
+  CRON_SECRET: z.string().min(32).optional(),
 });
 
 type RawEnv = z.infer<typeof envSchema>;
@@ -94,6 +100,7 @@ export const IS_PROD = env.NODE_ENV === 'production';
 export const AUTH_JWT_SECRET = env.AUTH_JWT_SECRET;
 export const KID_APP_ORIGIN = env.KID_APP_ORIGIN;
 export const PARENT_APP_URL = env.PARENT_APP_URL;
+export const CRON_SECRET = env.CRON_SECRET;
 /**
  * Two distinct cookie names so an admin session and a parent session can
  * coexist in the same browser without one accidentally authenticating the
