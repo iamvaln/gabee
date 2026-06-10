@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Tooling script: processes Prisma JsonValue blobs (Code grid configs,
+// Numbers arithmetic configs) that are intrinsically unstructured at this
+// boundary. `any` is the natural type for the function params below; the
+// alternative is a wall of `unknown` casts that adds no real safety.
 import 'dotenv/config';
 import { createPrismaClient } from '../src/client';
 
