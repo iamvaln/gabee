@@ -9,6 +9,14 @@ interface SendEmailInput {
   subject: string;
   html: string;
   text?: string;
+  /**
+   * When `true`, throw on a Mailgun non-2xx. When `false` (default), log
+   * and swallow — historical behaviour for invite / pair-link / password-
+   * reset, all of which have manual fallbacks (the user can re-trigger).
+   * Cron-driven sends (digest, weekly summary) MUST throw so the service
+   * catch fires and `last_sent_at` doesn't get bumped to a lie.
+   */
+  throwOnFailure?: boolean;
 }
 
 const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY;
@@ -16,7 +24,7 @@ const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN;
 const MAILGUN_FROM = process.env.MAILGUN_FROM ?? 'Gabee <no-reply@gabee.app>';
 const MAILGUN_BASE = process.env.MAILGUN_BASE_URL ?? 'https://api.mailgun.net/v3';
 
-export async function sendEmail({ to, subject, html, text }: SendEmailInput): Promise<void> {
+export async function sendEmail({ to, subject, html, text, throwOnFailure }: SendEmailInput): Promise<void> {
   if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN) {
     // Dev fallback: log + (optionally) leak the URL embedded in the body to
     // make it easy to copy-paste through. We do NOT log the body itself to
@@ -45,8 +53,14 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput): Pr
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     console.error(`[mailgun] send failed: ${res.status} ${body}`);
-    // Swallow — failing to send an invite email shouldn't kill the API call
-    // (the inviter can re-send, and the dev response still returns the token).
+    if (throwOnFailure) {
+      // Cron callers need to see the failure so last_sent_at isn't bumped
+      // to a lie — they catch + count it as `failed`, and the next run will
+      // retry the same parent.
+      throw new Error(`Mailgun rejected the send (${res.status}): ${body.slice(0, 200)}`);
+    }
+    // Other callers (invite / pair link / password reset) have manual
+    // fallback paths, so we swallow and let the route still return success.
   }
 }
 
@@ -219,5 +233,8 @@ export async function sendClassificationDigest(input: ClassificationDigestEmail)
   </p>
 </body></html>`;
 
-  await sendEmail({ to, subject, html, text });
+  // Cron-driven: propagate Mailgun failures so the service's last_sent_at
+  // isn't bumped when the mail didn't actually leave. The catch in
+  // runClassificationDigest counts it as `failed` and the next run retries.
+  await sendEmail({ to, subject, html, text, throwOnFailure: true });
 }
