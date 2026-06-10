@@ -51,11 +51,16 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #EEF1F4;
+  /* Honey-glow backdrop — the prototype's signature warmth. Even when
+     the kid-frame is white, the body shows around safe-area insets on
+     iOS (top of the notch, bottom of the home indicator). */
+  background:
+    radial-gradient(120% 80% at 50% -10%, #FFE9B0 0%, #FFF6E1 46%, #FFFBF0 100%);
   color: var(--text);
   font-family: 'Mulish', system-ui, sans-serif;
   font-size: calc(18px * var(--scale));
   line-height: 1.5;
+  overscroll-behavior: none;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -149,66 +154,82 @@ html, body {
 }
 .chrome-left, .chrome-right { min-width: 0; }
 
+/* Round chrome buttons (back, home) — same press-down language as .btn,
+   thinner shadow because they sit in the dense app bar. Tap target stays
+   ≥44px via the fluid lower bound. */
 .icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: clamp(46px, 11vw, 54px);
+  height: clamp(46px, 11vw, 54px);
+  flex-shrink: 0;
   border-radius: var(--radius-pill);
-  border: 1.5px solid var(--border);
+  border: 2.5px solid var(--color-ink);
   background: var(--surface);
   cursor: pointer;
   color: var(--color-ink);
-  transition: all var(--motion-fast) var(--easing);
+  box-shadow: 0 3px 0 var(--color-ink);
+  transition: transform var(--motion-fast) var(--easing),
+              box-shadow var(--motion-fast) var(--easing),
+              background var(--motion-fast);
 }
-.icon-btn:hover { background: var(--surface-muted); transform: translateY(-1px); }
-.icon-btn:active { transform: translateY(0); }
-.icon-btn svg { width: 22px; height: 22px; }
+.icon-btn:hover { background: #FFF6E1; }
+.icon-btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--color-ink); }
+.icon-btn svg { width: clamp(20px, 5vw, 24px); height: clamp(20px, 5vw, 24px); }
 
+/* Profile chip + lang toggle inherit the chunky press-down language.
+   On narrow phones the chip's name collapses (icon-only) to keep the
+   app bar single-row at 360px. */
 .profile-chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 4px 12px 4px 4px;
   margin-right: 4px;
-  border-radius: 9999px;
-  border: 2px solid transparent;
-  background: transparent;
+  border-radius: var(--radius-pill);
+  border: 2.5px solid var(--color-ink);
+  background: var(--surface);
   font: inherit;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 14px;
-  color: inherit;
+  color: var(--color-ink);
   cursor: pointer;
-  transition: all var(--motion-fast) var(--easing);
+  box-shadow: 0 3px 0 var(--color-ink);
+  transition: transform var(--motion-fast) var(--easing),
+              box-shadow var(--motion-fast) var(--easing),
+              background var(--motion-fast);
 }
-button.profile-chip:hover {
-  background: var(--surface-muted);
-  border-color: var(--border);
-}
+button.profile-chip:hover { background: #FFF6E1; }
+button.profile-chip:active { transform: translateY(3px); box-shadow: 0 0 0 var(--color-ink); }
 .profile-chip:focus-visible {
-  outline: none;
-  border-color: var(--color-brand);
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+@media (max-width: 520px) {
+  .profile-chip { padding: 4px; }
+  .profile-chip > span:not(.profile-avatar) { display: none; }
 }
 
 .lang-toggle {
   display: inline-flex;
-  background: var(--surface-muted);
+  background: var(--surface);
   border-radius: var(--radius-pill);
-  padding: 4px;
-  border: 1.5px solid var(--border);
-  font-weight: 700;
+  padding: 3px;
+  border: 2.5px solid var(--color-ink);
+  box-shadow: 0 3px 0 var(--color-ink);
+  font-weight: 800;
   font-size: 14px;
   gap: 2px;
 }
 .lang-toggle button {
   border: 0;
   background: transparent;
-  padding: 8px 14px;
+  padding: 7px clamp(10px, 2.6vw, 15px);
   border-radius: var(--radius-pill);
   cursor: pointer;
   color: var(--text-muted);
-  font-weight: 700;
+  font-weight: 800;
   font-family: inherit;
 }
 .lang-toggle button.on {
@@ -217,38 +238,53 @@ button.profile-chip:hover {
 }
 
 /* Buttons */
+/* Chunky "press-down" buttons (Phase 2 visual refresh).
+   The shadow is a SOLID OFFSET that collapses on :active — gives a
+   tactile sense of pressing the button down. Same idea on tiles + cards
+   below. Borders are 3px ink so the chip reads from across the room. */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 14px 24px;
-  border-radius: var(--radius-lg);
+  padding: 15px clamp(20px, 4vw, 30px);
+  border-radius: var(--radius-pill);
   border: 0;
   background: var(--color-brand);
   color: var(--color-ink);
   font-family: inherit;
   font-weight: 800;
-  font-size: 18px;
+  font-size: clamp(17px, 3vw, 20px);
   cursor: pointer;
-  box-shadow: var(--shadow-md);
-  min-height: 56px;
-  transition: transform var(--motion-fast) var(--easing), box-shadow var(--motion-fast) var(--easing);
+  min-height: 58px;
+  box-shadow: 0 5px 0 #C98A00;
+  transition: transform var(--motion-fast) var(--easing),
+              box-shadow var(--motion-fast) var(--easing),
+              filter var(--motion-fast);
 }
-.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-.btn:active { transform: translateY(0); }
+.btn:hover { filter: brightness(1.03); }
+.btn:active { transform: translateY(5px); box-shadow: 0 0 0 #C98A00; }
+.btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; transform: none; }
+.btn.large { min-height: 66px; font-size: clamp(19px, 3.4vw, 23px); padding: 18px 34px; }
 .btn.secondary {
-  background: var(--surface-muted);
+  background: var(--surface);
   color: var(--color-ink);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 5px 0 var(--border);
 }
+.btn.secondary:active { transform: translateY(5px); box-shadow: 0 0 0 var(--border); }
 .btn.ghost {
   background: transparent;
   color: var(--color-ink);
   box-shadow: none;
-  border: 1.5px solid var(--border);
+  border: 2.5px solid var(--border);
 }
-.btn.large { padding: 18px 32px; font-size: 22px; min-height: 64px; border-radius: var(--radius-xl); }
+.btn.ghost:active { transform: translateY(2px); }
+.btn.on-module {
+  background: var(--module);
+  color: var(--module-text);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, .22);
+}
+.btn.on-module:active { transform: translateY(5px); box-shadow: 0 0 0 rgba(0, 0, 0, .22); }
 
 /* Module color helpers */
 [data-module="numbers"] { --module: var(--module-numbers); --module-text: white; }
@@ -622,23 +658,20 @@ a:focus-visible,
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 28px 24px;
+  gap: 12px;
+  padding: clamp(16px, 3vw, 26px) 18px;
   background: var(--surface);
+  border: 3px solid var(--color-ink);
   border-radius: var(--radius-xl);
-  border: 3px solid var(--border);
   cursor: pointer;
-  min-width: 180px;
-  transition: all var(--motion-base) var(--easing);
-  box-shadow: var(--shadow-sm);
+  min-width: 0;
+  box-shadow: 0 6px 0 var(--color-ink);
+  transition: transform var(--motion-base) var(--bounce),
+              box-shadow var(--motion-base) var(--easing);
 }
-.profile-card:hover {
-  border-color: var(--color-brand);
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-}
+.profile-card:hover { transform: translateY(-4px); box-shadow: 0 10px 0 var(--color-ink); }
+.profile-card:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--color-ink); }
 .profile-card.selected {
-  border-color: var(--color-brand);
   background: #FFFAE5;
 }
 .profile-avatar {
@@ -837,22 +870,28 @@ a:focus-visible,
 .module-tile {
   background: var(--module);
   color: var(--module-text);
+  border: 3px solid var(--color-ink);
   border-radius: var(--radius-xl);
-  padding: 22px;
+  padding: clamp(16px, 2.4vw, 22px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
-  border: 0;
   font-family: inherit;
   text-align: left;
   position: relative;
   overflow: hidden;
-  min-height: 240px;
-  transition: transform var(--motion-base) var(--easing), box-shadow var(--motion-base) var(--easing);
-  box-shadow: var(--shadow-md);
+  /* Fluid min-height — small phones get 150px tiles (still tappable),
+     desktop gets 230px (room for the glance "Reprendre · Niveau N" copy
+     that lands in Phase 3). */
+  min-height: clamp(150px, 30vw, 230px);
+  box-shadow: 0 6px 0 var(--color-ink);
+  transition: transform var(--motion-base) var(--bounce),
+              box-shadow var(--motion-base) var(--easing);
 }
-.module-tile:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.module-tile:hover { transform: translateY(-5px); box-shadow: 0 11px 0 var(--color-ink); }
+.module-tile:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--color-ink); }
+.module-tile:disabled { opacity: .55; cursor: not-allowed; box-shadow: 0 6px 0 var(--color-ink); transform: none; }
 .module-tile .icon {
   width: 56px;
   height: 56px;
@@ -930,33 +969,36 @@ a:focus-visible,
   aspect-ratio: 1;
   border-radius: var(--radius-xl);
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: 3px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 26px;
+  font-size: clamp(22px, 4.6vw, 30px);
   color: var(--color-ink);
   cursor: pointer;
   position: relative;
   font-family: inherit;
-  transition: transform var(--motion-fast) var(--easing), box-shadow var(--motion-fast) var(--easing);
   padding: 12px;
+  box-shadow: 0 5px 0 var(--border);
+  transition: transform var(--motion-fast) var(--bounce),
+              box-shadow var(--motion-fast) var(--easing);
 }
-.level-tile:hover:not(.locked) {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-}
+.level-tile:hover:not(.locked) { transform: translateY(-4px); box-shadow: 0 9px 0 var(--module, var(--border)); }
+.level-tile:active:not(.locked) { transform: translateY(2px); box-shadow: 0 2px 0 var(--module, var(--border)); }
 .level-tile.unlocked {
   border-color: var(--module);
   color: var(--module);
+  box-shadow: 0 5px 0 var(--module);
 }
 .level-tile.complete {
   background: var(--module);
   color: var(--module-text);
-  border-color: var(--module);
+  border-color: var(--color-ink);
+  box-shadow: 0 5px 0 var(--color-ink);
 }
+.level-tile.complete:hover { box-shadow: 0 9px 0 var(--color-ink); }
 .level-tile.locked {
   background: var(--surface-muted);
   border-color: var(--border);
@@ -1170,32 +1212,36 @@ a:focus-visible,
 }
 .answer-btn {
   background: var(--surface);
-  border: 2.5px solid var(--border);
+  border: 3px solid var(--color-ink);
   border-radius: var(--radius-lg);
-  padding: clamp(10px, 2vh, 22px) clamp(14px, 2vw, 24px);
+  padding: clamp(16px, 3vw, 24px);
   font-family: inherit;
   font-weight: 800;
-  font-size: clamp(18px, 3vh, 32px);
+  font-size: clamp(22px, 5vw, 32px);
   color: var(--color-ink);
   cursor: pointer;
-  /* Min height was 80px which adds up to ~180px+ for a 2-row grid + gap;
-     on a short laptop this used to push the prompt under the chrome. */
-  min-height: clamp(48px, 7vh, 80px);
-  transition: all var(--motion-fast) var(--easing);
+  /* Tap target ≥64px on mobile, 84px on desktop — fluid between so a
+     row of two answer buttons reads as a deliberate target without
+     pushing the prompt under the chrome on short laptops. */
+  min-height: clamp(64px, 14vw, 84px);
+  box-shadow: 0 5px 0 var(--color-ink);
+  transition: transform var(--motion-fast) var(--easing),
+              box-shadow var(--motion-fast) var(--easing),
+              background var(--motion-fast);
 }
-.answer-btn:hover {
-  border-color: var(--module, var(--color-brand));
-  background: var(--surface-muted);
-}
+.answer-btn:hover { background: #FFF6E1; }
+.answer-btn:active { transform: translateY(5px); box-shadow: 0 0 0 var(--color-ink); }
 .answer-btn.correct {
   border-color: var(--feedback-correct);
   background: #E8F1E0;
   color: var(--feedback-correct);
+  box-shadow: 0 5px 0 var(--feedback-correct);
 }
 .answer-btn.wrong {
   border-color: var(--feedback-retry);
   background: #FDECEC;
   color: var(--feedback-retry);
+  box-shadow: 0 5px 0 var(--feedback-retry);
 }
 
 /* Feedback strip — replaces the answer grid once the kid picks. The Next
@@ -1791,28 +1837,29 @@ a:focus-visible,
 .road-stop.offset-3 { margin-left: 80%; }
 
 .road-stop .stop {
-  width: 64px;
-  height: 64px;
+  width: clamp(54px, 12vw, 68px);
+  height: clamp(54px, 12vw, 68px);
   border-radius: 50%;
-  border: 3px solid #0f172a;
-  background: #FACC15;
+  border: 3px solid var(--color-ink);
+  background: var(--color-brand);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
-  font-size: 22px;
-  color: #0f172a;
+  font-size: clamp(18px, 4vw, 22px);
+  color: var(--color-ink);
   cursor: pointer;
-  box-shadow: 0 4px 0 0 #0f172a;
-  transition: transform 100ms ease, box-shadow 100ms ease;
+  box-shadow: 0 4px 0 var(--color-ink);
+  transition: transform var(--motion-fast) var(--easing),
+              box-shadow var(--motion-fast) var(--easing);
 }
 .road-stop .stop:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 0 #0f172a;
+  transform: translateY(-3px);
+  box-shadow: 0 7px 0 var(--color-ink);
 }
 .road-stop .stop:active:not(:disabled) {
-  transform: translateY(1px);
-  box-shadow: 0 2px 0 0 #0f172a;
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--color-ink);
 }
 .road-stop .stop.done {
   background: #34D399; /* mint */
