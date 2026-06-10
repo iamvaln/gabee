@@ -11,6 +11,13 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Opt in to Node 24 for the JS actions used below (checkout etc.) ahead of
+  # the 2026-06-16 default flip + the 2026-09-16 Node 20 removal. Keeps the
+  # pinned action versions working until upstream ships a major bump.
+  # See https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   check:
     runs-on: ubuntu-latest

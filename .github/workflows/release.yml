@@ -8,6 +8,12 @@ on:
 
 env:
   REGISTRY: ghcr.io/iamvaln
+  # Opt in to Node 24 for the JS actions below (checkout, docker/*) ahead of
+  # the 2026-06-16 default flip + the 2026-09-16 Node 20 removal. Lets us
+  # leave action versions pinned (v4 / v3 / v6) until each maintainer ships a
+  # major bump — the runner just runs the existing entrypoint on Node 24.
+  # See https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   # ── Build & push the web image (Next.js) ────────────────────────────────────
