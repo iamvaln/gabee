@@ -33,7 +33,6 @@ export function Hub({
   // a refresh doesn't lose the count).
   const dailyTarget = limits?.daily_lesson_target ?? 4;
   const lessonsToday = daily.lessons_today || play?.position || 0;
-  const L = lang === 'fr';
 
   return (
     <div className="home-screen">
@@ -42,9 +41,9 @@ export function Hub({
         <Bee size={72} expression="idle" wings bob />
         <div>
           <h1>
-            {L ? 'Salut' : 'Hi'}, {profile.name} 👋
+            {t('hub.hi')}, {profile.name} 👋
           </h1>
-          <p>{L ? 'Apprends quelque chose de nouveau aujourd’hui !' : 'Learn something new today!'}</p>
+          <p>{t('hub.learnNew')}</p>
         </div>
         <div className="home-stats" aria-label="progress">
           <div className="stat-chip stars">
@@ -69,16 +68,16 @@ export function Hub({
                 {lessonsToday}
                 <span className="stat-of">/{dailyTarget}</span>
               </div>
-              <div className="stat-label">{L ? 'leçons aujourd’hui' : 'lessons today'}</div>
+              <div className="stat-label">{t('lessonsToday')}</div>
             </div>
           </div>
-          <StreakPill lang={lang} />
+          <StreakPill />
         </div>
       </div>
       <div className="module-grid">
         {MODULES.map((m) => {
           const playable = PLAYABLE_MODULES.has(m.id);
-          const soon = L ? ' · bientôt' : ' · soon';
+          const soon = t('common.soon');
           return (
             <button
               key={m.id}

@@ -431,7 +431,7 @@ export function KeyboardScrollingSession({
               </div>
             </div>
             <div style={{ fontSize: 14, color: '#64748b', textAlign: 'center' }}>
-              {lang === 'fr' ? 'Tape avant que ça disparaisse !' : 'Type before it scrolls off!'}
+              {t('keyboard.typeBeforeScroll')}
             </div>
             </div>
           </div>

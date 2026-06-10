@@ -27,7 +27,6 @@ export function Carte({
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
   const profile = useStore((s) => s.profile);
-  const L = lang === 'fr';
 
   return (
     <div className="home-screen">
@@ -35,18 +34,14 @@ export function Carte({
       <div className="home-greeting">
         <Bee size={72} expression="focus" wings />
         <div>
-          <h1>{L ? 'Ton parcours' : 'Your journey'}</h1>
-          <p>
-            {L
-              ? 'Choisis un module pour voir tous tes niveaux et rejouer une leçon.'
-              : 'Pick a module to see every level and replay a lesson.'}
-          </p>
+          <h1>{t('carte.title')}</h1>
+          <p>{t('carte.subtitle')}</p>
         </div>
       </div>
       <div className="module-grid">
         {MODULES.map((m) => {
           const playable = PLAYABLE_MODULES.has(m.id);
-          const soon = L ? ' · bientôt' : ' · soon';
+          const soon = t('common.soon');
           return (
             <button
               key={m.id}

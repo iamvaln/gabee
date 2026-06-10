@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Bee } from './Bee';
 
 /**
@@ -18,13 +19,12 @@ import { Bee } from './Bee';
  */
 export function LookAwayOverlay({
   pauseSec,
-  lang,
   onDone,
 }: {
   pauseSec: number;
-  lang: 'fr' | 'en';
   onDone: () => void;
 }) {
+  const { t } = useTranslation();
   const [remaining, setRemaining] = useState(pauseSec);
 
   // Countdown — once per second. Auto-dismiss when it hits zero so the kid
@@ -94,12 +94,10 @@ export function LookAwayOverlay({
       >
         <Bee size={120} expression="idle" wings bob />
         <h2 style={{ marginTop: 16, fontSize: 24, color: '#0f172a' }}>
-          {lang === 'fr' ? 'Regarde au loin' : 'Look far away'}
+          {t('lookAway.title')}
         </h2>
         <p style={{ marginTop: 8, color: '#64748b' }}>
-          {lang === 'fr'
-            ? 'Repose tes yeux quelques secondes — regarde quelque chose loin de l’écran.'
-            : 'Rest your eyes — look at something far from the screen.'}
+          {t('lookAway.body')}
         </p>
         <div
           aria-live="polite"
@@ -114,7 +112,7 @@ export function LookAwayOverlay({
           {remaining > 0 ? remaining : '✓'}
         </div>
         <p style={{ marginTop: 12, fontSize: 13, color: '#94a3b8' }}>
-          {lang === 'fr' ? 'L’écran reviendra tout seul.' : 'The screen will come back on its own.'}
+          {t('lookAway.comesBack')}
         </p>
       </div>
     </div>

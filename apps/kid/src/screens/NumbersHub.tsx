@@ -80,7 +80,7 @@ export function NumbersHub({
     return set;
   }, [bundle]);
 
-  const soon = lang === 'fr' ? ' · bientôt' : ' · soon';
+  const soon = t('common.soon');
   const m = MODULES.find((x) => x.id === 'numbers')!;
 
   return (

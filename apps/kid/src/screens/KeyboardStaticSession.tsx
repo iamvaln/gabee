@@ -449,7 +449,7 @@ export function KeyboardStaticSession({
               })}
             </div>
             <div style={{ fontSize: 14, color: '#64748b' }}>
-              {lang === 'fr' ? 'Tape la lettre en surbrillance' : 'Type the highlighted letter'}
+              {t('keyboard.typeHighlighted')}
             </div>
             </div>
           </div>

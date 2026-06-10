@@ -99,7 +99,7 @@ export function Login() {
           rel="noopener noreferrer"
           style={{ marginTop: 18, fontWeight: 700, textDecoration: 'underline', opacity: 0.8 }}
         >
-          {lang === 'fr' ? "Gérer depuis l'espace parent →" : 'Manage from the parent space →'}
+          {t('login.manageFromParent')}
         </a>
       </div>
     </div>

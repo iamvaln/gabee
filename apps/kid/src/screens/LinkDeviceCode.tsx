@@ -22,7 +22,6 @@ export function LinkDeviceCode() {
   const setAuth = useStore((s) => s.setAuth);
   const skip = useStore((s) => s.skipDeviceLink);
   const clearAuth = useStore((s) => s.clearAuth);
-  const L = lang === 'fr';
 
   // Stored uppercase, no dash — display formatting happens at render time.
   const [raw, setRaw] = useState('');
@@ -60,19 +59,11 @@ export function LinkDeviceCode() {
     } catch (err) {
       const code = err instanceof ApiError ? err.code : 'error';
       if (code === 'pair_code_invalid') {
-        setError(L ? 'Code invalide ou expiré. Vérifie auprès du parent.' : 'Invalid or expired code. Double-check with the parent.');
+        setError(t('pair.invalidCode'));
       } else if (err instanceof ApiError && err.status === 429) {
-        setError(
-          L
-            ? 'Trop d’essais. Attendez quelques minutes avant de réessayer.'
-            : 'Too many attempts. Wait a few minutes before trying again.',
-        );
+        setError(t('pair.tooManyAttempts'));
       } else {
-        setError(
-          L
-            ? 'Connexion impossible — vérifie ta connexion internet.'
-            : 'Could not connect — check your internet.',
-        );
+        setError(t('pair.cannotConnect'));
       }
       setBusy(false);
     }
@@ -85,12 +76,8 @@ export function LinkDeviceCode() {
         <div className="welcome-hero">
           <Bee size={120} expression="focus" wings />
           <div>
-            <h1>{L ? 'Lier cet appareil' : 'Pair this device'}</h1>
-            <p>
-              {L
-                ? 'Entre le code à 6 caractères affiché sur le téléphone ou l’ordinateur du parent.'
-                : 'Type the 6-character code shown on the parent’s phone or computer.'}
-            </p>
+            <h1>{t('pair.title')}</h1>
+            <p>{t('pair.subtitle')}</p>
           </div>
         </div>
 
@@ -106,7 +93,7 @@ export function LinkDeviceCode() {
               required
               value={formatted()}
               onChange={(e) => handleInput(e.target.value)}
-              aria-label={L ? 'Code à 6 caractères' : '6-character code'}
+              aria-label={t('pair.codeLabel')}
               style={{
                 fontFamily: 'ui-monospace, monospace',
                 fontSize: 36,
@@ -125,7 +112,7 @@ export function LinkDeviceCode() {
           )}
 
           <button type="submit" className="btn large welcome-cta" disabled={raw.length !== 6 || busy}>
-            {busy ? (L ? 'Vérification…' : 'Checking…') : L ? 'Lier l’appareil' : 'Pair the device'}
+            {busy ? t('pair.checking') : t('pair.pairDevice')}
             <Icon name="arrow-right" />
           </button>
         </form>
@@ -143,7 +130,7 @@ export function LinkDeviceCode() {
               cursor: 'pointer',
             }}
           >
-            {L ? 'Plus tard — juste jouer cette fois' : 'Skip — just play this time'}
+            {t('pair.skipPlay')}
           </button>
           {parent && (
             <button
@@ -158,9 +145,7 @@ export function LinkDeviceCode() {
                 cursor: 'pointer',
               }}
             >
-              {L
-                ? `Ce n’est pas le compte de ${parent.email} ? Se déconnecter`
-                : `Not ${parent.email}? Sign out`}
+              {t('pair.notYourAccount', { email: parent.email })}
             </button>
           )}
         </div>

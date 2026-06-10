@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ChildProfile, Module, QuestionBundleResponse } from '@gabee/types';
 import i18n from './i18n';
@@ -136,6 +137,7 @@ type Route =
   | { name: 'settings' };
 
 export function App() {
+  const { t } = useTranslation();
   const lang = useStore((s) => s.lang);
   const token = useStore((s) => s.token);
   const profile = useStore((s) => s.profile);
@@ -1157,7 +1159,7 @@ export function App() {
     <div className={STAGE_CLASS}>
       <div className="kid-frame">
         {showDailyLock ? (
-          <DailyLockScreen lang={lang} onHome={goHome} dailyTotalCapMin={limits!.daily_total_cap_min} />
+          <DailyLockScreen onHome={goHome} dailyTotalCapMin={limits!.daily_total_cap_min} />
         ) : (
           screen
         )}
@@ -1178,7 +1180,6 @@ export function App() {
         {showIdleLock && profile && (
           <LockScreen
             profile={profile}
-            lang={lang}
             onResume={() => unlockIdle()}
             onSwitchProfile={() => {
               unlockIdle();
@@ -1212,7 +1213,6 @@ export function App() {
         {lookAwayDue && limits && !showDailyLock && (
           <LookAwayOverlay
             pauseSec={limits.look_away_pause_sec}
-            lang={lang}
             onDone={() => acknowledgeLookAway()}
           />
         )}
@@ -1228,12 +1228,10 @@ export function App() {
           >
             <span style={{ fontSize: 24 }}>☕</span>
             <span style={{ fontSize: 14 }}>
-              {lang === 'fr'
-                ? `Tu travailles depuis ${limits.session_soft_limit_min} min — une pause ?`
-                : `You've trained for ${limits.session_soft_limit_min} min — take a break?`}
+              {t('app.breakPrompt', { min: limits.session_soft_limit_min })}
             </span>
             <button className="btn ghost" onClick={() => acknowledgeSoft()} style={{ padding: '4px 12px' }}>
-              {lang === 'fr' ? 'Continuer' : 'Keep going'}
+              {t('app.keepGoing')}
             </button>
           </div>
         )}

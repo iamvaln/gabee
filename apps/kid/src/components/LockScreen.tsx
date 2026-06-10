@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { ChildProfile } from '@gabee/types';
 import { Bee } from './Bee';
 
@@ -14,16 +15,14 @@ import { Bee } from './Bee';
  */
 export function LockScreen({
   profile,
-  lang,
   onResume,
   onSwitchProfile,
 }: {
   profile: ChildProfile;
-  lang: 'fr' | 'en';
   onResume: () => void;
   onSwitchProfile: () => void;
 }) {
-  const L = lang === 'fr';
+  const { t } = useTranslation();
   const initial = profile.name.slice(0, 1).toUpperCase();
 
   return (
@@ -38,7 +37,7 @@ export function LockScreen({
     >
       <Bee size={80} expression="idle" wings />
       <h1 style={{ marginTop: 16, fontSize: 20, color: '#64748b', textAlign: 'center', fontWeight: 600 }}>
-        {L ? 'Touche pour reprendre' : 'Tap to resume'}
+        {t('lock.tapToResume')}
       </h1>
 
       <button
@@ -51,7 +50,7 @@ export function LockScreen({
           gap: 8, cursor: 'pointer',
           boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
         }}
-        aria-label={L ? `Reprendre comme ${profile.name}` : `Resume as ${profile.name}`}
+        aria-label={t('lock.resumeAs', { name: profile.name })}
       >
         <span style={{ fontSize: 72, fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>{initial}</span>
         <span style={{ fontSize: 22, fontWeight: 800, color: '#0f172a' }}>{profile.name}</span>
@@ -66,9 +65,7 @@ export function LockScreen({
           maxWidth: 480, textAlign: 'center', padding: '8px 16px',
         }}
       >
-        {L
-          ? `Pas ${profile.name} ? Ouvre ton propre profil pour ne pas perdre ta progression →`
-          : `Not ${profile.name}? Open your own profile so you don't lose your progress →`}
+        {t('lock.notYou', { name: profile.name })}
       </button>
     </div>
   );

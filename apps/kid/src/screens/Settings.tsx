@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import type { Module } from '@gabee/types';
 import { Bee } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
@@ -35,7 +35,6 @@ export function Settings({
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
   const profile = useStore((s) => s.profile);
-  const L = lang === 'fr';
 
   const [bundles, setBundles] = useState<BundleRow[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -75,15 +74,15 @@ export function Settings({
 
   return (
     <div className="session-screen">
-      <Chrome lang={lang} setLang={setLang} title={L ? 'Paramètres' : 'Settings'} onBack={onBack} onHome={onHome} profile={profile} />
+      <Chrome lang={lang} setLang={setLang} title={t('settings.title')} onBack={onBack} onHome={onHome} profile={profile} />
       <div className="session-body">
         <div className="session-stage" style={{ maxWidth: 560, marginInline: 'auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
             <Bee size={56} expression="idle" wings />
             <div>
-              <h2 style={{ margin: 0 }}>{L ? 'Paramètres' : 'Settings'}</h2>
+              <h2 style={{ margin: 0 }}>{t('settings.title')}</h2>
               <div style={{ fontSize: 13, opacity: 0.7 }}>
-                {L ? 'Versions des contenus chargés' : 'Loaded content versions'}
+                {t('settings.loadedVersions')}
               </div>
             </div>
           </div>
@@ -95,11 +94,11 @@ export function Settings({
               fontSize: 14, color: '#0f172a',
             }}
           >
-            <strong>{L ? 'Connexion :' : 'Connection:'}</strong>{' '}
-            {online ? (L ? 'en ligne' : 'online') : (L ? 'hors ligne' : 'offline')}
+            <strong>{t('settings.connection')}</strong>{' '}
+            {online ? t('settings.online') : t('settings.offline')}
             <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
-              <strong>{L ? 'Stockage persistant :' : 'Persisted storage:'}</strong>{' '}
-              {persisted === null ? '…' : persisted ? (L ? 'oui' : 'yes') : (L ? 'non' : 'no')}
+              <strong>{t('settings.persistedStorage')}</strong>{' '}
+              {persisted === null ? '…' : persisted ? t('settings.yes') : t('settings.no')}
             </div>
           </div>
 
@@ -111,46 +110,36 @@ export function Settings({
                 fontSize: 14, color: '#0f172a',
               }}
             >
-              <strong>{L ? 'Installer Gabee' : 'Install Gabee'}</strong>
+              <strong>{t('settings.installGabee')}</strong>
               <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4, marginBottom: 10 }}>
-                {L
-                  ? 'L’app s’ouvre alors comme une vraie app, sans la barre du navigateur.'
-                  : 'The app opens like a real app, without the browser bar.'}
+                {t('settings.installWhy')}
               </div>
               {install.kind === 'available' ? (
                 <button
                   className="btn"
                   onClick={() => void install.prompt()}
                 >
-                  <Icon name="arrow-right" /> {L ? 'Installer maintenant' : 'Install now'}
+                  <Icon name="arrow-right" /> {t('install.now')}
                 </button>
               ) : (
                 <div style={{ fontSize: 13, lineHeight: 1.6 }}>
-                  {L ? (
-                    <>
-                      <strong>Sur iPhone/iPad :</strong> touche <span style={{ fontWeight: 700 }}>Partager</span> dans Safari, puis <span style={{ fontWeight: 700 }}>« Sur l’écran d’accueil »</span>.
-                    </>
-                  ) : (
-                    <>
-                      <strong>On iPhone/iPad:</strong> tap <span style={{ fontWeight: 700 }}>Share</span> in Safari, then <span style={{ fontWeight: 700 }}>"Add to Home Screen"</span>.
-                    </>
-                  )}
+                  <Trans i18nKey="install.iosHint" components={{ b: <strong />, s: <span style={{ fontWeight: 700 }} /> }} />
                 </div>
               )}
             </div>
           )}
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <strong style={{ fontSize: 14 }}>{L ? 'Contenus en cache' : 'Cached bundles'}</strong>
+            <strong style={{ fontSize: 14 }}>{t('settings.cachedBundles')}</strong>
             <button className="btn ghost" onClick={() => void manualRefresh()} disabled={refreshing || !online}>
-              {refreshing ? (L ? 'Mise à jour…' : 'Refreshing…') : (L ? 'Rafraîchir' : 'Refresh')}
+              {refreshing ? t('settings.refreshing') : t('settings.refresh')}
             </button>
           </div>
 
           <div style={{ display: 'grid', gap: 8 }}>
             {bundles.length === 0 ? (
               <div style={{ padding: 12, borderRadius: 8, background: '#F1F5F9', fontSize: 13, opacity: 0.7 }}>
-                {L ? 'Aucun contenu encore en cache.' : 'No bundles cached yet.'}
+                {t('settings.noBundles')}
               </div>
             ) : (
               bundles.map((b) => (
@@ -165,7 +154,7 @@ export function Settings({
                   <div>
                     <strong style={{ textTransform: 'capitalize' }}>{b.module}</strong>
                     <div style={{ fontSize: 12, opacity: 0.7 }}>
-                      {b.question_count} {L ? 'questions' : 'questions'}
+                      {b.question_count} {t('common.questions')}
                     </div>
                   </div>
                   <div style={{ textAlign: 'right', fontSize: 13 }}>
@@ -186,7 +175,7 @@ export function Settings({
               <Icon name="arrow-right" /> {t('back')}
             </button>
             <button className="btn ghost" onClick={onSwitchProfile}>
-              {L ? 'Changer de profil' : 'Switch profile'}
+              {t('settings.switchProfile')}
             </button>
           </div>
         </div>

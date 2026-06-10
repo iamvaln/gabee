@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Bee } from './Bee';
 
 /**
@@ -6,14 +7,13 @@ import { Bee } from './Bee';
  * skills, see you tomorrow." NOT a punishment screen.
  */
 export function DailyLockScreen({
-  lang,
   onHome,
   dailyTotalCapMin,
 }: {
-  lang: 'fr' | 'en';
   onHome: () => void;
   dailyTotalCapMin: number;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       style={{
@@ -24,15 +24,13 @@ export function DailyLockScreen({
     >
       <Bee size={160} expression="idle" wings bob />
       <h1 style={{ marginTop: 24, fontSize: 28, color: '#0f172a', textAlign: 'center' }}>
-        {lang === 'fr' ? 'Bravo pour aujourd’hui !' : 'Great job today!'}
+        {t('daily.greatJob')}
       </h1>
       <p style={{ marginTop: 12, maxWidth: 420, textAlign: 'center', color: '#64748b' }}>
-        {lang === 'fr'
-          ? `Tu as bien travaillé pendant ${dailyTotalCapMin} minutes. On se retrouve demain — la constance, c’est ce qui développe les compétences.`
-          : `You've trained for ${dailyTotalCapMin} minutes today. See you tomorrow — consistency is what builds skills.`}
+        {t('daily.body', { min: dailyTotalCapMin })}
       </p>
       <button className="btn" onClick={onHome} style={{ marginTop: 24 }}>
-        {lang === 'fr' ? 'D’accord' : 'OK'}
+        {t('common.ok')}
       </button>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { KidStreakState } from '@gabee/types';
 import { useStore } from '../store';
 import { readStreak } from '../lib/streak';
@@ -8,7 +9,8 @@ import { readStreak } from '../lib/streak';
  * as a positive consistency cue (product §6.3 — "consistency framing, no FOMO").
  * Reads from local cache; refreshes on profile change.
  */
-export function StreakPill({ lang }: { lang: 'fr' | 'en' }) {
+export function StreakPill() {
+  const { t } = useTranslation();
   const profile = useStore((s) => s.profile);
   const [state, setState] = useState<KidStreakState>({ streak_days: 0, longest_streak_days: 0, last_lesson_date: null });
 
@@ -22,13 +24,13 @@ export function StreakPill({ lang }: { lang: 'fr' | 'en' }) {
     <div
       className="stat-chip"
       style={{ background: '#FEF3C7', borderColor: '#F59E0B' }}
-      aria-label={lang === 'fr' ? `${state.streak_days} jours d'affilée` : `${state.streak_days}-day streak`}
+      aria-label={t('streak.ariaLabel', { count: state.streak_days })}
     >
       <span style={{ fontSize: 22 }}>🔥</span>
       <div className="stat-body">
         <div className="stat-num">{state.streak_days}</div>
         <div className="stat-label">
-          {lang === 'fr' ? 'jours' : 'days'}
+          {t('streak.days')}
         </div>
       </div>
     </div>

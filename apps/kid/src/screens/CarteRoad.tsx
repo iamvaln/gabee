@@ -110,7 +110,6 @@ export function CarteRoad({
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
   const profile = useStore((s) => s.profile);
-  const L = lang === 'fr';
 
   const submodes = SUB_MODES_BY_MODULE[module];
   const [activeSub, setActiveSub] = useState<string | null>(submodes[0]?.key ?? null);
@@ -151,7 +150,7 @@ export function CarteRoad({
         <div>
           <h1 style={{ margin: 0 }}>{mDef.tagline[lang]}</h1>
           <p style={{ margin: 0 }}>
-            {L ? 'Tape un arrêt pour rejouer.' : 'Tap a stop to replay.'}
+            {t('carteRoad.tapToReplay')}
           </p>
         </div>
       </div>
@@ -179,10 +178,10 @@ export function CarteRoad({
       )}
 
       {isLoading ? (
-        <div style={{ padding: 24, opacity: 0.6 }}>{L ? 'Chargement…' : 'Loading…'}</div>
+        <div style={{ padding: 24, opacity: 0.6 }}>{t('carteRoad.loading')}</div>
       ) : stops.length === 0 ? (
         <div className="carte-road-empty">
-          {L ? 'Aucune leçon publiée ici pour l’instant.' : 'No lessons here yet.'}
+          {t('carteRoad.noLessons')}
         </div>
       ) : (
         <div className="carte-road-list" role="list">
@@ -196,8 +195,7 @@ export function CarteRoad({
               }
               offsetIdx={i % 4}
               showLevelBanner={i === 0 || stops[i - 1]!.level !== s.level}
-              levelLabel={L ? `Niveau ${s.level}` : `Level ${s.level}`}
-              lang={lang}
+              levelLabel={t('carteRoad.levelN', { n: s.level })}
               onTap={() =>
                 onPlay({
                   subMode: activeSub,
@@ -224,7 +222,6 @@ function RoadStop({
   offsetIdx,
   showLevelBanner,
   levelLabel,
-  lang,
   onTap,
 }: {
   stop: Stop;
@@ -232,10 +229,10 @@ function RoadStop({
   offsetIdx: number;
   showLevelBanner: boolean;
   levelLabel: string;
-  lang: 'fr' | 'en';
   onTap: () => void;
 }) {
-  const label = stop.isRevision ? (lang === 'fr' ? 'R' : 'R') : `${indexInLevel}`;
+  const { t } = useTranslation();
+  const label = stop.isRevision ? 'R' : `${indexInLevel}`;
   return (
     <div className="road-row">
       {showLevelBanner && <div className="road-level-banner">{levelLabel}</div>}
@@ -246,8 +243,8 @@ function RoadStop({
           disabled={stop.status === 'locked'}
           aria-label={
             stop.status === 'locked'
-              ? lang === 'fr' ? 'Étape verrouillée' : 'Locked stop'
-              : `${stop.isRevision ? (lang === 'fr' ? 'Révision' : 'Revision') : (lang === 'fr' ? 'Leçon' : 'Lesson')} ${label} · ${stop.stars}/3 ⭐`
+              ? t('carteRoad.lockedStop')
+              : `${stop.isRevision ? t('revision') : t('lesson')} ${label} · ${stop.stars}/3 ⭐`
           }
         >
           {stop.status === 'locked' ? (

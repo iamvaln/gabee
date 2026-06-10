@@ -1,6 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import { Bee } from './Bee';
 import { Icon } from './Icon';
-import { useStore } from '../store';
 
 /**
  * Full-screen warm overlay shown when the kid taps the bandeau (design handoff
@@ -16,10 +16,9 @@ export function MessageReader({
   text: string;
   onContinue: () => void;
 }) {
-  const lang = useStore((s) => s.lang);
-  const L = lang === 'fr';
-  const fromLine = L ? `De ${fromDisplayName}` : `From ${fromDisplayName}`;
-  const cta = L ? 'Continuer' : 'Continue';
+  const { t } = useTranslation();
+  const fromLine = t('message.from', { name: fromDisplayName });
+  const cta = t('common.continue');
 
   return (
     <div

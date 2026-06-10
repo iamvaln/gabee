@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { Avatar, Language } from '@gabee/types';
 import { GabeeWordmark } from './Bee';
 import { Icon } from './Icon';
@@ -77,6 +78,7 @@ export function Chrome({
   hideHome?: boolean;
   profile?: ProfileLike | null;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="chrome">
       <div className="chrome-left">
@@ -100,12 +102,12 @@ export function Chrome({
               <span>{profile.name}</span>
             </div>
           ))}
-        <div className="lang-toggle" role="group" aria-label={lang === 'fr' ? 'langue' : 'language'}>
+        <div className="lang-toggle" role="group" aria-label={t('chrome.language')}>
           <button
             type="button"
             className={lang === 'fr' ? 'on' : ''}
             aria-pressed={lang === 'fr'}
-            aria-label={lang === 'fr' ? 'Français' : 'Switch to French'}
+            aria-label={t('chrome.toFrench')}
             onClick={() => setLang('fr')}
           >
             FR
@@ -114,7 +116,7 @@ export function Chrome({
             type="button"
             className={lang === 'en' ? 'on' : ''}
             aria-pressed={lang === 'en'}
-            aria-label={lang === 'fr' ? 'Anglais' : 'English'}
+            aria-label={t('chrome.toEnglish')}
             onClick={() => setLang('en')}
           >
             EN

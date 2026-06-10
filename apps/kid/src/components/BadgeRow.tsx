@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { BadgeId } from '@gabee/types';
 import { BADGE_LABELS } from '../lib/badges';
 
@@ -15,12 +16,13 @@ export function BadgeRow({
   lang: 'fr' | 'en';
   highlight?: BadgeId[];
 }) {
+  const { t } = useTranslation();
   if (badges.length === 0) return null;
   const hl = new Set(highlight ?? []);
   return (
     <div
       style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 8 }}
-      aria-label={lang === 'fr' ? 'Badges' : 'Badges'}
+      aria-label={t('common.badges')}
     >
       {badges.map((id) => {
         const meta = BADGE_LABELS[id];

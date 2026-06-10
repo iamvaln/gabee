@@ -30,7 +30,7 @@ export function WordsHub({
   const profile = useStore((s) => s.profile);
 
   const playable: WordsSubMode[] = ['picture', 'fill', 'build', 'read'];
-  const soon = lang === 'fr' ? ' · bientôt' : ' · soon';
+  const soon = t('common.soon');
   const m = MODULES.find((x) => x.id === 'words')!;
 
   return (

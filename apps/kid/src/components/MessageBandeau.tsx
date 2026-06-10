@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Bee } from './Bee';
-import { useStore } from '../store';
 import { playMsgDing } from '../lib/messages';
 
 /**
@@ -18,12 +18,9 @@ export function MessageBandeau({
   messageId: string;
   onTap: () => void;
 }) {
-  const lang = useStore((s) => s.lang);
-  const L = lang === 'fr';
-  const label = L
-    ? `${fromDisplayName} t'a laissé un mot 💛`
-    : `${fromDisplayName} left you a note 💛`;
-  const hint = L ? 'Touche pour lire' : 'Tap to read';
+  const { t } = useTranslation();
+  const label = t('message.note', { name: fromDisplayName });
+  const hint = t('message.tapToRead');
 
   useEffect(() => {
     playMsgDing();

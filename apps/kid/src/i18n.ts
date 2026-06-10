@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 // Kid-app UI strings (FR/EN). Question content carries its own { fr, en } pairs.
+// All user-facing copy lives here — components read it via useTranslation()/t().
 const resources = {
   fr: {
     translation: {
@@ -40,6 +41,128 @@ const resources = {
       offline: 'Hors-ligne — tout est sauvegardé',
       syncing: 'Sauvegarde…',
       synced: 'Sauvegardé',
+
+      common: {
+        soon: ' · bientôt',
+        continue: 'Continuer',
+        ok: 'D’accord',
+        badges: 'Badges',
+        questions: 'questions',
+      },
+      app: {
+        breakPrompt: 'Tu travailles depuis {{min}} min — une pause ?',
+        keepGoing: 'Continuer',
+      },
+      hub: {
+        hi: 'Salut',
+        learnNew: 'Apprends quelque chose de nouveau aujourd’hui !',
+      },
+      carte: {
+        title: 'Ton parcours',
+        subtitle: 'Choisis un module pour voir tous tes niveaux et rejouer une leçon.',
+      },
+      carteRoad: {
+        tapToReplay: 'Tape un arrêt pour rejouer.',
+        loading: 'Chargement…',
+        noLessons: 'Aucune leçon publiée ici pour l’instant.',
+        levelN: 'Niveau {{n}}',
+        lockedStop: 'Étape verrouillée',
+      },
+      settings: {
+        title: 'Paramètres',
+        loadedVersions: 'Versions des contenus chargés',
+        connection: 'Connexion :',
+        online: 'en ligne',
+        offline: 'hors ligne',
+        persistedStorage: 'Stockage persistant :',
+        yes: 'oui',
+        no: 'non',
+        installGabee: 'Installer Gabee',
+        installWhy: 'L’app s’ouvre alors comme une vraie app, sans la barre du navigateur.',
+        cachedBundles: 'Contenus en cache',
+        refreshing: 'Mise à jour…',
+        refresh: 'Rafraîchir',
+        noBundles: 'Aucun contenu encore en cache.',
+        switchProfile: 'Changer de profil',
+      },
+      install: {
+        onThisDevice: 'Installer Gabee sur cet appareil',
+        why: 'Pour que ton enfant ouvre Gabee comme une vraie app, sans la barre du navigateur.',
+        now: 'Installer maintenant',
+        iosHint: '<b>Sur iPhone/iPad :</b> touche <s>Partager</s> dans Safari, puis <s>« Sur l’écran d’accueil »</s>.',
+      },
+      code: {
+        nice: 'Bravo ! ✨',
+        tryAgain: 'Réessaie !',
+        yourProgram: 'Ton programme',
+        addBlocks: 'Ajoute des blocs en bas →',
+        run: '▶ Lancer',
+        clear: 'Effacer',
+        skip: 'Passer',
+      },
+      pair: {
+        invalidCode: 'Code invalide ou expiré. Vérifie auprès du parent.',
+        tooManyAttempts: 'Trop d’essais. Attendez quelques minutes avant de réessayer.',
+        cannotConnect: 'Connexion impossible — vérifie ta connexion internet.',
+        title: 'Lier cet appareil',
+        subtitle: 'Entre le code à 6 caractères affiché sur le téléphone ou l’ordinateur du parent.',
+        codeLabel: 'Code à 6 caractères',
+        checking: 'Vérification…',
+        pairDevice: 'Lier l’appareil',
+        skipPlay: 'Plus tard — juste jouer cette fois',
+        notYourAccount: 'Ce n’est pas le compte de {{email}} ? Se déconnecter',
+      },
+      login: {
+        manageFromParent: "Gérer depuis l'espace parent →",
+      },
+      keyboard: {
+        typeBeforeScroll: 'Tape avant que ça disparaisse !',
+        typeHighlighted: 'Tape la lettre en surbrillance',
+      },
+      coffre: {
+        title: 'Ton coffre',
+        subtitle: 'Toutes tes récompenses au même endroit.',
+        dayStreak: 'jours d’affilée',
+        bestStreak: 'meilleure série',
+        unlocked: 'Trophées débloqués ({{count}})',
+        stillToUnlock: 'À débloquer',
+      },
+      streak: {
+        ariaLabel: "{{count}} jours d'affilée",
+        days: 'jours',
+      },
+      lock: {
+        tapToResume: 'Touche pour reprendre',
+        resumeAs: 'Reprendre comme {{name}}',
+        notYou: 'Pas {{name}} ? Ouvre ton propre profil pour ne pas perdre ta progression →',
+      },
+      milestone: {
+        newBadge_one: 'Nouveau badge !',
+        newBadge_other: 'Nouveaux badges !',
+        tapToContinue: '(touche pour continuer)',
+      },
+      nav: {
+        main: 'Navigation principale',
+      },
+      daily: {
+        greatJob: 'Bravo pour aujourd’hui !',
+        body: 'Tu as bien travaillé pendant {{min}} minutes. On se retrouve demain — la constance, c’est ce qui développe les compétences.',
+      },
+      message: {
+        from: 'De {{name}}',
+        note: "{{name}} t'a laissé un mot 💛",
+        tapToRead: 'Touche pour lire',
+      },
+      lookAway: {
+        title: 'Regarde au loin',
+        body: 'Repose tes yeux quelques secondes — regarde quelque chose loin de l’écran.',
+        comesBack: 'L’écran reviendra tout seul.',
+      },
+      chrome: {
+        language: 'langue',
+        toFrench: 'Français',
+        toEnglish: 'Anglais',
+      },
     },
   },
   en: {
@@ -79,6 +202,128 @@ const resources = {
       offline: 'Offline — everything is saved',
       syncing: 'Saving…',
       synced: 'Saved',
+
+      common: {
+        soon: ' · soon',
+        continue: 'Continue',
+        ok: 'OK',
+        badges: 'Badges',
+        questions: 'questions',
+      },
+      app: {
+        breakPrompt: "You've trained for {{min}} min — take a break?",
+        keepGoing: 'Keep going',
+      },
+      hub: {
+        hi: 'Hi',
+        learnNew: 'Learn something new today!',
+      },
+      carte: {
+        title: 'Your journey',
+        subtitle: 'Pick a module to see every level and replay a lesson.',
+      },
+      carteRoad: {
+        tapToReplay: 'Tap a stop to replay.',
+        loading: 'Loading…',
+        noLessons: 'No lessons here yet.',
+        levelN: 'Level {{n}}',
+        lockedStop: 'Locked stop',
+      },
+      settings: {
+        title: 'Settings',
+        loadedVersions: 'Loaded content versions',
+        connection: 'Connection:',
+        online: 'online',
+        offline: 'offline',
+        persistedStorage: 'Persisted storage:',
+        yes: 'yes',
+        no: 'no',
+        installGabee: 'Install Gabee',
+        installWhy: 'The app opens like a real app, without the browser bar.',
+        cachedBundles: 'Cached bundles',
+        refreshing: 'Refreshing…',
+        refresh: 'Refresh',
+        noBundles: 'No bundles cached yet.',
+        switchProfile: 'Switch profile',
+      },
+      install: {
+        onThisDevice: 'Install Gabee on this device',
+        why: 'So your kid opens Gabee like a real app, with no browser bar.',
+        now: 'Install now',
+        iosHint: '<b>On iPhone/iPad:</b> tap <s>Share</s> in Safari, then <s>"Add to Home Screen"</s>.',
+      },
+      code: {
+        nice: 'Nice! ✨',
+        tryAgain: 'Try again!',
+        yourProgram: 'Your program',
+        addBlocks: 'Add blocks from below →',
+        run: '▶ Run',
+        clear: 'Clear',
+        skip: 'Skip',
+      },
+      pair: {
+        invalidCode: 'Invalid or expired code. Double-check with the parent.',
+        tooManyAttempts: 'Too many attempts. Wait a few minutes before trying again.',
+        cannotConnect: 'Could not connect — check your internet.',
+        title: 'Pair this device',
+        subtitle: 'Type the 6-character code shown on the parent’s phone or computer.',
+        codeLabel: '6-character code',
+        checking: 'Checking…',
+        pairDevice: 'Pair the device',
+        skipPlay: 'Skip — just play this time',
+        notYourAccount: 'Not {{email}}? Sign out',
+      },
+      login: {
+        manageFromParent: 'Manage from the parent space →',
+      },
+      keyboard: {
+        typeBeforeScroll: 'Type before it scrolls off!',
+        typeHighlighted: 'Type the highlighted letter',
+      },
+      coffre: {
+        title: 'Your chest',
+        subtitle: 'Everything you earned, in one place.',
+        dayStreak: 'day streak',
+        bestStreak: 'best streak',
+        unlocked: 'Unlocked ({{count}})',
+        stillToUnlock: 'Still to unlock',
+      },
+      streak: {
+        ariaLabel: '{{count}}-day streak',
+        days: 'days',
+      },
+      lock: {
+        tapToResume: 'Tap to resume',
+        resumeAs: 'Resume as {{name}}',
+        notYou: "Not {{name}}? Open your own profile so you don't lose your progress →",
+      },
+      milestone: {
+        newBadge_one: 'New badge!',
+        newBadge_other: 'New badges!',
+        tapToContinue: '(tap to continue)',
+      },
+      nav: {
+        main: 'Main navigation',
+      },
+      daily: {
+        greatJob: 'Great job today!',
+        body: "You've trained for {{min}} minutes today. See you tomorrow — consistency is what builds skills.",
+      },
+      message: {
+        from: 'From {{name}}',
+        note: '{{name}} left you a note 💛',
+        tapToRead: 'Tap to read',
+      },
+      lookAway: {
+        title: 'Look far away',
+        body: 'Rest your eyes — look at something far from the screen.',
+        comesBack: 'The screen will come back on its own.',
+      },
+      chrome: {
+        language: 'language',
+        toFrench: 'Switch to French',
+        toEnglish: 'English',
+      },
     },
   },
 };

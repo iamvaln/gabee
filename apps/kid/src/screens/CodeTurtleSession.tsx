@@ -102,7 +102,6 @@ export function CodeTurtleSession({
   const profile = useStore((s) => s.profile);
   const play = useStore((s) => s.play);
   const nextLessonPosition = useStore((s) => s.nextLessonPosition);
-  const L = lang === 'fr';
 
   const { data: bundle, isLoading } = useQuery({
     queryKey: ['bundle', 'code'],
@@ -282,8 +281,8 @@ export function CodeTurtleSession({
   const cur: Frame | null = run ? run.frames[Math.min(frame, run.frames.length - 1)]! : null;
   const beeExpr: BeeExpression = result === 'ok' ? 'celebrate' : result === 'fail' ? 'encourage' : 'focus';
   const coach =
-    result === 'ok' ? (L ? 'Bravo ! ✨' : 'Nice! ✨')
-      : result === 'fail' ? (q?.hint ? `💡 ${displayHint(q.hint, lang)}` : (L ? 'Réessaie !' : 'Try again!'))
+    result === 'ok' ? t('code.nice')
+      : result === 'fail' ? (q?.hint ? `💡 ${displayHint(q.hint, lang)}` : t('code.tryAgain'))
         : WORLD_COACH[world][lang];
 
   if (isLoading || !session || !q || !puzzle || !cur) {
@@ -321,10 +320,10 @@ export function CodeTurtleSession({
           {/* Program strip */}
           <div
             style={{ marginTop: 16, minHeight: 56, padding: 8, borderRadius: 12, background: '#F1F5F9', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}
-            aria-label={L ? 'Ton programme' : 'Your program'}
+            aria-label={t('code.yourProgram')}
           >
             {program.length === 0 ? (
-              <span style={{ color: '#94a3b8', fontSize: 14 }}>{L ? 'Ajoute des blocs en bas →' : 'Add blocks from below →'}</span>
+              <span style={{ color: '#94a3b8', fontSize: 14 }}>{t('code.addBlocks')}</span>
             ) : (
               program.map((p, i) => {
                 const k = primKey(p);
@@ -375,13 +374,13 @@ export function CodeTurtleSession({
           {/* Actions */}
           <div style={{ marginTop: 16, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button className="btn" onClick={() => void startRun()} disabled={running || result !== null || program.length === 0}>
-              {L ? '▶ Lancer' : '▶ Run'}
+              {t('code.run')}
             </button>
             <button className="btn ghost" onClick={clearProgram} disabled={running || result !== null || program.length === 0}>
-              {L ? 'Effacer' : 'Clear'}
+              {t('code.clear')}
             </button>
             <button className="btn ghost" onClick={() => result === 'fail' ? setResult(null) : skip()} disabled={running}>
-              {result === 'fail' ? (L ? 'Réessayer' : 'Try again') : (L ? 'Passer' : 'Skip')}
+              {result === 'fail' ? t('retry') : t('code.skip')}
             </button>
           </div>
         </div>

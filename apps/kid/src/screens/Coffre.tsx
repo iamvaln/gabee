@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Bee } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
@@ -12,10 +13,10 @@ import { evaluateMilestones } from '../lib/milestones';
 // so unlocking has no persistence step — playing a lesson updates the
 // underlying counts, this screen reflects them next render.
 export function Coffre({ onSettings }: { onSettings?: () => void }) {
+  const { t } = useTranslation();
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
   const profile = useStore((s) => s.profile);
-  const L = lang === 'fr';
 
   const streak = useMemo(() => readStreak(profile?.id ?? null), [profile?.id]);
   const { unlocked, locked } = useMemo(
@@ -31,8 +32,8 @@ export function Coffre({ onSettings }: { onSettings?: () => void }) {
       <div className="home-greeting">
         <Bee size={72} expression="correct" wings bob />
         <div>
-          <h1>{L ? 'Ton coffre' : 'Your chest'}</h1>
-          <p>{L ? 'Toutes tes récompenses au même endroit.' : 'Everything you earned, in one place.'}</p>
+          <h1>{t('coffre.title')}</h1>
+          <p>{t('coffre.subtitle')}</p>
         </div>
       </div>
 
@@ -41,25 +42,25 @@ export function Coffre({ onSettings }: { onSettings?: () => void }) {
           <Icon name="star" size={20} />
           <div className="stat-body">
             <div className="stat-num">{profile.total_stars}</div>
-            <div className="stat-label">{L ? 'étoiles' : 'stars'}</div>
+            <div className="stat-label">{t('stars')}</div>
           </div>
         </div>
         <div className="stat-chip today">
           <div className="stat-body">
             <div className="stat-num">{streak.streak_days}</div>
-            <div className="stat-label">{L ? 'jours d’affilée' : 'day streak'}</div>
+            <div className="stat-label">{t('coffre.dayStreak')}</div>
           </div>
         </div>
         <div className="stat-chip today">
           <div className="stat-body">
             <div className="stat-num">{streak.longest_streak_days}</div>
-            <div className="stat-label">{L ? 'meilleure série' : 'best streak'}</div>
+            <div className="stat-label">{t('coffre.bestStreak')}</div>
           </div>
         </div>
       </div>
 
       <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>
-        {L ? `Trophées débloqués (${unlocked.length}/${unlocked.length + locked.length})` : `Unlocked (${unlocked.length}/${unlocked.length + locked.length})`}
+        {t('coffre.unlocked', { count: `${unlocked.length}/${unlocked.length + locked.length}` })}
       </h2>
       <div style={gridStyle}>
         {unlocked.map((m) => (
@@ -74,7 +75,7 @@ export function Coffre({ onSettings }: { onSettings?: () => void }) {
       {locked.length > 0 && (
         <>
           <h2 style={{ fontSize: 18, fontWeight: 800, marginTop: 18, marginBottom: 8, opacity: 0.7 }}>
-            {L ? 'À débloquer' : 'Still to unlock'}
+            {t('coffre.stillToUnlock')}
           </h2>
           <div style={gridStyle}>
             {locked.map((m) => (

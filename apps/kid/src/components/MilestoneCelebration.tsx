@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { BadgeId } from '@gabee/types';
 import { Bee } from './Bee';
 import { BADGE_LABELS } from '../lib/badges';
@@ -30,8 +31,9 @@ export function MilestoneCelebration({
     return () => clearTimeout(t);
   }, [onDone]);
 
+  const { t } = useTranslation();
+
   if (!open || badges.length === 0) return null;
-  const L = lang === 'fr';
 
   return (
     <div
@@ -46,7 +48,7 @@ export function MilestoneCelebration({
     >
       <Bee size={140} expression="celebrate" wings bob />
       <h1 style={{ marginTop: 16, fontSize: 28, color: '#0f172a', textAlign: 'center' }}>
-        {L ? `Nouveau${badges.length > 1 ? 'x' : ''} badge${badges.length > 1 ? 's' : ''} !` : `New badge${badges.length > 1 ? 's' : ''}!`}
+        {t('milestone.newBadge', { count: badges.length })}
       </h1>
       <div
         style={{
@@ -75,7 +77,7 @@ export function MilestoneCelebration({
         })}
       </div>
       <p style={{ marginTop: 20, color: '#64748b', fontSize: 14 }}>
-        {L ? '(touche pour continuer)' : '(tap to continue)'}
+        {t('milestone.tapToContinue')}
       </p>
     </div>
   );

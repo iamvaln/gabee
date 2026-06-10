@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { Language } from '@gabee/types';
 
 // Bottom navigation — Duolingo-style three-tab bar pinned to the bottom of
@@ -25,10 +26,11 @@ export function BottomNav({
   onChange: (next: KidTab) => void;
   lang: Language;
 }) {
+  const { t } = useTranslation();
   return (
     <nav
       className="kid-bottom-nav"
-      aria-label={lang === 'fr' ? 'Navigation principale' : 'Main navigation'}
+      aria-label={t('nav.main')}
       style={navStyle}
     >
       <NavBtn active={tab === 'apprendre'} onClick={() => onChange('apprendre')} label={LABEL.apprendre[lang]}>
