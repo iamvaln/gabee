@@ -109,7 +109,16 @@ function hostRole(host: string): HostRole {
     hostname === 'localhost' ||
     hostname.endsWith('.localhost') ||
     hostname === '::1' ||
-    /^127\.\d+\.\d+\.\d+$/.test(hostname)
+    /^127\.\d+\.\d+\.\d+$/.test(hostname) ||
+    // Single-label hostnames (no dot) — Docker compose internal DNS aliases
+    // like `web` or `db`. In prod, Traefik's router rules only match dotted
+    // public hostnames (`gabee.app`, `parents.gabee.app`, …), so a request
+    // reaching the web container with a single-label Host can ONLY be from
+    // inside the Docker network (cron-digest → web). Treat as localhost so
+    // internal HTTP works without explicit Host-header rewriting at the
+    // caller. Externally-spoofed `Host: web` requests don't reach the
+    // container in the first place — Traefik 404s them at the edge.
+    !hostname.includes('.')
   ) {
     return 'localhost';
   }
