@@ -704,48 +704,55 @@ a:focus-visible,
   overflow-x: hidden;
   min-height: 0;
 }
+/* Home greeting — h1 fluid type, subtitle muted. On phones the greet
+   wraps so the stat strip drops below the title instead of squeezing it. */
 .home-greeting {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: clamp(12px, 3vw, 20px);
+  flex-wrap: wrap;
 }
 .home-greeting > div { flex: 1; min-width: 0; }
 .home-greeting > div p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .home-greeting h1 {
   margin: 0;
-  font-size: 36px;
+  font-size: clamp(26px, 5.4vw, 40px);
   font-weight: 800;
   letter-spacing: -0.02em;
+  line-height: 1.05;
 }
 .home-greeting p {
   margin: 4px 0 0;
   color: var(--text-muted);
-  font-size: 16px;
-  font-weight: 600;
+  font-size: clamp(14px, 2.8vw, 17px);
+  font-weight: 700;
 }
 
-/* Home stats — total stars + today's lessons */
-.home-greeting { align-items: center; }
+/* XP strip — total stars + today ring + streak. Same chunky press-down
+   language as everything else: 2.5px ink border + 0 3px 0 ink shadow.
+   Wraps freely so on phones the chips drop to a second row instead of
+   shrinking text. The stars chip gets a warm honey-tinted background so
+   it reads as the "reward" anchor at a glance. */
 .home-stats {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: stretch;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 .stat-chip {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
   border-radius: var(--radius-lg);
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: 2.5px solid var(--color-ink);
+  box-shadow: 0 3px 0 var(--color-ink);
   min-height: 56px;
 }
 .stat-chip.stars {
-  background: #FFF6E0;
-  border-color: var(--color-brand);
-  color: var(--color-ink);
+  background: #FFF1C9;
 }
 .stat-chip.stars > svg:first-child { color: var(--color-brand); }
 .stat-body { display: flex; flex-direction: column; line-height: 1; }
@@ -1764,25 +1771,28 @@ a:focus-visible,
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  border-radius: 999px;
-  border: 1.5px solid #E2E8F0;
-  background: white;
-  font-weight: 700;
+  border-radius: var(--radius-pill);
+  border: 2.5px solid var(--color-ink);
+  background: var(--surface);
+  font-weight: 800;
   font-size: 13px;
-  color: #475569;
+  color: var(--color-ink);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: transform 120ms ease, background 120ms ease;
+  box-shadow: 0 3px 0 var(--color-ink);
+  transition: transform var(--motion-fast) var(--easing),
+              box-shadow var(--motion-fast) var(--easing),
+              background var(--motion-fast);
 }
 .carte-pill .ic { font-size: 16px; line-height: 1; }
-.carte-pill:hover:not(:disabled) { transform: translateY(-1px); }
+.carte-pill:hover:not(:disabled) { background: #FFF6E1; }
+.carte-pill:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--color-ink); }
 .carte-pill.active {
-  background: var(--color-brand, #FACC15);
-  color: #0f172a;
-  border-color: var(--color-brand, #FACC15);
+  background: var(--color-brand);
+  color: var(--color-ink);
 }
-.carte-pill.soon { opacity: 0.45; cursor: not-allowed; }
+.carte-pill.soon { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
 
 /* The road itself — vertical column of stops with alternating offsets.
    max-width keeps the journey legible on a wide laptop (the eye doesn't
