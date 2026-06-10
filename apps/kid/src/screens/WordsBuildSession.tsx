@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { LevelProgress, LessonProgress } from '@gabee/types';
 import { Bee, type BeeExpression } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
+import { SessionHeader } from '../components/SessionHeader';
 import { Icon } from '../components/Icon';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
@@ -372,16 +373,14 @@ export function WordsBuildSession({
   return (
     <div className="session-screen" data-module="words">
       <Chrome lang={lang} setLang={setLang} title={m.label[lang]} onBack={onBack} onHome={onHome} profile={profile} />
-      <div className="session-progress">
-        <div className="dots" aria-label={`question ${qIdx + 1} of ${session.questions.length}`}>
-          {session.questions.map((_, i) => (
-            <span key={i} className={`dot ${i < qIdx ? 'done' : i === qIdx ? 'active' : ''}`} />
-          ))}
-        </div>
-        <div className="lesson-label">
-          {t('level')} {level} · {isRevision ? t('revision') : `${t('lesson')} ${lesson}`}
-        </div>
-      </div>
+      <SessionHeader
+        total={session.questions.length}
+        current={qIdx}
+        trigger={trigger}
+        level={level}
+        lesson={lesson}
+        isRevision={isRevision}
+      />
       <div className="session-body">
         <div className="session-stage">
           <div className="session-prompt">

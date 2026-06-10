@@ -1126,13 +1126,49 @@ a:focus-visible,
 .session-progress .dot.done { background: var(--feedback-correct); }
 .session-progress .dot.active { background: var(--module, var(--color-brand)); transform: scale(1.3); }
 .session-progress .lesson-label {
+  /* When .lesson-label sits alone (legacy session screens), it auto-aligns
+     right via this fallback margin. When wrapped inside .session-meta
+     (new SessionHeader), the wrapper's margin-left: auto takes over and
+     this is a no-op. Both layouts coexist while the refactor rolls out. */
   margin-left: auto;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
+}
+.session-meta > .lesson-label { margin-left: 0; }
+/* Right cluster: the resume-chip + the lesson label sit together so a
+   single right margin-auto pushes them both. On phones the label might
+   ellipsis if cramped; we expose the full chip + level info from 700px+. */
+.session-meta {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.session-meta .lesson-label { flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; }
+@media (min-width: 700px) {
+  .session-meta .lesson-label { overflow: visible; }
+}
+/* Resume/Start chip — module-tinted so the kid can read at a glance which
+   strand they're inside, plus a tiny ink border for the chunky language. */
+.resume-chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--module, var(--color-brand));
+  color: var(--module-text, var(--color-ink));
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border: 2px solid var(--color-ink);
 }
 
 .session-body {

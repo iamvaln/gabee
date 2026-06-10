@@ -6,6 +6,7 @@ import { Bee, type BeeExpression } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { GeometryShape, shapeFromConfig, shapeFromLabel } from '../components/GeometryShape';
+import { SessionHeader } from '../components/SessionHeader';
 import { HintLine } from '../components/HintLine';
 import { AssetGlyph } from '../components/AssetGlyph';
 import { MODULES } from '../content/modules';
@@ -277,16 +278,14 @@ export function NumbersSession({
   return (
     <div className="session-screen" data-module="numbers">
       <Chrome lang={lang} setLang={setLang} title={m.label[lang]} onBack={onBack} onHome={onHome} profile={profile} />
-      <div className="session-progress">
-        <div className="dots" aria-label={`question ${qIdx + 1} of ${session.questions.length}`}>
-          {session.questions.map((_, i) => (
-            <span key={i} className={`dot ${i < qIdx ? 'done' : i === qIdx ? 'active' : ''}`} />
-          ))}
-        </div>
-        <div className="lesson-label">
-          {t('level')} {level} · {isRevision ? t('revision') : `${t('lesson')} ${lesson}`}
-        </div>
-      </div>
+      <SessionHeader
+        total={session.questions.length}
+        current={qIdx}
+        trigger={trigger}
+        level={level}
+        lesson={lesson}
+        isRevision={isRevision}
+      />
       <div className="session-body">
         <div className="session-stage">
           <div className="session-prompt">
