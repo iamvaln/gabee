@@ -54,12 +54,13 @@ services:
         condition: service_completed_successfully
     networks: [internal, web]
     healthcheck:
-      # Hit the favicon (cheap, no DB) to confirm Next.js is actually
-      # serving — the cron-digest sidecar's `depends_on: service_healthy`
-      # gates on this so its startup poke doesn't fire mid-boot. The image
-      # is node:20-slim (no wget/curl), so we use node's built-in http
-      # module — anything < 500 is a healthy serve, network errors fail.
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/favicon.ico', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      # Liveness probe — hits /api/health (which doesn't touch the DB) to
+      # confirm the Next.js process is up and serving. Used by the
+      # cron-digest sidecar's `depends_on: service_healthy` gate so the
+      # startup poke doesn't race a half-booted Next. node:20-slim has no
+      # wget/curl so we use the built-in http module — anything < 500 is
+      # healthy, network errors are fatal.
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 10s
       timeout: 5s
       retries: 12
