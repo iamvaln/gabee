@@ -35,8 +35,15 @@
   --motion-base: 200ms;
   --motion-slow: 320ms;
   --easing: cubic-bezier(.2, .8, .2, 1);
+  --bounce: cubic-bezier(.34, 1.56, .64, 1);
+  /* press-down shadow (used for chunky buttons / tiles) */
+  --shadow-pop: 0 4px 0 rgba(32, 36, 46, .12);
   /* density scale (tweakable) */
   --scale: 1;
+  /* Fluid gutter — the responsive baseline. Every screen-level padding
+     should use this rather than a hard pixel value, so the inner content
+     reflows naturally between phone (16px) and wide desktop (40px). */
+  --gutter: clamp(16px, 4vw, 40px);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -70,64 +77,59 @@ html, body {
      doesn't push the bottom nav offscreen. No outer padding, no rounded
      corners, no shadow — the OS provides its own chrome. Honour the device
      safe-area insets so the notch / home-bar don't clip content. */
+/* Responsive baseline (Phase 1 of the redesign):
+   - The kid app fills the actual viewport at every size — no centred 16:10
+     "tablet" device frame, no outer 24px padding, no rounded chrome on
+     desktop. The OS / browser chrome is the only chrome.
+   - 100dvh (dynamic viewport height) replaces 100vh so iOS Safari's
+     collapsible address bar doesn't push the bottom nav under the fold.
+   - safe-area-inset-* gets honoured for the notch + home indicator.
+   - Internal screens own their own scroll via `flex: 1; min-height: 0;
+     overflow-y: auto` on the screen body, while .kid-frame stays
+     overflow: hidden so cross-screen overlays (lookaway, lock) clip to it.
+*/
 .app-stage {
   min-height: 100dvh;
-  display: grid;
-  place-items: center;
-  padding: 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 .app-stage.app-embedded {
-  padding: 0;
   background: transparent;
 }
 .app-embedded .kid-frame {
   width: 100%;
   height: 100dvh;
-  max-width: none;
   border-radius: 0;
   box-shadow: none;
-  aspect-ratio: auto;
 }
 .kid-frame {
-  width: min(100%, 1280px);
-  /* Cap the height to the viewport so the frame ALWAYS fits without the
-     outer page scrolling, even on a 1366×768 / 1440×900 laptop where
-     1280×800 wouldn't. `aspect-ratio` still preserves 16:10 — when the
-     height cap kicks in, the browser narrows the width proportionally.
-     Subtract 2× .app-stage padding so the centred frame keeps its
-     breathing room above/below. */
-  max-height: calc(100dvh - 48px);
-  aspect-ratio: 16 / 10;
+  width: 100%;
+  height: 100dvh;
   background: var(--surface);
-  border-radius: 24px;
-  box-shadow: var(--shadow-lg);
+  /* No rounded corners / shadow on the frame — the OS surface IS the
+     frame. The previous "tablet" look added padding the inner screens
+     then had to subtract from. Removing it simplifies every padding
+     calc downstream. */
   overflow: hidden;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   position: relative;
   display: flex;
   flex-direction: column;
 }
-@media (max-width: 900px) {
-  .app-stage { padding: 0; }
-  .kid-frame {
-    width: 100%;
-    height: 100dvh;
-    max-width: 100%;
-    aspect-ratio: auto;
-    min-height: 0;
-    border-radius: 0;
-    box-shadow: none;
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-left: env(safe-area-inset-left, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
-  }
-}
+/* The 900px breakpoint that used to swap "device frame" for "fullscreen"
+   is gone — the frame fills the viewport at every width now (handled by
+   the base .kid-frame above). Per-screen layouts still adapt via the
+   fluid clamp() values in --gutter and screen-specific rules below. */
 
 /* App chrome */
 .chrome {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 24px;
+  padding: clamp(10px, 2.5vw, 16px) var(--gutter);
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   flex-shrink: 0;
@@ -659,7 +661,7 @@ a:focus-visible,
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 32px 48px 40px;
+  padding: clamp(16px, 3vw, 32px) var(--gutter) clamp(20px, 3vw, 40px);
   gap: 24px;
   position: relative;
   /* Vertical scroll INSIDE the frame so a tall Coffre / Carte list reaches
@@ -890,7 +892,7 @@ a:focus-visible,
 .levelmap-hero {
   background: var(--module);
   color: var(--module-text);
-  padding: 28px 48px 40px;
+  padding: clamp(14px, 3vw, 28px) var(--gutter) clamp(20px, 3vw, 40px);
   display: flex;
   align-items: center;
   gap: 20px;
@@ -909,7 +911,7 @@ a:focus-visible,
 }
 .level-body {
   flex: 1;
-  padding: 32px 48px 40px;
+  padding: clamp(16px, 3vw, 32px) var(--gutter) clamp(20px, 3vw, 40px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -996,7 +998,7 @@ a:focus-visible,
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 32px 48px;
+  padding: clamp(16px, 3vw, 32px) var(--gutter);
 }
 .submode-grid {
   display: grid;
@@ -1323,7 +1325,7 @@ a:focus-visible,
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 32px 48px;
+  padding: clamp(16px, 3vw, 32px) var(--gutter);
   gap: 20px;
 }
 .settings-row {
