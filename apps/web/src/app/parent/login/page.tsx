@@ -6,11 +6,14 @@ import { prisma } from '@/lib/server/db';
 import { LoginForm } from './login-form';
 
 /**
- * Parent sign-in. Server-side short-circuits when there's already a valid
- * session: an admin lands on `/admin`, a parent on `/parent` (or the `?next=`
- * target). Mirrors the admin login page shape. The `?next=…` parameter (set by
- * `requireParentPage` / `requireAdminPage`) takes precedence over the role
- * default so a gated link round-trips you back to its origin.
+ * Parent sign-in. Lives on the parent surface (`parents.gabee.app/login` in
+ * prod, `/parent/login` in dev), so success here ALWAYS lands on `/parent` —
+ * never `/admin`. Admins with parent-surface business get sent to `/parent`
+ * too; their admin sign-in is its own door at `admin.gabee.app/admin/login`,
+ * and `/admin` on the parent host is 404'd by the proxy anyway. Sending an
+ * admin to `/admin` from here used to break visibly under host isolation
+ * (404 after login). The `?next=…` parameter is preserved so a gated link
+ * round-trips you back, as long as the target itself is parent-allowed.
  */
 export default async function LoginPage({
   searchParams,
@@ -18,20 +21,19 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; email?: string }>;
 }) {
   const { next, email } = await searchParams;
-  const session = await getServerSession();
+  // Scope strictly to the parent surface so an admin cookie that somehow
+  // reaches the parent host (legacy / dev) doesn't accidentally short-circuit
+  // a parent's sign-in flow.
+  const session = await getServerSession('parent');
   if (session) {
     const account = await prisma.parentAccount.findUnique({
       where: { id: session.parentId },
-      select: { role: true },
+      select: { id: true },
     });
     if (account) {
-      const isAdmin = account.role === 'admin' || account.role === 'super_admin';
-      if (isAdmin) {
-        redirect(safeNext(next) ?? '/admin');
-      }
-      if (account.role === 'parent') {
-        redirect(safeNext(next) ?? '/parent');
-      }
+      // Same destination regardless of role — this is the parent surface,
+      // /parent is where signed-in users belong here.
+      redirect(safeNext(next) ?? '/parent');
     }
     // Stale cookie (account missing): drop through to the form; a successful
     // re-login will overwrite it.
@@ -42,10 +44,18 @@ export default async function LoginPage({
   return <LoginForm lang={lang} next={safeNext(next)} initialEmail={safeEmail(email)} />;
 }
 
-/** Only allow same-origin relative paths as `next` (prevents open-redirect). */
+/**
+ * Only allow PARENT-surface relative paths as `next`. Rejects:
+ *  - protocol-relative (`//evil.com`) → open-redirect class
+ *  - non-leading-slash (`evil.com`) → same
+ *  - `/admin*` → the parent host's proxy 404s those routes, and a crafted
+ *    `?next=/admin` link used to send the post-login `router.push` straight
+ *    into that 404 wall.
+ */
 function safeNext(raw: string | undefined): string | undefined {
   if (!raw) return undefined;
   if (!raw.startsWith('/') || raw.startsWith('//')) return undefined;
+  if (raw === '/admin' || raw.startsWith('/admin/')) return undefined;
   return raw;
 }
 

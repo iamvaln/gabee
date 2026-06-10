@@ -74,13 +74,12 @@ export function LoginForm({
       body: JSON.stringify({ email, password }),
     });
     if (res.ok) {
-      const body = (await res.json().catch(() => null)) as {
-        parent?: { role?: string };
-      } | null;
-      const role = body?.parent?.role;
-      const isAdmin = role === 'admin' || role === 'super_admin';
-      const fallback = isAdmin ? '/admin' : '/parent';
-      router.push(next ?? fallback);
+      // Parent surface: always land on /parent. Role-based bouncing to /admin
+      // used to break under host isolation (the parent host's proxy 404s
+      // /admin), and an admin who actually needs the admin surface signs in at
+      // admin.gabee.app/admin/login instead. Same call shape, same `next`
+      // override — just no cross-surface redirect.
+      router.push(next ?? '/parent');
       router.refresh();
       return;
     }
