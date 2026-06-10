@@ -1685,6 +1685,7 @@ a:focus-visible,
   align-items: center;
   gap: 12px;
   padding: 8px 4px 16px;
+  flex-shrink: 0;
 }
 .carte-road-head h1 {
   font-size: 22px;
@@ -1702,6 +1703,10 @@ a:focus-visible,
   display: flex;
   gap: 8px;
   overflow-x: auto;
+  /* overflow-x:auto makes overflow-y compute to `auto` too, turning this row
+     into a scroll container — which a flex column can shrink to height 0,
+     clipping the pills when the road below is tall. Pin it so it never shrinks. */
+  flex-shrink: 0;
   padding: 4px 2px 12px;
   scrollbar-width: none;
 }
