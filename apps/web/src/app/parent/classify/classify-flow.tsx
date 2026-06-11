@@ -1,9 +1,9 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { Language, PendingSession, InitiationLabel } from '@gabee/types';
+import type { Language, PendingSession, InitiationLabel, PendingSessionsResponse } from '@gabee/types';
 import { MintBee } from '../_components/mint-bee';
 
 export interface ClassifyKidContext {
@@ -53,6 +53,10 @@ const COPY = {
     fr: "Merci d'avoir pris ce moment avec eux aujourd'hui.",
     en: 'Thanks for taking this moment with them today.',
   },
+  classifyRefill: {
+    fr: 'On vérifie les dernières sessions…',
+    en: 'Checking for any latest sessions…',
+  },
   backHome: { fr: "Retour à l'accueil", en: 'Back to home' },
   leaveWordTitle: { fr: 'Et si tu lui laissais un mot ?', en: 'Want to leave them a word?' },
   leaveWordSub: {
@@ -81,6 +85,12 @@ const COPY = {
  * navigates to `/parent/messages/new?to=<id>` which is M2's compose form.
  */
 export function ClassifyFlow({ initial, kids, lang }: Props) {
+  // Queue is seeded from the server snapshot but mutable: when the parent
+  // finishes the initial batch we re-poll for any sessions that arrived
+  // while they were classifying (kid playing in parallel). Without this,
+  // the screen says "all reviewed" but the home badge still shows pending
+  // — the exact bug the user flagged.
+  const [queue, setQueue] = useState<PendingSession[]>(initial);
   const [idx, setIdx] = useState(0);
   const [sel, setSel] = useState<InitiationLabel | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -88,11 +98,55 @@ export function ClassifyFlow({ initial, kids, lang }: Props) {
   const [showWhy, setShowWhy] = useState(false);
   // Track all kid ids whose sessions we just classified — used for Leave-a-word.
   const [classifiedKidIds, setClassifiedKidIds] = useState<string[]>([]);
+  // 'idle' = ready to refill, 'fetching' = a refill is in flight, 'exhausted'
+  // = the last refill returned no new sessions, so it's safe to show the
+  // "all reviewed" screen. State machine prevents an infinite refetch loop
+  // when the queue legitimately empties.
+  const [refillState, setRefillState] = useState<'idle' | 'fetching' | 'exhausted'>('idle');
 
   const router = useRouter();
-  const total = initial.length;
-  const current = initial[idx];
-  const done = !current;
+  const total = queue.length;
+  const current = queue[idx];
+  const done = !current && refillState === 'exhausted';
+  const refilling = !current && refillState === 'fetching';
+
+  // When the parent runs past the loaded batch, poll once for any sessions
+  // that arrived since the page loaded. The refill is gated on refillState
+  // === 'idle' so each "exhausted" point triggers at most one fetch; a
+  // subsequent POST that re-empties the queue still won't re-poll (we'd
+  // have set 'exhausted' the first time around).
+  useEffect(() => {
+    if (current) return;
+    if (refillState !== 'idle') return;
+    setRefillState('fetching');
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/classifications/pending');
+        if (!res.ok) {
+          if (!cancelled) setRefillState('exhausted');
+          return;
+        }
+        const body = (await res.json()) as PendingSessionsResponse;
+        if (cancelled) return;
+        // Dedupe against what's already in the queue — POSTs we just did may
+        // still appear if the read replica hasn't caught up.
+        const seen = new Set(queue.map((q) => q.session_id));
+        const fresh = (body.sessions ?? []).filter((s) => !seen.has(s.session_id));
+        if (fresh.length === 0) {
+          setRefillState('exhausted');
+          return;
+        }
+        setQueue((q) => [...q, ...fresh]);
+        setRefillState('idle');
+      } catch {
+        if (!cancelled) setRefillState('exhausted');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [current, queue, refillState]);
 
   const advance = useCallback(() => {
     setSel(null);
@@ -137,9 +191,19 @@ export function ClassifyFlow({ initial, kids, lang }: Props) {
   );
 
   // ---- Empty / done state -------------------------------------------------
+  if (refilling) {
+    // Briefly show a quiet refill state while we re-poll. Avoids the false
+    // "All reviewed!" flash before learning a kid just finished a session.
+    return <RefillLoading lang={lang} />;
+  }
   if (done) {
     return <ThankYou kids={kids} classifiedKidIds={classifiedKidIds} lang={lang} />;
   }
+  // Narrow `current` for the render below — this branch is the
+  // transient "queue empty, refillState 'idle'" moment before the effect
+  // flips refillState to 'fetching'. Same RefillLoading screen so the UI
+  // doesn't flicker.
+  if (!current) return <RefillLoading lang={lang} />;
 
   const kid = kids[current.profile_id];
   const kidName = kid?.name ?? '—';
@@ -300,6 +364,32 @@ function WhyModal({ lang, onClose }: { lang: Language; onClose: () => void }) {
           <button type="button" className="btn mint" onClick={onClose}>
             {COPY.gotIt[lang]}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Quiet refill screen — shown for the brief window between "the parent
+// finished the loaded batch" and "we know whether more arrived". Plain
+// centered string + bee so it doesn't read as a separate destination,
+// just a moment of "checking".
+function RefillLoading({ lang }: { lang: Language }) {
+  return (
+    <div className="classify-stage">
+      <div className="classify-body">
+        <div className="classify-inner" style={{ textAlign: 'center' }}>
+          <MintBee size={108} expression="focus" />
+          <p
+            style={{
+              marginTop: 20,
+              color: 'var(--text-2)',
+              fontWeight: 700,
+              fontSize: 16,
+            }}
+          >
+            {COPY.classifyRefill[lang]}
+          </p>
         </div>
       </div>
     </div>

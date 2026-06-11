@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import type { Language } from '@gabee/types';
 import { requireParentPage } from '@/lib/server/auth';
 import { listPending } from '@/lib/server/services/classifications';
+import { accessibleKidIds } from '@/lib/server/kid-access';
 import { prisma } from '@/lib/server/db';
 import { ClassifyFlow, type ClassifyKidContext } from './classify-flow';
 
@@ -16,11 +17,16 @@ export default async function ClassifyPage() {
 
   const pending = await listPending(session.parentId);
 
-  // Pull kid context for whichever kids appear in the queue (≤3 in practice).
-  const kidIds = [...new Set(pending.map((p) => p.profile_id))];
-  const kids = kidIds.length
+  // Pull kid context for EVERY kid this parent has access to — not just the
+  // ones in the initial queue. Sessions that arrive mid-flow (kid playing
+  // while the parent classifies) need their name + avatar resolvable
+  // without another round-trip; otherwise the refill in classify-flow.tsx
+  // would fall back to "—" for the kid name. Cheap query: a handful of
+  // kids per parent.
+  const accessibleIds = await accessibleKidIds(session.parentId);
+  const kids = accessibleIds.length
     ? await prisma.childProfile.findMany({
-        where: { id: { in: kidIds }, parentId: session.parentId },
+        where: { id: { in: accessibleIds } },
         select: { id: true, name: true, avatar: true },
       })
     : [];
