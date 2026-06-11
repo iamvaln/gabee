@@ -29,34 +29,31 @@ const TOTAL = 5;
 // movement model is the unified turtle (forward + turn). The kid builds a flat
 // primitive program; success is the world's exact rule (see lib/turtle.ts).
 
-type PrimKey = 'forward' | 'left' | 'right' | 'pick' | 'drop' | 'penup' | 'pendown' | 'jump';
+// ABSOLUTE-direction palette: four arrows (no "forward + turn"). pick/drop for
+// the actions world. Loops/conditions live in the seed reference answer only —
+// the kid builds a FLAT arrow program (always solvable for these levels).
+type PrimKey = 'up' | 'down' | 'left' | 'right' | 'pick' | 'drop';
 const GLYPH: Record<PrimKey, string> = {
-  forward: '↑', left: '↺', right: '↻', pick: '✋', drop: '📥', penup: '✏️', pendown: '✏️', jump: '⤴️',
+  up: '⬆️', down: '⬇️', left: '⬅️', right: '➡️', pick: '✋', drop: '📥',
 };
 // Prims that show a text label under the glyph (the arrows are self-evident).
 const LABELLED: Record<string, { fr: string; en: string }> = {
   pick: { fr: 'Ramasse', en: 'Pick' },
   drop: { fr: 'Pose', en: 'Drop' },
-  penup: { fr: 'Lève', en: 'Pen up' },
-  pendown: { fr: 'Baisse', en: 'Pen down' },
-  jump: { fr: 'Saute', en: 'Jump' },
 };
 function primKey(p: Prim): PrimKey {
-  if (p.op === 'turn') return p.dir;
-  if (p.op === 'pen') return p.state === 'up' ? 'penup' : 'pendown';
-  return p.op as PrimKey;
+  return p.op === 'move' ? p.dir : p.op;
 }
 function makePrim(k: PrimKey): Prim {
-  if (k === 'left' || k === 'right') return { op: 'turn', dir: k };
-  if (k === 'penup') return { op: 'pen', state: 'up' };
-  if (k === 'pendown') return { op: 'pen', state: 'down' };
-  return { op: k } as Prim;
+  if (k === 'pick' || k === 'drop') return { op: k };
+  return { op: 'move', dir: k };
 }
 // Seed config.blocks token → kid PrimKey. `if`/`repeat` are excluded (the kid
-// builds flat programs; loops/conditions unroll).
+// builds flat arrow programs; the reference answer's loops/conditions are checked
+// by simulation, not required of the kid).
 const BLOCK_TO_PRIM: Record<string, PrimKey | null> = {
-  forward: 'forward', turn_left: 'left', turn_right: 'right', pick: 'pick', drop: 'drop',
-  pen_up: 'penup', pen_down: 'pendown', jump: 'jump', if: null, repeat: null,
+  up: 'up', down: 'down', left: 'left', right: 'right', pick: 'pick', drop: 'drop',
+  if: null, repeat: null,
 };
 function paletteFor(blocks: string[]): PrimKey[] {
   const seen = new Set<PrimKey>();
@@ -65,7 +62,7 @@ function paletteFor(blocks: string[]): PrimKey[] {
     const k = BLOCK_TO_PRIM[b];
     if (k && !seen.has(k)) { seen.add(k); out.push(k); }
   }
-  return out.length ? out : ['forward', 'left', 'right'];
+  return out.length ? out : ['up', 'down', 'left', 'right'];
 }
 
 function localKey(world: CodeWorld): string {

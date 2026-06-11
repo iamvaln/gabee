@@ -18,12 +18,9 @@ import { createPrismaClient } from '../src/client';
  */
 const MODULES = ['numbers', 'words', 'keyboard', 'code', 'translation'] as const;
 
-// ─── Compact turtle verifier (mirrors apps/kid/src/lib/turtle.ts) ────────────
-type Heading = 'N' | 'E' | 'S' | 'W';
+// ─── Compact ABSOLUTE-direction verifier (mirrors apps/kid/src/lib/turtle.ts) ──
 type Cell = { x: number; y: number };
-const ORDER: Heading[] = ['N', 'E', 'S', 'W'];
-const DELTA: Record<Heading, Cell> = { N: { x: 0, y: -1 }, E: { x: 1, y: 0 }, S: { x: 0, y: 1 }, W: { x: -1, y: 0 } };
-const turn = (h: Heading, d: 'left' | 'right') => ORDER[(ORDER.indexOf(h) + (d === 'right' ? 1 : 3)) % 4]!;
+const MOVE: Record<string, Cell> = { up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 } };
 const cell = (a: any): Cell => ({ x: a[0], y: a[1] });
 const eq = (a: Cell, b: Cell) => a.x === b.x && a.y === b.y;
 function segKey(a: Cell, b: Cell): string {
@@ -46,42 +43,28 @@ function solves(world: string, config: any, program: any[]): boolean {
   const c = config ?? {};
   const w = c.grid?.w ?? 5, h = c.grid?.h ?? 5;
   let pos: Cell = c.start ? cell(c.start) : { x: 0, y: 0 };
-  let heading: Heading = c.facing ?? 'E';
-  let carrying: number | null = null, penDown = true, wasted = 0;
+  let carrying: number | null = null, wasted = 0;
   const items: Cell[] = (c.items ?? []).map(cell);
-  const walls: Cell[] = (c.walls ?? []).map(cell);
-  const obstacles: Cell[] = (c.obstacles ?? []).map(cell);
+  // Absolute content stores blockers under `walls` (older content used `obstacles`).
+  const walls: Cell[] = [...(c.walls ?? []), ...(c.obstacles ?? [])].map(cell);
   const inGrid = (p: Cell) => p.x >= 0 && p.x < w && p.y >= 0 && p.y < h;
-  const isWall = (p: Cell) => walls.some((q) => eq(q, p));
-  const isObs = (p: Cell) => obstacles.some((q) => eq(q, p));
-  const blocked = (p: Cell) => !inGrid(p) || isWall(p) || isObs(p);
-  const ahead = (n = 1): Cell => ({ x: pos.x + DELTA[heading].x * n, y: pos.y + DELTA[heading].y * n });
+  const blocked = (p: Cell) => !inGrid(p) || walls.some((q) => eq(q, p));
   const drawn: string[] = [];
-  const cond = (name: string) => {
-    const n = ahead();
-    if (name === 'wall_ahead') return blocked(n);
-    if (name === 'cell_occupied') return isObs(n);
-    if (name === 'can_pick') return items.some((it, i) => i !== carrying && eq(it, pos));
-    return false;
-  };
   const exec = (ops: any[]): void => {
     for (const op of ops) {
-      if (op.op === 'turn') heading = turn(heading, op.dir);
-      else if (op.op === 'forward') {
-        const n = ahead();
+      if (op.op === 'move') {
+        const d = MOVE[op.dir]!; const n = { x: pos.x + d.x, y: pos.y + d.y };
         if (blocked(n)) wasted++;
-        else { if (world === 'draw' && penDown) drawn.push(segKey(pos, n)); pos = n; if (carrying !== null) items[carrying] = { ...pos }; }
-      } else if (op.op === 'jump') {
-        const n = ahead(2);
-        if (!inGrid(n) || isWall(n) || isObs(n)) wasted++;
-        else { pos = n; if (carrying !== null) items[carrying] = { ...pos }; }
+        else { if (world === 'draw') drawn.push(segKey(pos, n)); pos = n; if (carrying !== null) items[carrying] = { ...pos }; }
       } else if (op.op === 'pick') {
         const i = items.findIndex((it, j) => j !== carrying && eq(it, pos));
         if (carrying !== null || i < 0) wasted++; else carrying = i;
       } else if (op.op === 'drop') { if (carrying === null) wasted++; else carrying = null; }
-      else if (op.op === 'pen') penDown = op.state === 'down';
       else if (op.op === 'repeat') { for (let i = 0; i < op.n; i++) exec(op.body); }
-      else if (op.op === 'if') exec(cond(op.cond) ? op.then : (op.else ?? []));
+      else if (op.op === 'if') {
+        const d = MOVE[String(op.cond).split('_')[1] ?? ''] ?? { x: 0, y: 0 };
+        exec(blocked({ x: pos.x + d.x, y: pos.y + d.y }) ? op.then : (op.else ?? []));
+      }
     }
   };
   try { exec(program ?? []); } catch { return false; }

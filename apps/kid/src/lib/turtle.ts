@@ -1,31 +1,29 @@
 /**
- * Shared turtle engine for the three Code worlds (Curriculum v0.1 §4):
+ * Code engine for the three worlds (Curriculum v0.1 §4), ABSOLUTE-direction model:
  *   maze    — reach the star, finishing exactly on it
- *   draw    — trace the target shape exactly (pen up/down for gaps)
- *   actions — pick up items and drop them on their targets (jump over obstacles)
+ *   draw    — trace the target shape exactly (pen always down)
+ *   actions — pick an item and drop it on its target
  *
- * One movement model across all three: forward + turn-left + turn-right with a
- * heading, plus pen (draw) and jump (actions). Coordinates are [x,y], origin
- * top-left, x→right, y→down.
+ * Movement is four ABSOLUTE arrows — up / down / left / right — not "forward + turn"
+ * (turning was confusing for young kids; relative heading returns at higher levels).
+ * Coordinates are [x,y], origin top-left, x→right, y→down.
  *
- * The kid builds a FLAT program of primitive ops (no repeat/if — those stay in
- * the seed `answer` and unroll). `runProgram` is nonetheless a FULL interpreter
- * (it executes repeat/if too) so the same code verifies the seed reference
- * programs. The per-puzzle palette comes from `config.blocks`.
+ * The kid builds a FLAT program of move/pick/drop. `runProgram` is a FULL interpreter
+ * (it also executes `repeat` and `if wall_<dir>`, used by the seed reference answers
+ * at the loop/condition levels) so the same code verifies those reference programs.
+ * The per-puzzle palette comes from `config.blocks`.
  */
 
 export type Heading = 'N' | 'E' | 'S' | 'W';
+export type MoveDir = 'up' | 'down' | 'left' | 'right';
 export type Cell = { x: number; y: number };
 export type CodeWorld = 'maze' | 'draw' | 'actions';
 
-/** Flat primitives the kid can place (palette is derived from config.blocks). */
+/** Flat primitives the kid can place (palette derived from config.blocks). */
 export type Prim =
-  | { op: 'forward' }
-  | { op: 'turn'; dir: 'left' | 'right' }
+  | { op: 'move'; dir: MoveDir }
   | { op: 'pick' }
-  | { op: 'drop' }
-  | { op: 'pen'; state: 'up' | 'down' }
-  | { op: 'jump' };
+  | { op: 'drop' };
 
 /** Full op set, including the control structures the seed `answer` may use. */
 export type Op =
@@ -33,21 +31,14 @@ export type Op =
   | { op: 'repeat'; n: number; body: Op[] }
   | { op: 'if'; cond: string; then: Op[]; else?: Op[] };
 
-const ORDER: Heading[] = ['N', 'E', 'S', 'W'];
-const DELTA: Record<Heading, Cell> = {
-  N: { x: 0, y: -1 }, E: { x: 1, y: 0 }, S: { x: 0, y: 1 }, W: { x: -1, y: 0 },
+const MOVE_DELTA: Record<MoveDir, Cell> = {
+  up: { x: 0, y: -1 }, down: { x: 0, y: 1 }, left: { x: -1, y: 0 }, right: { x: 1, y: 0 },
 };
+/** Last-move direction → bee facing (just for the on-grid arrow flair). */
+const DIR_TO_HEADING: Record<MoveDir, Heading> = { up: 'N', down: 'S', left: 'W', right: 'E' };
 /** Heading → CSS rotation (deg) for the on-grid heading arrow (E = 0°). */
 export const HEADING_DEG: Record<Heading, number> = { E: 0, S: 90, W: 180, N: 270 };
 
-export function turn(h: Heading, dir: 'left' | 'right'): Heading {
-  const i = ORDER.indexOf(h);
-  return ORDER[(i + (dir === 'right' ? 1 : 3)) % 4]!;
-}
-function ahead(pos: Cell, h: Heading, n = 1): Cell {
-  const d = DELTA[h];
-  return { x: pos.x + d.x * n, y: pos.y + d.y * n };
-}
 function eq(a: Cell, b: Cell): boolean {
   return a.x === b.x && a.y === b.y;
 }
@@ -104,7 +95,7 @@ export function parsePuzzle(world: CodeWorld, config: unknown): Puzzle {
     w: grid.w ?? 5,
     h: grid.h ?? 5,
     start: c.start ? toCell(c.start) : { x: 0, y: 0 },
-    facing: (c.facing as Heading) ?? 'E',
+    facing: 'S',
     blocks: (c.blocks as string[]) ?? [],
   };
   if (world === 'maze') {
@@ -124,7 +115,8 @@ export function parsePuzzle(world: CodeWorld, config: unknown): Puzzle {
   } else {
     base.items = ((c.items as unknown[]) ?? []).map(toCell);
     base.targets = ((c.targets as unknown[]) ?? []).map(toCell);
-    base.obstacles = ((c.obstacles as unknown[]) ?? []).map(toCell);
+    // Absolute actions store blockers under `walls`; older content used `obstacles`.
+    base.obstacles = ((c.walls as unknown[]) ?? (c.obstacles as unknown[]) ?? []).map(toCell);
   }
   return base;
 }
@@ -146,26 +138,24 @@ export interface RunResult {
 }
 
 /**
- * Execute a program (flat primitives, or the full op set with repeat/if) against
- * a puzzle, recording one frame per executed primitive for animation, and
- * computing per-world success.
+ * Execute a program (flat move/pick/drop, or the full op set with repeat/if)
+ * against a puzzle, recording one frame per executed primitive for animation,
+ * and computing per-world success.
  *
- * Exactness: maze finishes ON the goal with no wall/edge bump; draw's pen-down
- * segments equal the target exactly (each drawn once, none off-shape); actions
- * delivers every item to a target with empty hands (wasted moves tolerated —
- * clean loops carry a trailing repositioning step).
+ * Exactness: maze finishes ON the goal with no wall/edge bump; draw's segments
+ * (pen always down) equal the target exactly (each once, none off-shape); actions
+ * delivers the item onto its target with empty hands (wasted moves tolerated).
  */
 export function runProgram(puzzle: Puzzle, program: Op[]): RunResult {
   let pos = { ...puzzle.start };
   let heading = puzzle.facing;
   let carrying: number | null = null;
-  let penDown = true;
+  const penDown = true;
   const items = (puzzle.items ?? []).map((c) => ({ ...c }));
   const walls = puzzle.walls ?? [];
   const obstacles = puzzle.obstacles ?? [];
-  const isWall = (c: Cell) => walls.some((w) => eq(w, c));
-  const isObstacle = (c: Cell) => obstacles.some((o) => eq(o, c));
-  const blocked = (c: Cell) => !inGrid(c, puzzle.w, puzzle.h) || isWall(c) || isObstacle(c);
+  const blocked = (c: Cell) =>
+    !inGrid(c, puzzle.w, puzzle.h) || walls.some((w) => eq(w, c)) || obstacles.some((o) => eq(o, c));
 
   const drawn: Seg[] = [];
   const drawnKeys: string[] = [];
@@ -176,36 +166,19 @@ export function runProgram(puzzle: Puzzle, program: Op[]): RunResult {
   });
   snapshot(); // initial
 
-  const cond = (name: string): boolean => {
-    const nxt = ahead(pos, heading);
-    if (name === 'wall_ahead') return blocked(nxt);
-    if (name === 'cell_occupied') return isObstacle(nxt);
-    if (name === 'can_pick') return items.some((it, i) => i !== carrying && eq(it, pos));
-    return false;
-  };
-
   const exec = (ops: Op[]): void => {
     for (const op of ops) {
       switch (op.op) {
-        case 'turn':
-          heading = turn(heading, op.dir);
-          snapshot();
-          break;
-        case 'forward': {
-          const nxt = ahead(pos, heading);
+        case 'move': {
+          const d = MOVE_DELTA[op.dir];
+          const nxt = { x: pos.x + d.x, y: pos.y + d.y };
+          heading = DIR_TO_HEADING[op.dir];
           if (blocked(nxt)) { wasted += 1; }
           else {
-            if (puzzle.world === 'draw' && penDown) { drawn.push({ a: { ...pos }, b: { ...nxt } }); drawnKeys.push(segKey(pos, nxt)); }
+            if (puzzle.world === 'draw') { drawn.push({ a: { ...pos }, b: { ...nxt } }); drawnKeys.push(segKey(pos, nxt)); }
             pos = nxt;
             if (carrying !== null) items[carrying] = { ...pos };
           }
-          snapshot();
-          break;
-        }
-        case 'jump': {
-          const nxt = ahead(pos, heading, 2);
-          if (!inGrid(nxt, puzzle.w, puzzle.h) || isWall(nxt) || isObstacle(nxt)) { wasted += 1; }
-          else { pos = nxt; if (carrying !== null) items[carrying] = { ...pos }; }
           snapshot();
           break;
         }
@@ -221,16 +194,16 @@ export function runProgram(puzzle: Puzzle, program: Op[]): RunResult {
           else carrying = null;
           snapshot();
           break;
-        case 'pen':
-          penDown = op.state === 'down';
-          snapshot();
-          break;
         case 'repeat':
           for (let i = 0; i < op.n; i++) exec(op.body);
           break;
-        case 'if':
-          exec(cond(op.cond) ? op.then : (op.else ?? []));
+        case 'if': {
+          const m = op.cond.split('_')[1] as MoveDir | undefined;
+          const d = m ? MOVE_DELTA[m] : { x: 0, y: 0 };
+          const isBlocked = blocked({ x: pos.x + d.x, y: pos.y + d.y });
+          exec(isBlocked ? op.then : (op.else ?? []));
           break;
+        }
       }
     }
   };
