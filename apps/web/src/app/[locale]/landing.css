@@ -1178,9 +1178,19 @@ html.landing-html {
   }
 }
 @media (max-width: 860px) {
-  .ltop-links,
-  .ltop-signin {
+  /* Anchor links move into the burger drawer; sign-in stays visible as
+     a compact text link in the action bar so visitors don't have to
+     hunt through the hamburger to find the way to log in. The original
+     rule hid it alongside the nav links, which is the bug the user
+     flagged ("sign in disappears on mobile"). */
+  .ltop-links {
     display: none;
+  }
+  .ltop-signin {
+    /* Tighter so it fits alongside the lang toggle + Sign up CTA +
+       burger on narrow phones. Stays a text link, just compact. */
+    padding: 6px 8px;
+    font-size: 13px;
   }
   .ltop-burger {
     display: flex;
@@ -1188,6 +1198,14 @@ html.landing-html {
   .ltop-drawer {
     display: flex;
   }
+  .ltop-actions { gap: 8px; }
+}
+
+/* Very narrow phones — hide the inline lang toggle (it lives in the
+   drawer too) so the action bar fits sign-in + Sign up + burger without
+   wrapping. */
+@media (max-width: 480px) {
+  .ltop-actions > .lang-toggle { display: none; }
   .hero-inner {
     grid-template-columns: 1fr;
     text-align: center;
