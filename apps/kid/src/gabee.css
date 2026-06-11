@@ -785,10 +785,12 @@ a:focus-visible,
   .home-greeting { flex-wrap: wrap; row-gap: 12px; }
   .home-stats { width: 100%; flex-wrap: wrap; }
   .home-screen { padding: 20px 16px 24px; gap: 16px; }
-  .session-body { grid-template-columns: 1fr; padding: 16px 16px 20px; gap: 16px; }
-  .session-aside { flex-direction: row; gap: 16px; }
+  /* Session body is now stacked by default (no grid override needed). The
+     prompt + big-number shrink via clamp() at the base rule, so the only
+     phone-specific tweak left is a smaller min-height ceiling to keep
+     short laptops happy. */
   .session-progress { padding: 12px 16px; }
-  .session-prompt { padding: 20px; min-height: 140px; }
+  .session-prompt { padding: 20px; min-height: 120px; }
   .session-prompt .big-number { font-size: 64px; }
   .levelmap-hero { padding: 18px 20px 22px; }
   .levelmap-hero h1 { font-size: 26px; }
@@ -1195,36 +1197,45 @@ a:focus-visible,
   border: 2px solid var(--color-ink);
 }
 
+/* Session body — STACKED column at all viewports by default. The bee
+   aside sits at the bottom-left as an inline row, not a right-column.
+   This matches the design (handoff §B): prompt card grows to fill the
+   width, answers in a 2-col grid below, bee + bubble anchored bottom-
+   left. Only ≥1100px gets the optional right-column aside via a media
+   query at the end of this section. */
 .session-body {
   flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 200px;
-  /* Fluid gap + vertical padding: shrink as the viewport gets shorter so
-     the body keeps a sane breathing room without ever forcing a scroll. */
-  gap: clamp(16px, 2.5vh, 24px);
-  padding: clamp(16px, 3vh, 28px) clamp(20px, 4vw, 48px) clamp(20px, 3.5vh, 36px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 3vw, 22px);
+  padding: clamp(8px, 2vw, 18px) var(--gutter) clamp(16px, 3vw, 26px);
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
 }
 .session-stage {
   display: flex;
   flex-direction: column;
-  gap: clamp(12px, 2vh, 24px);
+  gap: clamp(12px, 2.5vw, 20px);
   min-height: 0;
-  overflow: hidden;
+  flex: 1;
 }
+/* Chunky prompt card — 3px module-tinted border + offset shadow gives
+   the same press-down language as buttons + tiles. Falls back to ink
+   border when no module is set (e.g. the welcome screen). */
 .session-prompt {
-  background: var(--surface-muted);
+  background: var(--surface);
+  border: 3px solid var(--module, var(--color-ink));
   border-radius: var(--radius-xl);
-  padding: clamp(16px, 3vh, 32px);
+  box-shadow: 0 6px 0 var(--module, var(--color-ink));
+  padding: clamp(20px, 4vw, 36px);
   display: flex;
   align-items: center;
   justify-content: center;
   /* No floor: let the prompt area shrink so the answers + feedback strip
      always have room. Content scales via clamp() on .big-number below. */
-  min-height: 0;
+  min-height: clamp(140px, 26vw, 220px);
   text-align: center;
-  flex: 1 1 0;
+  flex: 1 1 auto;
   overflow: hidden;
 }
 .session-prompt .big-number {
@@ -1237,35 +1248,72 @@ a:focus-visible,
   white-space: nowrap;
   line-height: 1;
 }
+/* Bee aside — anchored bottom-left of the session-body column. Bee on
+   the left, coach speech bubble to its right with a tail pointing down-
+   left at the bee. Sized small on phones so it doesn't compete with the
+   answers; grows modestly on wider screens. */
 .session-aside {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: clamp(8px, 2vw, 14px);
+  align-self: flex-start;
+  margin-top: auto;
+  padding-top: clamp(6px, 1vh, 12px);
+  flex-shrink: 0;
 }
+.session-aside .bee { width: clamp(64px, 14vw, 96px) !important; height: auto !important; flex-shrink: 0; }
 .bee-coach-text {
   background: var(--surface);
-  border: 1.5px solid var(--border);
+  border: 3px solid var(--color-ink);
   border-radius: var(--radius-lg);
-  padding: 12px 14px;
-  font-weight: 700;
-  font-size: 14px;
-  box-shadow: var(--shadow-sm);
+  padding: clamp(8px, 2vw, 12px) clamp(12px, 2.5vw, 16px);
+  font-weight: 800;
+  font-size: clamp(13px, 2.6vw, 16px);
+  box-shadow: 0 4px 0 var(--color-ink);
   position: relative;
   text-align: center;
 }
 .bee-coach-text::after {
   content: '';
   position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
+  bottom: -10px;
+  left: 10px;
+  transform: rotate(45deg);
   width: 14px;
   height: 14px;
   background: var(--surface);
-  border-right: 1.5px solid var(--border);
-  border-bottom: 1.5px solid var(--border);
+  border-right: 3px solid var(--color-ink);
+  border-bottom: 3px solid var(--color-ink);
+  background: var(--surface);
+}
+
+/* ≥1100px: optional right-column aside. The bee sits to the right of
+   the prompt area instead of below it. Below 1100px we keep the stack
+   so the bee stays out of the answers' way. */
+@media (min-width: 1100px) {
+  .session-body { display: grid; grid-template-columns: 1fr minmax(180px, 220px); align-items: stretch; gap: clamp(16px, 2vw, 24px); }
+  .session-stage { grid-column: 1; }
+  .session-aside {
+    grid-column: 2;
+    grid-row: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    margin-top: 0;
+    padding-top: 0;
+  }
+  .session-aside .bee-coach-text::after {
+    bottom: auto;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 3px solid var(--color-ink);
+    border-top: 3px solid var(--color-ink);
+  }
 }
 
 .session-answers {
