@@ -1,7 +1,10 @@
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Bee } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
 import { MODULES } from '../content/modules';
+import { api } from '../lib/api';
+import { subModeHint } from '../lib/nextLesson';
 import { useStore } from '../store';
 
 // The two Code sub-modes the kid app exposes (product §4.4). Both are seeded and playable:
@@ -51,6 +54,14 @@ export function CodeHub({
 
   const m = MODULES.find((x) => x.id === 'code')!;
 
+  // Bundle fetch drives the resume-hint chip on each tile. Code's progress
+  // sits in localStorage (lib/codeTrack), the subModeHint helper already
+  // reads from there for the 'code' module.
+  const { data: bundle } = useQuery({
+    queryKey: ['bundle', 'code'],
+    queryFn: () => api.getBundle('code'),
+  });
+
   return (
     <div className="levelmap-screen" data-module="code">
       <Chrome lang={lang} setLang={setLang} title={m.label[lang]} onBack={onBack} onHome={onHome} profile={profile} />
@@ -63,20 +74,32 @@ export function CodeHub({
       </div>
       <div className="level-body">
         <div className="module-grid">
-          {SUB_MODES.map((s) => (
-            <button
-              key={s.id}
-              className="module-tile"
-              data-module="code"
-              onClick={() => onSubMode(s.id)}
-            >
-              <div className="icon" style={{ color: 'white', fontSize: 30, lineHeight: 1 }}>{s.icon}</div>
-              <div>
-                <div className="label">{s.label[lang]}</div>
-                <div className="sub">{s.sub[lang]}</div>
-              </div>
-            </button>
-          ))}
+          {SUB_MODES.map((s) => {
+            const hint = profile ? subModeHint(bundle, profile, 'code', s.id, lang) : null;
+            return (
+              <button
+                key={s.id}
+                className="module-tile"
+                data-module="code"
+                onClick={() => onSubMode(s.id)}
+              >
+                <div className="icon" style={{ color: 'white', fontSize: 30, lineHeight: 1 }}>{s.icon}</div>
+                <div>
+                  <div className="label">{s.label[lang]}</div>
+                  <div className="sub">{s.sub[lang]}</div>
+                </div>
+                {hint && (
+                  <span className="tile-hint" data-state={hint.kind}>
+                    {hint.kind === 'resume'
+                      ? `▸ ${t('subhubResume')} · ${t('level')} ${hint.level}`
+                      : hint.kind === 'start'
+                        ? `✦ ${t('subhubStart')}`
+                        : `★ ${t('subhubDone')}`}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
