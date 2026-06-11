@@ -163,27 +163,26 @@ a { color: inherit; }
 }
 .topbar .brand { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; cursor: pointer; }
 .topbar-nav { display: flex; align-items: center; gap: 2px; margin-left: 10px; }
+/* Nav link — calmer pill background on active, no more bottom-bar
+   underline. Matches the redesign brief's "lighter, calmer cards"
+   approach: hover + active are subtle tints, not strong colour swaps. */
 .nav-link {
   position: relative;
   border: 0; background: transparent;
-  padding: 9px 15px;
+  padding: 9px 14px;
   border-radius: var(--r-sm);
   font-weight: 800; font-size: 14.5px;
   color: var(--text-2);
   cursor: pointer;
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
   transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
 }
-.nav-link:hover { background: var(--surface-3); color: var(--ink); }
-.nav-link.active { color: var(--ink); }
-.nav-link.active::after {
-  content: ''; position: absolute; left: 15px; right: 15px; bottom: -1px; height: 3px;
-  border-radius: 3px 3px 0 0; background: var(--mint);
-}
+.nav-link:hover { background: var(--surface-2); color: var(--ink); }
+.nav-link.active { background: var(--mint-soft); color: var(--mint-deep); }
 /* classification, when queue non-empty: coral */
 .nav-link.attn { color: var(--coral-deep); }
-.nav-link.attn.active::after { background: var(--coral); }
 .nav-link.attn:hover { background: var(--coral-soft); }
+.nav-link.attn.active { background: var(--coral-soft); color: var(--coral-deep); }
 .nav-count {
   font-size: 12px; font-weight: 900; min-width: 20px; height: 20px; padding: 0 6px;
   display: inline-flex; align-items: center; justify-content: center;
@@ -266,10 +265,14 @@ a { color: inherit; }
 .tabbar { display: none; }
 
 /* ===================== SCROLL BODY ===================== */
-.scroll { flex: 1; overflow-y: auto; }
+.scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* Fluid page padding — clamp() shrinks the 28px horizontal padding down
+   to 16px on phones, so 360-wide screens don't waste 56px of content
+   width on outer chrome. Vertical padding scales similarly. */
 .page {
   width: 100%; max-width: var(--maxw);
-  margin: 0 auto; padding: 30px 28px 64px;
+  margin: 0 auto;
+  padding: clamp(20px, 4vw, 34px) clamp(16px, 4vw, 32px) clamp(48px, 8vw, 96px);
 }
 .page-wide { max-width: 1200px; }
 
@@ -483,7 +486,11 @@ a { color: inherit; }
 .settings-content { min-width: 0; }
 .settings-content > .card + .card { margin-top: 18px; }
 
-@media (max-width: 760px) {
+/* Aligned with the main nav-swap breakpoint at 860px so the settings
+   tab rail flips to a horizontal scroll at the same width as the top
+   nav collapses to the bottom tabbar — no awkward "half-collapsed"
+   state between 760 and 860. */
+@media (max-width: 860px) {
   .settings-layout { grid-template-columns: 1fr; gap: 16px; }
   .settings-rail { position: static; flex-direction: row; overflow-x: auto; padding-bottom: 4px; gap: 6px; }
   .settings-rail .sr-link { white-space: nowrap; flex-shrink: 0; }
@@ -1040,19 +1047,25 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .device-main .dm-label { font-weight: 800; font-size: 14.5px; }
 .device-main .dm-sub { font-size: 12.5px; color: var(--text-3); font-weight: 700; margin-top: 2px; }
 
-/* ===================== RESPONSIVE — phone ===================== */
-@media (max-width: 760px) {
+/* ===================== RESPONSIVE — phone + small tablet ===================== */
+/* 860px breakpoint covers iPad portrait (768px) AND landscape phones in
+   one cleanly. Below this, the top nav collapses to the bottom tabbar,
+   home grid stacks to 1fr, kid cards stack to 1fr, etc. Above 860 the
+   desktop layout kicks back in. (Was 760, which left iPad portrait with
+   a cramped top nav.) */
+@media (max-width: 860px) {
   :root { --top-h: 60px; }
   .topbar { padding: 0 16px; gap: 10px; }
   .topbar-nav { display: none; }
   .topbar .search { display: none; }
-  .page { padding: 20px 16px 96px; }
+  /* extra bottom padding for the tabbar's footprint */
+  .page { padding-bottom: clamp(88px, 18vw, 110px); }
   .home-grid { grid-template-columns: 1fr; }
   .agg-tiles { grid-template-columns: 1fr 1fr; }
   .kid-cards { grid-template-columns: 1fr; }
   .input-row { flex-direction: column; gap: 0; }
-  .home-hero h1, .page-head h1 { font-size: 25px; }
-  .cc-title { font-size: 25px; }
+  .home-hero h1, .page-head h1 { font-size: clamp(22px, 5.5vw, 26px); }
+  .cc-title { font-size: clamp(22px, 5.5vw, 26px); }
   .cc-bee { display: none; }
   .auth-stage { grid-template-columns: 1fr; }
   .auth-aside { display: none; }
