@@ -59,30 +59,30 @@ export function Coffre({ onSettings }: { onSettings?: () => void }) {
         </div>
       </div>
 
-      <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>
+      <h2 className="chest-h2">
         {t('coffre.unlocked', { count: `${unlocked.length}/${unlocked.length + locked.length}` })}
       </h2>
-      <div style={gridStyle}>
+      <div className="trophy-grid">
         {unlocked.map((m) => (
-          <div key={m.id} style={tileStyle} title={m.description[lang]}>
-            <div style={iconLg}>{m.icon}</div>
-            <div style={titleStyle}>{m.title[lang]}</div>
-            <div style={descStyle}>{m.description[lang]}</div>
+          <div key={m.id} className="trophy" title={m.description[lang]}>
+            <div className="t-ic">{m.icon}</div>
+            <div className="t-title">{m.title[lang]}</div>
+            <div className="t-desc">{m.description[lang]}</div>
           </div>
         ))}
       </div>
 
       {locked.length > 0 && (
         <>
-          <h2 style={{ fontSize: 18, fontWeight: 800, marginTop: 18, marginBottom: 8, opacity: 0.7 }}>
+          <h2 className="chest-h2 muted" style={{ marginTop: 18 }}>
             {t('coffre.stillToUnlock')}
           </h2>
-          <div style={gridStyle}>
+          <div className="trophy-grid">
             {locked.map((m) => (
-              <div key={m.id} style={{ ...tileStyle, opacity: 0.45, background: '#F1F5F9' }} title={m.description[lang]}>
-                <div style={{ ...iconLg, filter: 'grayscale(1)' }}>{m.icon}</div>
-                <div style={titleStyle}>{m.title[lang]}</div>
-                <div style={descStyle}>{m.description[lang]}</div>
+              <div key={m.id} className="trophy locked" title={m.description[lang]}>
+                <div className="t-ic">{m.icon}</div>
+                <div className="t-title">{m.title[lang]}</div>
+                <div className="t-desc">{m.description[lang]}</div>
               </div>
             ))}
           </div>
@@ -91,31 +91,3 @@ export function Coffre({ onSettings }: { onSettings?: () => void }) {
     </div>
   );
 }
-
-const gridStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-  gap: 10,
-};
-const tileStyle: React.CSSProperties = {
-  background: 'white',
-  border: '1px solid #E2E8F0',
-  borderRadius: 14,
-  padding: 12,
-  textAlign: 'center',
-};
-const iconLg: React.CSSProperties = {
-  fontSize: 36,
-  lineHeight: 1,
-  marginBottom: 6,
-};
-const titleStyle: React.CSSProperties = {
-  fontSize: 13,
-  fontWeight: 800,
-  marginBottom: 4,
-};
-const descStyle: React.CSSProperties = {
-  fontSize: 11,
-  opacity: 0.75,
-  lineHeight: 1.35,
-};

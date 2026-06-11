@@ -20,20 +20,20 @@
   /* feedback */
   --feedback-correct: #3F7A2E;
   --feedback-retry: #E5322B;
-  /* radius */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  /* radius — aligned to design handoff (kid.css) */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 30px;
   --radius-pill: 9999px;
-  /* shadow */
+  /* shadow — aligned to design handoff */
   --shadow-sm: 0 1px 2px rgba(32, 36, 46, .06);
-  --shadow-md: 0 6px 16px rgba(32, 36, 46, .10);
-  --shadow-lg: 0 12px 32px rgba(32, 36, 46, .12);
-  /* motion */
-  --motion-fast: 120ms;
-  --motion-base: 200ms;
-  --motion-slow: 320ms;
+  --shadow-md: 0 8px 20px rgba(32, 36, 46, .10);
+  --shadow-lg: 0 16px 40px rgba(32, 36, 46, .14);
+  /* motion — aligned to design handoff */
+  --motion-fast: 130ms;
+  --motion-base: 220ms;
+  --motion-slow: 340ms;
   --easing: cubic-bezier(.2, .8, .2, 1);
   --bounce: cubic-bezier(.34, 1.56, .64, 1);
   /* press-down shadow (used for chunky buttons / tiles) */
@@ -2028,4 +2028,44 @@ a:focus-visible,
   padding: 32px;
   font-weight: 700;
   opacity: 0.6;
+}
+
+/* ── Coffre / trophy room (design handoff: kid.css §chest) ──────────────────── */
+.chest-h2 { margin: 6px 0 -4px; font-weight: 800; font-size: clamp(17px, 3.4vw, 22px); }
+.chest-h2.muted { color: var(--text-muted); }
+.trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
+.trophy {
+  background: var(--surface); border: 3px solid var(--color-ink); border-radius: var(--radius-xl);
+  box-shadow: 0 5px 0 var(--color-ink); padding: 16px 12px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.trophy .t-ic { font-size: 40px; line-height: 1; }
+.trophy .t-title { font-weight: 800; font-size: 14px; }
+.trophy .t-desc { font-weight: 700; font-size: 11.5px; color: var(--text-muted); line-height: 1.35; }
+.trophy.locked { background: var(--surface-muted); border-color: var(--border); box-shadow: none; opacity: .6; }
+.trophy.locked .t-ic { filter: grayscale(1); }
+
+/* ── Bottom nav (design handoff: kid.css §kid-bottom-nav) ────────────────────── */
+.kid-bottom-nav {
+  flex-shrink: 0;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  background: var(--surface);
+  border-top: 2.5px solid var(--color-ink);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  z-index: 30;
+}
+.kbn-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 10px 4px 8px; background: transparent; border: 0; cursor: pointer;
+  color: var(--text-muted); position: relative;
+  transition: color var(--motion-fast);
+}
+.kbn-btn .kbn-ic { display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center; }
+.kbn-btn .kbn-lab { font-size: 12px; font-weight: 700; }
+.kbn-btn.on { color: var(--color-ink); }
+.kbn-btn.on .kbn-lab { font-weight: 800; }
+.kbn-btn.on .kbn-ic { color: var(--color-brand); }
+.kbn-btn.on::before {
+  content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 40px; height: 4px; border-radius: 0 0 4px 4px; background: var(--color-brand);
 }

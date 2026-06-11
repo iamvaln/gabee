@@ -28,11 +28,7 @@ export function BottomNav({
 }) {
   const { t } = useTranslation();
   return (
-    <nav
-      className="kid-bottom-nav"
-      aria-label={t('nav.main')}
-      style={navStyle}
-    >
+    <nav className="kid-bottom-nav" aria-label={t('nav.main')}>
       <NavBtn active={tab === 'apprendre'} onClick={() => onChange('apprendre')} label={LABEL.apprendre[lang]}>
         <PadIcon />
       </NavBtn>
@@ -60,54 +56,16 @@ function NavBtn({
   return (
     <button
       type="button"
+      className={`kbn-btn${active ? ' on' : ''}`}
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       aria-label={label}
-      style={{ ...btnStyle, color: active ? 'var(--color-brand, #FACC15)' : '#475569' }}
     >
-      <span style={iconWrap}>{children}</span>
-      <span style={{ ...labelStyle, fontWeight: active ? 800 : 600 }}>{label}</span>
+      <span className="kbn-ic">{children}</span>
+      <span className="kbn-lab">{label}</span>
     </button>
   );
 }
-
-const navStyle: React.CSSProperties = {
-  position: 'sticky',
-  bottom: 0,
-  left: 0,
-  right: 0,
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  background: 'white',
-  borderTop: '1px solid #E2E8F0',
-  paddingTop: 6,
-  paddingBottom: 'calc(6px + env(safe-area-inset-bottom, 0px))',
-  zIndex: 50,
-};
-
-const btnStyle: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: 2,
-  padding: '6px 4px',
-  background: 'transparent',
-  border: 0,
-  cursor: 'pointer',
-};
-
-const iconWrap: React.CSSProperties = {
-  display: 'inline-flex',
-  width: 28,
-  height: 28,
-  alignItems: 'center',
-  justifyContent: 'center',
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: 12,
-  letterSpacing: 0.2,
-};
 
 function PadIcon() {
   // Game-pad — "Apprendre" is the play tab.
