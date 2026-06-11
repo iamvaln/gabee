@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Language, PendingSession, InitiationLabel, PendingSessionsResponse } from '@gabee/types';
@@ -111,24 +111,32 @@ export function ClassifyFlow({ initial, kids, lang }: Props) {
   const refilling = !current && refillState === 'fetching';
 
   // When the parent runs past the loaded batch, poll once for any sessions
-  // that arrived since the page loaded. The refill is gated on refillState
-  // === 'idle' so each "exhausted" point triggers at most one fetch; a
-  // subsequent POST that re-empties the queue still won't re-poll (we'd
-  // have set 'exhausted' the first time around).
+  // that arrived since the page loaded. We use a ref (not a closure-scoped
+  // cancel flag) to gate "did we already fire a refill for THIS exhaustion
+  // event" — using a flag would race with the effect cleanup that fires on
+  // every re-render: setRefillState('fetching') triggers a re-render, the
+  // cleanup sets cancelled=true, and the in-flight fetch then refuses to
+  // update state on response. That's the "stuck on refill loading forever"
+  // bug. The ref resets to false whenever we have items again, so each
+  // future emptying can refill once.
+  const refillFiredRef = useRef(false);
   useEffect(() => {
-    if (current) return;
-    if (refillState !== 'idle') return;
+    if (current) {
+      refillFiredRef.current = false;
+      return;
+    }
+    if (refillFiredRef.current) return;
+    if (refillState === 'exhausted') return;
+    refillFiredRef.current = true;
     setRefillState('fetching');
-    let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         const res = await fetch('/api/classifications/pending');
         if (!res.ok) {
-          if (!cancelled) setRefillState('exhausted');
+          setRefillState('exhausted');
           return;
         }
         const body = (await res.json()) as PendingSessionsResponse;
-        if (cancelled) return;
         // Dedupe against what's already in the queue — POSTs we just did may
         // still appear if the read replica hasn't caught up.
         const seen = new Set(queue.map((q) => q.session_id));
@@ -140,12 +148,9 @@ export function ClassifyFlow({ initial, kids, lang }: Props) {
         setQueue((q) => [...q, ...fresh]);
         setRefillState('idle');
       } catch {
-        if (!cancelled) setRefillState('exhausted');
+        setRefillState('exhausted');
       }
     })();
-    return () => {
-      cancelled = true;
-    };
   }, [current, queue, refillState]);
 
   const advance = useCallback(() => {
