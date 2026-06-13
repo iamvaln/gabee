@@ -8,6 +8,11 @@ import { useStore } from '../store';
 import { listCachedBundles, refreshIfNewer } from '../lib/bundles';
 import { useInstall } from '../lib/install';
 
+// Release version, baked at build time from the git tag (release.yml passes
+// VITE_APP_VERSION=${github.ref_name} → Dockerfile ENV → Vite inlines it).
+// Falls back to 'dev' for local builds where the var is unset.
+const APP_VERSION = (import.meta.env.VITE_APP_VERSION as string | undefined) ?? 'dev';
+
 interface BundleRow {
   module: Module;
   version: number | null;
@@ -168,6 +173,20 @@ export function Settings({
                 </div>
               ))
             )}
+          </div>
+
+          <div
+            style={{
+              marginTop: 20, padding: 12, borderRadius: 12,
+              background: '#F8FAFC', border: '1px solid #E2E8F0',
+              fontSize: 14, color: '#0f172a',
+            }}
+          >
+            <strong style={{ fontSize: 14 }}>{t('settings.about')}</strong>
+            <div style={{ fontSize: 13, opacity: 0.8, marginTop: 6, display: 'flex', justifyContent: 'space-between' }}>
+              <span>{t('settings.appVersion')}</span>
+              <span style={{ fontFamily: 'ui-monospace, monospace' }}>{APP_VERSION}</span>
+            </div>
           </div>
 
           <div style={{ marginTop: 24, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>

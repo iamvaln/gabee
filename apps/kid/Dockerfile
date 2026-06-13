@@ -16,6 +16,9 @@ RUN pnpm install --frozen-lockfile
 # VITE_* values are inlined at build time → must be set before `vite build`.
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+# Release version (the git tag) — surfaced in Settings → About.
+ARG VITE_APP_VERSION
+ENV VITE_APP_VERSION=$VITE_APP_VERSION
 RUN pnpm --filter @gabee/kid run build
 
 # ── Serve the static bundle ──

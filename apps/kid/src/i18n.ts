@@ -89,6 +89,8 @@ const resources = {
         refresh: 'Rafraîchir',
         noBundles: 'Aucun contenu encore en cache.',
         switchProfile: 'Changer de profil',
+        about: 'À propos',
+        appVersion: 'Version de l’app :',
       },
       install: {
         onThisDevice: 'Installer Gabee sur cet appareil',
@@ -255,6 +257,8 @@ const resources = {
         refresh: 'Refresh',
         noBundles: 'No bundles cached yet.',
         switchProfile: 'Switch profile',
+        about: 'About',
+        appVersion: 'App version:',
       },
       install: {
         onThisDevice: 'Install Gabee on this device',
