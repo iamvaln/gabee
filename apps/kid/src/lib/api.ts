@@ -25,6 +25,7 @@ import {
   type EventEnvelope,
   type Module,
 } from '@gabee/types';
+import { db } from './db';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
 
@@ -122,7 +123,30 @@ export const api = {
     );
   },
   async getProfiles(): Promise<ListProfilesResponse> {
-    return ListProfilesResponseSchema.parse(await request('/api/profiles'));
+    try {
+      const res = ListProfilesResponseSchema.parse(await request('/api/profiles'));
+      // Write-through so a later offline relaunch can still show the picker.
+      try {
+        await db.profiles.clear();
+        await db.profiles.bulkPut(res.profiles);
+      } catch {
+        // Cache write is best-effort; never let it fail the live fetch.
+      }
+      return res;
+    } catch (err) {
+      // Only fall back to cache on NETWORK failure (fetch throws a TypeError
+      // offline). HTTP/auth errors (ApiError — e.g. 401 → clearAuth) must
+      // surface so App re-routes to Login; serving stale profiles there would
+      // mask a dead session.
+      if (err instanceof ApiError) throw err;
+      try {
+        const cached = await db.profiles.toArray();
+        if (cached.length) return { profiles: cached };
+      } catch {
+        // Cache read failed too — fall through to rethrow the original error.
+      }
+      throw err;
+    }
   },
   /**
    * Bundles manifest (product §8). Cheap call that lists each module's current

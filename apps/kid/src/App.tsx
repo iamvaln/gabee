@@ -145,6 +145,14 @@ export function App() {
   const startPlay = useStore((s) => s.startPlay);
   const queryClient = useQueryClient();
   const [route, setRoute] = useState<Route>({ name: 'hub' });
+  // Connectivity, for offline-aware gating below. We never strand a kid on the
+  // device-link prompt while offline: a short code can't be claimed without the
+  // network, and the persisted token + cached bundles let them play right away.
+  // They'll be nudged to link again the next time the app is online.
+  const [isOffline, setIsOffline] = useState(
+    typeof navigator !== 'undefined' && !navigator.onLine,
+  );
+  useEffect(() => sync.subscribe((s) => setIsOffline(s === 'offline')), []);
   // Bottom-nav tab (Apprendre / Carte / Coffre). Routing-wise these are
   // orthogonal to `route` — every tab has its own home. Switching tabs
   // resets `route` to the tab's root; sessions and summaries hide the nav
@@ -477,7 +485,7 @@ export function App() {
   let screen: React.ReactNode;
   if (!token) {
     screen = <Login />;
-  } else if (needsDeviceLink && !deviceLinkSkipped) {
+  } else if (needsDeviceLink && !deviceLinkSkipped && !isOffline) {
     screen = <LinkDeviceCode />;
   } else if (!profile) {
     screen = <ProfileSelect onPick={handlePick} />;

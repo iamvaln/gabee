@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { EventEnvelope, ProgressSyncRequest, QuestionBundleResponse } from '@gabee/types';
+import type { ChildProfile, EventEnvelope, ProgressSyncRequest, QuestionBundleResponse } from '@gabee/types';
 
 /** A parent → kid message cached locally so the bandeau survives offline reloads. */
 export interface LocalMessage {
@@ -60,6 +60,7 @@ export const db = new Dexie('gabee-kid') as Dexie & {
   progress: EntityTable<QueuedProgress, 'profile_id'>;
   messages: EntityTable<LocalMessage, 'id'>;
   bundles: EntityTable<CachedBundle, 'module'>;
+  profiles: EntityTable<ChildProfile, 'id'>;
 };
 
 db.version(1).stores({
@@ -91,4 +92,18 @@ db.version(4).stores({
   progress: 'profile_id',
   messages: 'id, status, createdAt',
   bundles: 'module, published_at',
+});
+
+// v5 adds the child-profile cache (offline-capable kid app). Without it, a
+// relaunch while offline strands the kid on ProfileSelect — `profile` isn't
+// persisted (re-picked each launch) and `GET /api/profiles` can't be reached,
+// so the picker shows an error and the kid can never reach the (cached) hub.
+// We write-through on every successful fetch and read back when offline.
+// Indexed by `id` (primary) + `parent_id` so a future account switch can scope.
+db.version(5).stores({
+  events: '++id',
+  progress: 'profile_id',
+  messages: 'id, status, createdAt',
+  bundles: 'module, published_at',
+  profiles: 'id, parent_id',
 });

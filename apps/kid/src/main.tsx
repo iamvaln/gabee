@@ -18,7 +18,20 @@ const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      // CRITICAL for offline play: TanStack Query's default `networkMode:
+      // 'online'` PAUSES a query (never calls its queryFn) whenever
+      // `navigator.onLine` is false. But every kid query reads cache-first
+      // (bundles + profiles from Dexie), so pausing them strands the kid on a
+      // perpetual loading skeleton offline even though the data is local.
+      // 'offlineFirst' runs the queryFn once regardless of connectivity (the
+      // Dexie read resolves), and only gates RETRIES on being online.
+      networkMode: 'offlineFirst',
+    },
+  },
 });
 
 function mount(): void {
