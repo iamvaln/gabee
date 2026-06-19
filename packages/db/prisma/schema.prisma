@@ -789,3 +789,16 @@ model HealthyUseLimits {
 
   @@map("healthy_use_limits")
 }
+
+/// Singleton tracking when the weekly admin digest was last emailed. The
+/// cron-digest sidecar pokes the admin endpoint daily (alongside the
+/// classification digest); the endpoint self-gates to one send per week
+/// (target weekday) and uses this marker to stay idempotent across container
+/// restarts / startup pokes — never two digests in the same week.
+model AdminDigestState {
+  id           String    @id @default("default")
+  lastWeeklyAt DateTime? @map("last_weekly_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("admin_digest_state")
+}

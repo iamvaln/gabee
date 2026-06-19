@@ -120,6 +120,8 @@ services:
       # service directly without round-tripping through Traefik. Path
       # mirrors the API route.
       CRON_DIGEST_URL: http://web:3000/api/cron/classification-digest
+      # Secondary daily poke — the weekly admin digest (self-gates to 1×/week).
+      ADMIN_DIGEST_URL: http://web:3000/api/cron/admin-digest
       CRON_SECRET: ${CRON_SECRET}
       CRON_DIGEST_HOUR_UTC: ${CRON_DIGEST_HOUR_UTC:-9}
     depends_on:

@@ -30,3 +30,21 @@ if command -v jq >/dev/null 2>&1; then
 else
   echo "$response"
 fi
+
+# Secondary, best-effort: the weekly admin digest shares this daily cadence.
+# The endpoint self-gates to one send per week, so a daily poke is a no-op on
+# the other six days. A failure here NEVER changes this script's exit status —
+# the primary classification run already succeeded; we just log and move on.
+if [ -n "${ADMIN_DIGEST_URL:-}" ]; then
+  echo "[digest] POST ${ADMIN_DIGEST_URL} (admin, best-effort)"
+  if admin_resp=$(
+    curl --silent --show-error --fail-with-body \
+      --max-time 60 \
+      -X POST "${ADMIN_DIGEST_URL}" \
+      -H "Authorization: Bearer ${CRON_SECRET}"
+  ); then
+    if command -v jq >/dev/null 2>&1; then echo "$admin_resp" | jq -c '.summary'; else echo "$admin_resp"; fi
+  else
+    echo "[digest] admin poke FAILED (rc=$?): ${admin_resp:-}" >&2
+  fi
+fi

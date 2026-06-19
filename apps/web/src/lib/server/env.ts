@@ -59,6 +59,17 @@ const envSchema = z.object({
   // unset, the cron endpoints refuse every request (fail-closed). Generate
   // with `openssl rand -hex 32`.
   CRON_SECRET: z.string().min(32).optional(),
+
+  // ── Weekly admin digest (ops report) ──────────────────────────────────────
+  // Recipient(s) for the weekly platform digest — comma-separated. Defaults to
+  // the founder's address when unset (single-operator phase).
+  ADMIN_DIGEST_TO: z.string().optional(),
+  // Base URL of the admin app, used to build deep links in the digest email
+  // (e.g. <ADMIN_APP_URL>/admin/content). Defaults to https://admin.gabee.app.
+  ADMIN_APP_URL: z.url().optional(),
+  // UTC weekday the digest goes out (0=Sun … 6=Sat). Defaults to Monday (1).
+  // The cron sidecar pokes daily; the endpoint only sends on this day.
+  ADMIN_DIGEST_DOW: z.coerce.number().int().min(0).max(6).optional(),
 });
 
 type RawEnv = z.infer<typeof envSchema>;
@@ -101,6 +112,9 @@ export const AUTH_JWT_SECRET = env.AUTH_JWT_SECRET;
 export const KID_APP_ORIGIN = env.KID_APP_ORIGIN;
 export const PARENT_APP_URL = env.PARENT_APP_URL;
 export const CRON_SECRET = env.CRON_SECRET;
+export const ADMIN_DIGEST_TO = env.ADMIN_DIGEST_TO || 'nguemnev@gmail.com';
+export const ADMIN_APP_URL = env.ADMIN_APP_URL || 'https://admin.gabee.app';
+export const ADMIN_DIGEST_DOW = env.ADMIN_DIGEST_DOW ?? 1;
 /**
  * Two distinct cookie names so an admin session and a parent session can
  * coexist in the same browser without one accidentally authenticating the
