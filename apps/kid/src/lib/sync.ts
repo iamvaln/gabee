@@ -169,6 +169,39 @@ class SyncManager {
   }
 
   /**
+   * User-triggered "Sync now" (Settings button). Like `flush`, but RETURNS a
+   * definitive result so the UI can show success/failure — `flush` swallows
+   * errors for the background path. Reports how many events were waiting so the
+   * parent gets concrete feedback ("12 sent"). Used to confirm a kid's offline
+   * progress actually reached the server (e.g. multi-device reconciliation).
+   */
+  async syncNow(): Promise<{ ok: boolean; sentEvents: number; reason?: 'offline' | 'busy' | 'error' }> {
+    if (!this.online) return { ok: false, sentEvents: 0, reason: 'offline' };
+    if (this.inFlight) return { ok: false, sentEvents: 0, reason: 'busy' };
+    const pending = await db.events.count();
+    this.inFlight = true;
+    this.setStatus('syncing');
+    try {
+      await this.drainEvents();
+      await this.drainProgress();
+      this.failures = 0;
+      if (this.backoffTimer) {
+        clearTimeout(this.backoffTimer);
+        this.backoffTimer = null;
+      }
+      this.flashSynced();
+      return { ok: true, sentEvents: pending };
+    } catch (err) {
+      this.scheduleRetry();
+      this.setStatus(this.online ? 'online' : 'offline');
+      if (import.meta.env.DEV) console.warn('[sync] syncNow failed', err);
+      return { ok: false, sentEvents: 0, reason: 'error' };
+    } finally {
+      this.inFlight = false;
+    }
+  }
+
+  /**
    * Push buffered events in chunks of ≤ MAX_BATCH. Removes rows the server processed
    * (accepted + duplicates) and drops rejected ones after logging. Returns whether any
    * rows were sent. Throws on a transient failure so `flush` can back off.
