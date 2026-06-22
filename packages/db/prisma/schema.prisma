@@ -283,6 +283,7 @@ model ChildProfile {
   receivedMessages KidMessage[]
   parentLinks      ParentChildLink[]
   familyActions    FamilyActivityLog[]
+  gifts            KidGift[]
 
   @@index([parentId])
   @@map("child_profiles")
@@ -605,6 +606,36 @@ model KidMessage {
   @@index([toChildId, createdAt], name: "idx_kid_messages_to_child_unread")
   @@index([fromParentId, createdAt(sort: Desc)])
   @@map("kid_messages")
+}
+
+enum KidGiftStatus {
+  pending
+  claimed
+  revoked
+}
+
+// An auditable bonus-stars gift to a kid (loyalty reward / compensation). Unlike a
+// raw `total_stars` write, every gift is a RECORD: how much, why (`reason`), who
+// granted it (`grantedBy`), when created + claimed, and the resulting total at claim
+// time (`claimedTotalStars`). The kid taps "Accept the gift" → `total_stars += amount`
+// (additive) and the row flips to `claimed`. So score changes are never silent — the
+// kid's gift history is fully reconstructable from this table.
+model KidGift {
+  id                String        @id @default(uuid()) @db.Uuid
+  childId           String        @map("child_id") @db.Uuid
+  amount            Int // bonus stars added to total_stars on claim (additive, may overflow any target)
+  label             String        @db.VarChar(120) // shown to the kid (e.g. "Cadeau de fidélité")
+  reason            String? // internal audit note — why it was granted (not shown to the kid)
+  grantedBy         String?       @map("granted_by") // admin id / "system" / "compensation"
+  status            KidGiftStatus @default(pending)
+  createdAt         DateTime      @default(now()) @map("created_at")
+  claimedAt         DateTime?     @map("claimed_at")
+  claimedTotalStars Int?          @map("claimed_total_stars") // total_stars AFTER applying — audit trail
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId, status])
+  @@map("kid_gifts")
 }
 
 // ─── Family, co-parents, devices, notifications (parent spec §9, §10.4, §10.5) ─

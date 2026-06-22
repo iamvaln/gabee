@@ -8,6 +8,10 @@ import {
   IngestEventsResponseSchema,
   ProgressSyncResponseSchema,
   KidPendingMessagesResponseSchema,
+  PendingGiftsResponseSchema,
+  ClaimGiftResponseSchema,
+  type PendingGiftsResponse,
+  type ClaimGiftResponse,
   KidEffectiveLimitsSchema,
   KidStreakStateSchema,
   type AuthSessionResponse,
@@ -201,6 +205,18 @@ export const api = {
   },
   async markMessageRead(messageId: string): Promise<void> {
     await request(`/api/messages/${encodeURIComponent(messageId)}/read`, { method: 'POST' });
+  },
+  // Loyalty / compensation gifts — the kid taps "Accept" and the bonus is added to
+  // total_stars server-side (additive, auditable). Polled on hub like messages.
+  async getPendingGifts(childId: string): Promise<PendingGiftsResponse> {
+    return PendingGiftsResponseSchema.parse(
+      await request(`/api/gifts/pending?child_id=${encodeURIComponent(childId)}`),
+    );
+  },
+  async claimGift(giftId: string): Promise<ClaimGiftResponse> {
+    return ClaimGiftResponseSchema.parse(
+      await request('/api/gifts/claim', { method: 'POST', body: JSON.stringify({ gift_id: giftId }) }),
+    );
   },
   /**
    * Healthy-use limits resolved for ONE kid (admin defaults + parent overrides,
