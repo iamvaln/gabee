@@ -140,6 +140,18 @@ model ParentAccount {
   /// without another migration.
   emailConfirmedAt   DateTime?          @map("email_confirmed_at")
 
+  /// Activation funnel milestones (admin analytics §funnels). Each column
+  /// is set ONCE — the first time the parent performs the action — so a
+  /// cohort query can count "how many of the parents who signed up in
+  /// week N have logged in / added a kid / classified / messaged at any
+  /// point since". Backfilled to NULL on existing rows; existing parents
+  /// won't count toward firstX metrics retroactively. That's intentional:
+  /// the cohort baseline starts at the day we land the migration.
+  firstLoginAt           DateTime? @map("first_login_at")
+  firstKidAddedAt        DateTime? @map("first_kid_added_at")
+  firstClassificationAt  DateTime? @map("first_classification_at")
+  firstMessageSentAt     DateTime? @map("first_message_sent_at")
+
   @@map("parent_accounts")
 }
 

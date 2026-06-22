@@ -63,6 +63,16 @@ export async function classifySessions(
       });
     }
   }
+  // Activation funnel: stamp firstClassificationAt iff the parent actually
+  // classified at least one session this call (results.length > 0). Skipped
+  // / unknown-id POSTs don't count as activation. updateMany's WHERE filter
+  // makes the flip idempotent — second-and-later classifications no-op.
+  if (results.length > 0) {
+    await prisma.parentAccount.updateMany({
+      where: { id: parentId, firstClassificationAt: null },
+      data: { firstClassificationAt: classifiedAt },
+    });
+  }
   return results;
 }
 

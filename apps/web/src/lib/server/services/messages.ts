@@ -72,6 +72,15 @@ export async function createMessage(
       text: input.text,
     },
   });
+  // Activation funnel: stamp firstMessageSentAt on the parent for the
+  // first delivered message. Sequential (not transactional) — if the
+  // funnel update fails the message still goes through; the metric will
+  // catch the next message sent by the same parent. Idempotent via the
+  // WHERE filter on the null column.
+  await prisma.parentAccount.updateMany({
+    where: { id: parentId, firstMessageSentAt: null },
+    data: { firstMessageSentAt: row.createdAt },
+  });
   return rowToKidMessage(row);
 }
 

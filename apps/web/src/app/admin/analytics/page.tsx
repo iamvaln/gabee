@@ -5,6 +5,7 @@ import { getAnalytics } from '@/lib/server/services/admin-observability';
 import { getKeyboardMetricsForAdmin } from '@/lib/server/services/keyboard-metrics';
 import { getCodeMetricsForAdmin } from '@/lib/server/services/code-metrics';
 import { PageHead, MiniBar, ModuleDot } from '../_shell/primitives';
+import { AnalyticsNav } from './funnels/page';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,8 @@ export default async function AnalyticsPage() {
             : 'Decision-signal deep-dives: per-module engagement, session initiation, retention.'
         }
       />
+
+      <AnalyticsNav active="overview" lang={lang} />
 
       <div className="tiles" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
         <div className="card tile">

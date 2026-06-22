@@ -85,6 +85,15 @@ export async function createProfile(
         skipDuplicates: true,
       });
     }
+    // Activation funnel: stamp firstKidAddedAt on the parent who created
+    // this kid, but only the first time. Inside the same transaction so
+    // a partial failure rolls everything back together. updateMany lets
+    // the WHERE filter short-circuit when the field is already set — no
+    // need to round-trip to read the row first.
+    await tx.parentAccount.updateMany({
+      where: { id: parentId, firstKidAddedAt: null },
+      data: { firstKidAddedAt: new Date() },
+    });
     return created;
   });
   return mapChildProfile(row);

@@ -53,9 +53,15 @@ export async function login(email: string, password: string): Promise<ParentAcco
     throw new HttpError(403, 'email_not_confirmed', 'Please confirm your email before signing in.');
   }
 
+  // Stamp lastLoginAt every time + firstLoginAt only on the first successful
+  // login (activation funnel). The two flips travel in a single UPDATE so
+  // the funnel column can never lag the row by more than a round-trip.
   await prisma.parentAccount.update({
     where: { id: account.id },
-    data: { lastLoginAt: new Date() },
+    data: {
+      lastLoginAt: new Date(),
+      ...(account.firstLoginAt == null ? { firstLoginAt: new Date() } : {}),
+    },
   });
   return mapParentAccount(account);
 }
