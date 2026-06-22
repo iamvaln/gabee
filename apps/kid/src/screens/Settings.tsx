@@ -6,6 +6,7 @@ import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { useStore } from '../store';
 import { listCachedBundles, refreshIfNewer } from '../lib/bundles';
+import { sync } from '../lib/sync';
 import { useInstall } from '../lib/install';
 
 // Release version, baked at build time from the git tag (release.yml passes
@@ -45,6 +46,8 @@ export function Settings({
   const [refreshing, setRefreshing] = useState(false);
   const [persisted, setPersisted] = useState<boolean | null>(null);
   const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<Awaited<ReturnType<typeof sync.syncNow>> | null>(null);
   const install = useInstall();
 
   async function load() {
@@ -77,6 +80,16 @@ export function Settings({
     }
   }
 
+  async function syncNow() {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      setSyncResult(await sync.syncNow());
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   return (
     <div className="session-screen">
       <Chrome lang={lang} setLang={setLang} title={t('settings.title')} onBack={onBack} onHome={onHome} profile={profile} />
@@ -105,6 +118,46 @@ export function Settings({
               <strong>{t('settings.persistedStorage')}</strong>{' '}
               {persisted === null ? '…' : persisted ? t('settings.yes') : t('settings.no')}
             </div>
+          </div>
+
+          {/* Manual sync — pushes this device's queued progress + events to the
+              server on demand, with a clear success/failure result. Useful when
+              a parent needs to confirm a kid's offline play actually landed
+              (e.g. reconciling progress across two devices). */}
+          <div
+            style={{
+              padding: 12, borderRadius: 12, marginBottom: 16,
+              background: '#EEF2FF', border: '1px solid #C7D2FE',
+              fontSize: 14, color: '#0f172a',
+            }}
+          >
+            <strong>{t('settings.syncTitle')}</strong>
+            <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4, marginBottom: 10 }}>
+              {t('settings.syncHint')}
+            </div>
+            <button
+              className="btn"
+              onClick={() => void syncNow()}
+              disabled={syncing || !online}
+            >
+              <Icon name="arrow-right" /> {syncing ? t('settings.syncing') : t('settings.syncNow')}
+            </button>
+            {syncResult && !syncing && (
+              <div
+                style={{
+                  marginTop: 10, fontWeight: 700,
+                  color: syncResult.ok ? '#166534' : '#b91c1c',
+                }}
+              >
+                {syncResult.ok
+                  ? syncResult.sentEvents > 0
+                    ? `✓ ${t('settings.syncOk', { count: syncResult.sentEvents })}`
+                    : `✓ ${t('settings.syncUpToDate')}`
+                  : syncResult.reason === 'offline'
+                    ? `✗ ${t('settings.syncOffline')}`
+                    : `✗ ${t('settings.syncFailed')}`}
+              </div>
+            )}
           </div>
 
           {install.kind !== 'installed' && install.kind !== 'unavailable' && (
