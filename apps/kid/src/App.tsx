@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import type { ChildProfile, Module, QuestionBundleResponse } from '@gabee/types';
+import type { ChildProfile, KidGift, Module, QuestionBundleResponse } from '@gabee/types';
 import i18n from './i18n';
 import { useStore } from './store';
 import { enqueueEvent, flushEvents } from './lib/events';
@@ -59,6 +59,7 @@ import { api } from './lib/api';
 import { useHealthyUse } from './lib/healthy-use';
 import { bumpStreak } from './lib/streak';
 import { MessageBandeau } from './components/MessageBandeau';
+import { GiftCard } from './components/GiftCard';
 import { MessageReader } from './components/MessageReader';
 import { lessonsForLevel, unitsForLevel } from './lib/progression';
 import {
@@ -162,6 +163,8 @@ export function App() {
   // oldest unread cached locally; the mint bandeau surfaces it between lessons.
   // `readerOpen` flips when the kid taps the bandeau.
   const [pendingMsg, setPendingMsg] = useState<LocalMessage | null>(null);
+  // Loyalty / compensation gift awaiting the kid's "Accept" tap (auditable bonus).
+  const [pendingGift, setPendingGift] = useState<KidGift | null>(null);
   const [readerOpen, setReaderOpen] = useState(false);
   const play = useStore((s) => s.play);
 
@@ -381,6 +384,36 @@ export function App() {
   useEffect(() => {
     if (route.name === 'hub' && profile) void refreshPending(profile.id);
   }, [route.name, profile]);
+
+  // Pending gifts: surface the celebratory "Accept the gift" card on the hub. Best-
+  // effort (offline → just skip; it'll show next online hub mount). Only fetch when
+  // nothing is already showing so a claim-in-progress isn't interrupted.
+  useEffect(() => {
+    if (route.name !== 'hub' || !profile || pendingGift) return;
+    void api
+      .getPendingGifts(profile.id)
+      .then((r) => setPendingGift(r.gifts[0] ?? null))
+      .catch(() => undefined);
+  }, [route.name, profile, pendingGift]);
+
+  async function claimPendingGift(): Promise<void> {
+    if (!pendingGift || !profile) return;
+    const res = await api.claimGift(pendingGift.id);
+    // Reflect the new total locally so the Hub star count updates immediately.
+    setProfile({ ...profile, total_stars: res.total_stars });
+  }
+
+  function dismissGift(): void {
+    const current = pendingGift;
+    setPendingGift(null);
+    // Chain to the next pending gift, if any (rare, but supported).
+    if (profile && current) {
+      void api
+        .getPendingGifts(profile.id)
+        .then((r) => setPendingGift(r.gifts[0] ?? null))
+        .catch(() => undefined);
+    }
+  }
 
   // At every summary screen, if Dexie has an unread message, surface the oldest
   // one as the bandeau. The bandeau persists across lessons until tapped — the
@@ -1214,6 +1247,11 @@ export function App() {
               void markRead(msgId, { profileId: profile.id, sessionId: play?.id ?? null });
             }}
           />
+        )}
+        {/* Loyalty / compensation gift — celebratory "Accept the gift" card on the
+            hub. Below the daily lock + look-away (healthy-use always wins). */}
+        {pendingGift && profile && !showDailyLock && !lookAwayDue && (
+          <GiftCard gift={pendingGift} onClaim={claimPendingGift} onDismiss={dismissGift} />
         )}
         {/* Healthy-use overlays. Look-away has highest priority (forced pause);
             soft-limit is acknowledgeable (kid can keep going). Both are above

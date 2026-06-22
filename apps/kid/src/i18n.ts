@@ -100,6 +100,15 @@ const resources = {
         syncOffline: 'Hors ligne — connecte-toi puis réessaie',
         syncFailed: 'Échec — réessaie dans un instant',
       },
+      gift: {
+        title: 'Un cadeau de Gabee !',
+        accept: 'Accepter le cadeau',
+        claiming: 'Un instant…',
+        claimed: '+{{count}} étoiles ajoutées ! 🎉',
+        continue: 'Super !',
+        error: 'Oups, réessaie',
+        retry: 'Réessayer',
+      },
       install: {
         onThisDevice: 'Installer Gabee sur cet appareil',
         why: 'Pour que ton enfant ouvre Gabee comme une vraie app, sans la barre du navigateur.',
@@ -275,6 +284,15 @@ const resources = {
         syncUpToDate: 'Already up to date',
         syncOffline: 'Offline — connect then try again',
         syncFailed: 'Failed — try again shortly',
+      },
+      gift: {
+        title: 'A gift from Gabee!',
+        accept: 'Accept the gift',
+        claiming: 'One moment…',
+        claimed: '+{{count}} stars added! 🎉',
+        continue: 'Awesome!',
+        error: 'Oops, try again',
+        retry: 'Retry',
       },
       install: {
         onThisDevice: 'Install Gabee on this device',
