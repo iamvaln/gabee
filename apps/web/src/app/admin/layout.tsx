@@ -8,6 +8,14 @@ import { AdminShell } from './_shell/nav';
 // Admin shell (incl. /admin/login) is staff-only — keep the whole subtree out
 // of search engines. Also blocked in robots.ts as a belt-and-braces signal.
 export const metadata: Metadata = {
+  // Distinct browser-tab title for the back office — otherwise the admin subtree
+  // inherits the root layout's marketing default ("Gabee — Apprendre…"), which
+  // is confusing when both are open in tabs. Own template so page-level titles
+  // read e.g. "Analytique · Gabee Admin".
+  title: {
+    default: 'Gabee Admin',
+    template: '%s · Gabee Admin',
+  },
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
   // Declare icons here (relative → resolved on the admin host) so the favicon
   // shows on admin.gabee.app; the root layout's icons resolve against

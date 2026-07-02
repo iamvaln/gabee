@@ -79,6 +79,14 @@ const envSchema = z.object({
   // are read directly in next.config.ts, not validated here.
   SENTRY_DSN: z.string().optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+  // Read-only API access for the admin "System logs" page (pulls recent issues
+  // via Sentry's REST API). SENTRY_ORG/PROJECT are shared with the build-time
+  // source-map config. SENTRY_API_TOKEN needs project:read + event:read scope.
+  // SENTRY_API_BASE overrides the host for region orgs (e.g. https://us.sentry.io).
+  SENTRY_API_TOKEN: z.string().optional(),
+  SENTRY_ORG: z.string().optional(),
+  SENTRY_PROJECT: z.string().optional(),
+  SENTRY_API_BASE: z.string().optional(),
 });
 
 type RawEnv = z.infer<typeof envSchema>;
