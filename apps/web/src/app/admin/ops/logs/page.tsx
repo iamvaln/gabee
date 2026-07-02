@@ -35,34 +35,27 @@ export default async function SystemLogsPage() {
         }
       />
 
-      {/* Not configured → the original honest placeholder. */}
-      {!result.configured && (
-        <div className="card tbl-wrap mt8">
-          <div className="empty-state">
-            <AdminBee size={64} expression="idle" />
-            <h3>{L ? 'Sentry non branché' : 'Sentry not wired'}</h3>
-            <p>
-              {L
-                ? 'Définis SENTRY_API_TOKEN, SENTRY_ORG et SENTRY_PROJECT pour afficher ici les exceptions récentes, leur fréquence et les utilisateurs touchés.'
-                : 'Set SENTRY_API_TOKEN, SENTRY_ORG and SENTRY_PROJECT to surface recent exceptions, their frequency and affected users here.'}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Configured but the call failed (bad token / wrong slug / region). */}
-      {result.configured && !result.ok && (
-        <div className="card tbl-wrap mt8">
-          <div className="empty-state">
-            <AdminBee size={64} expression="idle" />
-            <h3>{L ? 'Sentry injoignable' : "Couldn't reach Sentry"}</h3>
-            <p style={{ fontFamily: 'monospace', fontSize: 13 }}>{result.error}</p>
-            <p>
-              {L
-                ? 'Vérifie le token (scope project:read + event:read), les slugs org/projet, et SENTRY_API_BASE si ton org est sur une région (ex. https://us.sentry.io).'
-                : 'Check the token (project:read + event:read scope), the org/project slugs, and SENTRY_API_BASE if your org is on a region (e.g. https://us.sentry.io).'}
-            </p>
-          </div>
+      {/* Can't load logs inline (not configured OR fetch failed) → don't show a
+          dead-end placeholder; send the admin straight to Sentry instead. */}
+      {!result.ok && (
+        <div className="card mt8" style={{ padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, textAlign: 'center' }}>
+          <AdminBee size={56} expression="idle" />
+          <h3 style={{ margin: 0 }}>
+            {result.configured
+              ? L ? 'Impossible de charger les logs ici' : "Can't load logs here"
+              : L ? 'Les logs vivent dans Sentry' : 'Logs live in Sentry'}
+          </h3>
+          <p style={{ margin: 0, color: 'var(--text-2)', maxWidth: 460, fontWeight: 600 }}>
+            {result.configured
+              ? L ? 'La récupération via l’API a échoué — ouvre le tableau de bord Sentry pour les consulter.' : 'The API fetch failed — open the Sentry dashboard to view them.'
+              : L ? 'Consulte les exceptions, alertes et la performance directement dans Sentry.' : 'View exceptions, alerts and performance directly in Sentry.'}
+          </p>
+          <a className="btn" href={result.projectUrl} target="_blank" rel="noreferrer">
+            {L ? 'Ouvrir Sentry ↗' : 'Open Sentry ↗'}
+          </a>
+          {result.configured && result.error && (
+            <p style={{ margin: 0, fontFamily: 'monospace', fontSize: 12, color: 'var(--text-3)' }}>{result.error}</p>
+          )}
         </div>
       )}
 

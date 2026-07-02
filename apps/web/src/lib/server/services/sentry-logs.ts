@@ -46,18 +46,29 @@ export function isSentryLogsConfigured(): boolean {
 }
 
 /**
+ * Best-effort deep link to Sentry — as specific as the configured env allows,
+ * down to the bare app when nothing is set. Always returns something clickable
+ * so the page can offer "open in Sentry" even when it can't load logs inline.
+ */
+export function sentryLink(): string {
+  const org = process.env.SENTRY_ORG;
+  if (org) return `${API_BASE}/organizations/${encodeURIComponent(org)}/issues/?query=is:unresolved`;
+  return API_BASE;
+}
+
+/**
  * Fetch the most recent unresolved issues for the configured project. Returns a
  * typed result the page can render without try/catch of its own. Cached 60s so
  * repeated admin page loads don't hammer Sentry's rate limit.
  */
 export async function getSentryIssues(limit = 25): Promise<SentryLogsResult> {
   if (!isSentryLogsConfigured()) {
-    return { configured: false, ok: false, issues: [] };
+    return { configured: false, ok: false, issues: [], projectUrl: sentryLink() };
   }
   const org = process.env.SENTRY_ORG!;
   const project = process.env.SENTRY_PROJECT!;
   const token = process.env.SENTRY_API_TOKEN!;
-  const projectUrl = `${API_BASE}/organizations/${org}/issues/?project=&query=is:unresolved`;
+  const projectUrl = sentryLink();
 
   const url =
     `${API_BASE}/api/0/projects/${encodeURIComponent(org)}/${encodeURIComponent(project)}/issues/` +
