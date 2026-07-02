@@ -70,6 +70,15 @@ const envSchema = z.object({
   // UTC weekday the digest goes out (0=Sun … 6=Sat). Defaults to Monday (1).
   // The cron sidecar pokes daily; the endpoint only sends on this day.
   ADMIN_DIGEST_DOW: z.coerce.number().int().min(0).max(6).optional(),
+
+  // ── Observability (Sentry) ────────────────────────────────────────────────
+  // All optional — with none set, Sentry initialises to a no-op (see
+  // sentry.*.config.ts). SENTRY_DSN = server-side error reporting;
+  // NEXT_PUBLIC_SENTRY_DSN = browser (inlined into the client bundle).
+  // SENTRY_AUTH_TOKEN/ORG/PROJECT are BUILD-time only (source-map upload) and
+  // are read directly in next.config.ts, not validated here.
+  SENTRY_DSN: z.string().optional(),
+  NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
 });
 
 type RawEnv = z.infer<typeof envSchema>;

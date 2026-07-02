@@ -14,6 +14,7 @@
     "@anthropic-ai/sdk": "^0.100.1",
     "@gabee/db": "workspace:*",
     "@gabee/types": "workspace:*",
+    "@sentry/nextjs": "^10.63.0",
     "jose": "^6.2.3",
     "libphonenumber-js": "^1.13.4",
     "next": "^16.2.6",

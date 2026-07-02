@@ -19,6 +19,9 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 # Release version (the git tag) — surfaced in Settings → About.
 ARG VITE_APP_VERSION
 ENV VITE_APP_VERSION=$VITE_APP_VERSION
+# Sentry DSN (optional) — inlined at build time; empty → Sentry is a no-op.
+ARG VITE_SENTRY_DSN
+ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
 RUN pnpm --filter @gabee/kid run build
 
 # ── Serve the static bundle ──

@@ -8,6 +8,11 @@ import { consumePairToken, hasPairTokenInUrl } from './lib/pair';
 import * as bundles from './lib/bundles';
 import { refreshIfNewer, startBackgroundRefresh } from './lib/bundles';
 import { bindBundlesModule } from './lib/api';
+import { initSentry, Sentry } from './lib/sentry';
+
+// Init error reporting before anything else so early boot errors are captured.
+// No-op unless VITE_SENTRY_DSN is set.
+initSentry();
 
 // Late-bind bundles into api so getBundle() can reach getCachedBundle /
 // fetchAndCacheBundle without a dynamic import (which would defeat chunk
@@ -37,10 +42,34 @@ const queryClient = new QueryClient({
 function mount(): void {
   createRoot(root!).render(
     <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
+      {/* Sentry ErrorBoundary catches render crashes and reports them (when a
+          DSN is set); the fallback keeps a kid from staring at a white screen.
+          Without a DSN, Sentry.ErrorBoundary still renders + shows the fallback
+          on crash — it just doesn't report. */}
+      <Sentry.ErrorBoundary fallback={<CrashFallback />}>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </Sentry.ErrorBoundary>
     </StrictMode>,
+  );
+}
+
+// Minimal, kid-friendly crash screen. Reload is the only action — the app is
+// offline-capable so a reload usually recovers.
+function CrashFallback() {
+  return (
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24, textAlign: 'center', fontFamily: 'Mulish, system-ui, sans-serif' }}>
+      <div style={{ fontSize: 48 }}>🐝</div>
+      <p style={{ fontWeight: 800, fontSize: 18, margin: 0 }}>Oups ! On recommence ?</p>
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        style={{ border: '3px solid #20242E', background: '#FFB400', color: '#20242E', fontWeight: 800, fontSize: 16, padding: '12px 24px', borderRadius: 9999, boxShadow: '0 4px 0 #20242E', cursor: 'pointer' }}
+      >
+        Recharger
+      </button>
+    </div>
   );
 }
 

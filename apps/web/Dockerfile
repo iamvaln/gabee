@@ -34,6 +34,10 @@ ARG NEXT_PUBLIC_KID_APP_URL
 ENV NEXT_PUBLIC_KID_APP_URL=$NEXT_PUBLIC_KID_APP_URL
 ARG NEXT_PUBLIC_PARENT_APP_URL
 ENV NEXT_PUBLIC_PARENT_APP_URL=$NEXT_PUBLIC_PARENT_APP_URL
+# Sentry browser DSN (optional) — inlined into the client bundle; empty → no-op.
+# The SERVER-side SENTRY_DSN is read at runtime from the container env, not here.
+ARG NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 # `next build` loads server modules to collect route metadata; lib/server/env.ts
 # throws in production if these runtime secrets are unset. They are server-only
 # (never inlined into the client bundle) and the real values come from the
