@@ -141,6 +141,28 @@ async function main(): Promise<void> {
     }
     console.log(`✓ Seeded ${SUB_MODE_DEFS.length} sub-mode registry rows.`);
 
+    // Prune stale sub-mode rows from earlier curriculum versions. The upsert
+    // above only adds/updates the current set — it never removes keys that were
+    // renamed or dropped (e.g. old `build` vs current `build-sentence`, or the
+    // pre-reset numbers `arithmetic`/`geometry`). Left behind they clutter the
+    // admin content matrix as empty + duplicate rows. Their draft ContentPlans
+    // are orphaned too, so drop those first.
+    const currentSubModeIds = SUB_MODE_DEFS.map((sm) => sm.id);
+    const staleSubModes = await prisma.subMode.findMany({
+      where: { id: { notIn: currentSubModeIds } },
+      select: { module: true, key: true },
+    });
+    if (staleSubModes.length > 0) {
+      await prisma.contentPlan.deleteMany({
+        where: { OR: staleSubModes.map((s) => ({ moduleId: s.module, subMode: s.key })) },
+      });
+      await prisma.subMode.deleteMany({ where: { id: { notIn: currentSubModeIds } } });
+      console.log(
+        `✓ Pruned ${staleSubModes.length} stale sub-mode rows (+ orphan plans): ` +
+          staleSubModes.map((s) => `${s.module}.${s.key}`).join(', '),
+      );
+    }
+
     // Default curriculum (single MVP row) + the 5 fixed module identities.
     await prisma.curriculum.upsert({
       where: { id: DEFAULT_CURRICULUM_ID },
