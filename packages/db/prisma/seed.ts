@@ -189,16 +189,65 @@ async function main(): Promise<void> {
     console.log(`✓ Wiped ${deleted.count} existing questions.`);
 
     const byModule: Record<string, number> = {};
+    const planSet = new Map<string, { module: QuestionRecord['module']; subMode: string; level: number }>();
     for (const q of questions) {
       const data = toQuestionData(q);
       await prisma.question.create({ data });
       byModule[q.module] = (byModule[q.module] ?? 0) + 1;
+      const pk = `${data.module}|${data.subMode}|${data.level}`;
+      if (!planSet.has(pk)) planSet.set(pk, { module: data.module, subMode: data.subMode, level: data.level });
     }
 
     console.log(`✓ Seeded ${questions.length} questions:`);
     for (const [module, count] of Object.entries(byModule).sort()) {
       console.log(`  ${module.padEnd(12)} ${count}`);
     }
+
+    // Accepted plans for the seeded content (respect the authoring workflow). The
+    // seed loads pre-authored questions directly; without a matching accepted
+    // ContentPlan the admin plan / AI-generate flow is GATED ("previous level has
+    // no accepted plan") for every level > 1. So emit one accepted plan per
+    // (module, sub_mode, level) that has content. The body is a templated
+    // bilingual placeholder derived from the sub-mode name — valid + editable; a
+    // human/AI enriches it later. `update: {}` leaves any existing (human-edited)
+    // plan untouched, so a reseed never clobbers real authoring.
+    const subModeName = new Map(SUB_MODE_DEFS.map((sm) => [`${sm.module}.${sm.key}`, sm.name]));
+    for (const { module, subMode, level } of planSet.values()) {
+      const name = subModeName.get(`${module}.${subMode}`) ?? { fr: subMode, en: subMode };
+      await prisma.contentPlan.upsert({
+        where: {
+          curriculumId_moduleId_subMode_level: {
+            curriculumId: DEFAULT_CURRICULUM_ID,
+            moduleId: module,
+            subMode,
+            level,
+          },
+        },
+        create: {
+          curriculumId: DEFAULT_CURRICULUM_ID,
+          moduleId: module,
+          subMode,
+          level,
+          scope: {
+            fr: `${name.fr} · niveau ${level}. Plan généré au seed — à enrichir.`,
+            en: `${name.en} · level ${level}. Seed-generated plan — to enrich.`,
+          } as Prisma.InputJsonValue,
+          pedagogicalObjectives: [
+            { fr: `Maîtriser « ${name.fr} » au niveau ${level}.`, en: `Master "${name.en}" at level ${level}.` },
+          ] as Prisma.InputJsonValue,
+          validationCriteria: {
+            fr: `Le pool du niveau ${level} est rempli et validé (parité FR/EN).`,
+            en: `Level ${level} pool filled and validated (FR/EN parity).`,
+          } as Prisma.InputJsonValue,
+          status: 'accepted',
+          acceptedBy: 'seed',
+          acceptedAt: new Date(),
+          notes: 'Auto-généré au seed pour un contenu déjà rédigé — à enrichir.',
+        },
+        update: {},
+      });
+    }
+    console.log(`✓ Ensured ${planSet.size} accepted content plans for seeded levels.`);
   } finally {
     await prisma.$disconnect();
   }
