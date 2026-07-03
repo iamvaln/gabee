@@ -23,6 +23,8 @@ export interface SentryIssue {
   lastSeen: string;
   permalink: string;
   status: string;
+  /** Which Sentry project (slug) this issue came from — web vs kid. */
+  project: string;
 }
 
 export interface SentryLogsResult {
@@ -37,11 +39,23 @@ export interface SentryLogsResult {
 
 const API_BASE = process.env.SENTRY_API_BASE || 'https://sentry.io';
 
+/**
+ * Projects the logs page queries. `SENTRY_LOG_PROJECTS` is a comma-separated
+ * slug list (e.g. "gabee-web,gabee-kid") so both stacks show in one table;
+ * falls back to the single `SENTRY_PROJECT` used by the build source-map config.
+ */
+function logProjects(): string[] {
+  const multi = process.env.SENTRY_LOG_PROJECTS;
+  if (multi) return multi.split(',').map((s) => s.trim()).filter(Boolean);
+  const single = process.env.SENTRY_PROJECT;
+  return single ? [single] : [];
+}
+
 export function isSentryLogsConfigured(): boolean {
   return (
     !!process.env.SENTRY_API_TOKEN &&
     !!process.env.SENTRY_ORG &&
-    !!process.env.SENTRY_PROJECT
+    logProjects().length > 0
   );
 }
 
@@ -66,43 +80,27 @@ export async function getSentryIssues(limit = 25): Promise<SentryLogsResult> {
     return { configured: false, ok: false, issues: [], projectUrl: sentryLink() };
   }
   const org = process.env.SENTRY_ORG!;
-  const project = process.env.SENTRY_PROJECT!;
   const token = process.env.SENTRY_API_TOKEN!;
+  const projects = logProjects();
   const projectUrl = sentryLink();
-
-  const url =
-    `${API_BASE}/api/0/projects/${encodeURIComponent(org)}/${encodeURIComponent(project)}/issues/` +
-    `?query=${encodeURIComponent('is:unresolved')}&statsPeriod=14d&limit=${limit}`;
+  // Split the row budget across projects so one noisy stack can't crowd out
+  // the other; we re-sort + re-cap after merging anyway.
+  const perProject = Math.max(5, Math.ceil(limit / projects.length));
 
   try {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-      // Cache to protect Sentry's rate limit; the admin doesn't need real-time.
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      return {
-        configured: true,
-        ok: false,
-        issues: [],
-        error: `Sentry API ${res.status}${body ? ` — ${body.slice(0, 200)}` : ''}`,
-        projectUrl,
-      };
+    const perResults = await Promise.all(
+      projects.map((project) => fetchProjectIssues(org, project, token, perProject)),
+    );
+    // Any project failing surfaces as an error (partial data would mislead an
+    // ops read). First failure wins the message.
+    const failed = perResults.find((r) => !r.ok);
+    if (failed) {
+      return { configured: true, ok: false, issues: [], error: failed.error, projectUrl };
     }
-    const data = (await res.json()) as RawIssue[];
-    const issues: SentryIssue[] = data.map((i) => ({
-      id: i.id,
-      title: i.title ?? i.metadata?.type ?? '(untitled)',
-      culprit: i.culprit ?? null,
-      level: i.level ?? 'error',
-      count: Number(i.count ?? 0),
-      userCount: Number(i.userCount ?? 0),
-      firstSeen: i.firstSeen,
-      lastSeen: i.lastSeen,
-      permalink: i.permalink,
-      status: i.status ?? 'unresolved',
-    }));
+    const issues = perResults
+      .flatMap((r) => r.issues)
+      .sort((a, b) => new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime())
+      .slice(0, limit);
     return { configured: true, ok: true, issues, projectUrl };
   } catch (e) {
     return {
@@ -113,6 +111,46 @@ export async function getSentryIssues(limit = 25): Promise<SentryLogsResult> {
       projectUrl,
     };
   }
+}
+
+async function fetchProjectIssues(
+  org: string,
+  project: string,
+  token: string,
+  limit: number,
+): Promise<{ ok: boolean; issues: SentryIssue[]; error?: string }> {
+  const url =
+    `${API_BASE}/api/0/projects/${encodeURIComponent(org)}/${encodeURIComponent(project)}/issues/` +
+    `?query=${encodeURIComponent('is:unresolved')}&statsPeriod=14d&limit=${limit}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    next: { revalidate: 60 },
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    return {
+      ok: false,
+      issues: [],
+      error: `Sentry API ${res.status} for "${project}"${body ? ` — ${body.slice(0, 160)}` : ''}`,
+    };
+  }
+  const data = (await res.json()) as RawIssue[];
+  return {
+    ok: true,
+    issues: data.map((i) => ({
+      id: i.id,
+      title: i.title ?? i.metadata?.type ?? '(untitled)',
+      culprit: i.culprit ?? null,
+      level: i.level ?? 'error',
+      count: Number(i.count ?? 0),
+      userCount: Number(i.userCount ?? 0),
+      firstSeen: i.firstSeen,
+      lastSeen: i.lastSeen,
+      permalink: i.permalink,
+      status: i.status ?? 'unresolved',
+      project,
+    })),
+  };
 }
 
 interface RawIssue {

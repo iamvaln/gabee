@@ -85,6 +85,7 @@ export default async function SystemLogsPage() {
             <thead>
               <tr>
                 <th>{L ? 'Erreur' : 'Error'}</th>
+                <th>{L ? 'Projet' : 'Project'}</th>
                 <th className="num">{L ? 'Événements' : 'Events'}</th>
                 <th className="num">{L ? 'Utilisateurs' : 'Users'}</th>
                 <th>{L ? 'Dernière fois' : 'Last seen'}</th>
@@ -106,6 +107,7 @@ export default async function SystemLogsPage() {
                       )}
                     </a>
                   </td>
+                  <td><span className="badge neutral">{i.project}</span></td>
                   <td className="num t-mono">{i.count.toLocaleString(L ? 'fr-FR' : 'en-US')}</td>
                   <td className="num t-mono">{i.userCount.toLocaleString(L ? 'fr-FR' : 'en-US')}</td>
                   <td className="t-mono" title={i.lastSeen}>{relTime(i.lastSeen, L)}</td>

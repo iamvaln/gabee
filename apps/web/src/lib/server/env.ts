@@ -86,6 +86,10 @@ const envSchema = z.object({
   SENTRY_API_TOKEN: z.string().optional(),
   SENTRY_ORG: z.string().optional(),
   SENTRY_PROJECT: z.string().optional(),
+  // Comma-separated project slugs the logs page queries (e.g.
+  // "gabee-web,gabee-kid"). Falls back to SENTRY_PROJECT when unset. Kept
+  // separate so the single-project build source-map config isn't affected.
+  SENTRY_LOG_PROJECTS: z.string().optional(),
   SENTRY_API_BASE: z.string().optional(),
 });
 
