@@ -24,13 +24,16 @@ ARG VITE_SENTRY_DSN
 ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
 # Sentry source-map upload (optional) — org token + org/project read at build
 # time by @sentry/vite-plugin. All empty → plugin not added, no maps emitted.
+# ARGs only, passed inline to the RUN (not ENV) so the write-scoped token never
+# lands in any image layer's env — even though the nginx runtime stage already
+# discards it, this keeps the build stage clean + silences SecretsUsedInArgOrEnv.
 ARG SENTRY_AUTH_TOKEN
-ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
 ARG SENTRY_ORG
-ENV SENTRY_ORG=$SENTRY_ORG
 ARG SENTRY_PROJECT
-ENV SENTRY_PROJECT=$SENTRY_PROJECT
-RUN pnpm --filter @gabee/kid run build
+RUN SENTRY_AUTH_TOKEN="$SENTRY_AUTH_TOKEN" \
+    SENTRY_ORG="$SENTRY_ORG" \
+    SENTRY_PROJECT="$SENTRY_PROJECT" \
+    pnpm --filter @gabee/kid run build
 
 # ── Serve the static bundle ──
 FROM nginx:1.27-alpine AS runtime

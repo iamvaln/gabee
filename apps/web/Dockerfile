@@ -40,20 +40,25 @@ ARG NEXT_PUBLIC_SENTRY_DSN
 ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 # Sentry source-map upload (optional) — withSentryConfig activates only when all
 # three are present at build time. All empty → plain next.config, build unchanged.
+# ARGs only (NOT ENV): this runtime stage is `FROM build`, so an ENV here would
+# bake the write-scoped auth token into the shipped image. ARGs don't persist —
+# we pass them inline to the build RUN below instead, exactly like the JWT
+# secret. (SecretsUsedInArgOrEnv warning fix + real leak fix.)
 ARG SENTRY_AUTH_TOKEN
-ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
 ARG SENTRY_ORG
-ENV SENTRY_ORG=$SENTRY_ORG
 ARG SENTRY_PROJECT
-ENV SENTRY_PROJECT=$SENTRY_PROJECT
 # `next build` loads server modules to collect route metadata; lib/server/env.ts
 # throws in production if these runtime secrets are unset. They are server-only
 # (never inlined into the client bundle) and the real values come from the
 # container env at runtime — so pass throwaway placeholders for the build only
 # (inline, not ENV, so nothing is baked into the image: runtime fail-fast stays).
+# The Sentry vars ride the same inline mechanism so they never persist either.
 RUN AUTH_JWT_SECRET="build-time-placeholder-not-used-at-runtime" \
     COPARENT_INVITE_SECRET="build-time-placeholder-not-used-at-runtime" \
     DATABASE_URL="postgresql://prisma:prisma@localhost:5432/prisma" \
+    SENTRY_AUTH_TOKEN="$SENTRY_AUTH_TOKEN" \
+    SENTRY_ORG="$SENTRY_ORG" \
+    SENTRY_PROJECT="$SENTRY_PROJECT" \
     pnpm --filter @gabee/web run build
 
 # ── Runtime stage: run `next start`. Keeps full node_modules so the Prisma CLI ──
