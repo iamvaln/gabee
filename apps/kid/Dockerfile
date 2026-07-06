@@ -22,6 +22,14 @@ ENV VITE_APP_VERSION=$VITE_APP_VERSION
 # Sentry DSN (optional) — inlined at build time; empty → Sentry is a no-op.
 ARG VITE_SENTRY_DSN
 ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
+# Sentry source-map upload (optional) — org token + org/project read at build
+# time by @sentry/vite-plugin. All empty → plugin not added, no maps emitted.
+ARG SENTRY_AUTH_TOKEN
+ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
+ARG SENTRY_ORG
+ENV SENTRY_ORG=$SENTRY_ORG
+ARG SENTRY_PROJECT
+ENV SENTRY_PROJECT=$SENTRY_PROJECT
 RUN pnpm --filter @gabee/kid run build
 
 # ── Serve the static bundle ──

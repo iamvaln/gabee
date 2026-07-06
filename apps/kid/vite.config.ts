@@ -2,7 +2,16 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import { fileURLToPath, URL } from 'node:url';
+
+// Source-map upload to Sentry is BUILD-time + opt-in: only when SENTRY_AUTH_TOKEN
+// (an org token with the source-map scope) AND SENTRY_ORG are present in the
+// build env. Absent (local dev, CI without the secret) → the plugin isn't added
+// and no maps are emitted, so builds stay identical to before. In CI the kid
+// build job passes SENTRY_PROJECT=gabee-kids.
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+const sentryEnabled = !!sentryAuthToken && !!process.env.SENTRY_ORG;
 
 // Offline / PWA layer (product spec §8). Strategy:
 //  • Vite + Workbox precaches the kid app shell (HTML/JS/CSS/fonts/icons) so it
@@ -82,11 +91,28 @@ export default defineConfig({
         ],
       },
     }),
+    // Sentry LAST so it can see every emitted asset. Only added when a build
+    // token is present (see sentryEnabled above). Deletes the .map files after
+    // upload so they're never served to kids / baked into the nginx image.
+    ...(sentryEnabled
+      ? [
+          sentryVitePlugin({
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT ?? 'gabee-kids',
+            authToken: sentryAuthToken,
+            sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
+            telemetry: false,
+          }),
+        ]
+      : []),
   ],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   build: {
+    // Emit source maps only when we're going to upload + delete them (CI with a
+    // token). Off otherwise so local/dev builds stay lean and nothing leaks.
+    sourcemap: sentryEnabled,
     // One `vendor` chunk for ALL node_modules (cacheable independently of app
     // code), app code in the entry. Splitting node_modules across MULTIPLE
     // chunks (react / query / dexie / zustand / i18n) reordered cross-chunk

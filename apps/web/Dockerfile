@@ -38,6 +38,14 @@ ENV NEXT_PUBLIC_PARENT_APP_URL=$NEXT_PUBLIC_PARENT_APP_URL
 # The SERVER-side SENTRY_DSN is read at runtime from the container env, not here.
 ARG NEXT_PUBLIC_SENTRY_DSN
 ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
+# Sentry source-map upload (optional) — withSentryConfig activates only when all
+# three are present at build time. All empty → plain next.config, build unchanged.
+ARG SENTRY_AUTH_TOKEN
+ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
+ARG SENTRY_ORG
+ENV SENTRY_ORG=$SENTRY_ORG
+ARG SENTRY_PROJECT
+ENV SENTRY_PROJECT=$SENTRY_PROJECT
 # `next build` loads server modules to collect route metadata; lib/server/env.ts
 # throws in production if these runtime secrets are unset. They are server-only
 # (never inlined into the client bundle) and the real values come from the

@@ -41,6 +41,9 @@ jobs:
             NEXT_PUBLIC_KID_APP_URL=${{ vars.NEXT_PUBLIC_KID_APP_URL }}
             NEXT_PUBLIC_PARENT_APP_URL=${{ vars.NEXT_PUBLIC_PARENT_APP_URL }}
             NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_ORG=${{ secrets.SENTRY_ORG }}
+            SENTRY_PROJECT=gabee-web
           tags: |
             ${{ env.REGISTRY }}/gabee-web:${{ github.ref_name }}
             ${{ env.REGISTRY }}/gabee-web:latest
@@ -72,6 +75,9 @@ jobs:
             VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL }}
             VITE_APP_VERSION=${{ github.ref_name }}
             VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+            SENTRY_ORG=${{ secrets.SENTRY_ORG }}
+            SENTRY_PROJECT=gabee-kids
           tags: |
             ${{ env.REGISTRY }}/gabee-kid:${{ github.ref_name }}
             ${{ env.REGISTRY }}/gabee-kid:latest
