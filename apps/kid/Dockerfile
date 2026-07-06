@@ -4,6 +4,14 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 FROM node:20-slim AS build
+# ca-certificates: node:20-slim ships no system CA store. Node's own HTTPS uses
+# its bundled certs, but @sentry/vite-plugin shells out to the sentry-cli RUST
+# binary, which uses the SYSTEM store — without this, its TLS handshake to
+# Sentry fails ("SSL certificate problem: unable to get local issuer
+# certificate" → "API request failed") and source-map upload silently no-ops.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
 WORKDIR /app
 COPY . .
