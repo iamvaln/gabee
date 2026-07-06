@@ -47,6 +47,8 @@ ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
+# Release name for source-map association (no .git in the build context).
+ARG SENTRY_RELEASE
 # `next build` loads server modules to collect route metadata; lib/server/env.ts
 # throws in production if these runtime secrets are unset. They are server-only
 # (never inlined into the client bundle) and the real values come from the
@@ -59,6 +61,7 @@ RUN AUTH_JWT_SECRET="build-time-placeholder-not-used-at-runtime" \
     SENTRY_AUTH_TOKEN="$SENTRY_AUTH_TOKEN" \
     SENTRY_ORG="$SENTRY_ORG" \
     SENTRY_PROJECT="$SENTRY_PROJECT" \
+    SENTRY_RELEASE="$SENTRY_RELEASE" \
     pnpm --filter @gabee/web run build
 
 # ── Runtime stage: run `next start`. Keeps full node_modules so the Prisma CLI ──

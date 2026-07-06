@@ -100,6 +100,14 @@ export default defineConfig({
             org: process.env.SENTRY_ORG,
             project: process.env.SENTRY_PROJECT ?? 'gabee-kids',
             authToken: sentryAuthToken,
+            // Explicit release from the release tag (SENTRY_RELEASE) — in the
+            // Docker build there's no .git, so auto-detection would pass the
+            // literal "undefined" and the upload API rejects it (CI failure on
+            // v2.6.0/.1). Locally SENTRY_RELEASE is unset → undefined → the
+            // plugin auto-detects from git, which works.
+            release: process.env.SENTRY_RELEASE
+              ? { name: process.env.SENTRY_RELEASE }
+              : undefined,
             sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
             telemetry: false,
           }),

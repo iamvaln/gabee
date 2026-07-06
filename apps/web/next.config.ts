@@ -28,7 +28,14 @@ export default sentryConfigured
   ? withSentryConfig(base, {
       org: process.env.SENTRY_ORG,
       project: process.env.SENTRY_PROJECT,
-      // Quiet the plugin's own logs in CI.
+      // Explicit release from the tag — the Docker build has no .git so auto-
+      // detection would pass a "undefined" release and the upload API rejects
+      // it. Falls back to withSentryConfig's own detection when unset (local).
+      ...(process.env.SENTRY_RELEASE
+        ? { release: { name: process.env.SENTRY_RELEASE } }
+        : {}),
+      // Quiet the plugin's own logs in CI. (Set false + SENTRY_LOG_LEVEL=debug
+      // to surface upload errors — they were hidden here on v2.6.0/.1.)
       silent: true,
       // Upload source maps then delete them so they're not served publicly.
       sourcemaps: { deleteSourcemapsAfterUpload: true },

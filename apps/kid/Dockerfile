@@ -30,9 +30,13 @@ ENV VITE_SENTRY_DSN=$VITE_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
+# Release name for source-map association (no .git in the build context, so the
+# plugin can't auto-detect it — pass the tag explicitly).
+ARG SENTRY_RELEASE
 RUN SENTRY_AUTH_TOKEN="$SENTRY_AUTH_TOKEN" \
     SENTRY_ORG="$SENTRY_ORG" \
     SENTRY_PROJECT="$SENTRY_PROJECT" \
+    SENTRY_RELEASE="$SENTRY_RELEASE" \
     pnpm --filter @gabee/kid run build
 
 # ── Serve the static bundle ──

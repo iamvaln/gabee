@@ -44,6 +44,7 @@ jobs:
             SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
             SENTRY_ORG=${{ secrets.SENTRY_ORG }}
             SENTRY_PROJECT=gabee-web
+            SENTRY_RELEASE=${{ github.ref_name }}
           tags: |
             ${{ env.REGISTRY }}/gabee-web:${{ github.ref_name }}
             ${{ env.REGISTRY }}/gabee-web:latest
@@ -78,6 +79,7 @@ jobs:
             SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
             SENTRY_ORG=${{ secrets.SENTRY_ORG }}
             SENTRY_PROJECT=gabee-kids
+            SENTRY_RELEASE=${{ github.ref_name }}
           tags: |
             ${{ env.REGISTRY }}/gabee-kid:${{ github.ref_name }}
             ${{ env.REGISTRY }}/gabee-kid:latest
