@@ -216,18 +216,26 @@ export function CodeTurtleSession({
     onDone(finalScore, total);
   }
 
+  // A miss (`result === 'fail'`) is an EDITABLE state: the kid can fix their
+  // program and re-run. Only a success locks the controls (briefly, while the
+  // win animation advances). Editing after a miss clears the verdict so Run
+  // re-enables and the coach reverts from the hint.
+  const editLocked = running || result === 'ok';
   function addBlock(k: PrimKey) {
-    if (running || result) return;
+    if (editLocked) return;
+    if (result === 'fail') setResult(null);
     setProgram((p) => [...p, makePrim(k)]);
     setFrame(0);
   }
   function removeAt(i: number) {
-    if (running || result) return;
+    if (editLocked) return;
+    if (result === 'fail') setResult(null);
     setProgram((p) => p.filter((_, j) => j !== i));
     setFrame(0);
   }
   function clearProgram() {
-    if (running || result) return;
+    if (editLocked) return;
+    if (result === 'fail') setResult(null);
     setProgram([]);
     setFrame(0);
   }
@@ -327,13 +335,13 @@ export function CodeTurtleSession({
                   <button
                     key={i}
                     onClick={() => removeAt(i)}
-                    disabled={running || result !== null}
+                    disabled={editLocked}
                     style={{
                       height: 40, padding: '0 10px', borderRadius: 8,
                       background: running && i < frame ? '#F5A623' : '#34d399',
                       color: '#0f172a', border: 'none', fontSize: 16, fontWeight: 700,
                       display: 'flex', alignItems: 'center', gap: 4,
-                      cursor: running || result ? 'default' : 'pointer',
+                      cursor: editLocked ? 'default' : 'pointer',
                     }}
                     aria-label={`remove ${k}`}
                   >
@@ -351,7 +359,7 @@ export function CodeTurtleSession({
               <button
                 key={k}
                 onClick={() => addBlock(k)}
-                disabled={running || result !== null}
+                disabled={editLocked}
                 style={{
                   minWidth: 56, height: 60, padding: '0 10px', borderRadius: 12,
                   background: LABELLED[k] ? '#FDE9C8' : '#BBEAF2',
@@ -369,14 +377,14 @@ export function CodeTurtleSession({
 
           {/* Actions */}
           <div style={{ marginTop: 16, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn" onClick={() => void startRun()} disabled={running || result !== null || program.length === 0}>
+            <button className="btn" onClick={() => void startRun()} disabled={editLocked || program.length === 0}>
               {t('code.run')}
             </button>
-            <button className="btn ghost" onClick={clearProgram} disabled={running || result !== null || program.length === 0}>
+            <button className="btn ghost" onClick={clearProgram} disabled={editLocked || program.length === 0}>
               {t('code.clear')}
             </button>
-            <button className="btn ghost" onClick={() => result === 'fail' ? setResult(null) : skip()} disabled={running}>
-              {result === 'fail' ? t('retry') : t('code.skip')}
+            <button className="btn ghost" onClick={skip} disabled={running}>
+              {t('code.skip')}
             </button>
           </div>
         </div>
