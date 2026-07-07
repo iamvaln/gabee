@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   AvatarSchema,
   HairColorSchema,
+  HairStyleSchema,
   LanguageSchema,
   LessonSchema,
   LevelSchema,
@@ -111,10 +112,11 @@ export const ChildProfileSchema = z.object({
   /** Legacy fixed-look id. Null on rows created after the recolour system;
    *  kept for back-compat, not written anymore. Prefer the 3 dims below. */
   avatar: AvatarSchema.nullable().default(null),
-  /** Recolourable look — three independently-picked dimensions. Backfilled on
+  /** Recolourable look — independently-picked dimensions. Backfilled on
    *  existing rows from the legacy avatar, so always present post-migration. */
   skin_tone: SkinToneSchema,
   hair_color: HairColorSchema,
+  hair_style: HairStyleSchema,
   shirt_color: ShirtColorSchema,
   /** Active language; switchable anytime, no locked primary (product §2). */
   language: LanguageSchema,

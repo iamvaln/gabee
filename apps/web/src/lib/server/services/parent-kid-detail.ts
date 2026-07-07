@@ -1,4 +1,4 @@
-import type { Module, SkinTone, HairColor, ShirtColor } from '@gabee/types';
+import type { Module, SkinTone, HairColor, HairStyle, ShirtColor } from '@gabee/types';
 import { prisma } from '../db';
 import { assertParentCanAccessKid } from '../kid-access';
 import { ageFromBirthDate } from '../../age';
@@ -41,6 +41,7 @@ export interface KidSummary {
   name: string;
   skin_tone: SkinTone;
   hair_color: HairColor;
+  hair_style: HairStyle;
   shirt_color: ShirtColor;
   language: 'fr' | 'en';
   /** ISO date (YYYY-MM-DD) or null; `age` is the derived whole-years value. */
@@ -149,6 +150,7 @@ export async function listKidSummaries(parentId: string): Promise<KidSummary[]> 
     name: r.name,
     skin_tone: r.skinTone,
     hair_color: r.hairColor,
+    hair_style: r.hairStyle,
     shirt_color: r.shirtColor,
     language: r.language,
     birth_date: r.birthDate ? r.birthDate.toISOString().slice(0, 10) : null,
@@ -172,6 +174,7 @@ export async function getKidSummary(parentId: string, kidId: string): Promise<Ki
     name: r.name,
     skin_tone: r.skinTone,
     hair_color: r.hairColor,
+    hair_style: r.hairStyle,
     shirt_color: r.shirtColor,
     language: r.language,
     birth_date: r.birthDate ? r.birthDate.toISOString().slice(0, 10) : null,

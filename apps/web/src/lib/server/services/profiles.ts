@@ -95,6 +95,7 @@ export async function createProfile(
         // client omits. `avatar` (legacy enum) is left null on new rows.
         skinTone: input.skin_tone ?? DEFAULT_AVATAR_LOOK.skinTone,
         hairColor: input.hair_color ?? DEFAULT_AVATAR_LOOK.hairColor,
+        hairStyle: input.hair_style ?? DEFAULT_AVATAR_LOOK.hairStyle,
         shirtColor: input.shirt_color ?? DEFAULT_AVATAR_LOOK.shirtColor,
         language: input.language,
         birthDate: input.birth_date ? new Date(input.birth_date) : null,
@@ -145,6 +146,7 @@ export async function updateProfile(
       ...(input.name !== undefined ? { name: input.name } : {}),
       ...(input.skin_tone !== undefined ? { skinTone: input.skin_tone } : {}),
       ...(input.hair_color !== undefined ? { hairColor: input.hair_color } : {}),
+      ...(input.hair_style !== undefined ? { hairStyle: input.hair_style } : {}),
       ...(input.shirt_color !== undefined ? { shirtColor: input.shirt_color } : {}),
       ...(input.language !== undefined ? { language: input.language } : {}),
       ...(input.birth_date !== undefined ? { birthDate: new Date(input.birth_date) } : {}),

@@ -46,6 +46,7 @@ export default async function EditKidPage({ params }: { params: Promise<{ id: st
         name={kid.name}
         skinTone={kid.skin_tone}
         hairColor={kid.hair_color}
+        hairStyle={kid.hair_style}
         shirtColor={kid.shirt_color}
         language={kid.language}
         birthDate={kid.birth_date}

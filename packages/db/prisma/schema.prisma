@@ -60,6 +60,16 @@ enum ShirtColor {
   shirt_ink
 }
 
+// Hair SHAPE (independent of colour). SVG paths live in @gabee/types.
+enum HairStyle {
+  style_short
+  style_curly
+  style_afro
+  style_long
+  style_pigtails
+  style_bun
+}
+
 enum Module {
   numbers
   words
@@ -286,6 +296,7 @@ model ChildProfile {
   /// Recolourable look — backfilled from `avatar` for pre-existing rows.
   skinTone                    SkinTone                @default(skin_2) @map("skin_tone")
   hairColor                   HairColor               @default(hair_brown) @map("hair_color")
+  hairStyle                   HairStyle               @default(style_short) @map("hair_style")
   shirtColor                  ShirtColor              @default(shirt_blue) @map("shirt_color")
   language                    Language
   // Collected at add-kid (required in the form); drives age-based content

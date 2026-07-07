@@ -10,6 +10,7 @@ import type {
   PendingSessionsResponse,
   SkinTone,
   HairColor,
+  HairStyle,
   ShirtColor,
 } from '@gabee/types';
 import { MintBee } from '../_components/mint-bee';
@@ -20,6 +21,7 @@ export interface ClassifyKidContext {
   name: string;
   skinTone: SkinTone;
   hairColor: HairColor;
+  hairStyle: HairStyle;
   shirtColor: ShirtColor;
 }
 
@@ -275,6 +277,7 @@ export function ClassifyFlow({ initial, kids, lang }: Props) {
             <KidAvatar
               skinTone={kid?.skinTone}
               hairColor={kid?.hairColor}
+              hairStyle={kid?.hairStyle}
               shirtColor={kid?.shirtColor}
               size={48}
               label={kidName}
@@ -478,6 +481,7 @@ function ThankYou({
                       <KidAvatar
                         skinTone={k.skinTone}
                         hairColor={k.hairColor}
+                        hairStyle={k.hairStyle}
                         shirtColor={k.shirtColor}
                         size={40}
                         label={k.name}

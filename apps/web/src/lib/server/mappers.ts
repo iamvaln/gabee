@@ -22,6 +22,7 @@ interface ChildRow {
   avatar: string | null;
   skinTone: string;
   hairColor: string;
+  hairStyle: string;
   shirtColor: string;
   language: string;
   birthDate: Date | null;
@@ -54,6 +55,7 @@ export function mapChildProfile(row: ChildRow): ChildProfile {
     avatar: row.avatar,
     skin_tone: row.skinTone,
     hair_color: row.hairColor,
+    hair_style: row.hairStyle,
     shirt_color: row.shirtColor,
     language: row.language,
     // @db.Date row → "YYYY-MM-DD" (stored at UTC midnight).

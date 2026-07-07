@@ -22,6 +22,7 @@ export function AddChildForm({ lang = 'fr' }: { lang?: Language }) {
   const [look, setLook] = useState<AvatarLook>({
     skinTone: DEFAULT_AVATAR_LOOK.skinTone,
     hairColor: DEFAULT_AVATAR_LOOK.hairColor,
+    hairStyle: DEFAULT_AVATAR_LOOK.hairStyle,
     shirtColor: DEFAULT_AVATAR_LOOK.shirtColor,
   });
   const [language, setLanguage] = useState<Language>(lang);
@@ -77,6 +78,7 @@ export function AddChildForm({ lang = 'fr' }: { lang?: Language }) {
           name: name.trim(),
           skin_tone: look.skinTone,
           hair_color: look.hairColor,
+          hair_style: look.hairStyle,
           shirt_color: look.shirtColor,
           language,
           birth_date: birthday || undefined,

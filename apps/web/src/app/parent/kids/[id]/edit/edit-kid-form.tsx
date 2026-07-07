@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   DEFAULT_AVATAR_LOOK,
   type HairColor,
+  type HairStyle,
   type HealthyUseLimits,
   type KidLimitsOverrides,
   type Language,
@@ -20,6 +21,7 @@ interface Props {
   name: string;
   skinTone: SkinTone;
   hairColor: HairColor;
+  hairStyle: HairStyle;
   shirtColor: ShirtColor;
   language: Language;
   birthDate: string | null;
@@ -38,6 +40,7 @@ export function EditKidForm({
   name: initialName,
   skinTone: initialSkin,
   hairColor: initialHair,
+  hairStyle: initialStyle,
   shirtColor: initialShirt,
   language: initialLanguage,
   birthDate: initialBirthDate,
@@ -48,6 +51,7 @@ export function EditKidForm({
   const [look, setLook] = useState<AvatarLook>({
     skinTone: initialSkin ?? DEFAULT_AVATAR_LOOK.skinTone,
     hairColor: initialHair ?? DEFAULT_AVATAR_LOOK.hairColor,
+    hairStyle: initialStyle ?? DEFAULT_AVATAR_LOOK.hairStyle,
     shirtColor: initialShirt ?? DEFAULT_AVATAR_LOOK.shirtColor,
   });
   const [language, setLanguage] = useState<Language>(initialLanguage);
@@ -80,6 +84,7 @@ export function EditKidForm({
           name: name.trim(),
           skin_tone: look.skinTone,
           hair_color: look.hairColor,
+          hair_style: look.hairStyle,
           shirt_color: look.shirtColor,
           language,
           ...(birthday ? { birth_date: birthday } : {}),

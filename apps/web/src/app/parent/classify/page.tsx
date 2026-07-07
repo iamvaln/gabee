@@ -32,6 +32,7 @@ export default async function ClassifyPage() {
           name: true,
           skinTone: true,
           hairColor: true,
+          hairStyle: true,
           shirtColor: true,
         },
       })
@@ -43,6 +44,7 @@ export default async function ClassifyPage() {
       name: k.name,
       skinTone: k.skinTone,
       hairColor: k.hairColor,
+      hairStyle: k.hairStyle,
       shirtColor: k.shirtColor,
     };
 

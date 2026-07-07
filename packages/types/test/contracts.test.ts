@@ -222,6 +222,7 @@ describe('ChildProfile', () => {
       avatar: 'avatar_1',
       skin_tone: 'skin_2',
       hair_color: 'hair_brown',
+      hair_style: 'style_short',
       shirt_color: 'shirt_blue',
       language: 'fr',
       created_at: NOW,

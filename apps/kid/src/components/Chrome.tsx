@@ -1,10 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import {
   HAIR_COLOR_HEX,
+  HAIR_STYLE_PATHS,
   SHIRT_COLOR_HEX,
   SKIN_TONE_HEX,
   DEFAULT_AVATAR_LOOK,
   type HairColor,
+  type HairStyle,
   type Language,
   type ShirtColor,
   type SkinTone,
@@ -12,13 +14,14 @@ import {
 import { GabeeWordmark } from './Bee';
 import { Icon } from './Icon';
 
-// Recolourable look — skin/hair/shirt each picked independently. Hex maps are
-// the shared source of truth in @gabee/types (same values feed the parent
-// picker swatches). Falls back to the default look for any missing dimension.
+// Recolourable look — skin/hair colour+shape/shirt each picked independently.
+// Palettes + hair-shape paths are the shared source of truth in @gabee/types
+// (same values feed the parent picker). Falls back to the default look.
 export interface ProfileLike {
   name: string;
   skin_tone?: SkinTone | null;
   hair_color?: HairColor | null;
+  hair_style?: HairStyle | null;
   shirt_color?: ShirtColor | null;
 }
 
@@ -34,6 +37,7 @@ export function ProfileAvatar({
   const skin = SKIN_TONE_HEX[profile.skin_tone ?? DEFAULT_AVATAR_LOOK.skinTone];
   const hair = HAIR_COLOR_HEX[profile.hair_color ?? DEFAULT_AVATAR_LOOK.hairColor];
   const shirt = SHIRT_COLOR_HEX[profile.shirt_color ?? DEFAULT_AVATAR_LOOK.shirtColor];
+  const style = HAIR_STYLE_PATHS[profile.hair_style ?? DEFAULT_AVATAR_LOOK.hairStyle];
   const clip = `face-${profile.name.replace(/\W/g, '')}-${skin.slice(1)}`;
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-label={profile.name}>
@@ -45,8 +49,9 @@ export function ProfileAvatar({
       <circle cx="50" cy="50" r="48" fill={shirt} />
       <g clipPath={`url(#${clip})`}>
         <rect x="0" y="80" width="100" height="40" fill={shirt} />
+        {style.back && <path d={style.back} fill={hair} stroke="#20242E" strokeWidth="1.5" />}
         <ellipse cx="50" cy="56" rx="26" ry="30" fill={skin} stroke="#20242E" strokeWidth="1.5" />
-        <path d="M 24 50 Q 25 26 50 24 Q 75 26 76 50 Q 70 36 50 36 Q 30 36 24 50 Z" fill={hair} stroke="#20242E" strokeWidth="1.5" />
+        <path d={style.front} fill={hair} stroke="#20242E" strokeWidth="1.5" />
         {expression === 'correct' ? (
           <>
             <path d="M 40 56 Q 43 60 46 56" stroke="#20242E" strokeWidth="2" fill="none" strokeLinecap="round" />

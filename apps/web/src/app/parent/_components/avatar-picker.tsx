@@ -3,27 +3,32 @@
 import {
   SKIN_TONES,
   HAIR_COLORS,
+  HAIR_STYLES,
   SHIRT_COLORS,
   type HairColor,
+  type HairStyle,
   type Language,
   type ShirtColor,
   type SkinTone,
 } from '@gabee/types';
 import { KidAvatar } from './kid-avatar';
 
-// Parent-facing avatar customiser: a live preview + three rows of colour
-// swatches (skin / hair / shirt). Shared by the add + edit kid forms. Palettes
-// and hex come from @gabee/types so a swatch always matches its rendered fill.
+// Parent-facing avatar customiser: a live preview + colour rows (skin / hair /
+// shirt) and a hairstyle row (mini-avatar shape previews). Shared by the add +
+// edit kid forms. Palettes + shapes come from @gabee/types so a swatch always
+// matches its rendered fill.
 
-const LABELS: Record<'skin' | 'hair' | 'shirt', { fr: string; en: string }> = {
+const LABELS: Record<'skin' | 'hair' | 'style' | 'shirt', { fr: string; en: string }> = {
   skin: { fr: 'Peau', en: 'Skin' },
-  hair: { fr: 'Cheveux', en: 'Hair' },
+  hair: { fr: 'Couleur cheveux', en: 'Hair colour' },
+  style: { fr: 'Coiffure', en: 'Hairstyle' },
   shirt: { fr: 'Habit', en: 'Shirt' },
 };
 
 export interface AvatarLook {
   skinTone: SkinTone;
   hairColor: HairColor;
+  hairStyle: HairStyle;
   shirtColor: ShirtColor;
 }
 
@@ -44,6 +49,7 @@ export function AvatarPicker({
         <KidAvatar
           skinTone={value.skinTone}
           hairColor={value.hairColor}
+          hairStyle={value.hairStyle}
           shirtColor={value.shirtColor}
           size={88}
           label={name || 'avatar'}
@@ -62,6 +68,33 @@ export function AvatarPicker({
           selected={value.hairColor}
           onSelect={(id) => onChange({ ...value, hairColor: id as HairColor })}
         />
+        {/* Hairstyle = shapes, so each option is a mini-avatar preview showing
+            the style with the currently-chosen skin + hair colour. */}
+        <div className="swatch-row">
+          <span className="swatch-row-label">{LABELS.style[lang]}</span>
+          <div className="swatch-row-options" role="radiogroup" aria-label={LABELS.style[lang]}>
+            {HAIR_STYLES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                role="radio"
+                aria-checked={value.hairStyle === s}
+                aria-label={s}
+                className={'style-swatch' + (value.hairStyle === s ? ' on' : '')}
+                onClick={() => onChange({ ...value, hairStyle: s })}
+              >
+                <KidAvatar
+                  skinTone={value.skinTone}
+                  hairColor={value.hairColor}
+                  hairStyle={s}
+                  shirtColor={value.shirtColor}
+                  size={40}
+                  label={s}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
         <SwatchRow
           label={LABELS.shirt[lang]}
           options={SHIRT_COLORS}

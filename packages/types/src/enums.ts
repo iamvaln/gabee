@@ -136,6 +136,19 @@ export const HairColorSchema = z.enum([
 ]);
 export type HairColor = z.infer<typeof HairColorSchema>;
 
+/** Hair SHAPE (independent of colour). Each maps to SVG path(s) in
+ *  HAIR_STYLE_PATHS below — a `front` layer drawn over the face and an optional
+ *  `back` layer drawn behind it (for long/afro/pigtails/bun that frame the head). */
+export const HairStyleSchema = z.enum([
+  'style_short', // the legacy single cap — default + backfill target
+  'style_curly',
+  'style_afro',
+  'style_long',
+  'style_pigtails',
+  'style_bun',
+]);
+export type HairStyle = z.infer<typeof HairStyleSchema>;
+
 /** Shirt colours drawn from the brand + module palette. */
 export const ShirtColorSchema = z.enum([
   'shirt_blue',
@@ -177,22 +190,52 @@ export const SHIRT_COLOR_HEX: Record<ShirtColor, string> = {
   shirt_ink: '#20242E',
 };
 
+// Hair SHAPE paths on a 100×100 viewBox (face ellipse: cx50 cy56 rx26 ry30).
+// `front` is drawn over the face + filled with the hair colour; `back` (optional)
+// is drawn BEHIND the face ellipse so long/afro/pigtails/bun frame the head.
+// These are the single tweak point for the shapes — edit here, both apps update.
+const FRONT_CAP = 'M 24 50 Q 25 26 50 24 Q 75 26 76 50 Q 70 36 50 36 Q 30 36 24 50 Z';
+export const HAIR_STYLE_PATHS: Record<HairStyle, { back?: string; front: string }> = {
+  style_short: { front: FRONT_CAP },
+  style_curly: {
+    front:
+      'M 23 50 Q 19 33 30 31 Q 31 22 41 27 Q 50 19 59 27 Q 69 22 70 31 Q 81 33 77 50 Q 71 36 50 36 Q 29 36 23 50 Z',
+  },
+  style_afro: {
+    back: 'M 50 14 C 24 14 14 34 18 53 Q 19 61 25 63 Q 22 46 50 44 Q 78 46 75 63 Q 81 61 82 53 C 86 34 76 14 50 14 Z',
+    front: FRONT_CAP,
+  },
+  style_long: {
+    back: 'M 21 48 Q 19 30 50 22 Q 81 30 79 48 L 79 86 Q 71 82 69 58 Q 67 40 50 39 Q 33 40 31 58 Q 29 82 21 86 Z',
+    front: FRONT_CAP,
+  },
+  style_pigtails: {
+    back: 'M 9 50 A 9 9 0 1 0 27 50 A 9 9 0 1 0 9 50 Z M 73 50 A 9 9 0 1 0 91 50 A 9 9 0 1 0 73 50 Z',
+    front: FRONT_CAP,
+  },
+  style_bun: {
+    back: 'M 41 19 A 9 9 0 1 0 59 19 A 9 9 0 1 0 41 19 Z',
+    front: FRONT_CAP,
+  },
+};
+
 /** Ordered palettes for the picker swatches (id + hex). */
 export const SKIN_TONES = (Object.keys(SKIN_TONE_HEX) as SkinTone[]).map((id) => ({ id, hex: SKIN_TONE_HEX[id] }));
 export const HAIR_COLORS = (Object.keys(HAIR_COLOR_HEX) as HairColor[]).map((id) => ({ id, hex: HAIR_COLOR_HEX[id] }));
 export const SHIRT_COLORS = (Object.keys(SHIRT_COLOR_HEX) as ShirtColor[]).map((id) => ({ id, hex: SHIRT_COLOR_HEX[id] }));
+export const HAIR_STYLES = Object.keys(HAIR_STYLE_PATHS) as HairStyle[];
 
 /** Maps each legacy avatar id → its recolour equivalent, for backfilling
  *  existing rows. Skin defaults to skin_2 (#F4C7A1, the old single hardcoded
  *  tone); hair/shirt come from the old AVATAR_LOOKS table (Chrome.tsx). */
 export const LEGACY_AVATAR_LOOK: Record<
   Avatar,
-  { skinTone: SkinTone; hairColor: HairColor; shirtColor: ShirtColor }
+  { skinTone: SkinTone; hairColor: HairColor; shirtColor: ShirtColor; hairStyle: HairStyle }
 > = {
-  avatar_1: { skinTone: 'skin_2', hairColor: 'hair_brown', shirtColor: 'shirt_blue' },
-  avatar_2: { skinTone: 'skin_2', hairColor: 'hair_blonde', shirtColor: 'shirt_purple' },
-  avatar_3: { skinTone: 'skin_2', hairColor: 'hair_black', shirtColor: 'shirt_green' },
-  avatar_4: { skinTone: 'skin_2', hairColor: 'hair_ginger', shirtColor: 'shirt_pink' },
+  avatar_1: { skinTone: 'skin_2', hairColor: 'hair_brown', shirtColor: 'shirt_blue', hairStyle: 'style_short' },
+  avatar_2: { skinTone: 'skin_2', hairColor: 'hair_blonde', shirtColor: 'shirt_purple', hairStyle: 'style_short' },
+  avatar_3: { skinTone: 'skin_2', hairColor: 'hair_black', shirtColor: 'shirt_green', hairStyle: 'style_short' },
+  avatar_4: { skinTone: 'skin_2', hairColor: 'hair_ginger', shirtColor: 'shirt_pink', hairStyle: 'style_short' },
 };
 
 /** Default look for a brand-new profile before the parent picks. */
@@ -200,6 +243,7 @@ export const DEFAULT_AVATAR_LOOK = {
   skinTone: 'skin_2' as SkinTone,
   hairColor: 'hair_brown' as HairColor,
   shirtColor: 'shirt_blue' as ShirtColor,
+  hairStyle: 'style_short' as HairStyle,
 };
 
 // ─── Session / lesson ────────────────────────────────────────────────────────

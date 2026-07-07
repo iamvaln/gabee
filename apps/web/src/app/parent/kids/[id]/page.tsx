@@ -75,6 +75,7 @@ export default async function KidDetailPage({
         <KidAvatar
           skinTone={kid.skin_tone}
           hairColor={kid.hair_color}
+          hairStyle={kid.hair_style}
           shirtColor={kid.shirt_color}
           size={72}
           label={kid.name}

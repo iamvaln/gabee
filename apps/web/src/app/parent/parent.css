@@ -920,6 +920,14 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 }
 .swatch:hover { transform: scale(1.08); }
 .swatch.on { border-color: var(--ink); transform: scale(1.12); }
+/* hairstyle options are mini-avatar shape previews, not colour dots */
+.style-swatch {
+  padding: 3px; border-radius: 50%; cursor: pointer; line-height: 0;
+  border: 2.5px solid var(--border); background: var(--surface);
+  transition: transform var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+.style-swatch:hover { transform: scale(1.06); }
+.style-swatch.on { border-color: var(--ink); transform: scale(1.1); }
 @media (max-width: 520px) {
   .avatar-picker { gap: 12px; }
   .swatch { width: 34px; height: 34px; }

@@ -152,6 +152,7 @@ function KidCard({ kid, lang }: { kid: KidSummary; lang: Language }) {
         <KidAvatar
           skinTone={kid.skin_tone}
           hairColor={kid.hair_color}
+          hairStyle={kid.hair_style}
           shirtColor={kid.shirt_color}
           size={56}
           label={kid.name}
