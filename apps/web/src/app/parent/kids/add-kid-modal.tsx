@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Language } from '@gabee/types';
+import { DEFAULT_AVATAR_LOOK, type Language } from '@gabee/types';
+import { AvatarPicker, type AvatarLook } from '../_components/avatar-picker';
 
 // P1 — Add a kid (parent spec §7.2). Modal triggered from the kids list. Submits
-// the API-supported subset (name/avatar/language) immediately and stores the
+// the API-supported subset (name/avatar look/language) immediately and stores the
 // Phase 1 metadata locally — birthday / school level / objectives are captured
 // per spec but not yet persisted server-side (no schema column).
-
-const AVATARS = ['avatar_1', 'avatar_2', 'avatar_3', 'avatar_4'] as const;
-type Avatar = (typeof AVATARS)[number];
 
 const OBJECTIVES: { id: string; label: { fr: string; en: string } }[] = [
   { id: 'math_basics', label: { fr: 'Bases en maths', en: 'Math basics' } },
@@ -37,17 +35,16 @@ interface LauncherProps {
  */
 export function AddKidModalLauncher({ label, atLimit, variant, lang }: LauncherProps) {
   const [open, setOpen] = useState(false);
-  const limitTitle = lang === 'fr' ? 'Limite de 3 enfants atteinte' : '3-kid limit reached';
+
+  // At the cap, we don't dead-end on a disabled button — the parent can ask the
+  // operator to raise the limit. The request lands in the admin Inbox.
+  if (atLimit) {
+    return <RequestMoreProfiles lang={lang} variant={variant} />;
+  }
 
   const trigger =
     variant === 'card' ? (
-      <button
-        type="button"
-        className="kid-add-card"
-        disabled={atLimit}
-        title={atLimit ? limitTitle : ''}
-        onClick={() => setOpen(true)}
-      >
+      <button type="button" className="kid-add-card" onClick={() => setOpen(true)}>
         <span className="plus" aria-hidden>
           +
         </span>
@@ -57,8 +54,6 @@ export function AddKidModalLauncher({ label, atLimit, variant, lang }: LauncherP
       <button
         type="button"
         className={'btn mint' + (variant === 'primary-lg' ? ' lg' : '')}
-        disabled={atLimit}
-        title={atLimit ? limitTitle : ''}
         onClick={() => setOpen(true)}
       >
         <span aria-hidden>+</span>
@@ -74,11 +69,58 @@ export function AddKidModalLauncher({ label, atLimit, variant, lang }: LauncherP
   );
 }
 
+// Shown when the parent is at the 3-profile cap: a button that submits a
+// "please raise my limit" request to the operator (admin Inbox), with a sent /
+// error state. No dead-disabled add button.
+function RequestMoreProfiles({ lang, variant }: { lang: Language; variant: LauncherProps['variant'] }) {
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const L = lang === 'fr';
+
+  async function submit() {
+    if (state === 'sending' || state === 'sent') return;
+    setState('sending');
+    try {
+      const res = await fetch('/api/profiles/request-increase', { method: 'POST' });
+      setState(res.ok ? 'sent' : 'error');
+    } catch {
+      setState('error');
+    }
+  }
+
+  if (state === 'sent') {
+    return (
+      <span className="hint" style={{ fontWeight: 700, color: 'var(--mint-deep)' }}>
+        {L ? 'Demande envoyée ✓ — on revient vers vous.' : 'Request sent ✓ — we’ll get back to you.'}
+      </span>
+    );
+  }
+
+  const cls = variant === 'card' ? 'kid-add-card' : 'btn secondary' + (variant === 'primary-lg' ? ' lg' : '');
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: variant === 'card' ? 'stretch' : 'flex-start' }}>
+      <button type="button" className={cls} onClick={submit} disabled={state === 'sending'}>
+        {state === 'sending'
+          ? L ? 'Envoi…' : 'Sending…'
+          : L ? 'Demander plus de profils' : 'Request more profiles'}
+      </button>
+      <span className="hint" style={{ fontSize: 12, color: 'var(--text-3)' }}>
+        {state === 'error'
+          ? L ? 'Échec — réessayez.' : 'Failed — try again.'
+          : L ? `Limite de ${3} profils atteinte.` : `${3}-profile limit reached.`}
+      </span>
+    </div>
+  );
+}
+
 function AddKidModal({ lang, onClose }: { lang: Language; onClose: () => void }) {
   const router = useRouter();
   const [name, setName] = useState('');
   const [birthday, setBirthday] = useState('');
-  const [avatar, setAvatar] = useState<Avatar>('avatar_1');
+  const [look, setLook] = useState<AvatarLook>({
+    skinTone: DEFAULT_AVATAR_LOOK.skinTone,
+    hairColor: DEFAULT_AVATAR_LOOK.hairColor,
+    shirtColor: DEFAULT_AVATAR_LOOK.shirtColor,
+  });
   const [language, setLanguage] = useState<Language>(lang);
   const [school, setSchool] = useState<(typeof SCHOOL_LEVELS)[number]>('CP');
   const [objectives, setObjectives] = useState<string[]>([]);
@@ -113,7 +155,7 @@ function AddKidModal({ lang, onClose }: { lang: Language; onClose: () => void })
   void objectives;
   void extra;
 
-  const canSave = name.trim().length >= 2 && !!avatar && !!birthday;
+  const canSave = name.trim().length >= 2 && !!birthday;
 
   const toggleObj = (id: string) =>
     setObjectives((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
@@ -128,7 +170,9 @@ function AddKidModal({ lang, onClose }: { lang: Language; onClose: () => void })
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
-          avatar,
+          skin_tone: look.skinTone,
+          hair_color: look.hairColor,
+          shirt_color: look.shirtColor,
           language,
           birth_date: birthday || undefined,
           // Only send the flag when we actually surfaced the choice — keeps
@@ -181,8 +225,8 @@ function AddKidModal({ lang, onClose }: { lang: Language; onClose: () => void })
             setName={setName}
             birthday={birthday}
             setBirthday={setBirthday}
-            avatar={avatar}
-            setAvatar={setAvatar}
+            look={look}
+            setLook={setLook}
             language={language}
             setLanguage={setLanguage}
             school={school}
@@ -265,8 +309,8 @@ export function KidFormFields({
   setName,
   birthday,
   setBirthday,
-  avatar,
-  setAvatar,
+  look,
+  setLook,
   language,
   setLanguage,
   school,
@@ -281,8 +325,8 @@ export function KidFormFields({
   setName: (v: string) => void;
   birthday: string;
   setBirthday: (v: string) => void;
-  avatar: Avatar;
-  setAvatar: (v: Avatar) => void;
+  look: AvatarLook;
+  setLook: (v: AvatarLook) => void;
   language: Language;
   setLanguage: (v: Language) => void;
   school: (typeof SCHOOL_LEVELS)[number];
@@ -320,25 +364,7 @@ export function KidFormFields({
 
       <div className="field" role="group" aria-labelledby="kf-avatar-lbl">
         <span id="kf-avatar-lbl" className="field-label-text" style={{ fontWeight: 800, fontSize: 13.5, display: 'block', color: 'var(--text)' }}>{lang === 'fr' ? 'Avatar' : 'Avatar'}</span>
-        <div className="avatar-pick">
-          {AVATARS.map((a) => (
-            <button
-              key={a}
-              type="button"
-              className={'avatar-opt' + (avatar === a ? ' on' : '')}
-              onClick={() => setAvatar(a)}
-              aria-pressed={avatar === a}
-              aria-label={a}
-            >
-              <AvatarSwatch avatar={a} size={64} />
-              {avatar === a && (
-                <span className="chk" aria-hidden>
-                  ✓
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+        <AvatarPicker value={look} onChange={setLook} lang={lang} name={name} />
       </div>
 
       <div className="field" role="group" aria-labelledby="kf-language-lbl">
@@ -411,20 +437,3 @@ export function KidFormFields({
   );
 }
 
-function AvatarSwatch({ avatar, size }: { avatar: Avatar; size: number }) {
-  const color =
-    avatar === 'avatar_2'
-      ? 'var(--module-words)'
-      : avatar === 'avatar_3'
-        ? 'var(--module-keyboard)'
-        : avatar === 'avatar_4'
-          ? 'var(--coral)'
-          : 'var(--mint)';
-  return (
-    <span
-      className="kid-av"
-      aria-hidden
-      style={{ width: size, height: size, background: color, display: 'inline-block' }}
-    />
-  );
-}

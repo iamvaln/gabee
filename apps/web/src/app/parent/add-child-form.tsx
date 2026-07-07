@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Language } from '@gabee/types';
+import { DEFAULT_AVATAR_LOOK, type Language } from '@gabee/types';
 import { KidFormFields } from './kids/add-kid-modal';
+import type { AvatarLook } from './_components/avatar-picker';
 
 // First-run kid creation (parent spec §7.2). Shown on the parent home page
 // when the account has zero kids yet — same shell as the AddKidModal in the
@@ -12,14 +13,17 @@ import { KidFormFields } from './kids/add-kid-modal';
 // POST body are intentionally identical to the modal so the two surfaces
 // stay in lockstep: a kid added here looks the same as one added later.
 
-const AVATARS = ['avatar_1', 'avatar_2', 'avatar_3', 'avatar_4'] as const;
 const SCHOOL_LEVELS = ['CP', 'CE1', 'CE2', 'autre'] as const;
 
 export function AddChildForm({ lang = 'fr' }: { lang?: Language }) {
   const router = useRouter();
   const [name, setName] = useState('');
   const [birthday, setBirthday] = useState('');
-  const [avatar, setAvatar] = useState<(typeof AVATARS)[number]>('avatar_1');
+  const [look, setLook] = useState<AvatarLook>({
+    skinTone: DEFAULT_AVATAR_LOOK.skinTone,
+    hairColor: DEFAULT_AVATAR_LOOK.hairColor,
+    shirtColor: DEFAULT_AVATAR_LOOK.shirtColor,
+  });
   const [language, setLanguage] = useState<Language>(lang);
   const [school, setSchool] = useState<(typeof SCHOOL_LEVELS)[number]>('CP');
   const [objectives, setObjectives] = useState<string[]>([]);
@@ -55,7 +59,7 @@ export function AddChildForm({ lang = 'fr' }: { lang?: Language }) {
   void objectives;
   void extra;
 
-  const canSave = name.trim().length >= 2 && !!avatar && !!birthday;
+  const canSave = name.trim().length >= 2 && !!birthday;
 
   const toggleObj = (id: string) =>
     setObjectives((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
@@ -71,7 +75,9 @@ export function AddChildForm({ lang = 'fr' }: { lang?: Language }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: name.trim(),
-          avatar,
+          skin_tone: look.skinTone,
+          hair_color: look.hairColor,
+          shirt_color: look.shirtColor,
           language,
           birth_date: birthday || undefined,
           ...(coparentNames.length > 0 ? { share_with_existing_coparents: shareWithCoparents } : {}),
@@ -98,8 +104,8 @@ export function AddChildForm({ lang = 'fr' }: { lang?: Language }) {
         setName={setName}
         birthday={birthday}
         setBirthday={setBirthday}
-        avatar={avatar}
-        setAvatar={setAvatar}
+        look={look}
+        setLook={setLook}
         language={language}
         setLanguage={setLanguage}
         school={school}

@@ -111,9 +111,96 @@ export const KNOWN_ERROR_TYPES = [
 
 // ─── Profile / avatar ────────────────────────────────────────────────────────
 
-/** Four fixed avatar looks at MVP; visual identity only, no behavioral effect (product §3). */
+/** Legacy four fixed looks (MVP). Kept for back-compat on rows created before
+ *  the recolour system; new rows use the skin/hair/shirt dimensions below and
+ *  the enum is no longer written. Visual identity only, no behavioral effect. */
 export const AvatarSchema = z.enum(['avatar_1', 'avatar_2', 'avatar_3', 'avatar_4']);
 export type Avatar = z.infer<typeof AvatarSchema>;
+
+// Recolourable avatar: three independently-picked dimensions instead of 4 fixed
+// combos. Visual identity only. Palettes are the source of truth for BOTH the
+// picker swatches and the SVG fills — the shared <KidAvatar> maps id → hex.
+
+/** Inclusive skin-tone range, light → deep. */
+export const SkinToneSchema = z.enum(['skin_1', 'skin_2', 'skin_3', 'skin_4', 'skin_5', 'skin_6']);
+export type SkinTone = z.infer<typeof SkinToneSchema>;
+
+/** Natural hair colours + a couple of playful ones. */
+export const HairColorSchema = z.enum([
+  'hair_black',
+  'hair_brown',
+  'hair_chestnut',
+  'hair_blonde',
+  'hair_ginger',
+  'hair_grey',
+]);
+export type HairColor = z.infer<typeof HairColorSchema>;
+
+/** Shirt colours drawn from the brand + module palette. */
+export const ShirtColorSchema = z.enum([
+  'shirt_blue',
+  'shirt_purple',
+  'shirt_green',
+  'shirt_pink',
+  'shirt_honey',
+  'shirt_cyan',
+  'shirt_coral',
+  'shirt_ink',
+]);
+export type ShirtColor = z.infer<typeof ShirtColorSchema>;
+
+/** Hex maps — single source of truth for swatches + SVG fills (shared component). */
+export const SKIN_TONE_HEX: Record<SkinTone, string> = {
+  skin_1: '#FCE0C2',
+  skin_2: '#F4C7A1',
+  skin_3: '#E0A878',
+  skin_4: '#C68642',
+  skin_5: '#8D5524',
+  skin_6: '#5C3A21',
+};
+export const HAIR_COLOR_HEX: Record<HairColor, string> = {
+  hair_black: '#1B1A18',
+  hair_brown: '#3A2A1A',
+  hair_chestnut: '#6B4423',
+  hair_blonde: '#E8B84B',
+  hair_ginger: '#B5532A',
+  hair_grey: '#B9B4AC',
+};
+export const SHIRT_COLOR_HEX: Record<ShirtColor, string> = {
+  shirt_blue: '#1F6FEB',
+  shirt_purple: '#7B2FF7',
+  shirt_green: '#3F7A2E',
+  shirt_pink: '#D6336C',
+  shirt_honey: '#FFB400',
+  shirt_cyan: '#2BD4E6',
+  shirt_coral: '#FF7E5C',
+  shirt_ink: '#20242E',
+};
+
+/** Ordered palettes for the picker swatches (id + hex). */
+export const SKIN_TONES = (Object.keys(SKIN_TONE_HEX) as SkinTone[]).map((id) => ({ id, hex: SKIN_TONE_HEX[id] }));
+export const HAIR_COLORS = (Object.keys(HAIR_COLOR_HEX) as HairColor[]).map((id) => ({ id, hex: HAIR_COLOR_HEX[id] }));
+export const SHIRT_COLORS = (Object.keys(SHIRT_COLOR_HEX) as ShirtColor[]).map((id) => ({ id, hex: SHIRT_COLOR_HEX[id] }));
+
+/** Maps each legacy avatar id → its recolour equivalent, for backfilling
+ *  existing rows. Skin defaults to skin_2 (#F4C7A1, the old single hardcoded
+ *  tone); hair/shirt come from the old AVATAR_LOOKS table (Chrome.tsx). */
+export const LEGACY_AVATAR_LOOK: Record<
+  Avatar,
+  { skinTone: SkinTone; hairColor: HairColor; shirtColor: ShirtColor }
+> = {
+  avatar_1: { skinTone: 'skin_2', hairColor: 'hair_brown', shirtColor: 'shirt_blue' },
+  avatar_2: { skinTone: 'skin_2', hairColor: 'hair_blonde', shirtColor: 'shirt_purple' },
+  avatar_3: { skinTone: 'skin_2', hairColor: 'hair_black', shirtColor: 'shirt_green' },
+  avatar_4: { skinTone: 'skin_2', hairColor: 'hair_ginger', shirtColor: 'shirt_pink' },
+};
+
+/** Default look for a brand-new profile before the parent picks. */
+export const DEFAULT_AVATAR_LOOK = {
+  skinTone: 'skin_2' as SkinTone,
+  hairColor: 'hair_brown' as HairColor,
+  shirtColor: 'shirt_blue' as ShirtColor,
+};
 
 // ─── Session / lesson ────────────────────────────────────────────────────────
 

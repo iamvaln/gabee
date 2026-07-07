@@ -1,4 +1,4 @@
-import type { Module } from '@gabee/types';
+import type { Module, SkinTone, HairColor, ShirtColor } from '@gabee/types';
 import { prisma } from '../db';
 import { assertParentCanAccessKid } from '../kid-access';
 import { ageFromBirthDate } from '../../age';
@@ -39,7 +39,9 @@ export interface KidModuleAggregate {
 export interface KidSummary {
   id: string;
   name: string;
-  avatar: string;
+  skin_tone: SkinTone;
+  hair_color: HairColor;
+  shirt_color: ShirtColor;
   language: 'fr' | 'en';
   /** ISO date (YYYY-MM-DD) or null; `age` is the derived whole-years value. */
   birth_date: string | null;
@@ -145,7 +147,9 @@ export async function listKidSummaries(parentId: string): Promise<KidSummary[]> 
   return rows.map((r) => ({
     id: r.id,
     name: r.name,
-    avatar: r.avatar,
+    skin_tone: r.skinTone,
+    hair_color: r.hairColor,
+    shirt_color: r.shirtColor,
     language: r.language,
     birth_date: r.birthDate ? r.birthDate.toISOString().slice(0, 10) : null,
     age: r.birthDate ? ageFromBirthDate(r.birthDate.toISOString().slice(0, 10)) : null,
@@ -166,7 +170,9 @@ export async function getKidSummary(parentId: string, kidId: string): Promise<Ki
   return {
     id: r.id,
     name: r.name,
-    avatar: r.avatar,
+    skin_tone: r.skinTone,
+    hair_color: r.hairColor,
+    shirt_color: r.shirtColor,
     language: r.language,
     birth_date: r.birthDate ? r.birthDate.toISOString().slice(0, 10) : null,
     age: r.birthDate ? ageFromBirthDate(r.birthDate.toISOString().slice(0, 10)) : null,

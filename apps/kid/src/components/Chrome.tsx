@@ -1,19 +1,25 @@
 import { useTranslation } from 'react-i18next';
-import type { Avatar, Language } from '@gabee/types';
+import {
+  HAIR_COLOR_HEX,
+  SHIRT_COLOR_HEX,
+  SKIN_TONE_HEX,
+  DEFAULT_AVATAR_LOOK,
+  type HairColor,
+  type Language,
+  type ShirtColor,
+  type SkinTone,
+} from '@gabee/types';
 import { GabeeWordmark } from './Bee';
 import { Icon } from './Icon';
 
-// Fixed look per avatar id (hair + shirt). Phase-3 recolouring will make these editable.
-const AVATAR_LOOKS: Record<Avatar, { hair: string; shirt: string }> = {
-  avatar_1: { hair: '#3A2A1A', shirt: '#1F6FEB' },
-  avatar_2: { hair: '#E89B3B', shirt: '#7B2FF7' },
-  avatar_3: { hair: '#1B1A18', shirt: '#3F7A2E' },
-  avatar_4: { hair: '#C44', shirt: '#D6336C' },
-};
-
+// Recolourable look — skin/hair/shirt each picked independently. Hex maps are
+// the shared source of truth in @gabee/types (same values feed the parent
+// picker swatches). Falls back to the default look for any missing dimension.
 export interface ProfileLike {
   name: string;
-  avatar: Avatar;
+  skin_tone?: SkinTone | null;
+  hair_color?: HairColor | null;
+  shirt_color?: ShirtColor | null;
 }
 
 export function ProfileAvatar({
@@ -25,9 +31,10 @@ export function ProfileAvatar({
   size?: number;
   expression?: 'idle' | 'correct';
 }) {
-  const { hair, shirt } = AVATAR_LOOKS[profile.avatar];
-  const skin = '#F4C7A1';
-  const clip = `face-${profile.avatar}`;
+  const skin = SKIN_TONE_HEX[profile.skin_tone ?? DEFAULT_AVATAR_LOOK.skinTone];
+  const hair = HAIR_COLOR_HEX[profile.hair_color ?? DEFAULT_AVATAR_LOOK.hairColor];
+  const shirt = SHIRT_COLOR_HEX[profile.shirt_color ?? DEFAULT_AVATAR_LOOK.shirtColor];
+  const clip = `face-${profile.name.replace(/\W/g, '')}-${skin.slice(1)}`;
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-label={profile.name}>
       <defs>

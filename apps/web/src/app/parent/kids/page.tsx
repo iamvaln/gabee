@@ -8,6 +8,7 @@ import {
 } from '@/lib/server/services/parent-kid-detail';
 import { listFamilyActivity } from '@/lib/server/services/family-activity';
 import { MintBee } from '../_components/mint-bee';
+import { KidAvatar } from '../_components/kid-avatar';
 import { FamilyFeed } from '../_components/family-feed';
 import { AddKidModalLauncher } from './add-kid-modal';
 
@@ -148,7 +149,13 @@ function KidCard({ kid, lang }: { kid: KidSummary; lang: Language }) {
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
       <div className="kid-card-top">
-        <KidAvatar avatar={kid.avatar} size={56} />
+        <KidAvatar
+          skinTone={kid.skin_tone}
+          hairColor={kid.hair_color}
+          shirtColor={kid.shirt_color}
+          size={56}
+          label={kid.name}
+        />
         <div>
           <div className="kc-name">{kid.name}</div>
           <div className="kc-age">
@@ -182,24 +189,6 @@ function KidCard({ kid, lang }: { kid: KidSummary; lang: Language }) {
             : 'Not yet active'}
       </div>
     </Link>
-  );
-}
-
-function KidAvatar({ avatar, size }: { avatar: string; size: number }) {
-  const color =
-    avatar === 'avatar_2'
-      ? 'var(--module-words)'
-      : avatar === 'avatar_3'
-        ? 'var(--module-keyboard)'
-        : avatar === 'avatar_4'
-          ? 'var(--coral)'
-          : 'var(--mint)';
-  return (
-    <span
-      className="kid-av"
-      aria-hidden
-      style={{ width: size, height: size, background: color, display: 'inline-block' }}
-    />
   );
 }
 

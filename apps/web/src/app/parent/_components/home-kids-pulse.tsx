@@ -16,7 +16,6 @@ const MODULES: { id: string; nameFr: string; nameEn: string; color: string }[] =
 export interface KidPulse {
   id: string;
   name: string;
-  avatar: string;
   age: number | null;
   todaySessions: number;
   todayMinutes: number;

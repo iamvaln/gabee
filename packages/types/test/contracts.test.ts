@@ -220,6 +220,9 @@ describe('ChildProfile', () => {
       parent_id: UUID2,
       name: 'Léa',
       avatar: 'avatar_1',
+      skin_tone: 'skin_2',
+      hair_color: 'hair_brown',
+      shirt_color: 'shirt_blue',
       language: 'fr',
       created_at: NOW,
       progress_by_module: {

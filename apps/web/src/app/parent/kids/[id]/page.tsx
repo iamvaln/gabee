@@ -11,6 +11,7 @@ import {
 } from '@/lib/server/services/parent-kid-detail';
 import { getKeyboardMetrics } from '@/lib/server/services/keyboard-metrics';
 import { getCodeMetrics } from '@/lib/server/services/code-metrics';
+import { KidAvatar } from '../../_components/kid-avatar';
 import { KidDetailTabs } from './kid-detail-tabs';
 
 export const dynamic = 'force-dynamic';
@@ -71,7 +72,13 @@ export default async function KidDetailPage({
       </Link>
 
       <div className="kid-hero">
-        <KidAvatar avatar={kid.avatar} size={72} />
+        <KidAvatar
+          skinTone={kid.skin_tone}
+          hairColor={kid.hair_color}
+          shirtColor={kid.shirt_color}
+          size={72}
+          label={kid.name}
+        />
         <div>
           <div className="kh-name">{kid.name}</div>
           <div className="kh-meta">
@@ -163,24 +170,6 @@ const MOD_LABEL: Record<string, { fr: string; en: string }> = {
   code: { fr: 'Code', en: 'Code' },
   translation: { fr: 'Traduction', en: 'Translate' },
 };
-
-function KidAvatar({ avatar, size }: { avatar: string; size: number }) {
-  const color =
-    avatar === 'avatar_2'
-      ? 'var(--module-words)'
-      : avatar === 'avatar_3'
-        ? 'var(--module-keyboard)'
-        : avatar === 'avatar_4'
-          ? 'var(--coral)'
-          : 'var(--mint)';
-  return (
-    <span
-      className="kid-av"
-      aria-hidden
-      style={{ width: size, height: size, background: color, display: 'inline-block' }}
-    />
-  );
-}
 
 function formatRelative(iso: string, lang: Language): string {
   const then = new Date(iso).getTime();

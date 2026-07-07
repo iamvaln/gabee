@@ -1,5 +1,14 @@
 import { z } from 'zod';
-import { AvatarSchema, LanguageSchema, LessonSchema, LevelSchema, StarsSchema } from './enums';
+import {
+  AvatarSchema,
+  HairColorSchema,
+  LanguageSchema,
+  LessonSchema,
+  LevelSchema,
+  ShirtColorSchema,
+  SkinToneSchema,
+  StarsSchema,
+} from './enums';
 
 /** A level = 3 lessons + 1 revision (product §4.0). Revision is the reserved lesson 4. */
 export const REVISION_LESSON = 4;
@@ -99,7 +108,14 @@ export const ChildProfileSchema = z.object({
   id: z.uuid(),
   parent_id: z.uuid(),
   name: z.string().min(2).max(20),
-  avatar: AvatarSchema,
+  /** Legacy fixed-look id. Null on rows created after the recolour system;
+   *  kept for back-compat, not written anymore. Prefer the 3 dims below. */
+  avatar: AvatarSchema.nullable().default(null),
+  /** Recolourable look — three independently-picked dimensions. Backfilled on
+   *  existing rows from the legacy avatar, so always present post-migration. */
+  skin_tone: SkinToneSchema,
+  hair_color: HairColorSchema,
+  shirt_color: ShirtColorSchema,
   /** Active language; switchable anytime, no locked primary (product §2). */
   language: LanguageSchema,
   /** ISO date (YYYY-MM-DD) collected at add-kid; drives age-based content

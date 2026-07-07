@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-type Kid = { id: string; name: string; avatar: string };
+type Kid = { id: string; name: string };
 
 const MSG_CAP = 200;
 
