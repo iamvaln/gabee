@@ -27,6 +27,14 @@ export function LookAwayOverlay({
   const { t } = useTranslation();
   const [remaining, setRemaining] = useState(pauseSec);
 
+  // Pick ONE break action at random, once per pause. `pick` is frozen in state
+  // so the per-second countdown re-renders don't reshuffle the suggestion.
+  // Falls back to the generic body if the actions list is somehow missing.
+  const actionsRaw = t('lookAway.actions', { returnObjects: true }) as unknown;
+  const actions = Array.isArray(actionsRaw) ? (actionsRaw as string[]) : [];
+  const [pick] = useState(() => Math.random());
+  const action = actions.length > 0 ? actions[Math.floor(pick * actions.length)]! : t('lookAway.body');
+
   // Countdown — once per second. Auto-dismiss when it hits zero so the kid
   // doesn't have to tap anything.
   useEffect(() => {
@@ -93,11 +101,11 @@ export function LookAwayOverlay({
         }}
       >
         <Bee size={120} expression="idle" wings bob />
-        <h2 style={{ marginTop: 16, fontSize: 24, color: '#0f172a' }}>
+        <h2 style={{ marginTop: 16, fontSize: 22, color: '#64748b', fontWeight: 700 }}>
           {t('lookAway.title')}
         </h2>
-        <p style={{ marginTop: 8, color: '#64748b' }}>
-          {t('lookAway.body')}
+        <p style={{ marginTop: 10, fontSize: 22, fontWeight: 800, color: '#0f172a', lineHeight: 1.35 }}>
+          {action}
         </p>
         <div
           aria-live="polite"

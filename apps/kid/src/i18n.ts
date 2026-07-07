@@ -178,9 +178,19 @@ const resources = {
         tapToRead: 'Touche pour lire',
       },
       lookAway: {
-        title: 'Regarde au loin',
-        body: 'Repose tes yeux quelques secondes — regarde quelque chose loin de l’écran.',
+        title: 'Petite pause ! 🐝',
+        body: 'Repose-toi quelques secondes.',
         comesBack: 'L’écran reviendra tout seul.',
+        actions: [
+          'Va boire un grand verre d’eau 💧',
+          'Lève-toi et fais le tour de la pièce 🚶',
+          'Va à la fenêtre et regarde le plus loin possible 🪟',
+          'Debout, étire-toi vers le plafond, le plus haut possible 🙆',
+          'Saute 5 fois sur place 🦘',
+          'Va faire un câlin à quelqu’un 🤗',
+          'Cours toucher le mur le plus loin, puis reviens 🏃',
+          'Penche-toi et touche tes orteils 5 fois 🦶',
+        ],
       },
       chrome: {
         language: 'langue',
@@ -363,9 +373,19 @@ const resources = {
         tapToRead: 'Tap to read',
       },
       lookAway: {
-        title: 'Look far away',
-        body: 'Rest your eyes — look at something far from the screen.',
+        title: 'Quick break! 🐝',
+        body: 'Rest for a few seconds.',
         comesBack: 'The screen will come back on its own.',
+        actions: [
+          'Go drink a big glass of water 💧',
+          'Stand up and walk around the room 🚶',
+          'Go to the window and look as far as you can 🪟',
+          'Stand and reach up to the ceiling, as high as you can 🙆',
+          'Jump 5 times in place 🦘',
+          'Go give someone a hug 🤗',
+          'Run to touch the farthest wall, then come back 🏃',
+          'Bend down and touch your toes 5 times 🦶',
+        ],
       },
       chrome: {
         language: 'language',
