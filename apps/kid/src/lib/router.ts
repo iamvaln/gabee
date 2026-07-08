@@ -196,21 +196,30 @@ const play = (level: number, lesson: number): PlayTarget & { trigger: 'new' } =>
   trigger: 'new',
 });
 
+// Structural range guard — the curriculum is 10 levels × (3 lessons + revision).
+// A URL with an out-of-range level/lesson (e.g. level-0, level-99) is treated as
+// if that segment were absent, so it falls back to the level/lesson map instead
+// of rendering an empty screen.
+const MAX_LEVEL = 10;
+const MAX_LESSON = 4; // 3 lessons + the revision (lesson 4)
+const inLevel = (n: number | undefined): number | undefined => (n != null && n >= 1 && n <= MAX_LEVEL ? n : undefined);
+const inLesson = (n: number | undefined): number | undefined => (n != null && n >= 1 && n <= MAX_LESSON ? n : undefined);
+
 /** Build a module content route from parsed segments. `sub` is the 3rd segment
  *  (a sub-mode / world for most modules; for translation it's already the level). */
 function contentRoute(module: string, seg2: string | undefined, seg3: string | undefined, seg4: string | undefined): Route | null {
   // Translation has no sub-mode: /learn/translation[/levels | /level-N[/lesson-M]]
   if (module === 'translation') {
-    const level = parseLevel(seg2);
-    const lesson = parseLesson(seg3);
+    const level = inLevel(parseLevel(seg2));
+    const lesson = inLesson(parseLesson(seg3));
     if (level != null && lesson != null) return { name: 'translation_session', ...play(level, lesson) };
     if (level != null) return { name: 'translation_lessonmap', level };
     return { name: 'translation_levelmap' };
   }
 
   const sub = seg2;
-  const level = parseLevel(seg3);
-  const lesson = parseLesson(seg4);
+  const level = inLevel(parseLevel(seg3));
+  const lesson = inLesson(parseLesson(seg4));
 
   if (module === 'numbers') {
     const subMode = (NUMBERS_SUBS as readonly string[]).includes(sub ?? '') ? (sub as NumbersSubMode) : undefined;
