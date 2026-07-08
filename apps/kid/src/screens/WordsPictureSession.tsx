@@ -13,6 +13,7 @@ import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { selectSession } from '../lib/selectSession';
 import { getSeen, markSeen } from '../lib/seen';
+import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
 import { ageFromBirthDate } from '../lib/age';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
 import { HintLine } from '../components/HintLine';
@@ -61,8 +62,8 @@ export function WordsPictureSession({
     return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL, seen) };
   }, [bundle, level, lesson, isRevision]);
 
-  const [qIdx, setQIdx] = useState(0);
-  const [score, setScore] = useState(0);
+  const resumeKey = sessionResumeKey(profile?.id ?? null, 'words:picture', level, lesson);
+  const { qIdx, setQIdx, score, setScore, clear: clearResume } = useResumableProgress(resumeKey);
   const [attempt, setAttempt] = useState(1);
   const [picked, setPicked] = useState<string | number | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
@@ -216,6 +217,7 @@ export function WordsPictureSession({
       );
       await flushEvents();
       await persistProgress(newScore, stars);
+      clearResume();
       onDone(newScore, total);
       return;
     }

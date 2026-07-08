@@ -11,6 +11,7 @@ import { enqueueEvent, flushEvents } from '../lib/events';
 import { useStore } from '../store';
 import { selectSession } from '../lib/selectSession';
 import { getSeen, markSeen } from '../lib/seen';
+import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
 import { ageFromBirthDate } from '../lib/age';
 import {
   parsePuzzle,
@@ -114,12 +115,12 @@ export function CodeTurtleSession({
     return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL, seen) };
   }, [bundle, world, level, lesson, isRevision]);
 
-  const [qIdx, setQIdx] = useState(0);
+  const resumeKey = sessionResumeKey(profile?.id ?? null, `code:${world}`, level, lesson);
+  const { qIdx, setQIdx, score, setScore, clear: clearResume } = useResumableProgress(resumeKey);
   const [program, setProgram] = useState<Prim[]>([]);
   const [frame, setFrame] = useState(0);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<'ok' | 'fail' | null>(null);
-  const [score, setScore] = useState(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedRef = useRef(false);
   const shownRef = useRef<string | null>(null);
@@ -213,6 +214,7 @@ export function CodeTurtleSession({
     );
     await flushEvents();
     persistLocal(stars);
+    clearResume();
     onDone(finalScore, total);
   }
 

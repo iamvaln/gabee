@@ -15,6 +15,7 @@ import { selectSession } from '../lib/selectSession';
 import { ageFromBirthDate } from '../lib/age';
 import { displayValue } from '../lib/util';
 import { getSeen, markSeen } from '../lib/seen';
+import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
 import { HintLine } from '../components/HintLine';
 
 const TOTAL = 7;
@@ -64,10 +65,10 @@ export function KeyboardScrollingSession({
 
   const speedPxPerS = SCROLL_SPEED_BY_LEVEL[level] ?? 60;
 
-  const [qIdx, setQIdx] = useState(0);
+  const resumeKey = sessionResumeKey(profile?.id ?? null, 'keyboard:speed', level, lesson);
+  const { qIdx, setQIdx, score, setScore, clear: clearResume } = useResumableProgress(resumeKey);
   const [typedLen, setTypedLen] = useState(0);
   const [flash, setFlash] = useState<'ok' | 'err' | null>(null);
-  const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   // x = pixel offset of the LEFT edge of the scrolling text. Starts off-stage to
   // the right (= viewport width) and decreases each frame; word "scrolls off"
@@ -236,6 +237,7 @@ export function KeyboardScrollingSession({
     );
     await flushEvents();
     await persistProgress(finalScore, stars);
+    clearResume();
     onDone(finalScore, total);
   }
 

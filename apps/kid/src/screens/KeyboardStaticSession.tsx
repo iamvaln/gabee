@@ -15,6 +15,7 @@ import { selectSession } from '../lib/selectSession';
 import { ageFromBirthDate } from '../lib/age';
 import { displayValue } from '../lib/util';
 import { getSeen, markSeen } from '../lib/seen';
+import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
 import { HintLine } from '../components/HintLine';
 
 const TOTAL = 7;
@@ -65,12 +66,13 @@ export function KeyboardStaticSession({
     return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL, seen) };
   }, [bundle, level, lesson, isRevision]);
 
-  const [qIdx, setQIdx] = useState(0);
+  const resumeKey = sessionResumeKey(profile?.id ?? null, 'keyboard:copy', level, lesson);
+  // qIdx + lesson-wide score (sum of correctly-typed words) persist per lesson
+  // so a reload resumes at the same prompt instead of restarting.
+  const { qIdx, setQIdx, score, setScore, clear: clearResume } = useResumableProgress(resumeKey);
   // Per-question state.
   const [typedLen, setTypedLen] = useState(0);
   const [flash, setFlash] = useState<'ok' | 'err' | null>(null);
-  // Lesson-wide score = sum of correctly-typed words across all 7 prompts.
-  const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
 
   // Refs (timers + dedupe + per-word telemetry buffers).
@@ -255,6 +257,7 @@ export function KeyboardStaticSession({
     );
     await flushEvents();
     await persistProgress(finalScore, stars);
+    clearResume();
     onDone(finalScore, total);
   }
 
