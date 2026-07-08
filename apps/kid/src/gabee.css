@@ -1418,6 +1418,78 @@ a:focus-visible,
   font-size: 28px;
 }
 
+/* Result score ring — the number lives inside a track that fills to score/total
+   (a perfect run closes the ring). Refinement of the old floating "7/7". */
+.summary-ring {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  display: grid;
+  place-items: center;
+}
+.summary-ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.summary-ring .ring-track { fill: none; stroke: #F1E7CE; stroke-width: 14; }
+.summary-ring .ring-fill {
+  fill: none;
+  stroke: var(--color-brand);
+  stroke-width: 14;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 720ms var(--easing);
+}
+.summary-ring-center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.summary-ring-score {
+  font-size: 60px;
+  font-weight: 800;
+  color: var(--color-ink);
+  letter-spacing: -0.03em;
+}
+.summary-ring-total {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Perfect-run chip */
+.summary-perfect {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: var(--radius-pill);
+  background: #FFF3CC;
+  border: 2px solid var(--color-brand);
+  color: #8A5A00;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* Stars pop in one-by-one as a small reward beat. */
+.summary-star { display: inline-flex; }
+.summary-star.pop { animation: summary-star-pop 460ms var(--bounce) both; }
+@keyframes summary-star-pop {
+  0% { transform: scale(0) rotate(-25deg); opacity: 0; }
+  70% { transform: scale(1.25) rotate(6deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .summary-ring .ring-fill { transition: none; }
+  .summary-star.pop { animation: none; }
+}
+
 /* Celebration */
 .celebrate-screen {
   flex: 1;

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bee } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
@@ -29,6 +29,18 @@ export function Summary({
   const profile = useStore((s) => s.profile);
   const stars = Math.max(1, Math.min(3, Math.round((score / total) * 3)));
   const great = score >= total - 1;
+  const perfect = total > 0 && score >= total;
+
+  // Score ring: circumference & the fraction the fill should reach. The ring
+  // starts empty and animates to `frac` on mount for a small reward beat
+  // (transition disabled under prefers-reduced-motion → it just appears full).
+  const RING_C = 2 * Math.PI * 66;
+  const frac = total > 0 ? Math.max(0, Math.min(1, score / total)) : 0;
+  const [filled, setFilled] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setFilled(true), 80);
+    return () => clearTimeout(id);
+  }, []);
 
   // Badges: compute the full earned set + the delta vs what the kid has seen.
   // Newly-earned drives the celebration overlay; the seen-set is written when
@@ -52,17 +64,42 @@ export function Summary({
       <Chrome lang={lang} setLang={setLang} showWordmark onHome={onHome} profile={profile} />
       <div className="summary-content">
         <Bee size={96} expression={great ? 'celebrate' : 'correct'} wings bob />
-        <div className="summary-score">
-          <span>{score}</span>
-          <span className="total">/{total}</span>
+        <div className="summary-ring" role="img" aria-label={`${score}/${total}`}>
+          <svg viewBox="0 0 168 168" aria-hidden="true">
+            <circle className="ring-track" cx="84" cy="84" r="66" />
+            <circle
+              className="ring-fill"
+              cx="84"
+              cy="84"
+              r="66"
+              strokeDasharray={RING_C}
+              strokeDashoffset={filled ? RING_C * (1 - frac) : RING_C}
+            />
+          </svg>
+          <div className="summary-ring-center">
+            <span className="summary-ring-score">{score}</span>
+            <span className="summary-ring-total">/ {total}</span>
+          </div>
         </div>
         <div className="summary-stars" aria-label={`${stars} stars`}>
-          {[1, 2, 3].map((i) => (
-            <span key={i} style={{ color: i <= stars ? '#FFB400' : '#E6E8EE', display: 'inline-flex' }}>
-              <Icon name="star" size={28} />
-            </span>
-          ))}
+          {[1, 2, 3].map((i) => {
+            const earned = i <= stars;
+            return (
+              <span
+                key={i}
+                className={`summary-star${earned ? ' pop' : ''}`}
+                style={{ color: earned ? '#FFB400' : '#E6E8EE', animationDelay: earned ? `${340 + i * 150}ms` : undefined }}
+              >
+                <Icon name="star" size={30} />
+              </span>
+            );
+          })}
         </div>
+        {perfect && (
+          <span className="summary-perfect">
+            <Icon name="sparkle" size={16} /> {t('perfectScore')}
+          </span>
+        )}
         <p style={{ fontSize: 18, fontWeight: 700, maxWidth: 560, textAlign: 'center' }}>
           {great ? t('bravoName', { name: profile?.name }) : t('niceTryName', { name: profile?.name })}
         </p>

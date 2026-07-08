@@ -6,10 +6,10 @@ import { BADGE_LABELS } from '../lib/badges';
 
 /**
  * Full-screen celebration that fires when the kid earns one or more new badges
- * (product §6.3 — consistency framing). Calm + positive: confetti is implied
- * by a few bobbing badge tiles, NOT by a flashy animation. The kid taps to
- * dismiss; the parent then writes the seen-set so the same badges don't fire
- * twice.
+ * (product §6.3 — consistency framing). Calm + positive: the reward reads as an
+ * earned MEDAL (gold medallion + ribbon on a soft sunburst), not a confetti
+ * storm. Each medal pops in once then breathes gently. The kid taps to dismiss;
+ * the parent then writes the seen-set so the same badges don't fire twice.
  */
 export function MilestoneCelebration({
   badges,
@@ -38,45 +38,126 @@ export function MilestoneCelebration({
   return (
     <div
       style={{
-        position: 'fixed', inset: 0, background: 'rgba(255,251,236,0.96)',
+        position: 'fixed', inset: 0, background: 'rgba(255,251,236,0.97)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        zIndex: 9500, padding: 24,
+        zIndex: 9500, padding: 24, overflow: 'hidden',
       }}
       role="dialog"
       aria-modal="true"
       onClick={() => { setOpen(false); onDone(); }}
     >
-      <Bee size={140} expression="celebrate" wings bob />
-      <h1 style={{ marginTop: 16, fontSize: 28, color: '#0f172a', textAlign: 'center' }}>
+      <style>{`
+        @keyframes gabee-medal-pop {
+          0% { transform: scale(0.4); opacity: 0; }
+          70% { transform: scale(1.06); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes gabee-medal-bob {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-7px); }
+        }
+        @keyframes gabee-rays-in {
+          from { transform: scale(0.7); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .gabee-medal-unit {
+          animation: gabee-medal-pop 460ms cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        .gabee-medal-unit .gabee-medal {
+          animation: gabee-medal-bob 2.6s ease-in-out infinite;
+        }
+        .gabee-rays { animation: gabee-rays-in 600ms ease-out both; }
+        @media (prefers-reduced-motion: reduce) {
+          .gabee-medal-unit, .gabee-medal-unit .gabee-medal, .gabee-rays { animation: none !important; }
+        }
+      `}</style>
+
+      {/* Soft static sunburst behind the medals — reward warmth, no confetti. */}
+      <span
+        aria-hidden
+        className="gabee-rays"
+        style={{
+          position: 'absolute', top: '50%', left: '50%', width: 620, height: 620,
+          transform: 'translate(-50%,-50%)', pointerEvents: 'none',
+          background: 'repeating-conic-gradient(from 8deg, rgba(245,179,1,0.13) 0deg 7deg, rgba(245,179,1,0) 7deg 15deg)',
+          WebkitMaskImage: 'radial-gradient(circle, #000 0%, #000 24%, rgba(0,0,0,0) 60%)',
+          maskImage: 'radial-gradient(circle, #000 0%, #000 24%, rgba(0,0,0,0) 60%)',
+        }}
+      />
+
+      <Bee size={132} expression="celebrate" wings bob />
+      <h1 style={{ marginTop: 12, marginBottom: 0, fontSize: 28, fontWeight: 800, color: '#20242e', textAlign: 'center', textWrap: 'balance', position: 'relative' }}>
         {t('milestone.newBadge', { count: badges.length })}
       </h1>
+
       <div
         style={{
-          marginTop: 20, display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 600,
+          marginTop: 24, display: 'flex', gap: 22, flexWrap: 'wrap', justifyContent: 'center',
+          maxWidth: 620, position: 'relative',
         }}
       >
-        {badges.map((id) => {
+        {badges.map((id, i) => {
           const meta = BADGE_LABELS[id];
           return (
             <div
               key={id}
+              className="gabee-medal-unit"
               style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                padding: '12px 16px', borderRadius: 16,
-                background: '#FCD34D', border: '3px solid #B45309',
-                minWidth: 120,
-                animation: 'bob 1.8s ease-in-out infinite',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+                animationDelay: `${120 + i * 110}ms`,
               }}
             >
-              <span style={{ fontSize: 36 }}>{meta.icon}</span>
-              <span style={{ fontSize: 13, fontWeight: 700, marginTop: 6, textAlign: 'center' }}>
+              {/* medallion + ribbon */}
+              <span style={{ position: 'relative', display: 'grid', placeItems: 'center' }}>
+                {/* ribbon tails, behind the disc */}
+                <span
+                  aria-hidden
+                  style={{
+                    position: 'absolute', top: '58%', width: 74, height: 60, zIndex: 0,
+                    display: 'flex', justifyContent: 'space-between',
+                  }}
+                >
+                  <span style={{ width: 26, height: 56, background: '#2BD4E6', borderRight: '2px solid #20242e', borderLeft: '2px solid #20242e', clipPath: 'polygon(0 0,100% 0,100% 100%,50% 78%,0 100%)', transform: 'rotate(-8deg)' }} />
+                  <span style={{ width: 26, height: 56, background: '#2BD4E6', borderRight: '2px solid #20242e', borderLeft: '2px solid #20242e', clipPath: 'polygon(0 0,100% 0,100% 100%,50% 78%,0 100%)', transform: 'rotate(8deg)' }} />
+                </span>
+                {/* gold disc */}
+                <span
+                  className="gabee-medal"
+                  style={{
+                    position: 'relative', zIndex: 1,
+                    width: 116, height: 116, borderRadius: '50%',
+                    background: 'radial-gradient(circle at 38% 32%, #FFEDA8 0%, #F7BE24 52%, #E08A00 100%)',
+                    border: '5px solid #20242e',
+                    boxShadow: 'inset 0 0 0 5px rgba(255,255,255,0.35), 0 12px 24px rgba(224,138,0,0.38)',
+                    display: 'grid', placeItems: 'center',
+                  }}
+                >
+                  <span style={{ fontSize: 46, lineHeight: 1, filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.18))' }}>
+                    {meta.icon}
+                  </span>
+                </span>
+              </span>
+              {/* label pill */}
+              <span
+                style={{
+                  fontSize: 14, fontWeight: 800, color: '#20242e', textAlign: 'center',
+                  background: '#fff', border: '2px solid #20242e', borderRadius: 999,
+                  padding: '5px 14px', lineHeight: 1.1,
+                }}
+              >
                 {meta[lang]}
               </span>
             </div>
           );
         })}
       </div>
-      <p style={{ marginTop: 20, color: '#64748b', fontSize: 14 }}>
+
+      <p
+        style={{
+          marginTop: 26, marginBottom: 0, color: '#64748b', fontSize: 14, fontWeight: 600,
+          position: 'relative',
+        }}
+      >
         {t('milestone.tapToContinue')}
       </p>
     </div>
