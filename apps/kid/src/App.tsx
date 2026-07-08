@@ -60,7 +60,7 @@ import { useHealthyUse } from './lib/healthy-use';
 import { bumpStreak } from './lib/streak';
 import { MessageBandeau } from './components/MessageBandeau';
 import { GiftCard } from './components/GiftCard';
-import { type Route, type PlayTarget, routeToPath, parsePath, restorableRoute } from './lib/router';
+import { type Route, type PlayTarget, routeToPath, parsePath, restorableRoute, routeModule, routeLevel, moduleHome } from './lib/router';
 import { MessageReader } from './components/MessageReader';
 import { lessonsForLevel, unitsForLevel } from './lib/progression';
 import {
@@ -106,6 +106,19 @@ export function App() {
   const initialPath = useRef(typeof window !== 'undefined' ? window.location.pathname : '/');
   const didInitUrl = useRef(false);
   const poppingUrl = useRef(false);
+  // Phase 2: validate a URL-derived route against the cached content bundle. A
+  // deep-linked/typed level that doesn't exist (e.g. /learn/code/maze/level-9)
+  // falls back to the module home instead of an empty map. Best-effort: when the
+  // bundle isn't cached yet we trust the route (the screens degrade gracefully).
+  function safeRoute(r: Route): Route {
+    const module = routeModule(r);
+    const level = routeLevel(r);
+    if (!module || level == null) return r;
+    const bundle = queryClient.getQueryData<QuestionBundleResponse>(['bundle', module]);
+    if (!bundle) return r;
+    const exists = bundle.questions.some((q) => q.level === level);
+    return exists ? r : moduleHome(module);
+  }
   // Adopt the URL's route once the kid is past the gates (profile ready).
   useEffect(() => {
     if (didInitUrl.current || !profile) return;
@@ -113,7 +126,7 @@ export function App() {
     const parsed = parsePath(initialPath.current);
     if (!parsed || typeof window === 'undefined') return;
     setTab(parsed.tab);
-    const r = restorableRoute(parsed.route);
+    const r = safeRoute(restorableRoute(parsed.route));
     if (r.name !== 'hub') setRoute(r);
     window.history.replaceState(null, '', routeToPath(r, parsed.tab));
   }, [profile]);
@@ -129,7 +142,7 @@ export function App() {
     const onPop = () => {
       const parsed = parsePath(window.location.pathname);
       poppingUrl.current = true;
-      if (parsed) { setTab(parsed.tab); setRoute(restorableRoute(parsed.route)); }
+      if (parsed) { setTab(parsed.tab); setRoute(safeRoute(restorableRoute(parsed.route))); }
       else setRoute({ name: 'hub' });
       setTimeout(() => { poppingUrl.current = false; }, 0);
     };

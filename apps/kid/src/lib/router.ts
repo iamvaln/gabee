@@ -276,6 +276,34 @@ export function parsePath(pathname: string): { tab: KidTab; route: Route } | nul
   return null;
 }
 
+/** The module a route belongs to (null for hub/settings). */
+export function routeModule(r: Route): Module | null {
+  const n = r.name;
+  if (n === 'carte_road') return r.module;
+  if (n === 'numbers_subhub' || n === 'levelmap' || n === 'lessonmap' || n === 'session' || n === 'summary') return 'numbers';
+  if (n.startsWith('words')) return 'words';
+  if (n.startsWith('keyboard')) return 'keyboard';
+  if (n.startsWith('code')) return 'code';
+  if (n.startsWith('translation')) return 'translation';
+  return null;
+}
+
+/** The `level` a route targets, or null (hub/subhub/levelmap/road). */
+export function routeLevel(r: Route): number | null {
+  return 'level' in r && typeof (r as { level?: unknown }).level === 'number' ? (r as { level: number }).level : null;
+}
+
+/** A module's safe "home" route — the fallback when a deep-linked level is invalid. */
+export function moduleHome(module: Module): Route {
+  switch (module) {
+    case 'numbers': return { name: 'numbers_subhub' };
+    case 'words': return { name: 'words_subhub' };
+    case 'keyboard': return { name: 'keyboard_subhub' };
+    case 'code': return { name: 'code_subhub' };
+    case 'translation': return { name: 'translation_levelmap' };
+  }
+}
+
 /**
  * The route to actually RESTORE on load / back-forward. Sessions + summaries are
  * ephemeral (need a bundle + progression validation), so a reload of one drops
