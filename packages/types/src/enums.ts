@@ -196,15 +196,16 @@ export const SHIRT_COLOR_HEX: Record<ShirtColor, string> = {
 // face (cx50, y34–77) → `fringe` over the forehead → features. Both are filled
 // with the hair colour. Single tweak point — edit here, both apps update.
 const FRINGE = 'M 32 40 Q 34 31 50 31 Q 66 31 68 40 Q 60 36 50 36 Q 40 36 32 40 Z';
+// A NEAT cap that sits on TOP of the head, ABOVE the ears — no wide "helmet
+// behind the head" (that only makes sense for afro/long, which frame the sides).
+const NEAT_CAP = 'M 30 47 Q 27 23 50 22 Q 73 23 70 47 Q 68 33 50 32 Q 32 33 30 47 Z';
 export const HAIR_STYLE_PATHS: Record<HairStyle, { back: string; fringe: string }> = {
-  style_short: {
-    back: 'M 26 50 Q 22 24 50 22 Q 78 24 74 50 Q 74 42 70 40 Q 72 32 50 31 Q 28 32 30 40 Q 26 42 26 50 Z',
-    fringe: FRINGE,
-  },
+  style_short: { back: NEAT_CAP, fringe: FRINGE },
   style_curly: {
-    back: 'M 24 50 Q 20 38 27 34 Q 26 25 36 26 Q 40 18 50 24 Q 60 18 64 26 Q 74 25 73 34 Q 80 38 76 50 Q 74 40 68 39 Q 70 31 50 31 Q 30 31 32 39 Q 26 40 24 50 Z',
+    back: 'M 28 47 Q 24 35 31 31 Q 30 23 39 26 Q 43 19 50 25 Q 57 19 61 26 Q 70 23 69 31 Q 76 35 72 47 Q 68 33 50 32 Q 32 33 28 47 Z',
     fringe: 'M 32 41 Q 33 32 41 33 Q 45 28 50 32 Q 55 28 59 33 Q 67 32 68 41 Q 60 36 50 36 Q 40 36 32 41 Z',
   },
+  // afro + long keep the WIDE silhouette — their hair really does frame the head.
   style_afro: {
     back: 'M 50 12 C 20 12 10 37 16 57 Q 18 66 26 65 Q 22 45 50 43 Q 78 45 74 65 Q 82 66 84 57 C 90 37 80 12 50 12 Z',
     fringe: 'M 32 42 Q 34 31 50 31 Q 66 31 68 42 Q 60 37 50 37 Q 40 37 32 42 Z',
@@ -213,13 +214,14 @@ export const HAIR_STYLE_PATHS: Record<HairStyle, { back: string; fringe: string 
     back: 'M 24 48 Q 22 26 50 24 Q 78 26 76 48 L 76 76 Q 69 74 67 58 Q 66 42 50 41 Q 34 42 33 58 Q 31 74 24 76 Z',
     fringe: FRINGE,
   },
+  // neat cap + two SYMMETRIC pigtail puffs by the ears
   style_pigtails: {
-    // two SYMMETRIC pigtail puffs by the ears + the top cap
-    back: 'M 26 50 Q 22 24 50 22 Q 78 24 74 50 Q 74 40 68 39 Q 70 31 50 31 Q 30 31 32 39 Q 26 40 26 50 Z M 11 56 A 10 10 0 1 0 31 56 A 10 10 0 1 0 11 56 Z M 69 56 A 10 10 0 1 0 89 56 A 10 10 0 1 0 69 56 Z',
+    back: NEAT_CAP + ' M 12 54 A 9 9 0 1 0 30 54 A 9 9 0 1 0 12 54 Z M 70 54 A 9 9 0 1 0 88 54 A 9 9 0 1 0 70 54 Z',
     fringe: FRINGE,
   },
+  // neat cap + top knot
   style_bun: {
-    back: 'M 26 50 Q 22 24 50 22 Q 78 24 74 50 Q 74 40 68 39 Q 70 31 50 31 Q 30 31 32 39 Q 26 40 26 50 Z M 39 18 A 11 11 0 1 0 61 18 A 11 11 0 1 0 39 18 Z',
+    back: NEAT_CAP + ' M 39 18 A 11 11 0 1 0 61 18 A 11 11 0 1 0 39 18 Z',
     fringe: FRINGE,
   },
 };
