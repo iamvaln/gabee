@@ -125,10 +125,15 @@ export function App() {
     didInitUrl.current = true;
     const parsed = parsePath(initialPath.current);
     if (!parsed || typeof window === 'undefined') return;
+    // Suppress the URL-sync effect while we adopt the initial route, so the
+    // transient `route === 'hub'` render (from handlePick) doesn't push '/learn'
+    // over the deep URL we're restoring. Mirrors the popstate guard.
+    poppingUrl.current = true;
     setTab(parsed.tab);
     const r = safeRoute(restorableRoute(parsed.route));
     if (r.name !== 'hub') setRoute(r);
     window.history.replaceState(null, '', routeToPath(r, parsed.tab));
+    setTimeout(() => { poppingUrl.current = false; }, 0);
   }, [profile]);
   // Reflect route/tab in the URL (after init; skip while handling back/forward).
   useEffect(() => {
