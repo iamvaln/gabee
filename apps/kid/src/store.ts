@@ -31,9 +31,10 @@ interface AppState {
    */
   needsDeviceLink: boolean;
   /**
-   * In-session sentinel: when the parent taps "Skip" on LinkDeviceCode we
-   * remember it so we don't re-prompt them on the next render. NOT persisted —
-   * a refresh re-prompts, which is desirable for a half-finished pair.
+   * Set when the parent taps "Plus tard — juste jouer cette fois" on
+   * LinkDeviceCode. PERSISTED (parent feedback): a page refresh must NOT
+   * re-nag the pairing prompt every time. A fresh login (`setAuth`) resets it,
+   * so the parent is re-nudged to pair on the next SIGN-IN — not on refresh.
    */
   deviceLinkSkipped: boolean;
   /** Selected child profile (re-picked each launch; not persisted). */
@@ -96,7 +97,7 @@ export const useStore = create<AppState>()(
     {
       name: 'gabee-kid-store',
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ lang: s.lang, token: s.token, parent: s.parent, needsDeviceLink: s.needsDeviceLink }),
+      partialize: (s) => ({ lang: s.lang, token: s.token, parent: s.parent, needsDeviceLink: s.needsDeviceLink, deviceLinkSkipped: s.deviceLinkSkipped }),
       onRehydrateStorage: () => (state) => {
         if (state?.token) setApiToken(state.token);
       },
