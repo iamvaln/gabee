@@ -158,7 +158,8 @@ const resources = {
       lock: {
         tapToResume: 'Touche pour reprendre',
         resumeAs: 'Reprendre comme {{name}}',
-        notYou: 'Pas {{name}} ? Ouvre ton propre profil pour ne pas perdre ta progression →',
+        switchProfile: 'Changer de profil',
+        notYou: 'Pas {{name}} ? Ouvre ton profil pour ne pas perdre ta progression.',
       },
       milestone: {
         newBadge_one: 'Nouveau badge !',
@@ -353,7 +354,8 @@ const resources = {
       lock: {
         tapToResume: 'Tap to resume',
         resumeAs: 'Resume as {{name}}',
-        notYou: "Not {{name}}? Open your own profile so you don't lose your progress →",
+        switchProfile: 'Switch profile',
+        notYou: "Not {{name}}? Open your profile so you don't lose your progress.",
       },
       milestone: {
         newBadge_one: 'New badge!',
