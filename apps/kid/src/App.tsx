@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ChildProfile, KidGift, Module, QuestionBundleResponse } from '@gabee/types';
@@ -60,6 +60,7 @@ import { useHealthyUse } from './lib/healthy-use';
 import { bumpStreak } from './lib/streak';
 import { MessageBandeau } from './components/MessageBandeau';
 import { GiftCard } from './components/GiftCard';
+import { type Route, type PlayTarget, routeToPath, parsePath, restorableRoute } from './lib/router';
 import { MessageReader } from './components/MessageReader';
 import { lessonsForLevel, unitsForLevel } from './lib/progression';
 import {
@@ -75,67 +76,7 @@ import type { LocalMessage } from './lib/db';
 // type pairing + density are the gabee.css class toggles.
 const STAGE_CLASS = 'app-stage variation-experimental type-mulish density-regular';
 
-interface PlayTarget {
-  level: number;
-  lesson: number;
-  isRevision: boolean;
-}
-
-type Route =
-  | { name: 'hub' }
-  // Carte → road view for one module. The road takes over the canvas and
-  // handles its own sub-mode pills; tapping a stop fires onPlay which we
-  // route to the right module-specific session below.
-  | { name: 'carte_road'; module: Module }
-  // Numbers sub-hub (Arithmetic + Geometry) — mirrors the Words/Keyboard/Code
-  // pattern. Legacy `levelmap`/`lessonmap`/`session`/`summary` routes remain
-  // for back-compat (deep links / cached state) and route into Arithmetic.
-  | { name: 'numbers_subhub' }
-  | { name: 'levelmap'; subMode?: NumbersSubMode }
-  | { name: 'lessonmap'; level: number; subMode?: NumbersSubMode }
-  | ({ name: 'session'; trigger: 'new' | 'replay'; subMode?: NumbersSubMode } & PlayTarget)
-  | ({ name: 'summary'; score: number; total: number; subMode?: NumbersSubMode } & PlayTarget)
-  // Words sub-hub + 4 sub-modes (each: levelmap → lessonmap → session → summary)
-  | { name: 'words_subhub' }
-  | { name: 'words_picture_levelmap' }
-  | { name: 'words_picture_lessonmap'; level: number }
-  | ({ name: 'words_picture_session'; trigger: 'new' | 'replay' } & PlayTarget)
-  | ({ name: 'words_picture_summary'; score: number; total: number } & PlayTarget)
-  | { name: 'words_fill_levelmap' }
-  | { name: 'words_fill_lessonmap'; level: number }
-  | ({ name: 'words_fill_session'; trigger: 'new' | 'replay' } & PlayTarget)
-  | ({ name: 'words_fill_summary'; score: number; total: number } & PlayTarget)
-  | { name: 'words_build_levelmap' }
-  | { name: 'words_build_lessonmap'; level: number }
-  | ({ name: 'words_build_session'; trigger: 'new' | 'replay' } & PlayTarget)
-  | ({ name: 'words_build_summary'; score: number; total: number } & PlayTarget)
-  | { name: 'words_read_levelmap' }
-  | { name: 'words_read_lessonmap'; level: number }
-  | ({ name: 'words_read_session'; trigger: 'new' | 'replay' } & PlayTarget)
-  | ({ name: 'words_read_summary'; score: number; total: number } & PlayTarget)
-  // Translation
-  | { name: 'translation_levelmap' }
-  | { name: 'translation_lessonmap'; level: number }
-  | ({ name: 'translation_session'; trigger: 'new' | 'replay' } & PlayTarget)
-  | ({ name: 'translation_summary'; score: number; total: number } & PlayTarget)
-  // Keyboard
-  | { name: 'keyboard_subhub' }
-  | { name: 'keyboard_static_levelmap' }
-  | { name: 'keyboard_static_lessonmap'; level: number }
-  | ({ name: 'keyboard_static_session'; trigger: 'new' | 'replay' } & PlayTarget)
-  | ({ name: 'keyboard_static_summary'; score: number; total: number } & PlayTarget)
-  | { name: 'keyboard_scrolling_levelmap' }
-  | { name: 'keyboard_scrolling_lessonmap'; level: number }
-  | ({ name: 'keyboard_scrolling_session'; trigger: 'new' | 'replay' } & PlayTarget)
-  | ({ name: 'keyboard_scrolling_summary'; score: number; total: number } & PlayTarget)
-  // Code — three worlds (maze / draw / actions), one unified turtle session
-  | { name: 'code_subhub' }
-  | { name: 'code_levelmap'; world: CodeWorld }
-  | { name: 'code_lessonmap'; world: CodeWorld; level: number }
-  | ({ name: 'code_session'; world: CodeWorld; trigger: 'new' | 'replay' } & PlayTarget)
-  | ({ name: 'code_summary'; world: CodeWorld; score: number; total: number } & PlayTarget)
-  // Settings
-  | { name: 'settings' };
+// `Route` + `PlayTarget` moved to lib/router.ts (shared with the URL codec).
 
 export function App() {
   const { t } = useTranslation();
@@ -159,6 +100,42 @@ export function App() {
   // resets `route` to the tab's root; sessions and summaries hide the nav
   // entirely so play stays full-screen.
   const [tab, setTab] = useState<KidTab>('apprendre');
+
+  // ── URL ⇄ route sync (Phase 1). Additive: reflects navigation in the address
+  // bar + restores a route on load / back-forward. No screen logic changes.
+  const initialPath = useRef(typeof window !== 'undefined' ? window.location.pathname : '/');
+  const didInitUrl = useRef(false);
+  const poppingUrl = useRef(false);
+  // Adopt the URL's route once the kid is past the gates (profile ready).
+  useEffect(() => {
+    if (didInitUrl.current || !profile) return;
+    didInitUrl.current = true;
+    const parsed = parsePath(initialPath.current);
+    if (!parsed || typeof window === 'undefined') return;
+    setTab(parsed.tab);
+    const r = restorableRoute(parsed.route);
+    if (r.name !== 'hub') setRoute(r);
+    window.history.replaceState(null, '', routeToPath(r, parsed.tab));
+  }, [profile]);
+  // Reflect route/tab in the URL (after init; skip while handling back/forward).
+  useEffect(() => {
+    if (!didInitUrl.current || poppingUrl.current || typeof window === 'undefined') return;
+    const path = routeToPath(route, tab);
+    if (path !== window.location.pathname) window.history.pushState(null, '', path);
+  }, [route, tab]);
+  // Back / forward buttons.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onPop = () => {
+      const parsed = parsePath(window.location.pathname);
+      poppingUrl.current = true;
+      if (parsed) { setTab(parsed.tab); setRoute(restorableRoute(parsed.route)); }
+      else setRoute({ name: 'hub' });
+      setTimeout(() => { poppingUrl.current = false; }, 0);
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
   // Parent → kid messages (changes-v1 §1 / parent spec §8.4). `pendingMsg` is the
   // oldest unread cached locally; the mint bandeau surfaces it between lessons.
   // `readerOpen` flips when the kid taps the bandeau.
