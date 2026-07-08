@@ -16,6 +16,7 @@
  * back to its lesson map on reload (Phase 2 will add validated session deep-links).
  */
 import type { Module } from '@gabee/types';
+import { REVISION_LESSON } from '@gabee/types';
 import type { NumbersSubMode } from '../screens/NumbersHub';
 import type { CodeWorld } from './turtle';
 import type { KidTab } from '../components/BottomNav';
@@ -192,7 +193,7 @@ const parseLesson = (s: string | undefined): number | undefined => {
 const play = (level: number, lesson: number): PlayTarget & { trigger: 'new' } => ({
   level,
   lesson,
-  isRevision: false, // recomputed by the app from the bundle
+  isRevision: lesson === REVISION_LESSON, // the revision is the reserved lesson 4
   trigger: 'new',
 });
 
@@ -314,26 +315,25 @@ export function moduleHome(module: Module): Route {
 }
 
 /**
- * The route to actually RESTORE on load / back-forward. Sessions + summaries are
- * ephemeral (need a bundle + progression validation), so a reload of one drops
- * to its lesson map instead of resuming mid-play. Phase 2 will validate + resume.
+ * The route to actually RESTORE on load / back-forward. Sessions ARE restored —
+ * a reload re-enters the lesson (from question 1; per-question resume is not
+ * persisted), so the kid keeps their PLACE instead of landing on the picker.
+ * Only SUMMARIES are truly ephemeral (score/total are gone) → drop to the lesson
+ * map. `safeRoute` in App still validates the level exists before entering.
  */
 export function restorableRoute(route: Route): Route {
   switch (route.name) {
-    case 'session':
     case 'summary':
       return { name: 'lessonmap', level: route.level, subMode: route.subMode };
-    case 'code_session':
     case 'code_summary':
       return { name: 'code_lessonmap', world: route.world, level: route.level };
-    case 'translation_session':
     case 'translation_summary':
       return { name: 'translation_lessonmap', level: route.level };
     default:
       break;
   }
-  // words_*/keyboard_* session|summary → the matching lessonmap.
-  const m = route.name.match(/^(words_(?:picture|fill|build|read)|keyboard_(?:static|scrolling))_(session|summary)$/);
+  // words_*/keyboard_* SUMMARY → the matching lessonmap (sessions pass through).
+  const m = route.name.match(/^(words_(?:picture|fill|build|read)|keyboard_(?:static|scrolling))_summary$/);
   if (m && 'level' in route) {
     return { name: `${m[1]}_lessonmap`, level: (route as PlayTarget).level } as Route;
   }

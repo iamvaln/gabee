@@ -149,6 +149,26 @@ export function App() {
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
+  // Deferred deep-link validation: safeRoute is best-effort (skips when the
+  // bundle isn't cached yet), so a COLD deep-load to a level that doesn't exist
+  // (e.g. a typed /learn/.../level-9 when only 5 ship) would otherwise sit on an
+  // empty session skeleton. Once the module's bundle is fetched, re-check and
+  // clamp to the module home. Cache-first (offline-safe); no-op for valid levels.
+  useEffect(() => {
+    if (!didInitUrl.current || !profile) return;
+    const module = routeModule(route);
+    const level = routeLevel(route);
+    if (!module || level == null) return;
+    let cancelled = false;
+    void queryClient
+      .ensureQueryData<QuestionBundleResponse>({ queryKey: ['bundle', module], queryFn: () => api.getBundle(module) })
+      .then((bundle) => {
+        if (cancelled) return;
+        if (!bundle.questions.some((q) => q.level === level)) setRoute(moduleHome(module));
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [route, profile, queryClient]);
   // Parent → kid messages (changes-v1 §1 / parent spec §8.4). `pendingMsg` is the
   // oldest unread cached locally; the mint bandeau surfaces it between lessons.
   // `readerOpen` flips when the kid taps the bandeau.
