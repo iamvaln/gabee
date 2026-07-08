@@ -190,34 +190,42 @@ export const SHIRT_COLOR_HEX: Record<ShirtColor, string> = {
   shirt_ink: '#20242E',
 };
 
-// Hair SHAPE paths on a 100×100 viewBox (face ellipse: cx50 cy56 rx26 ry30).
-// `front` is drawn over the face + filled with the hair colour; `back` (optional)
-// is drawn BEHIND the face ellipse so long/afro/pigtails/bun frame the head.
-// These are the single tweak point for the shapes — edit here, both apps update.
-const FRONT_CAP = 'M 24 50 Q 25 26 50 24 Q 75 26 76 50 Q 70 36 50 36 Q 30 36 24 50 Z';
-export const HAIR_STYLE_PATHS: Record<HairStyle, { back?: string; front: string }> = {
-  style_short: { front: FRONT_CAP },
+// FRONT-VIEW hair shapes on a 100×100 viewBox. Composed against the shared
+// avatar in KidAvatar/ProfileAvatar: neutral bg disc → coloured shoulders
+// (shirt) → neck → `back` hair silhouette (frames the head top+sides) → ears →
+// face (cx50, y34–77) → `fringe` over the forehead → features. Both are filled
+// with the hair colour. Single tweak point — edit here, both apps update.
+const FRINGE = 'M 32 40 Q 34 31 50 31 Q 66 31 68 40 Q 60 36 50 36 Q 40 36 32 40 Z';
+export const HAIR_STYLE_PATHS: Record<HairStyle, { back: string; fringe: string }> = {
+  style_short: {
+    back: 'M 26 50 Q 22 24 50 22 Q 78 24 74 50 Q 74 42 70 40 Q 72 32 50 31 Q 28 32 30 40 Q 26 42 26 50 Z',
+    fringe: FRINGE,
+  },
   style_curly: {
-    front:
-      'M 23 50 Q 19 33 30 31 Q 31 22 41 27 Q 50 19 59 27 Q 69 22 70 31 Q 81 33 77 50 Q 71 36 50 36 Q 29 36 23 50 Z',
+    back: 'M 24 50 Q 20 38 27 34 Q 26 25 36 26 Q 40 18 50 24 Q 60 18 64 26 Q 74 25 73 34 Q 80 38 76 50 Q 74 40 68 39 Q 70 31 50 31 Q 30 31 32 39 Q 26 40 24 50 Z',
+    fringe: 'M 32 41 Q 33 32 41 33 Q 45 28 50 32 Q 55 28 59 33 Q 67 32 68 41 Q 60 36 50 36 Q 40 36 32 41 Z',
   },
   style_afro: {
-    back: 'M 50 14 C 24 14 14 34 18 53 Q 19 61 25 63 Q 22 46 50 44 Q 78 46 75 63 Q 81 61 82 53 C 86 34 76 14 50 14 Z',
-    front: FRONT_CAP,
+    back: 'M 50 16 C 24 16 14 38 20 56 Q 22 62 27 62 Q 23 46 50 44 Q 77 46 73 62 Q 78 62 80 56 C 86 38 76 16 50 16 Z',
+    fringe: 'M 32 42 Q 34 32 50 32 Q 66 32 68 42 Q 60 37 50 37 Q 40 37 32 42 Z',
   },
   style_long: {
-    back: 'M 21 48 Q 19 30 50 22 Q 81 30 79 48 L 79 86 Q 71 82 69 58 Q 67 40 50 39 Q 33 40 31 58 Q 29 82 21 86 Z',
-    front: FRONT_CAP,
+    back: 'M 24 48 Q 22 26 50 24 Q 78 26 76 48 L 76 74 Q 68 72 66 58 Q 66 42 50 41 Q 34 42 34 58 Q 32 72 24 74 Z',
+    fringe: FRINGE,
   },
   style_pigtails: {
-    back: 'M 9 50 A 9 9 0 1 0 27 50 A 9 9 0 1 0 9 50 Z M 73 50 A 9 9 0 1 0 91 50 A 9 9 0 1 0 73 50 Z',
-    front: FRONT_CAP,
+    back: 'M 26 50 Q 22 24 50 22 Q 78 24 74 50 Q 74 40 68 39 Q 70 31 50 31 Q 30 31 32 39 Q 26 40 26 50 Z M 19 52 A 9 9 0 1 0 19 51.9 Z M 81 52 A 9 9 0 1 0 81 51.9 Z',
+    fringe: FRINGE,
   },
   style_bun: {
-    back: 'M 41 19 A 9 9 0 1 0 59 19 A 9 9 0 1 0 41 19 Z',
-    front: FRONT_CAP,
+    back: 'M 26 50 Q 22 24 50 22 Q 78 24 74 50 Q 74 40 68 39 Q 70 31 50 31 Q 30 31 32 39 Q 26 40 26 50 Z M 41 18 A 9 9 0 1 0 59 18 A 9 9 0 1 0 41 18 Z',
+    fringe: FRINGE,
   },
 };
+
+/** Fixed neutral disc behind the avatar (the shirt colour now dresses the
+ *  shoulders, not the background). */
+export const AVATAR_BG = '#ECE7DC';
 
 /** Ordered palettes for the picker swatches (id + hex). */
 export const SKIN_TONES = (Object.keys(SKIN_TONE_HEX) as SkinTone[]).map((id) => ({ id, hex: SKIN_TONE_HEX[id] }));
