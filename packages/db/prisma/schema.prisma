@@ -20,11 +20,54 @@ enum Language {
   en
 }
 
+// Legacy fixed-look avatar (MVP). Superseded by the recolour dimensions below;
+// kept for back-compat on the nullable ChildProfile.avatar column.
 enum Avatar {
   avatar_1
   avatar_2
   avatar_3
   avatar_4
+}
+
+// Recolourable avatar dimensions — hex values live in @gabee/types (single
+// source for swatches + SVG fills). Visual identity only, no behavioral effect.
+enum SkinTone {
+  skin_1
+  skin_2
+  skin_3
+  skin_4
+  skin_5
+  skin_6
+}
+
+enum HairColor {
+  hair_black
+  hair_brown
+  hair_chestnut
+  hair_blonde
+  hair_ginger
+  hair_grey
+}
+
+enum ShirtColor {
+  shirt_blue
+  shirt_purple
+  shirt_green
+  shirt_pink
+  shirt_honey
+  shirt_cyan
+  shirt_coral
+  shirt_ink
+}
+
+// Hair SHAPE (independent of colour). SVG paths live in @gabee/types.
+enum HairStyle {
+  style_short
+  style_curly
+  style_afro
+  style_long
+  style_pigtails
+  style_bun
 }
 
 enum Module {
@@ -248,7 +291,13 @@ model ChildProfile {
   id                          String                  @id @default(uuid()) @db.Uuid
   parentId                    String                  @map("parent_id") @db.Uuid
   name                        String
-  avatar                      Avatar
+  /// Legacy fixed-look id; null on rows created after the recolour system.
+  avatar                      Avatar?
+  /// Recolourable look — backfilled from `avatar` for pre-existing rows.
+  skinTone                    SkinTone                @default(skin_2) @map("skin_tone")
+  hairColor                   HairColor               @default(hair_brown) @map("hair_color")
+  hairStyle                   HairStyle               @default(style_short) @map("hair_style")
+  shirtColor                  ShirtColor              @default(shirt_blue) @map("shirt_color")
   language                    Language
   // Collected at add-kid (required in the form); drives age-based content
   // selection. Nullable for profiles created before this field existed.

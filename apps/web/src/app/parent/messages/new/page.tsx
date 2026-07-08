@@ -27,7 +27,7 @@ export default async function NewMessagePage({
     }),
     prisma.childProfile.findMany({
       where: { parentId: session.parentId },
-      select: { id: true, name: true, avatar: true },
+      select: { id: true, name: true },
       orderBy: { createdAt: 'asc' },
     }),
   ]);

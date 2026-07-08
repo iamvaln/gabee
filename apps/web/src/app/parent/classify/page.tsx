@@ -27,11 +27,26 @@ export default async function ClassifyPage() {
   const kids = accessibleIds.length
     ? await prisma.childProfile.findMany({
         where: { id: { in: accessibleIds } },
-        select: { id: true, name: true, avatar: true },
+        select: {
+          id: true,
+          name: true,
+          skinTone: true,
+          hairColor: true,
+          hairStyle: true,
+          shirtColor: true,
+        },
       })
     : [];
   const kidMap: Record<string, ClassifyKidContext> = {};
-  for (const k of kids) kidMap[k.id] = { id: k.id, name: k.name, avatar: k.avatar };
+  for (const k of kids)
+    kidMap[k.id] = {
+      id: k.id,
+      name: k.name,
+      skinTone: k.skinTone,
+      hairColor: k.hairColor,
+      hairStyle: k.hairStyle,
+      shirtColor: k.shirtColor,
+    };
 
   const lang: Language =
     (await cookies()).get('parent_lang')?.value === 'en' ? 'en' : 'fr';

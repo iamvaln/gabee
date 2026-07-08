@@ -19,7 +19,11 @@ interface ChildRow {
   id: string;
   parentId: string;
   name: string;
-  avatar: string;
+  avatar: string | null;
+  skinTone: string;
+  hairColor: string;
+  hairStyle: string;
+  shirtColor: string;
   language: string;
   birthDate: Date | null;
   audioEnabled: boolean;
@@ -49,6 +53,10 @@ export function mapChildProfile(row: ChildRow): ChildProfile {
     parent_id: row.parentId,
     name: row.name,
     avatar: row.avatar,
+    skin_tone: row.skinTone,
+    hair_color: row.hairColor,
+    hair_style: row.hairStyle,
+    shirt_color: row.shirtColor,
     language: row.language,
     // @db.Date row → "YYYY-MM-DD" (stored at UTC midnight).
     birth_date: row.birthDate ? row.birthDate.toISOString().slice(0, 10) : null,

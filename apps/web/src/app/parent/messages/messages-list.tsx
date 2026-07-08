@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import type { ParentKidMessageRow } from '@gabee/types';
 import { MintBee } from '../_components/mint-bee';
 
-type Kid = { id: string; name: string; avatar: string };
+type Kid = { id: string; name: string };
 
 /**
  * M1 — Messages list (parent spec §8.2). Ported from

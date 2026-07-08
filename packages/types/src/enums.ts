@@ -111,9 +111,151 @@ export const KNOWN_ERROR_TYPES = [
 
 // ─── Profile / avatar ────────────────────────────────────────────────────────
 
-/** Four fixed avatar looks at MVP; visual identity only, no behavioral effect (product §3). */
+/** Legacy four fixed looks (MVP). Kept for back-compat on rows created before
+ *  the recolour system; new rows use the skin/hair/shirt dimensions below and
+ *  the enum is no longer written. Visual identity only, no behavioral effect. */
 export const AvatarSchema = z.enum(['avatar_1', 'avatar_2', 'avatar_3', 'avatar_4']);
 export type Avatar = z.infer<typeof AvatarSchema>;
+
+// Recolourable avatar: three independently-picked dimensions instead of 4 fixed
+// combos. Visual identity only. Palettes are the source of truth for BOTH the
+// picker swatches and the SVG fills — the shared <KidAvatar> maps id → hex.
+
+/** Inclusive skin-tone range, light → deep. */
+export const SkinToneSchema = z.enum(['skin_1', 'skin_2', 'skin_3', 'skin_4', 'skin_5', 'skin_6']);
+export type SkinTone = z.infer<typeof SkinToneSchema>;
+
+/** Natural hair colours + a couple of playful ones. */
+export const HairColorSchema = z.enum([
+  'hair_black',
+  'hair_brown',
+  'hair_chestnut',
+  'hair_blonde',
+  'hair_ginger',
+  'hair_grey',
+]);
+export type HairColor = z.infer<typeof HairColorSchema>;
+
+/** Hair SHAPE (independent of colour). Each maps to SVG path(s) in
+ *  HAIR_STYLE_PATHS below — a `front` layer drawn over the face and an optional
+ *  `back` layer drawn behind it (for long/afro/pigtails/bun that frame the head). */
+export const HairStyleSchema = z.enum([
+  'style_short', // the legacy single cap — default + backfill target
+  'style_curly',
+  'style_afro',
+  'style_long',
+  'style_pigtails',
+  'style_bun',
+]);
+export type HairStyle = z.infer<typeof HairStyleSchema>;
+
+/** Shirt colours drawn from the brand + module palette. */
+export const ShirtColorSchema = z.enum([
+  'shirt_blue',
+  'shirt_purple',
+  'shirt_green',
+  'shirt_pink',
+  'shirt_honey',
+  'shirt_cyan',
+  'shirt_coral',
+  'shirt_ink',
+]);
+export type ShirtColor = z.infer<typeof ShirtColorSchema>;
+
+/** Hex maps — single source of truth for swatches + SVG fills (shared component). */
+export const SKIN_TONE_HEX: Record<SkinTone, string> = {
+  skin_1: '#FCE0C2',
+  skin_2: '#F4C7A1',
+  skin_3: '#E0A878',
+  skin_4: '#C68642',
+  skin_5: '#8D5524',
+  skin_6: '#5C3A21',
+};
+export const HAIR_COLOR_HEX: Record<HairColor, string> = {
+  hair_black: '#1B1A18',
+  hair_brown: '#3A2A1A',
+  hair_chestnut: '#6B4423',
+  hair_blonde: '#E8B84B',
+  hair_ginger: '#B5532A',
+  hair_grey: '#B9B4AC',
+};
+export const SHIRT_COLOR_HEX: Record<ShirtColor, string> = {
+  shirt_blue: '#1F6FEB',
+  shirt_purple: '#7B2FF7',
+  shirt_green: '#3F7A2E',
+  shirt_pink: '#D6336C',
+  shirt_honey: '#FFB400',
+  shirt_cyan: '#2BD4E6',
+  shirt_coral: '#FF7E5C',
+  shirt_ink: '#20242E',
+};
+
+// FRONT-VIEW hair shapes on a 100×100 viewBox. Composed against the shared
+// avatar in KidAvatar/ProfileAvatar: neutral bg disc → coloured shoulders
+// (shirt) → neck → `back` hair silhouette (frames the head top+sides) → ears →
+// face (cx50, y34–77) → `fringe` over the forehead → features. Both are filled
+// with the hair colour. Single tweak point — edit here, both apps update.
+const FRINGE = 'M 32 40 Q 34 31 50 31 Q 66 31 68 40 Q 60 36 50 36 Q 40 36 32 40 Z';
+// A NEAT cap that sits on TOP of the head, ABOVE the ears — no wide "helmet
+// behind the head" (that only makes sense for afro/long, which frame the sides).
+const NEAT_CAP = 'M 30 47 Q 27 23 50 22 Q 73 23 70 47 Q 68 33 50 32 Q 32 33 30 47 Z';
+export const HAIR_STYLE_PATHS: Record<HairStyle, { back: string; fringe: string }> = {
+  style_short: { back: NEAT_CAP, fringe: FRINGE },
+  style_curly: {
+    back: 'M 28 47 Q 24 35 31 31 Q 30 23 39 26 Q 43 19 50 25 Q 57 19 61 26 Q 70 23 69 31 Q 76 35 72 47 Q 68 33 50 32 Q 32 33 28 47 Z',
+    fringe: 'M 32 41 Q 33 32 41 33 Q 45 28 50 32 Q 55 28 59 33 Q 67 32 68 41 Q 60 36 50 36 Q 40 36 32 41 Z',
+  },
+  // afro + long keep the WIDE silhouette — their hair really does frame the head.
+  style_afro: {
+    back: 'M 50 12 C 20 12 10 37 16 57 Q 18 66 26 65 Q 22 45 50 43 Q 78 45 74 65 Q 82 66 84 57 C 90 37 80 12 50 12 Z',
+    fringe: 'M 32 42 Q 34 31 50 31 Q 66 31 68 42 Q 60 37 50 37 Q 40 37 32 42 Z',
+  },
+  style_long: {
+    back: 'M 24 48 Q 22 26 50 24 Q 78 26 76 48 L 76 76 Q 69 74 67 58 Q 66 42 50 41 Q 34 42 33 58 Q 31 74 24 76 Z',
+    fringe: FRINGE,
+  },
+  // neat cap + two SYMMETRIC pigtail puffs by the ears
+  style_pigtails: {
+    back: NEAT_CAP + ' M 12 54 A 9 9 0 1 0 30 54 A 9 9 0 1 0 12 54 Z M 70 54 A 9 9 0 1 0 88 54 A 9 9 0 1 0 70 54 Z',
+    fringe: FRINGE,
+  },
+  // neat cap + top knot
+  style_bun: {
+    back: NEAT_CAP + ' M 39 18 A 11 11 0 1 0 61 18 A 11 11 0 1 0 39 18 Z',
+    fringe: FRINGE,
+  },
+};
+
+/** Fixed neutral disc behind the avatar (the shirt colour now dresses the
+ *  shoulders, not the background). */
+export const AVATAR_BG = '#ECE7DC';
+
+/** Ordered palettes for the picker swatches (id + hex). */
+export const SKIN_TONES = (Object.keys(SKIN_TONE_HEX) as SkinTone[]).map((id) => ({ id, hex: SKIN_TONE_HEX[id] }));
+export const HAIR_COLORS = (Object.keys(HAIR_COLOR_HEX) as HairColor[]).map((id) => ({ id, hex: HAIR_COLOR_HEX[id] }));
+export const SHIRT_COLORS = (Object.keys(SHIRT_COLOR_HEX) as ShirtColor[]).map((id) => ({ id, hex: SHIRT_COLOR_HEX[id] }));
+export const HAIR_STYLES = Object.keys(HAIR_STYLE_PATHS) as HairStyle[];
+
+/** Maps each legacy avatar id → its recolour equivalent, for backfilling
+ *  existing rows. Skin defaults to skin_2 (#F4C7A1, the old single hardcoded
+ *  tone); hair/shirt come from the old AVATAR_LOOKS table (Chrome.tsx). */
+export const LEGACY_AVATAR_LOOK: Record<
+  Avatar,
+  { skinTone: SkinTone; hairColor: HairColor; shirtColor: ShirtColor; hairStyle: HairStyle }
+> = {
+  avatar_1: { skinTone: 'skin_2', hairColor: 'hair_brown', shirtColor: 'shirt_blue', hairStyle: 'style_short' },
+  avatar_2: { skinTone: 'skin_2', hairColor: 'hair_blonde', shirtColor: 'shirt_purple', hairStyle: 'style_short' },
+  avatar_3: { skinTone: 'skin_2', hairColor: 'hair_black', shirtColor: 'shirt_green', hairStyle: 'style_short' },
+  avatar_4: { skinTone: 'skin_2', hairColor: 'hair_ginger', shirtColor: 'shirt_pink', hairStyle: 'style_short' },
+};
+
+/** Default look for a brand-new profile before the parent picks. */
+export const DEFAULT_AVATAR_LOOK = {
+  skinTone: 'skin_2' as SkinTone,
+  hairColor: 'hair_brown' as HairColor,
+  shirtColor: 'shirt_blue' as ShirtColor,
+  hairStyle: 'style_short' as HairStyle,
+};
 
 // ─── Session / lesson ────────────────────────────────────────────────────────
 

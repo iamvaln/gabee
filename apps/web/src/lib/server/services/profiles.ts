@@ -1,4 +1,5 @@
 import {
+  DEFAULT_AVATAR_LOOK,
   defaultProgressByModule,
   defaultProgressByModulePerLanguage,
   type ChildProfile,
@@ -10,6 +11,33 @@ import { HttpError } from '../http';
 import { mapChildProfile } from '../mappers';
 
 const MAX_CHILDREN = 3;
+
+/**
+ * A parent at the profile cap asks the operator to raise it. We don't
+ * auto-grant — this lands a row in the admin Inbox (source
+ * `profile_increase_request`) so the operator has a trackable count + can
+ * follow up. Idempotent-ish by design: the admin dedupes; the endpoint
+ * rate-limits to stop spam.
+ */
+export async function requestProfileIncrease(parentId: string): Promise<void> {
+  const account = await prisma.parentAccount.findUnique({
+    where: { id: parentId },
+    select: { email: true, children: { select: { name: true } } },
+  });
+  if (!account) throw new HttpError(404, 'account_not_found', 'Account not found');
+  const names = account.children.map((c) => c.name).join(', ') || '—';
+  await prisma.inboxMessage.create({
+    data: {
+      name: account.email,
+      email: account.email,
+      subject: 'Demande de profils supplémentaires',
+      message:
+        `${account.email} a atteint la limite de ${MAX_CHILDREN} profils ` +
+        `(${account.children.length} enfant(s) : ${names}) et souhaite en ajouter davantage.`,
+      source: 'profile_increase_request',
+    },
+  });
+}
 
 export async function listProfiles(parentId: string): Promise<ChildProfile[]> {
   const rows = await prisma.childProfile.findMany({
@@ -63,7 +91,12 @@ export async function createProfile(
       data: {
         parentId,
         name: input.name,
-        avatar: input.avatar,
+        // Recolour look — fall back to the default for any dimension the
+        // client omits. `avatar` (legacy enum) is left null on new rows.
+        skinTone: input.skin_tone ?? DEFAULT_AVATAR_LOOK.skinTone,
+        hairColor: input.hair_color ?? DEFAULT_AVATAR_LOOK.hairColor,
+        hairStyle: input.hair_style ?? DEFAULT_AVATAR_LOOK.hairStyle,
+        shirtColor: input.shirt_color ?? DEFAULT_AVATAR_LOOK.shirtColor,
         language: input.language,
         birthDate: input.birth_date ? new Date(input.birth_date) : null,
         audioEnabled: input.audio_enabled ?? true,
@@ -111,7 +144,10 @@ export async function updateProfile(
     where: { id },
     data: {
       ...(input.name !== undefined ? { name: input.name } : {}),
-      ...(input.avatar !== undefined ? { avatar: input.avatar } : {}),
+      ...(input.skin_tone !== undefined ? { skinTone: input.skin_tone } : {}),
+      ...(input.hair_color !== undefined ? { hairColor: input.hair_color } : {}),
+      ...(input.hair_style !== undefined ? { hairStyle: input.hair_style } : {}),
+      ...(input.shirt_color !== undefined ? { shirtColor: input.shirt_color } : {}),
       ...(input.language !== undefined ? { language: input.language } : {}),
       ...(input.birth_date !== undefined ? { birthDate: new Date(input.birth_date) } : {}),
       ...(input.audio_enabled !== undefined ? { audioEnabled: input.audio_enabled } : {}),

@@ -1,19 +1,31 @@
 import { useTranslation } from 'react-i18next';
-import type { Avatar, Language } from '@gabee/types';
+import {
+  AVATAR_BG,
+  HAIR_COLOR_HEX,
+  HAIR_STYLE_PATHS,
+  SHIRT_COLOR_HEX,
+  SKIN_TONE_HEX,
+  DEFAULT_AVATAR_LOOK,
+  type HairColor,
+  type HairStyle,
+  type Language,
+  type ShirtColor,
+  type SkinTone,
+} from '@gabee/types';
+
+const INK = '#20242E';
 import { GabeeWordmark } from './Bee';
 import { Icon } from './Icon';
 
-// Fixed look per avatar id (hair + shirt). Phase-3 recolouring will make these editable.
-const AVATAR_LOOKS: Record<Avatar, { hair: string; shirt: string }> = {
-  avatar_1: { hair: '#3A2A1A', shirt: '#1F6FEB' },
-  avatar_2: { hair: '#E89B3B', shirt: '#7B2FF7' },
-  avatar_3: { hair: '#1B1A18', shirt: '#3F7A2E' },
-  avatar_4: { hair: '#C44', shirt: '#D6336C' },
-};
-
+// Recolourable look — skin/hair colour+shape/shirt each picked independently.
+// Palettes + hair-shape paths are the shared source of truth in @gabee/types
+// (same values feed the parent picker). Falls back to the default look.
 export interface ProfileLike {
   name: string;
-  avatar: Avatar;
+  skin_tone?: SkinTone | null;
+  hair_color?: HairColor | null;
+  hair_style?: HairStyle | null;
+  shirt_color?: ShirtColor | null;
 }
 
 export function ProfileAvatar({
@@ -25,9 +37,11 @@ export function ProfileAvatar({
   size?: number;
   expression?: 'idle' | 'correct';
 }) {
-  const { hair, shirt } = AVATAR_LOOKS[profile.avatar];
-  const skin = '#F4C7A1';
-  const clip = `face-${profile.avatar}`;
+  const skin = SKIN_TONE_HEX[profile.skin_tone ?? DEFAULT_AVATAR_LOOK.skinTone];
+  const hair = HAIR_COLOR_HEX[profile.hair_color ?? DEFAULT_AVATAR_LOOK.hairColor];
+  const shirt = SHIRT_COLOR_HEX[profile.shirt_color ?? DEFAULT_AVATAR_LOOK.shirtColor];
+  const style = HAIR_STYLE_PATHS[profile.hair_style ?? DEFAULT_AVATAR_LOOK.hairStyle];
+  const clip = `face-${profile.name.replace(/\W/g, '')}-${skin.slice(1)}`;
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-label={profile.name}>
       <defs>
@@ -35,23 +49,29 @@ export function ProfileAvatar({
           <circle cx="50" cy="50" r="48" />
         </clipPath>
       </defs>
-      <circle cx="50" cy="50" r="48" fill={shirt} />
+      {/* neutral disc — shirt colour dresses the shoulders, not the bg */}
+      <circle cx="50" cy="50" r="48" fill={AVATAR_BG} />
       <g clipPath={`url(#${clip})`}>
-        <rect x="0" y="80" width="100" height="40" fill={shirt} />
-        <ellipse cx="50" cy="56" rx="26" ry="30" fill={skin} stroke="#20242E" strokeWidth="1.5" />
-        <path d="M 24 50 Q 25 26 50 24 Q 75 26 76 50 Q 70 36 50 36 Q 30 36 24 50 Z" fill={hair} stroke="#20242E" strokeWidth="1.5" />
+        <path d="M 12 100 Q 13 78 34 74 Q 42 72 50 72 Q 58 72 66 74 Q 87 78 88 100 Z" fill={shirt} stroke={INK} strokeWidth="1.5" />
+        <path d="M 44 66 L 44 76 Q 50 80 56 76 L 56 66 Z" fill={skin} stroke={INK} strokeWidth="1.2" />
+        <path d={style.back} fill={hair} stroke={INK} strokeWidth="1.5" />
+        <circle cx="31" cy="53" r="4.5" fill={skin} stroke={INK} strokeWidth="1.2" />
+        <circle cx="69" cy="53" r="4.5" fill={skin} stroke={INK} strokeWidth="1.2" />
+        <path d="M 32 46 Q 32 34 50 34 Q 68 34 68 46 Q 68 62 60 70 Q 50 77 40 70 Q 32 62 32 46 Z" fill={skin} stroke={INK} strokeWidth="1.5" />
+        <path d={style.fringe} fill={hair} stroke={INK} strokeWidth="1.2" />
         {expression === 'correct' ? (
           <>
-            <path d="M 40 56 Q 43 60 46 56" stroke="#20242E" strokeWidth="2" fill="none" strokeLinecap="round" />
-            <path d="M 54 56 Q 57 60 60 56" stroke="#20242E" strokeWidth="2" fill="none" strokeLinecap="round" />
+            <path d="M 40 50 Q 43 54 46 50" stroke={INK} strokeWidth="2" fill="none" strokeLinecap="round" />
+            <path d="M 54 50 Q 57 54 60 50" stroke={INK} strokeWidth="2" fill="none" strokeLinecap="round" />
           </>
         ) : (
           <>
-            <circle cx="43" cy="57" r="2.2" fill="#20242E" />
-            <circle cx="57" cy="57" r="2.2" fill="#20242E" />
+            <circle cx="43" cy="50" r="2.3" fill={INK} />
+            <circle cx="57" cy="50" r="2.3" fill={INK} />
           </>
         )}
-        <path d="M 44 70 Q 50 74 56 70" stroke="#20242E" strokeWidth="2" fill="none" strokeLinecap="round" />
+        <path d="M 50 53 Q 52 58 49 59" fill="none" stroke={INK} strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M 44 63 Q 50 67 56 63" fill="none" stroke={INK} strokeWidth="1.8" strokeLinecap="round" />
       </g>
     </svg>
   );

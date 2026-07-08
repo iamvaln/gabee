@@ -75,7 +75,6 @@ export default async function ParentHome() {
     return {
       id: c.id,
       name: c.name,
-      avatar: c.avatar,
       age: ageFromBirthDate(c.birth_date),
       todaySessions: a?.sessions ?? 0,
       todayMinutes: Math.round((a?.durationS ?? 0) / 60),

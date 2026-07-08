@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AvatarSchema, LanguageSchema } from '../enums';
+import { HairColorSchema, HairStyleSchema, LanguageSchema, ShirtColorSchema, SkinToneSchema } from '../enums';
 import { ChildProfileSchema } from '../progress';
 
 /**
@@ -17,7 +17,12 @@ export type ListProfilesResponse = z.infer<typeof ListProfilesResponseSchema>;
 // POST /api/profiles
 export const CreateProfileRequestSchema = z.object({
   name: z.string().min(2).max(20),
-  avatar: AvatarSchema,
+  /** Recolourable look. Optional on the wire — the server fills the default
+   *  look for any dimension the client omits. */
+  skin_tone: SkinToneSchema.optional(),
+  hair_color: HairColorSchema.optional(),
+  hair_style: HairStyleSchema.optional(),
+  shirt_color: ShirtColorSchema.optional(),
   language: LanguageSchema,
   /** ISO date (YYYY-MM-DD); the add-kid form requires it, optional here for API back-compat. */
   birth_date: z.iso.date().optional(),
@@ -40,7 +45,10 @@ export type CreateProfileRequest = z.infer<typeof CreateProfileRequestSchema>;
 export const UpdateProfileRequestSchema = z
   .object({
     name: z.string().min(2).max(20),
-    avatar: AvatarSchema,
+    skin_tone: SkinToneSchema,
+    hair_color: HairColorSchema,
+    hair_style: HairStyleSchema,
+    shirt_color: ShirtColorSchema,
     language: LanguageSchema,
     birth_date: z.iso.date(),
     audio_enabled: z.boolean(),

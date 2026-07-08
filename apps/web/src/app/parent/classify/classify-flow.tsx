@@ -3,13 +3,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { Language, PendingSession, InitiationLabel, PendingSessionsResponse } from '@gabee/types';
+import type {
+  Language,
+  PendingSession,
+  InitiationLabel,
+  PendingSessionsResponse,
+  SkinTone,
+  HairColor,
+  HairStyle,
+  ShirtColor,
+} from '@gabee/types';
 import { MintBee } from '../_components/mint-bee';
+import { KidAvatar } from '../_components/kid-avatar';
 
 export interface ClassifyKidContext {
   id: string;
   name: string;
-  avatar: string;
+  skinTone: SkinTone;
+  hairColor: HairColor;
+  hairStyle: HairStyle;
+  shirtColor: ShirtColor;
 }
 
 interface Props {
@@ -261,7 +274,14 @@ export function ClassifyFlow({ initial, kids, lang }: Props) {
           )}
 
           <div className="classify-kidline">
-            <KidAvatar avatar={kid?.avatar ?? 'avatar_1'} size={48} />
+            <KidAvatar
+              skinTone={kid?.skinTone}
+              hairColor={kid?.hairColor}
+              hairStyle={kid?.hairStyle}
+              shirtColor={kid?.shirtColor}
+              size={48}
+              label={kidName}
+            />
             <span className="nm">{kidName}</span>
           </div>
           <div className="classify-meta">
@@ -458,7 +478,14 @@ function ThankYou({
                       className={'lw-kid' + (activeKid === k.id ? ' on' : '')}
                       onClick={() => setPickKid(k.id)}
                     >
-                      <KidAvatar avatar={k.avatar} size={40} />
+                      <KidAvatar
+                        skinTone={k.skinTone}
+                        hairColor={k.hairColor}
+                        hairStyle={k.hairStyle}
+                        shirtColor={k.shirtColor}
+                        size={40}
+                        label={k.name}
+                      />
                       <span>{k.name}</span>
                     </button>
                   ))}
@@ -483,26 +510,5 @@ function ThankYou({
         </div>
       </div>
     </div>
-  );
-}
-
-// Lightweight in-file avatar — a coloured circle keyed off the avatar id. The
-// canonical KidAvatar lives in design assets; here we render a coloured swatch
-// so the flow renders standalone without external sprites.
-function KidAvatar({ avatar, size }: { avatar: string; size: number }) {
-  const color =
-    avatar === 'avatar_2'
-      ? 'var(--module-words)'
-      : avatar === 'avatar_3'
-        ? 'var(--module-keyboard)'
-        : avatar === 'avatar_4'
-          ? 'var(--coral)'
-          : 'var(--mint)';
-  return (
-    <span
-      className="kid-av"
-      aria-hidden
-      style={{ width: size, height: size, background: color, display: 'inline-block' }}
-    />
   );
 }

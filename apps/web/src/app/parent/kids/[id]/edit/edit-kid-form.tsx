@@ -2,17 +2,27 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { HealthyUseLimits, KidLimitsOverrides, Language } from '@gabee/types';
+import {
+  DEFAULT_AVATAR_LOOK,
+  type HairColor,
+  type HairStyle,
+  type HealthyUseLimits,
+  type KidLimitsOverrides,
+  type Language,
+  type ShirtColor,
+  type SkinTone,
+} from '@gabee/types';
 import { KidFormFields } from '../../add-kid-modal';
-
-const AVATARS = ['avatar_1', 'avatar_2', 'avatar_3', 'avatar_4'] as const;
-type Avatar = (typeof AVATARS)[number];
+import type { AvatarLook } from '../../../_components/avatar-picker';
 
 interface Props {
   lang: Language;
   id: string;
   name: string;
-  avatar: string;
+  skinTone: SkinTone;
+  hairColor: HairColor;
+  hairStyle: HairStyle;
+  shirtColor: ShirtColor;
   language: Language;
   birthDate: string | null;
 }
@@ -28,16 +38,22 @@ export function EditKidForm({
   lang,
   id,
   name: initialName,
-  avatar: initialAvatar,
+  skinTone: initialSkin,
+  hairColor: initialHair,
+  hairStyle: initialStyle,
+  shirtColor: initialShirt,
   language: initialLanguage,
   birthDate: initialBirthDate,
 }: Props) {
   const router = useRouter();
   const [name, setName] = useState(initialName);
   const [birthday, setBirthday] = useState(initialBirthDate ?? '');
-  const [avatar, setAvatar] = useState<Avatar>(
-    (AVATARS as readonly string[]).includes(initialAvatar) ? (initialAvatar as Avatar) : 'avatar_1',
-  );
+  const [look, setLook] = useState<AvatarLook>({
+    skinTone: initialSkin ?? DEFAULT_AVATAR_LOOK.skinTone,
+    hairColor: initialHair ?? DEFAULT_AVATAR_LOOK.hairColor,
+    hairStyle: initialStyle ?? DEFAULT_AVATAR_LOOK.hairStyle,
+    shirtColor: initialShirt ?? DEFAULT_AVATAR_LOOK.shirtColor,
+  });
   const [language, setLanguage] = useState<Language>(initialLanguage);
   const [school, setSchool] = useState<'CP' | 'CE1' | 'CE2' | 'autre'>('CP');
   const [objectives, setObjectives] = useState<string[]>([]);
@@ -64,7 +80,15 @@ export function EditKidForm({
       const res = await fetch(`/api/profiles/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), avatar, language, ...(birthday ? { birth_date: birthday } : {}) }),
+        body: JSON.stringify({
+          name: name.trim(),
+          skin_tone: look.skinTone,
+          hair_color: look.hairColor,
+          hair_style: look.hairStyle,
+          shirt_color: look.shirtColor,
+          language,
+          ...(birthday ? { birth_date: birthday } : {}),
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
@@ -88,8 +112,8 @@ export function EditKidForm({
           setName={setName}
           birthday={birthday}
           setBirthday={setBirthday}
-          avatar={avatar}
-          setAvatar={setAvatar}
+          look={look}
+          setLook={setLook}
           language={language}
           setLanguage={setLanguage}
           school={school}
