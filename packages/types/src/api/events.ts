@@ -14,6 +14,18 @@ export const IngestEventsRequestSchema = z.object({
 });
 export type IngestEventsRequest = z.infer<typeof IngestEventsRequestSchema>;
 
+/**
+ * Lenient variant: accept the batch SHAPE (array of raw items) but validate each
+ * event INDIVIDUALLY in the handler. A single malformed / old-schema event then
+ * gets reported in `rejected` instead of 422-ing the whole batch — which would
+ * wedge the kid's offline queue forever (the drain retries the batch endlessly,
+ * so nothing after the bad event ever uploads). See /api/events route.
+ */
+export const IngestEventsRequestLenientSchema = z.object({
+  events: z.array(z.unknown()).min(1).max(500),
+});
+export type IngestEventsRequestLenient = z.infer<typeof IngestEventsRequestLenientSchema>;
+
 export const IngestEventsResponseSchema = z.object({
   accepted: z.number().int().min(0),
   duplicates: z.number().int().min(0),
