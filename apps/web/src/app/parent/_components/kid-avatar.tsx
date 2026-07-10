@@ -5,10 +5,12 @@ import {
   SHIRT_COLOR_HEX,
   SKIN_TONE_HEX,
   DEFAULT_AVATAR_LOOK,
+  FACE_PATHS,
   type HairColor,
   type HairStyle,
   type ShirtColor,
   type SkinTone,
+  type Gender,
 } from '@gabee/types';
 
 const INK = '#20242E';
@@ -23,6 +25,7 @@ export function KidAvatar({
   hairColor,
   hairStyle,
   shirtColor,
+  gender,
   size = 48,
   label,
 }: {
@@ -30,6 +33,7 @@ export function KidAvatar({
   hairColor?: HairColor | null;
   hairStyle?: HairStyle | null;
   shirtColor?: ShirtColor | null;
+  gender?: Gender | null;
   size?: number;
   label?: string;
 }) {
@@ -37,7 +41,8 @@ export function KidAvatar({
   const hair = HAIR_COLOR_HEX[hairColor ?? DEFAULT_AVATAR_LOOK.hairColor];
   const shirt = SHIRT_COLOR_HEX[shirtColor ?? DEFAULT_AVATAR_LOOK.shirtColor];
   const style = HAIR_STYLE_PATHS[hairStyle ?? DEFAULT_AVATAR_LOOK.hairStyle];
-  const clip = `kidface-${skin.slice(1)}-${hair.slice(1)}-${shirt.slice(1)}-${hairStyle ?? ''}`;
+  const face = FACE_PATHS[gender ?? 'boy'];
+  const clip = `kidface-${skin.slice(1)}-${hair.slice(1)}-${shirt.slice(1)}-${hairStyle ?? ''}-${gender ?? ''}`;
   return (
     <svg
       width={size}
@@ -65,7 +70,7 @@ export function KidAvatar({
         <circle cx="31" cy="53" r="4.5" fill={skin} stroke={INK} strokeWidth="1.2" />
         <circle cx="69" cy="53" r="4.5" fill={skin} stroke={INK} strokeWidth="1.2" />
         {/* face */}
-        <path d="M 32 46 Q 32 34 50 34 Q 68 34 68 46 Q 68 62 60 70 Q 50 77 40 70 Q 32 62 32 46 Z" fill={skin} stroke={INK} strokeWidth="1.5" />
+        <path d={face} fill={skin} stroke={INK} strokeWidth="1.5" />
         {/* fringe over the forehead */}
         <path d={style.fringe} fill={hair} stroke={INK} strokeWidth="1.2" />
         {/* front-facing features */}

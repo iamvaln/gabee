@@ -6,11 +6,13 @@ import {
   SHIRT_COLOR_HEX,
   SKIN_TONE_HEX,
   DEFAULT_AVATAR_LOOK,
+  FACE_PATHS,
   type HairColor,
   type HairStyle,
   type Language,
   type ShirtColor,
   type SkinTone,
+  type Gender,
 } from '@gabee/types';
 
 const INK = '#20242E';
@@ -26,6 +28,7 @@ export interface ProfileLike {
   hair_color?: HairColor | null;
   hair_style?: HairStyle | null;
   shirt_color?: ShirtColor | null;
+  gender?: Gender | null;
 }
 
 export function ProfileAvatar({
@@ -41,6 +44,7 @@ export function ProfileAvatar({
   const hair = HAIR_COLOR_HEX[profile.hair_color ?? DEFAULT_AVATAR_LOOK.hairColor];
   const shirt = SHIRT_COLOR_HEX[profile.shirt_color ?? DEFAULT_AVATAR_LOOK.shirtColor];
   const style = HAIR_STYLE_PATHS[profile.hair_style ?? DEFAULT_AVATAR_LOOK.hairStyle];
+  const face = FACE_PATHS[profile.gender ?? 'boy'];
   const clip = `face-${profile.name.replace(/\W/g, '')}-${skin.slice(1)}`;
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-label={profile.name}>
@@ -57,7 +61,7 @@ export function ProfileAvatar({
         <path d={style.back} fill={hair} stroke={INK} strokeWidth="1.5" />
         <circle cx="31" cy="53" r="4.5" fill={skin} stroke={INK} strokeWidth="1.2" />
         <circle cx="69" cy="53" r="4.5" fill={skin} stroke={INK} strokeWidth="1.2" />
-        <path d="M 32 46 Q 32 34 50 34 Q 68 34 68 46 Q 68 62 60 70 Q 50 77 40 70 Q 32 62 32 46 Z" fill={skin} stroke={INK} strokeWidth="1.5" />
+        <path d={face} fill={skin} stroke={INK} strokeWidth="1.5" />
         <path d={style.fringe} fill={hair} stroke={INK} strokeWidth="1.2" />
         {expression === 'correct' ? (
           <>
