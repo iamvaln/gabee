@@ -7,6 +7,7 @@
  * never redefined locally (brief).
  */
 export * from './enums';
+export * from './device';
 export * from './bilingual';
 export * from './sub-mode';
 export * from './question';

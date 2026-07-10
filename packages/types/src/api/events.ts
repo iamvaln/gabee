@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { EventEnvelopeSchema } from '../events';
+import { DeviceSnapshotSchema } from '../device';
 
 /**
  * Event ingestion API (product §8, §9). The kid app batch-uploads buffered event
@@ -11,6 +12,7 @@ import { EventEnvelopeSchema } from '../events';
 // POST /api/events
 export const IngestEventsRequestSchema = z.object({
   events: z.array(EventEnvelopeSchema).min(1).max(500),
+  device: DeviceSnapshotSchema.optional(),
 });
 export type IngestEventsRequest = z.infer<typeof IngestEventsRequestSchema>;
 
@@ -23,6 +25,7 @@ export type IngestEventsRequest = z.infer<typeof IngestEventsRequestSchema>;
  */
 export const IngestEventsRequestLenientSchema = z.object({
   events: z.array(z.unknown()).min(1).max(500),
+  device: DeviceSnapshotSchema.optional(),
 });
 export type IngestEventsRequestLenient = z.infer<typeof IngestEventsRequestLenientSchema>;
 
