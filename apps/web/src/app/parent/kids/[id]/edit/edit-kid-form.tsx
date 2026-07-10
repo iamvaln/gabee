@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   DEFAULT_AVATAR_LOOK,
+  type Gender,
   type HairColor,
   type HairStyle,
   type HealthyUseLimits,
@@ -23,6 +24,7 @@ interface Props {
   hairColor: HairColor;
   hairStyle: HairStyle;
   shirtColor: ShirtColor;
+  gender: Gender | null;
   language: Language;
   birthDate: string | null;
 }
@@ -42,6 +44,7 @@ export function EditKidForm({
   hairColor: initialHair,
   hairStyle: initialStyle,
   shirtColor: initialShirt,
+  gender: initialGender,
   language: initialLanguage,
   birthDate: initialBirthDate,
 }: Props) {
@@ -53,6 +56,7 @@ export function EditKidForm({
     hairColor: initialHair ?? DEFAULT_AVATAR_LOOK.hairColor,
     hairStyle: initialStyle ?? DEFAULT_AVATAR_LOOK.hairStyle,
     shirtColor: initialShirt ?? DEFAULT_AVATAR_LOOK.shirtColor,
+    gender: initialGender,
   });
   const [language, setLanguage] = useState<Language>(initialLanguage);
   const [school, setSchool] = useState<'CP' | 'CE1' | 'CE2' | 'autre'>('CP');
@@ -86,6 +90,7 @@ export function EditKidForm({
           hair_color: look.hairColor,
           hair_style: look.hairStyle,
           shirt_color: look.shirtColor,
+          gender: look.gender,
           language,
           ...(birthday ? { birth_date: birthday } : {}),
         }),

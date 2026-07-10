@@ -24,6 +24,7 @@ export function AddChildForm({ lang = 'fr' }: { lang?: Language }) {
     hairColor: DEFAULT_AVATAR_LOOK.hairColor,
     hairStyle: DEFAULT_AVATAR_LOOK.hairStyle,
     shirtColor: DEFAULT_AVATAR_LOOK.shirtColor,
+    gender: null,
   });
   const [language, setLanguage] = useState<Language>(lang);
   const [school, setSchool] = useState<(typeof SCHOOL_LEVELS)[number]>('CP');
@@ -80,6 +81,7 @@ export function AddChildForm({ lang = 'fr' }: { lang?: Language }) {
           hair_color: look.hairColor,
           hair_style: look.hairStyle,
           shirt_color: look.shirtColor,
+          ...(look.gender ? { gender: look.gender } : {}),
           language,
           birth_date: birthday || undefined,
           ...(coparentNames.length > 0 ? { share_with_existing_coparents: shareWithCoparents } : {}),

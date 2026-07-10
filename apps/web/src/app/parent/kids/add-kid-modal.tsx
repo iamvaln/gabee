@@ -121,6 +121,7 @@ function AddKidModal({ lang, onClose }: { lang: Language; onClose: () => void })
     hairColor: DEFAULT_AVATAR_LOOK.hairColor,
     hairStyle: DEFAULT_AVATAR_LOOK.hairStyle,
     shirtColor: DEFAULT_AVATAR_LOOK.shirtColor,
+    gender: null,
   });
   const [language, setLanguage] = useState<Language>(lang);
   const [school, setSchool] = useState<(typeof SCHOOL_LEVELS)[number]>('CP');
@@ -181,6 +182,7 @@ function AddKidModal({ lang, onClose }: { lang: Language; onClose: () => void })
           // the request minimal for parents with no co-parents (server
           // defaults to `true` for backwards compat).
           ...(coparentNames.length > 0 ? { share_with_existing_coparents: shareWithCoparents } : {}),
+          ...(look.gender ? { gender: look.gender } : {}),
         }),
       });
       if (!res.ok) {

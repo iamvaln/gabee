@@ -5,6 +5,7 @@ import {
   HAIR_COLORS,
   HAIR_STYLES,
   SHIRT_COLORS,
+  type Gender,
   type HairColor,
   type HairStyle,
   type Language,
@@ -18,11 +19,17 @@ import { KidAvatar } from './kid-avatar';
 // edit kid forms. Palettes + shapes come from @gabee/types so a swatch always
 // matches its rendered fill.
 
-const LABELS: Record<'skin' | 'hair' | 'style' | 'shirt', { fr: string; en: string }> = {
+const LABELS: Record<'gender' | 'skin' | 'hair' | 'style' | 'shirt', { fr: string; en: string }> = {
+  gender: { fr: 'Genre', en: 'Gender' },
   skin: { fr: 'Peau', en: 'Skin' },
   hair: { fr: 'Couleur cheveux', en: 'Hair colour' },
   style: { fr: 'Coiffure', en: 'Hairstyle' },
   shirt: { fr: 'Habit', en: 'Shirt' },
+};
+
+const GENDER_LABELS: Record<Gender, { fr: string; en: string }> = {
+  boy: { fr: 'Garçon', en: 'Boy' },
+  girl: { fr: 'Fille', en: 'Girl' },
 };
 
 export interface AvatarLook {
@@ -30,6 +37,7 @@ export interface AvatarLook {
   hairColor: HairColor;
   hairStyle: HairStyle;
   shirtColor: ShirtColor;
+  gender: Gender | null;
 }
 
 export function AvatarPicker({
@@ -51,11 +59,45 @@ export function AvatarPicker({
           hairColor={value.hairColor}
           hairStyle={value.hairStyle}
           shirtColor={value.shirtColor}
+          gender={value.gender}
           size={88}
           label={name || 'avatar'}
         />
       </div>
       <div className="avatar-picker-rows">
+        {/* Gender = face contour; barely legible at 40px, so each option
+            carries a text label. Clicking the selected one clears back to
+            unspecified (renders as the boy face). */}
+        <div className="swatch-row">
+          <span className="swatch-row-label">{LABELS.gender[lang]}</span>
+          <div className="swatch-row-options" role="radiogroup" aria-label={LABELS.gender[lang]}>
+            {(['boy', 'girl'] as const).map((g) => (
+              <button
+                key={g}
+                type="button"
+                role="radio"
+                aria-checked={value.gender === g}
+                aria-label={GENDER_LABELS[g][lang]}
+                className={'style-swatch' + (value.gender === g ? ' on' : '')}
+                style={{ height: 'auto', paddingBottom: 2 }}
+                onClick={() => onChange({ ...value, gender: value.gender === g ? null : g })}
+              >
+                <KidAvatar
+                  skinTone={value.skinTone}
+                  hairColor={value.hairColor}
+                  hairStyle={value.hairStyle}
+                  shirtColor={value.shirtColor}
+                  gender={g}
+                  size={40}
+                  label={GENDER_LABELS[g][lang]}
+                />
+                <span style={{ display: 'block', fontSize: 11, fontWeight: 700, textAlign: 'center' }}>
+                  {GENDER_LABELS[g][lang]}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
         <SwatchRow
           label={LABELS.skin[lang]}
           options={SKIN_TONES}
@@ -88,6 +130,7 @@ export function AvatarPicker({
                   hairColor={value.hairColor}
                   hairStyle={s}
                   shirtColor={value.shirtColor}
+                  gender={value.gender}
                   size={40}
                   label={s}
                 />
