@@ -70,6 +70,12 @@ enum HairStyle {
   style_bun
 }
 
+/// Child gender — nullable profile attribute; picks the avatar face contour.
+enum Gender {
+  girl
+  boy
+}
+
 enum Module {
   numbers
   words
@@ -298,6 +304,8 @@ model ChildProfile {
   hairColor                   HairColor               @default(hair_brown) @map("hair_color")
   hairStyle                   HairStyle               @default(style_short) @map("hair_style")
   shirtColor                  ShirtColor              @default(shirt_blue) @map("shirt_color")
+  /// Chosen by the parent in the avatar picker; null = unspecified (renders as boy).
+  gender                      Gender?
   language                    Language
   // Collected at add-kid (required in the form); drives age-based content
   // selection. Nullable for profiles created before this field existed.
