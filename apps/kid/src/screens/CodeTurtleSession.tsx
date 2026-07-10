@@ -16,13 +16,19 @@ import { ageFromBirthDate } from '../lib/age';
 import {
   parsePuzzle,
   runProgram,
+  flattenProgram,
   HEADING_DEG,
   type CodeWorld,
   type Prim,
+  type Op,
   type Frame,
   type Heading,
 } from '../lib/turtle';
 import { readLocalTrack, writeLocalTrack } from '../lib/codeTrack';
+import { buildGuideScript } from '../lib/guideScripts';
+import { useGuide } from '../lib/useGuide';
+import { guideSeen, markGuideSeen } from '../lib/guide';
+import { GuidePointer } from '../components/GuidePointer';
 
 const TOTAL = 5;
 
@@ -126,6 +132,11 @@ export function CodeTurtleSession({
   const shownRef = useRef<string | null>(null);
   const lessonStartRef = useRef(Date.now());
   const attemptsRef = useRef(0);
+  const anchors = useRef<Map<string, HTMLElement | null>>(new Map());
+  const setAnchor = (key: string) => (el: HTMLElement | null) => { anchors.current.set(key, el); };
+  const [forceGuide, setForceGuide] = useState(false);
+  const profileId = profile?.id ?? null;
+  const subKey = `code:${world}`;
 
   const q = session?.questions[qIdx];
   const puzzle = useMemo(() => (q ? parsePuzzle(world, q.config) : null), [q, world]);
@@ -133,6 +144,20 @@ export function CodeTurtleSession({
 
   // Precompute the run (frames + success) for the current program.
   const run = useMemo(() => (puzzle ? runProgram(puzzle, program) : null), [puzzle, program]);
+
+  const guideScript = useMemo(() => {
+    if (!puzzle || !q) return [];
+    const answer = Array.isArray(q.answer) ? (q.answer as Op[]) : [];
+    return buildGuideScript(world, puzzle, flattenProgram(puzzle, answer));
+  }, [q?.id, world, puzzle]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isFirstExercise = level === 1 && lesson === 1 && qIdx === 0;
+  const guideEnabled =
+    (forceGuide || (isFirstExercise && !guideSeen(profileId, subKey))) && guideScript.length > 0;
+  const guide = useGuide(guideScript, guideEnabled, () => {
+    markGuideSeen(profileId, subKey);
+    setForceGuide(false);
+  });
 
   function stopTimer() {
     if (timer.current) clearInterval(timer.current);
@@ -223,11 +248,13 @@ export function CodeTurtleSession({
   // win animation advances). Editing after a miss clears the verdict so Run
   // re-enables and the coach reverts from the hint.
   const editLocked = running || result === 'ok';
+  const gated = (anchorKey: string) => guide.active && !(guide.step?.allow.includes(anchorKey) ?? false);
   function addBlock(k: PrimKey) {
     if (editLocked) return;
     if (result === 'fail') setResult(null);
     setProgram((p) => [...p, makePrim(k)]);
     setFrame(0);
+    if (guide.active) guide.report(k === 'pick' ? 'pick-placed' : k === 'drop' ? 'drop-placed' : 'block-placed');
   }
   function removeAt(i: number) {
     if (editLocked) return;
@@ -243,6 +270,7 @@ export function CodeTurtleSession({
   }
   function startRun() {
     if (!q || !puzzle || !run || program.length === 0 || running) return;
+    if (guide.active) guide.report('run-pressed');
     attemptsRef.current += 1;
     setResult(null);
     setRunning(true);
@@ -268,6 +296,7 @@ export function CodeTurtleSession({
           ctx,
         );
         if (ok) {
+          if (guide.active) guide.report('success');
           const newScore = score + 1;
           setTimeout(() => {
             const isLast = qIdx >= (session!.questions.length - 1);
@@ -289,9 +318,11 @@ export function CodeTurtleSession({
   const cur: Frame | null = run ? run.frames[Math.min(frame, run.frames.length - 1)]! : null;
   const beeExpr: BeeExpression = result === 'ok' ? 'celebrate' : result === 'fail' ? 'encourage' : 'focus';
   const coach =
-    result === 'ok' ? t('code.nice')
-      : result === 'fail' ? (q?.hint ? `💡 ${displayHint(q.hint, lang)}` : t('code.tryAgain'))
-        : WORLD_COACH[world][lang];
+    guide.active && guide.step
+      ? guide.step.coach[lang]
+      : result === 'ok' ? t('code.nice')
+        : result === 'fail' ? (q?.hint ? `💡 ${displayHint(q.hint, lang)}` : t('code.tryAgain'))
+          : WORLD_COACH[world][lang];
 
   if (isLoading || !session || !q || !puzzle || !cur) {
     return (
@@ -337,7 +368,7 @@ export function CodeTurtleSession({
                   <button
                     key={i}
                     onClick={() => removeAt(i)}
-                    disabled={editLocked}
+                    disabled={editLocked || guide.active}
                     style={{
                       height: 40, padding: '0 10px', borderRadius: 8,
                       background: running && i < frame ? '#F5A623' : '#34d399',
@@ -360,8 +391,9 @@ export function CodeTurtleSession({
             {paletteFor(puzzle.blocks).map((k) => (
               <button
                 key={k}
+                ref={setAnchor(`palette:${k}`)}
                 onClick={() => addBlock(k)}
-                disabled={editLocked}
+                disabled={editLocked || gated(`palette:${k}`)}
                 style={{
                   minWidth: 56, height: 60, padding: '0 10px', borderRadius: 12,
                   background: LABELLED[k] ? '#FDE9C8' : '#BBEAF2',
@@ -379,13 +411,13 @@ export function CodeTurtleSession({
 
           {/* Actions */}
           <div style={{ marginTop: 16, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn" onClick={() => void startRun()} disabled={editLocked || program.length === 0}>
+            <button ref={setAnchor('run')} className="btn" onClick={() => void startRun()} disabled={editLocked || program.length === 0 || gated('run')}>
               {t('code.run')}
             </button>
-            <button className="btn ghost" onClick={clearProgram} disabled={editLocked || program.length === 0}>
+            <button className="btn ghost" onClick={clearProgram} disabled={editLocked || program.length === 0 || guide.active}>
               {t('code.clear')}
             </button>
-            <button className="btn ghost" onClick={skip} disabled={running}>
+            <button className="btn ghost" onClick={skip} disabled={running || guide.active}>
               {t('code.skip')}
             </button>
           </div>
@@ -394,8 +426,24 @@ export function CodeTurtleSession({
         <div className="session-aside">
           <Bee size={120} expression={beeExpr} wings bob />
           <div className="bee-coach-text">{coach}</div>
+          {guide.active ? (
+            <button className="btn ghost" onClick={guide.skip} style={{ marginTop: 8 }}>
+              {t('code.guideSkip')}
+            </button>
+          ) : (
+            <button
+              className="btn ghost"
+              aria-label={t('code.guideReplayAria')}
+              onClick={() => { clearProgram(); guide.restart(); setForceGuide(true); }}
+              style={{ marginTop: 8, minWidth: 44 }}
+            >
+              {t('code.guideReplay')}
+            </button>
+          )}
         </div>
       </div>
+
+      {guide.active && <GuidePointer anchorsRef={anchors} targetKey={guide.step?.target} />}
     </div>
   );
 }
