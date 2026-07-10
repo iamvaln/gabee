@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   AvatarSchema,
+  GenderSchema,
   HairColorSchema,
   HairStyleSchema,
   LanguageSchema,
@@ -118,6 +119,8 @@ export const ChildProfileSchema = z.object({
   hair_color: HairColorSchema,
   hair_style: HairStyleSchema,
   shirt_color: ShirtColorSchema,
+  /** Chosen by the parent; null = unspecified → renders as the boy face. */
+  gender: GenderSchema.nullable().default(null),
   /** Active language; switchable anytime, no locked primary (product §2). */
   language: LanguageSchema,
   /** ISO date (YYYY-MM-DD) collected at add-kid; drives age-based content

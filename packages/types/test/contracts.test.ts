@@ -8,6 +8,10 @@ import {
   IngestEventsRequestSchema,
   ChildProfileSchema,
   EVENT_NAMES,
+  GenderSchema,
+  FACE_PATHS,
+  defaultProgressByModule,
+  defaultProgressByModulePerLanguage,
   type EventEnvelope,
 } from '../src/index';
 
@@ -241,5 +245,46 @@ describe('ChildProfile', () => {
     });
     assert.equal(profile.audio_enabled, true);
     assert.equal(profile.total_stars, 0);
+  });
+});
+
+describe('Gender', () => {
+  it('GenderSchema accepts girl/boy and rejects anything else', () => {
+    assert.equal(GenderSchema.parse('girl'), 'girl');
+    assert.equal(GenderSchema.parse('boy'), 'boy');
+    assert.throws(() => GenderSchema.parse('neutral'));
+    assert.throws(() => GenderSchema.parse(''));
+  });
+
+  it('FACE_PATHS: one closed path per gender; boy keeps the legacy face verbatim', () => {
+    assert.deepEqual(Object.keys(FACE_PATHS).sort(), ['boy', 'girl']);
+    for (const p of Object.values(FACE_PATHS)) {
+      assert.ok(p.startsWith('M ') && p.trim().endsWith('Z'));
+    }
+    // Regression pin: null/boy renders EXACTLY the current face (spec "Rendu SVG").
+    assert.equal(
+      FACE_PATHS.boy,
+      'M 32 46 Q 32 34 50 34 Q 68 34 68 46 Q 68 62 60 70 Q 50 77 40 70 Q 32 62 32 46 Z',
+    );
+    assert.notEqual(FACE_PATHS.girl, FACE_PATHS.boy);
+  });
+
+  it('ChildProfile.gender defaults to null, accepts girl/boy', () => {
+    const base = {
+      id: UUID,
+      parent_id: UUID2,
+      name: 'Léna',
+      skin_tone: 'skin_2',
+      hair_color: 'hair_brown',
+      hair_style: 'style_short',
+      shirt_color: 'shirt_blue',
+      language: 'fr',
+      created_at: NOW,
+      progress_by_module: defaultProgressByModule(),
+      progress_by_module_per_language: defaultProgressByModulePerLanguage(),
+    };
+    assert.equal(ChildProfileSchema.parse(base).gender, null);
+    assert.equal(ChildProfileSchema.parse({ ...base, gender: 'girl' }).gender, 'girl');
+    assert.throws(() => ChildProfileSchema.parse({ ...base, gender: 'other' }));
   });
 });

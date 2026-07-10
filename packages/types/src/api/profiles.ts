@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { HairColorSchema, HairStyleSchema, LanguageSchema, ShirtColorSchema, SkinToneSchema } from '../enums';
+import { GenderSchema, HairColorSchema, HairStyleSchema, LanguageSchema, ShirtColorSchema, SkinToneSchema } from '../enums';
 import { ChildProfileSchema } from '../progress';
 
 /**
@@ -23,6 +23,7 @@ export const CreateProfileRequestSchema = z.object({
   hair_color: HairColorSchema.optional(),
   hair_style: HairStyleSchema.optional(),
   shirt_color: ShirtColorSchema.optional(),
+  gender: GenderSchema.optional(),
   language: LanguageSchema,
   /** ISO date (YYYY-MM-DD); the add-kid form requires it, optional here for API back-compat. */
   birth_date: z.iso.date().optional(),
@@ -49,6 +50,8 @@ export const UpdateProfileRequestSchema = z
     hair_color: HairColorSchema,
     hair_style: HairStyleSchema,
     shirt_color: ShirtColorSchema,
+    /** Nullable so an explicit null CLEARS the gender back to unspecified. */
+    gender: GenderSchema.nullable(),
     language: LanguageSchema,
     birth_date: z.iso.date(),
     audio_enabled: z.boolean(),

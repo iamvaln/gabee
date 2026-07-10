@@ -149,6 +149,12 @@ export const HairStyleSchema = z.enum([
 ]);
 export type HairStyle = z.infer<typeof HairStyleSchema>;
 
+/** Child gender — an attribute of the PROFILE (not just the avatar): it picks
+ *  the avatar face contour today and will drive French grammatical agreement
+ *  later. Nullable everywhere; null renders identically to 'boy'. */
+export const GenderSchema = z.enum(['girl', 'boy']);
+export type Gender = z.infer<typeof GenderSchema>;
+
 /** Shirt colours drawn from the brand + module palette. */
 export const ShirtColorSchema = z.enum([
   'shirt_blue',
@@ -224,6 +230,17 @@ export const HAIR_STYLE_PATHS: Record<HairStyle, { back: string; fringe: string 
     back: NEAT_CAP + ' M 39 18 A 11 11 0 1 0 61 18 A 11 11 0 1 0 39 18 Z',
     fringe: FRINGE,
   },
+};
+
+/** Face contour per gender, 100×100 viewBox — same single-source pattern as
+ *  HAIR_STYLE_PATHS. `boy` is the historical face, unchanged; `girl` is the
+ *  "heart" contour validated in design review (full cheeks at eye level,
+ *  gently tapering chin). Features (eyes/nose/smile/ears) are shared and NOT
+ *  gendered. Renderers do FACE_PATHS[gender ?? 'boy'].
+ */
+export const FACE_PATHS: Record<Gender, string> = {
+  boy: 'M 32 46 Q 32 34 50 34 Q 68 34 68 46 Q 68 62 60 70 Q 50 77 40 70 Q 32 62 32 46 Z',
+  girl: 'M 31 46 Q 31 34 50 34 Q 69 34 69 46 Q 69 57 60 65 Q 50 76 40 65 Q 31 57 31 46 Z',
 };
 
 /** Fixed neutral disc behind the avatar (the shirt colour now dresses the
