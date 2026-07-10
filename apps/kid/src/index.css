@@ -1,3 +1,8 @@
 @import 'tailwindcss';
 /* Gabee design system (tokens + components) — from the design handoff (design-spec §6-7). */
 @import './gabee.css';
+
+@keyframes guide-bounce {
+  0%, 100% { transform: translate(-50%, -100%); }
+  50% { transform: translate(-50%, calc(-100% - 8px)); }
+}
