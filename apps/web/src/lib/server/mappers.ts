@@ -24,6 +24,7 @@ interface ChildRow {
   hairColor: string;
   hairStyle: string;
   shirtColor: string;
+  gender: string | null;
   language: string;
   birthDate: Date | null;
   audioEnabled: boolean;
@@ -57,6 +58,7 @@ export function mapChildProfile(row: ChildRow): ChildProfile {
     hair_color: row.hairColor,
     hair_style: row.hairStyle,
     shirt_color: row.shirtColor,
+    gender: row.gender,
     language: row.language,
     // @db.Date row → "YYYY-MM-DD" (stored at UTC midnight).
     birth_date: row.birthDate ? row.birthDate.toISOString().slice(0, 10) : null,
