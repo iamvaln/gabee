@@ -152,8 +152,21 @@ export function CodeTurtleSession({
   }, [q?.id, world, puzzle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isFirstExercise = level === 1 && lesson === 1 && qIdx === 0;
+  // Only guide when every step's palette target actually renders as a button.
+  // If a puzzle's answer needs a key its `blocks` palette doesn't offer, the
+  // pointer would aim at nothing and every control would be gated off — a
+  // dead-end a pre-reader can't escape. In that case fall back to normal play.
+  const paletteKeys = useMemo(
+    () => new Set<string>(puzzle ? paletteFor(puzzle.blocks) : []),
+    [puzzle],
+  );
+  const guideCoversPalette = guideScript.every(
+    (s) => !s.target?.startsWith('palette:') || paletteKeys.has(s.target.slice('palette:'.length)),
+  );
   const guideEnabled =
-    (forceGuide || (isFirstExercise && !guideSeen(profileId, subKey))) && guideScript.length > 0;
+    (forceGuide || (isFirstExercise && !guideSeen(profileId, subKey))) &&
+    guideScript.length > 0 &&
+    guideCoversPalette;
   const onGuideComplete = useCallback(() => {
     markGuideSeen(profileId, subKey);
     setForceGuide(false);

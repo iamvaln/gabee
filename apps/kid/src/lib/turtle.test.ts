@@ -25,6 +25,14 @@ describe('flattenProgram', () => {
     ]);
   });
 
+  it('skips a blocked (no-op) move so the flat program matches what succeeds', () => {
+    // From (0,0) an `up` leaves the grid (blocked) — runProgram would score it
+    // as wasted, so it must not appear in the flattened program the kid builds.
+    const puzzle = parsePuzzle('maze', { grid: { w: 3, h: 3 }, start: [0, 0], goal: [1, 0], walls: [] });
+    const answer: Op[] = [{ op: 'move', dir: 'up' }, { op: 'move', dir: 'right' }];
+    assert.deepEqual(flattenProgram(puzzle, answer), [{ op: 'move', dir: 'right' }]);
+  });
+
   it('keeps pick/drop prims for the actions world', () => {
     const puzzle = parsePuzzle('actions', {
       grid: { w: 3, h: 1 }, start: [0, 0], items: [[1, 0]], targets: [[2, 0]], walls: [],

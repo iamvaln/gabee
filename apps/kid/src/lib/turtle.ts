@@ -252,10 +252,17 @@ export function flattenProgram(puzzle: Puzzle, program: Op[]): Prim[] {
     for (const op of ops) {
       switch (op.op) {
         case 'move': {
-          out.push({ op: 'move', dir: op.dir });
+          // Only emit an EFFECTIVE move. A blocked move is a no-op the kid never
+          // needs to place, and `runProgram` would score it as `wasted` (failing
+          // the run) — so emitting it would desync the guide's built program from
+          // the program that actually succeeds.
           const d = MOVE_DELTA[op.dir];
           const nxt = { x: pos.x + d.x, y: pos.y + d.y };
-          if (!blocked(nxt)) { pos = nxt; if (carrying !== null) items[carrying] = { ...pos }; }
+          if (!blocked(nxt)) {
+            out.push({ op: 'move', dir: op.dir });
+            pos = nxt;
+            if (carrying !== null) items[carrying] = { ...pos };
+          }
           break;
         }
         case 'pick': {
