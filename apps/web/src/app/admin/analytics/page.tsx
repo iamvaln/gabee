@@ -4,7 +4,8 @@ import { requireAdminPage } from '@/lib/server/auth';
 import { getAnalytics } from '@/lib/server/services/admin-observability';
 import { getKeyboardMetricsForAdmin } from '@/lib/server/services/keyboard-metrics';
 import { getCodeMetricsForAdmin } from '@/lib/server/services/code-metrics';
-import { PageHead, MiniBar, ModuleDot } from '../_shell/primitives';
+import { getHourlyUsage } from '@/lib/server/services/hourly-usage';
+import { PageHead, MiniBar, ModuleDot, EmptyState } from '../_shell/primitives';
 import { AnalyticsNav } from './funnels/page';
 
 export const dynamic = 'force-dynamic';
@@ -23,10 +24,11 @@ export default async function AnalyticsPage() {
   await requireAdminPage();
   const lang = (await cookies()).get('admin_lang')?.value === 'en' ? 'en' : 'fr';
   const L = lang === 'fr';
-  const [a, kbMetrics, codeMetrics] = await Promise.all([
+  const [a, kbMetrics, codeMetrics, hourly] = await Promise.all([
     getAnalytics(),
     getKeyboardMetricsForAdmin(),
     getCodeMetricsForAdmin(),
+    getHourlyUsage(),
   ]);
 
   const nf = (n: number) => n.toLocaleString(L ? 'fr-FR' : 'en-US');
@@ -50,6 +52,11 @@ export default async function AnalyticsPage() {
     { label: L ? 'Actif sur 7 j' : 'Active in 7d', value: f.returned_7d },
   ];
   const funnelMax = Math.max(1, ...funnelSteps.map((s) => s.value));
+
+  // A-something — peak playing hour (Task 8). Local hour is derived from
+  // SessionClassification.tz/tzOffsetMin at ingest (never server time), so
+  // this histogram reflects when kids ACTUALLY play in their own timezone.
+  const hourlyMax = Math.max(1, ...hourly.buckets);
 
   return (
     <div className="page">
@@ -280,6 +287,81 @@ export default async function AnalyticsPage() {
               </span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Peak playing hour — 24-bucket histogram of session starts by LOCAL
+          hour (Task 8). Never derived from server time; see hourly-usage.ts. */}
+      <div className="card mt16">
+        <div className="card-head">
+          <h3>{L ? 'Heure de pointe' : 'Peak hour'}</h3>
+          {hourly.peakHour !== null && (
+            <span className="card-title-sub">
+              {L ? `Pic à ${hourly.peakHour}h (heure locale)` : `Peak at ${hourly.peakHour}h (local time)`}
+            </span>
+          )}
+        </div>
+        <div className="card-pad">
+          {hourly.peakHour === null ? (
+            <EmptyState
+              icon="🕒"
+              title={L ? 'Pas encore de données de fuseau horaire' : 'No timezone data yet'}
+              body={
+                L
+                  ? "Aucune session n'a encore enregistré de fuseau horaire — l'histogramme apparaîtra une fois les données disponibles."
+                  : "No sessions have recorded a timezone yet — the histogram will appear once data is available."
+              }
+            />
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 110 }}>
+                {hourly.buckets.map((count, hour) => {
+                  const isPeak = hour === hourly.peakHour;
+                  const barPx = count > 0 ? Math.max(4, Math.round((count / hourlyMax) * 90)) : 2;
+                  return (
+                    <div
+                      key={hour}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 4,
+                        height: '100%',
+                        justifyContent: 'flex-end',
+                      }}
+                      title={`${hour}h — ${nf(count)} ${L ? 'sessions' : 'sessions'}`}
+                    >
+                      <div
+                        style={{
+                          width: '100%',
+                          height: barPx,
+                          borderRadius: 'var(--r-sm)',
+                          background: isPeak ? 'var(--ok)' : 'var(--surface-3)',
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: 9,
+                          fontWeight: isPeak ? 800 : 600,
+                          color: isPeak ? 'var(--ok)' : 'var(--text-3)',
+                        }}
+                      >
+                        {hour}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              {hourly.excludedNoTz > 0 && (
+                <p className="t-sub" style={{ marginTop: 12, fontSize: 11 }}>
+                  {L
+                    ? `${nf(hourly.excludedNoTz)} sessions sans fuseau (avant déploiement)`
+                    : `${nf(hourly.excludedNoTz)} sessions without timezone (pre-deploy)`}
+                </p>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
