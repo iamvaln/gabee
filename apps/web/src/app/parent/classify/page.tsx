@@ -34,6 +34,7 @@ export default async function ClassifyPage() {
           hairColor: true,
           hairStyle: true,
           shirtColor: true,
+          gender: true,
         },
       })
     : [];
@@ -46,6 +47,7 @@ export default async function ClassifyPage() {
       hairColor: k.hairColor,
       hairStyle: k.hairStyle,
       shirtColor: k.shirtColor,
+      gender: k.gender,
     };
 
   const lang: Language =

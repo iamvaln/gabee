@@ -77,6 +77,7 @@ export default async function KidDetailPage({
           hairColor={kid.hair_color}
           hairStyle={kid.hair_style}
           shirtColor={kid.shirt_color}
+          gender={kid.gender}
           size={72}
           label={kid.name}
         />

@@ -12,6 +12,7 @@ import type {
   HairColor,
   HairStyle,
   ShirtColor,
+  Gender,
 } from '@gabee/types';
 import { MintBee } from '../_components/mint-bee';
 import { KidAvatar } from '../_components/kid-avatar';
@@ -23,6 +24,7 @@ export interface ClassifyKidContext {
   hairColor: HairColor;
   hairStyle: HairStyle;
   shirtColor: ShirtColor;
+  gender: Gender | null;
 }
 
 interface Props {
@@ -279,6 +281,7 @@ export function ClassifyFlow({ initial, kids, lang }: Props) {
               hairColor={kid?.hairColor}
               hairStyle={kid?.hairStyle}
               shirtColor={kid?.shirtColor}
+              gender={kid?.gender}
               size={48}
               label={kidName}
             />
@@ -483,6 +486,7 @@ function ThankYou({
                         hairColor={k.hairColor}
                         hairStyle={k.hairStyle}
                         shirtColor={k.shirtColor}
+                        gender={k.gender}
                         size={40}
                         label={k.name}
                       />

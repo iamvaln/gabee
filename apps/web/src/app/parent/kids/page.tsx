@@ -154,6 +154,7 @@ function KidCard({ kid, lang }: { kid: KidSummary; lang: Language }) {
           hairColor={kid.hair_color}
           hairStyle={kid.hair_style}
           shirtColor={kid.shirt_color}
+          gender={kid.gender}
           size={56}
           label={kid.name}
         />
