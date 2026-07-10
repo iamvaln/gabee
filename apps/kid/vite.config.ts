@@ -24,6 +24,7 @@ const sentryEnabled = !!sentryAuthToken && !!process.env.SENTRY_ORG;
 //  • Dev SW is OFF so HMR stays fast; the SW is only emitted by `vite build`.
 
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify(process.env.VITE_APP_VERSION ?? 'dev') },
   plugins: [
     react(),
     tailwindcss(),

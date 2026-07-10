@@ -2,6 +2,7 @@ import type { ClaimDevicePairResponse } from '@gabee/types';
 import { useStore } from '../store';
 import { api } from './api';
 import { downloadAllBundles, requestPersistedStorage } from './bundles';
+import { getDeviceId } from './device';
 
 // Device-pairing entry for the kid PWA (parent spec §10.4 / §12.3 P9).
 //
@@ -42,6 +43,7 @@ export async function consumePairToken(): Promise<ClaimDevicePairResponse | null
   try {
     const result = await api.claimPairToken(token, {
       user_agent_hint: navigator.userAgent.slice(0, 160),
+      client_device_id: getDeviceId(),
     });
     // Link claim returns a device-bound bearer, so the device is fully
     // paired — `needsDeviceLink` defaults to false, no prompt needed.

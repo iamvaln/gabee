@@ -36,6 +36,7 @@ export const POST = route(async (req) => {
     parentId: session.parentId,
     rawCode: input.code,
     userAgentHint: input.user_agent_hint,
+    clientDeviceId: input.client_device_id,
   });
   return json(result);
 });

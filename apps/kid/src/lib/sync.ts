@@ -1,6 +1,8 @@
 import type { ProgressSyncRequest } from '@gabee/types';
 import { db } from './db';
 import { api, ApiError } from './api';
+import { buildDeviceSnapshot } from './device';
+import { useStore } from '../store';
 
 /**
  * Sync manager (milestone 5 / product §8). Owns the offline queues and drains them to
@@ -212,7 +214,10 @@ class SyncManager {
     for (;;) {
       const queued = await db.events.orderBy('id').limit(MAX_BATCH).toArray();
       if (queued.length === 0) break;
-      const result = await api.ingestEvents(queued.map((q) => q.envelope));
+      const result = await api.ingestEvents(
+        queued.map((q) => q.envelope),
+        buildDeviceSnapshot(useStore.getState().lang),
+      );
       sentAny = true;
 
       // Rejected = permanently invalid; report then drop so they can't wedge the queue.

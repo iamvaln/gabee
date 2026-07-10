@@ -128,6 +128,9 @@ export const ClaimDevicePairRequestSchema = z.object({
   token: z.string().min(20),
   /** Reported by the kid PWA from its window — used as the "Home computer · …" label. */
   user_agent_hint: z.string().max(160).optional(),
+  /** Stable per-install id the kid PWA persists in localStorage — lets the
+   *  server join this DeviceLink to its metadata `Device` row (Task 5/6). */
+  client_device_id: z.uuid().optional(),
 });
 export type ClaimDevicePairRequest = z.infer<typeof ClaimDevicePairRequestSchema>;
 
@@ -135,6 +138,7 @@ export const ClaimPairCodeRequestSchema = z.object({
   /** Accepted in any case / with or without the dash — server normalises. */
   code: z.string().min(6).max(8),
   user_agent_hint: z.string().max(160).optional(),
+  client_device_id: z.uuid().optional(),
 });
 export type ClaimPairCodeRequest = z.infer<typeof ClaimPairCodeRequestSchema>;
 

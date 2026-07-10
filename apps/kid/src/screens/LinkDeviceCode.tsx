@@ -4,6 +4,7 @@ import { Bee } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { api, ApiError } from '../lib/api';
+import { getDeviceId } from '../lib/device';
 import { useStore } from '../store';
 
 // Device-pair gate shown immediately after a parent email/password sign-in.
@@ -51,6 +52,7 @@ export function LinkDeviceCode() {
     try {
       const res = await api.claimPairCode(raw, {
         user_agent_hint: navigator.userAgent.slice(0, 160),
+        client_device_id: getDeviceId(),
       });
       // Swap the parent session JWT for the long-lived device-bound bearer.
       // Default `needsDeviceLink: false` flips the gate off so we never

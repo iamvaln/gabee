@@ -170,12 +170,13 @@ model ParentAccount {
   sentMessages       KidMessage[]
   childLinks         ParentChildLink[]     @relation("ParentChildLinkParent")
   sentInvites        CoparentInvite[]      @relation("CoparentInviteInviter")
-  devices            DeviceLink[]
+  deviceLinks        DeviceLink[]
   notificationPrefs  NotificationPrefs?
   familyActions      FamilyActivityLog[]
   passwordResets     PasswordReset[]
   emailConfirmations EmailConfirmation[]
   authEvents         AuthEventLog[]
+  devices            Device[]
   /// Timestamp set when the email confirmation link is opened. While null,
   /// the account exists but the email is "unverified" — some flows (e.g.
   /// sending kid messages) will gate on this in a future iteration. Today
@@ -438,6 +439,8 @@ model SessionClassification {
   classifiedAt DateTime?        @map("classified_at")
   nudgeSentAt  DateTime?        @map("nudge_sent_at")
   createdAt    DateTime         @default(now()) @map("created_at")
+  tz          String?  // IANA zone from session_start
+  tzOffsetMin Int?     @map("tz_offset_min")
 
   profile ChildProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
@@ -725,6 +728,12 @@ enum FamilyActionKind {
   message_deleted
 }
 
+enum DeviceType {
+  mobile
+  tablet
+  desktop
+}
+
 // Many-to-many: parents ↔ children. The first parent to create a kid has
 // `role=primary` (used for GDPR / billing context). Phase 1 cap = 2 parents per
 // child but the table can hold more — enforced in app layer.
@@ -775,6 +784,7 @@ model DeviceLink {
   pairedAt       DateTime  @default(now()) @map("paired_at")
   lastActiveAt   DateTime? @map("last_active_at")
   revokedAt     DateTime? @map("revoked_at")
+  clientDeviceId String? @map("client_device_id")
 
   parent ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
@@ -802,6 +812,57 @@ model DevicePairToken {
 
   @@index([parentId, expiresAt])
   @@map("device_pair_tokens")
+}
+
+/// Per-install device metadata (design 2026-07-10). Keyed by a client-generated
+/// deviceId (localStorage). Upserted on each event sync; the snapshot fields are
+/// client-provided, os/browser/type parsed server-side from uaFull, lastIp read
+/// from the request. Decoupled from DeviceLink (the pairing credential).
+model Device {
+  id             String      @id @default(uuid()) @db.Uuid
+  deviceId       String      @unique @map("device_id")
+  parentId       String      @map("parent_id") @db.Uuid
+  deviceLinkId   String?     @map("device_link_id") @db.Uuid
+  uaFull         String      @map("ua_full")
+  os             String?
+  osVersion      String?     @map("os_version")
+  browser        String?
+  browserVersion String?     @map("browser_version")
+  deviceType     DeviceType? @map("device_type")
+  deviceModel    String?     @map("device_model")
+  screenW        Int?        @map("screen_w")
+  screenH        Int?        @map("screen_h")
+  dpr            Float?
+  tz             String?
+  tzOffsetMin    Int?        @map("tz_offset_min")
+  locale         String?
+  appVersion     String?     @map("app_version")
+  pwaStandalone  Boolean?    @map("pwa_standalone")
+  lastIp         String?     @map("last_ip")
+  firstSeen      DateTime    @default(now()) @map("first_seen")
+  lastSeen       DateTime    @default(now()) @map("last_seen")
+
+  parent   ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  sightings DeviceIpSighting[]
+
+  @@index([parentId])
+  @@index([deviceLinkId])
+  @@map("devices")
+}
+
+/// Append-only IP history for a device (design 2026-07-10). Indefinite retention
+/// lives here (product decision). A row is appended only when the IP changes.
+model DeviceIpSighting {
+  id       String   @id @default(uuid()) @db.Uuid
+  deviceId String   @map("device_id")
+  ip       String
+  uaFull   String?  @map("ua_full")
+  seenAt   DateTime @default(now()) @map("seen_at")
+
+  device Device @relation(fields: [deviceId], references: [deviceId], onDelete: Cascade)
+
+  @@index([deviceId, seenAt])
+  @@map("device_ip_sightings")
 }
 
 // Per-parent notification preferences (parent spec §4.3 + §10.5). Security +

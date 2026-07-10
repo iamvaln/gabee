@@ -27,6 +27,7 @@ import {
   type KidEffectiveLimits,
   type KidStreakState,
   type EventEnvelope,
+  type DeviceSnapshot,
   type Module,
 } from '@gabee/types';
 import { db } from './db';
@@ -103,7 +104,7 @@ export const api = {
   // NO Authorization header is sent — the JWT in the body IS the auth.
   async claimPairToken(
     token: string,
-    extra?: Pick<ClaimDevicePairRequest, 'user_agent_hint'>,
+    extra?: Pick<ClaimDevicePairRequest, 'user_agent_hint' | 'client_device_id'>,
   ): Promise<ClaimDevicePairResponse> {
     const body: ClaimDevicePairRequest = { token, ...extra };
     return ClaimDevicePairResponseSchema.parse(
@@ -119,7 +120,7 @@ export const api = {
    */
   async claimPairCode(
     code: string,
-    extra?: Pick<ClaimPairCodeRequest, 'user_agent_hint'>,
+    extra?: Pick<ClaimPairCodeRequest, 'user_agent_hint' | 'client_device_id'>,
   ): Promise<ClaimDevicePairResponse> {
     const body: ClaimPairCodeRequest = { code, ...extra };
     return ClaimDevicePairResponseSchema.parse(
@@ -185,9 +186,12 @@ export const api = {
   async fetchBundleFromNetwork(module: Module): Promise<QuestionBundleResponse> {
     return QuestionBundleResponseSchema.parse(await request(`/api/bundles/${module}`));
   },
-  async ingestEvents(events: EventEnvelope[]): Promise<IngestEventsResponse> {
+  async ingestEvents(
+    events: EventEnvelope[],
+    device?: DeviceSnapshot,
+  ): Promise<IngestEventsResponse> {
     return IngestEventsResponseSchema.parse(
-      await request('/api/events', { method: 'POST', body: JSON.stringify({ events }) }),
+      await request('/api/events', { method: 'POST', body: JSON.stringify({ events, device }) }),
     );
   },
   async syncProgress(body: ProgressSyncRequest): Promise<ProgressSyncResponse> {
