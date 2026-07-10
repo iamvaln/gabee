@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "files=$(find src -name '*.test.ts'); if [ -z \"$files\" ]; then echo 'no test files found' >&2; exit 1; fi; node --import tsx --test $files"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
@@ -21,6 +22,7 @@
     "next-intl": "^4.13.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "ua-parser-js": "^2.0.10",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -28,7 +30,9 @@
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
+    "@types/ua-parser-js": "^0.7.39",
     "tailwindcss": "^4.3.0",
+    "tsx": "^4.22.3",
     "typescript": "^6.0.3"
   }
 }
