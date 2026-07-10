@@ -633,12 +633,18 @@ a:focus-visible,
 /* SCREEN: profile select */
 .profile-screen {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* `safe center` keeps the content centred when it fits, but falls back to
+     top-aligned once it's taller than the frame — so the install banner at the
+     bottom stays reachable instead of being clipped by flex centering. */
+  justify-content: safe center;
   gap: 32px;
   padding: 40px;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: linear-gradient(180deg, #FFF7E5 0%, var(--surface) 60%);
 }
 .profile-screen h1 {
@@ -688,6 +694,16 @@ a:focus-visible,
   position: relative;
 }
 .profile-card .name { font-size: 22px; font-weight: 800; }
+
+/* Short viewports: tighten the picker so the Bee + title + cards + install
+   banner all fit without scrolling (the overflow-y above is the safety net). */
+@media (max-height: 780px) {
+  .profile-screen { gap: 18px; padding: 24px 24px 28px; }
+  .profile-screen h1 { font-size: clamp(28px, 5vh, 40px); }
+  .profile-screen > svg.bee { width: 84px; height: auto; }
+  .profile-avatar { width: 96px; height: 96px; }
+  .profile-avatar svg { width: 96px; height: 96px; }
+}
 
 /* HOME / module hub */
 .home-screen {
