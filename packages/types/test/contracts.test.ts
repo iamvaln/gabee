@@ -241,6 +241,31 @@ describe('DeviceSnapshot', () => {
     });
     assert.equal(r.device?.tz, 'Europe/Paris');
   });
+
+  it('drops a malformed device snapshot on the lenient schema instead of rejecting the batch', () => {
+    const result = IngestEventsRequestLenientSchema.safeParse({
+      events: [
+        { event_id: UUID, profile_id: UUID2, session_id: null, client_ts: NOW,
+          event: { name: 'app_launched', locale: 'fr' } },
+      ],
+      device: {
+        device_id: 'not-a-uuid',
+        ua_full: 'x',
+        tz: 'X',
+        tz_offset_min: 0,
+        locale: 'fr',
+        screen_w: -5,
+        screen_h: null,
+        dpr: null,
+        app_version: null,
+        pwa_standalone: false,
+      },
+    });
+    assert.equal(result.success, true);
+    if (result.success) {
+      assert.equal(result.data.device, undefined);
+    }
+  });
 });
 
 describe('session_start tz', () => {

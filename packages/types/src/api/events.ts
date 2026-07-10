@@ -25,7 +25,8 @@ export type IngestEventsRequest = z.infer<typeof IngestEventsRequestSchema>;
  */
 export const IngestEventsRequestLenientSchema = z.object({
   events: z.array(z.unknown()).min(1).max(500),
-  device: DeviceSnapshotSchema.optional(),
+  // .catch(undefined): a malformed snapshot must NOT 422 the batch (would wedge the offline queue) — drop it, keep the events.
+  device: DeviceSnapshotSchema.optional().catch(undefined),
 });
 export type IngestEventsRequestLenient = z.infer<typeof IngestEventsRequestLenientSchema>;
 

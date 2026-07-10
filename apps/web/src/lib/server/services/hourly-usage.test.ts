@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { localHourOf } from './hourly-usage';
+import { localHourOf } from './hourly-usage-local';
 
 test('adds offset and wraps to 0-23', () => {
   // 20:00 UTC + 120min = 22:00 local

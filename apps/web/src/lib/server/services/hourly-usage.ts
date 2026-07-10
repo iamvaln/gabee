@@ -1,15 +1,7 @@
 import { prisma } from '../db';
+import { localHourOf } from './hourly-usage-local';
 
-/**
- * Local hour (0–23) of a UTC instant given a minutes-from-UTC offset
- * (`SessionClassification.tzOffsetMin`, captured client-side at
- * `session_start` — Task 2). Never derive this from server time: a parent's
- * server clock and a kid's device can be in different zones entirely.
- */
-export function localHourOf(startedAtUtc: Date, tzOffsetMin: number): number {
-  const shifted = new Date(startedAtUtc.getTime() + tzOffsetMin * 60_000);
-  return shifted.getUTCHours();
-}
+export { localHourOf } from './hourly-usage-local';
 
 export interface HourlyUsage {
   buckets: number[]; // length 24, index = local hour
