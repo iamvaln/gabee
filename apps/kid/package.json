@@ -8,6 +8,7 @@
     "build": "tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --import tsx --test src/lib/turtle.test.ts src/lib/guide.test.ts src/lib/guideScripts.test.ts",
     "lint": "eslint ."
   },
   "dependencies": {

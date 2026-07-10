@@ -230,3 +230,56 @@ export function runProgram(puzzle: Puzzle, program: Op[]): RunResult {
   }
   return { frames, success };
 }
+
+/**
+ * Flatten a reference `answer` program into the flat prim sequence a kid would
+ * actually place, by simulating it against the puzzle. `repeat` is expanded and
+ * `if wall_<dir>` is resolved against the live wall/edge state. Used by the
+ * guided-onboarding scripts to point at the exact next arrow/pick/drop. For a
+ * flat level-1 answer this is the identity.
+ */
+export function flattenProgram(puzzle: Puzzle, program: Op[]): Prim[] {
+  let pos = { ...puzzle.start };
+  let carrying: number | null = null;
+  const items = (puzzle.items ?? []).map((c) => ({ ...c }));
+  const walls = puzzle.walls ?? [];
+  const obstacles = puzzle.obstacles ?? [];
+  const blocked = (c: Cell) =>
+    !inGrid(c, puzzle.w, puzzle.h) || walls.some((w) => eq(w, c)) || obstacles.some((o) => eq(o, c));
+
+  const out: Prim[] = [];
+  const exec = (ops: Op[]): void => {
+    for (const op of ops) {
+      switch (op.op) {
+        case 'move': {
+          out.push({ op: 'move', dir: op.dir });
+          const d = MOVE_DELTA[op.dir];
+          const nxt = { x: pos.x + d.x, y: pos.y + d.y };
+          if (!blocked(nxt)) { pos = nxt; if (carrying !== null) items[carrying] = { ...pos }; }
+          break;
+        }
+        case 'pick': {
+          out.push({ op: 'pick' });
+          const idx = items.findIndex((it, i) => i !== carrying && eq(it, pos));
+          if (carrying === null && idx >= 0) carrying = idx;
+          break;
+        }
+        case 'drop':
+          out.push({ op: 'drop' });
+          if (carrying !== null) carrying = null;
+          break;
+        case 'repeat':
+          for (let i = 0; i < op.n; i++) exec(op.body);
+          break;
+        case 'if': {
+          const m = op.cond.split('_')[1] as MoveDir | undefined;
+          const d = m ? MOVE_DELTA[m] : { x: 0, y: 0 };
+          exec(blocked({ x: pos.x + d.x, y: pos.y + d.y }) ? op.then : (op.else ?? []));
+          break;
+        }
+      }
+    }
+  };
+  exec(program);
+  return out;
+}
