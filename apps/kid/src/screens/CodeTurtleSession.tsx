@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { LessonProgress, LevelProgress } from '@gabee/types';
@@ -154,10 +154,11 @@ export function CodeTurtleSession({
   const isFirstExercise = level === 1 && lesson === 1 && qIdx === 0;
   const guideEnabled =
     (forceGuide || (isFirstExercise && !guideSeen(profileId, subKey))) && guideScript.length > 0;
-  const guide = useGuide(guideScript, guideEnabled, () => {
+  const onGuideComplete = useCallback(() => {
     markGuideSeen(profileId, subKey);
     setForceGuide(false);
-  });
+  }, [profileId, subKey]);
+  const guide = useGuide(guideScript, guideEnabled, onGuideComplete);
 
   function stopTimer() {
     if (timer.current) clearInterval(timer.current);
@@ -303,6 +304,13 @@ export function CodeTurtleSession({
             if (isLast) void finishLesson(newScore);
             else { setScore(newScore); setQIdx((n) => n + 1); }
           }, 900);
+        } else if (guide.active) {
+          // A guided run should always succeed (the kid is gated to the exact
+          // reference-answer prims). If it somehow fails — e.g. bad seed data
+          // where the answer doesn't solve its own puzzle — end the guide so the
+          // gated controls unlock and the kid can retry/skip normally instead of
+          // being stuck on the never-reached success step.
+          guide.skip();
         }
       }
     }, 440);
@@ -435,6 +443,7 @@ export function CodeTurtleSession({
               className="btn ghost"
               aria-label={t('code.guideReplayAria')}
               onClick={() => { clearProgram(); guide.restart(); setForceGuide(true); }}
+              disabled={editLocked}
               style={{ marginTop: 8, minWidth: 44 }}
             >
               {t('code.guideReplay')}
