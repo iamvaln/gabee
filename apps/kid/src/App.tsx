@@ -7,6 +7,7 @@ import { useStore } from './store';
 import { enqueueEvent, flushEvents } from './lib/events';
 import { sync } from './lib/sync';
 import { armSessionEnd, endSession, noteBackground, noteForeground, setLastScreen } from './lib/session';
+import { deviceTz, deviceTzOffsetMin } from './lib/device';
 import { useIdle, installIdleListeners } from './lib/idle';
 import { LockScreen } from './components/LockScreen';
 import { SyncIndicator } from './components/SyncIndicator';
@@ -361,7 +362,10 @@ export function App() {
     setProfile(p);
     armSessionEnd();
     const sessionId = startPlay();
-    void enqueueEvent({ name: 'session_start', initiation_label: null }, { profileId: p.id, sessionId }).then(
+    void enqueueEvent(
+      { name: 'session_start', initiation_label: null, tz: deviceTz(), tz_offset_min: deviceTzOffsetMin() },
+      { profileId: p.id, sessionId },
+    ).then(
       () => flushEvents(),
     );
     void refreshPending(p.id);

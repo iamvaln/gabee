@@ -27,6 +27,7 @@ import {
   type KidEffectiveLimits,
   type KidStreakState,
   type EventEnvelope,
+  type DeviceSnapshot,
   type Module,
 } from '@gabee/types';
 import { db } from './db';
@@ -185,9 +186,12 @@ export const api = {
   async fetchBundleFromNetwork(module: Module): Promise<QuestionBundleResponse> {
     return QuestionBundleResponseSchema.parse(await request(`/api/bundles/${module}`));
   },
-  async ingestEvents(events: EventEnvelope[]): Promise<IngestEventsResponse> {
+  async ingestEvents(
+    events: EventEnvelope[],
+    device?: DeviceSnapshot,
+  ): Promise<IngestEventsResponse> {
     return IngestEventsResponseSchema.parse(
-      await request('/api/events', { method: 'POST', body: JSON.stringify({ events }) }),
+      await request('/api/events', { method: 'POST', body: JSON.stringify({ events, device }) }),
     );
   },
   async syncProgress(body: ProgressSyncRequest): Promise<ProgressSyncResponse> {
