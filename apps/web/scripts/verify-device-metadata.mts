@@ -67,6 +67,19 @@ async function main() {
     const iosUa =
       'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
 
+    // A non-revoked DeviceLink carrying this device's client_device_id — the
+    // pairing credential Task 6 stamps at claim time. `upsertDeviceFromSnapshot`
+    // should join `Device.deviceLinkId` to this row's id (Task 5).
+    const deviceLink = await prisma.deviceLink.create({
+      data: {
+        parentId,
+        label: 'Verify Kid device',
+        clientDeviceId: deviceId,
+        refreshTokenId: randomUUID(),
+      },
+      select: { id: true },
+    });
+
     const snapshot = DeviceSnapshotSchema.parse({
       device_id: deviceId,
       ua_full: iosUa,
@@ -103,6 +116,10 @@ async function main() {
     assert(device.browser !== null, 'Device.browser should be parsed (non-null)');
     assert(device.parentId === parentId, 'Device.parentId should match the ingesting parent');
     assert(device.lastIp === '203.0.113.5', 'Device.lastIp should be the request ip');
+    assert(
+      device.deviceLinkId === deviceLink.id,
+      `Device.deviceLinkId should join to the non-revoked DeviceLink carrying this client_device_id, got ${device.deviceLinkId}`,
+    );
 
     const classification = await prisma.sessionClassification.findUnique({
       where: { sessionId },

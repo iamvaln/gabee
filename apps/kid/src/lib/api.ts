@@ -103,7 +103,7 @@ export const api = {
   // NO Authorization header is sent — the JWT in the body IS the auth.
   async claimPairToken(
     token: string,
-    extra?: Pick<ClaimDevicePairRequest, 'user_agent_hint'>,
+    extra?: Pick<ClaimDevicePairRequest, 'user_agent_hint' | 'client_device_id'>,
   ): Promise<ClaimDevicePairResponse> {
     const body: ClaimDevicePairRequest = { token, ...extra };
     return ClaimDevicePairResponseSchema.parse(
@@ -119,7 +119,7 @@ export const api = {
    */
   async claimPairCode(
     code: string,
-    extra?: Pick<ClaimPairCodeRequest, 'user_agent_hint'>,
+    extra?: Pick<ClaimPairCodeRequest, 'user_agent_hint' | 'client_device_id'>,
   ): Promise<ClaimDevicePairResponse> {
     const body: ClaimPairCodeRequest = { code, ...extra };
     return ClaimDevicePairResponseSchema.parse(

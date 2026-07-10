@@ -238,6 +238,7 @@ export async function createPairToken(
 export interface ClaimPairTokenInput {
   token: string;
   userAgentHint?: string;
+  clientDeviceId?: string;
 }
 
 interface PairTokenClaims {
@@ -324,6 +325,7 @@ export async function claimPairToken(
         parentId: parent.id,
         label,
         userAgentHint: input.userAgentHint ?? null,
+        clientDeviceId: input.clientDeviceId ?? null,
         refreshTokenId,
         pairedAt: now,
         lastActiveAt: now,
@@ -365,6 +367,7 @@ export interface ClaimPairCodeInput {
   /** Raw user input — normaliseShortCode strips the dash + uppercases. */
   rawCode: string;
   userAgentHint?: string;
+  clientDeviceId?: string;
 }
 
 /**
@@ -426,6 +429,7 @@ export async function claimByCode(
         parentId: parent.id,
         label,
         userAgentHint: input.userAgentHint ?? null,
+        clientDeviceId: input.clientDeviceId ?? null,
         refreshTokenId,
         pairedAt: now,
         lastActiveAt: now,
