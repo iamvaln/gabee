@@ -75,16 +75,17 @@ L'admin affiche les avatars via les mêmes mappers → aucun travail spécifique
 ## Backfill production (one-off)
 
 Genre deviné par prénom sur les 17 profils prod existants (2026-07-10), à
-appliquer via un script one-off (`packages/db/prisma/`-style `.mts`, lancé
-manuellement sur le VPS après la migration) :
+appliquer via un fichier SQL one-off (`packages/db/prisma/backfill-gender.sql`,
+passé manuellement à `psql` via `docker exec` sur le VPS après la migration —
+le VPS n'a pas de Node hors conteneurs, donc pas de script `.mts`) :
 
 - `girl` : Léna, Ana, Eunice, Ana Gabrielle, Mya, Manoela
 - `boy` : Gilles Perry, Ezekiel, Michel, Ibrahim, Thibaut, Israel, Aaron,
   Ralf Matthis, Ily Mael (Maël = masculin, confiance moyenne)
 - laissés à `null` : kahi (indéterminé), Test (compte de test)
 
-Le script matche par nom exact + loggue chaque mise à jour ; tout profil créé
-entre-temps est ignoré. Anomalie relevée au passage (hors périmètre) :
+Le SQL matche par nom exact, ne touche que les lignes encore à `NULL`, et se
+termine par un SELECT de contrôle ; tout profil créé entre-temps est ignoré. Anomalie relevée au passage (hors périmètre) :
 « Ralf Matthis » a une date de naissance future (2026-09-23).
 
 ## Hors périmètre
