@@ -31,7 +31,7 @@ import {
 } from '@gabee/types';
 import { db } from './db';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
+const BASE_URL = import.meta.env?.VITE_API_BASE_URL ?? 'http://localhost:3000';
 
 // Late-bound reference to `./bundles` to break the cycle WITHOUT a dynamic
 // import. bundles.ts is loaded on the launch path anyway (pair.ts +

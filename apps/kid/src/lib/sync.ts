@@ -162,7 +162,7 @@ class SyncManager {
       // Transient (network / 5xx): keep everything queued and retry with backoff.
       this.scheduleRetry();
       this.setStatus(this.online ? 'online' : 'offline');
-      if (import.meta.env.DEV) console.warn('[sync] flush failed, will retry', err);
+      if (import.meta.env?.DEV) console.warn('[sync] flush failed, will retry', err);
     } finally {
       this.inFlight = false;
     }
@@ -194,7 +194,7 @@ class SyncManager {
     } catch (err) {
       this.scheduleRetry();
       this.setStatus(this.online ? 'online' : 'offline');
-      if (import.meta.env.DEV) console.warn('[sync] syncNow failed', err);
+      if (import.meta.env?.DEV) console.warn('[sync] syncNow failed', err);
       return { ok: false, sentEvents: 0, reason: 'error' };
     } finally {
       this.inFlight = false;
@@ -217,7 +217,7 @@ class SyncManager {
 
       // Rejected = permanently invalid; report then drop so they can't wedge the queue.
       const rejectedSet = new Set(result.rejected);
-      if (rejectedSet.size > 0 && import.meta.env.DEV) {
+      if (rejectedSet.size > 0 && import.meta.env?.DEV) {
         console.warn('[sync] server rejected events, dropping', result.rejected);
       }
       // Remove every row in this batch: accepted + duplicates + rejected are all
@@ -247,7 +247,7 @@ class SyncManager {
         // Other 4xx = the snapshot is permanently invalid; drop it so it can't wedge the
         // queue (a fresh snapshot supersedes it next lesson anyway — last-write-wins).
         if (err instanceof ApiError && isPermanentReject(err.status)) {
-          if (import.meta.env.DEV) console.warn('[sync] progress rejected, dropping', err);
+          if (import.meta.env?.DEV) console.warn('[sync] progress rejected, dropping', err);
           await db.progress.delete(row.profile_id);
           continue;
         }
