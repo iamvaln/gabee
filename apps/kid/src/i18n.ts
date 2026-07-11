@@ -124,6 +124,9 @@ const resources = {
         run: '▶ Lancer',
         clear: 'Effacer',
         skip: 'Passer',
+        guideSkip: 'Je sais, passer',
+        guideReplay: '？',
+        guideReplayAria: 'Revoir le guide',
       },
       pair: {
         invalidCode: 'Code invalide ou expiré. Vérifie auprès du parent.',
@@ -321,6 +324,9 @@ const resources = {
         run: '▶ Run',
         clear: 'Clear',
         skip: 'Skip',
+        guideSkip: 'I know, skip',
+        guideReplay: '？',
+        guideReplayAria: 'Replay the guide',
       },
       pair: {
         invalidCode: 'Invalid or expired code. Double-check with the parent.',
