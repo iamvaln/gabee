@@ -1,6 +1,7 @@
 import { Prisma } from '@gabee/db';
-import type { EventEnvelope, IngestEventsResponse } from '@gabee/types';
+import type { DeviceSnapshot, EventEnvelope, IngestEventsResponse } from '@gabee/types';
 import { prisma } from '../db';
+import { upsertDeviceFromSnapshot } from './devices-metadata';
 
 /**
  * Batch event ingestion (product §9). Idempotent via the client `event_id` (offline
@@ -10,6 +11,7 @@ import { prisma } from '../db';
 export async function ingestEvents(
   parentId: string,
   events: EventEnvelope[],
+  opts?: { device?: DeviceSnapshot; ip?: string | null },
 ): Promise<IngestEventsResponse> {
   const profileIds = [...new Set(events.map((e) => e.profile_id).filter((x): x is string => !!x))];
   const owned = profileIds.length
@@ -46,6 +48,17 @@ export async function ingestEvents(
 
   await maintainClassificationQueue(events, ownedSet);
 
+  if (opts?.device) {
+    // Best-effort: metadata capture must never fail event ingestion.
+    try {
+      await upsertDeviceFromSnapshot(parentId, opts.device, opts.ip ?? null);
+    } catch (err) {
+      // Log the error CLASS only — never err.message (a Prisma message can echo
+      // field values, incl. ip) / err / ip / ua.
+      console.error('[events] device metadata upsert failed:', err instanceof Error ? err.name : 'unknown');
+    }
+  }
+
   return { accepted, duplicates: rows.length - accepted, rejected };
 }
 
@@ -62,8 +75,14 @@ async function maintainClassificationQueue(
     if (e.name === 'session_start') {
       await prisma.sessionClassification.upsert({
         where: { sessionId },
-        create: { sessionId, profileId: env.profile_id, startedAt: new Date(env.client_ts) },
-        update: {},
+        create: {
+          sessionId,
+          profileId: env.profile_id,
+          startedAt: new Date(env.client_ts),
+          tz: e.tz ?? null,
+          tzOffsetMin: e.tz_offset_min ?? null,
+        },
+        update: { tz: e.tz ?? null, tzOffsetMin: e.tz_offset_min ?? null },
       });
     } else if (e.name === 'session_end') {
       await prisma.sessionClassification.updateMany({

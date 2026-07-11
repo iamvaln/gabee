@@ -55,6 +55,11 @@ export const SessionStartEvent = z.object({
   name: z.literal('session_start'),
   /** null until the parent classifies the session (product §9.3, §13.2). */
   initiation_label: InitiationLabelSchema.nullable().default(null),
+  /** IANA zone + minutes-from-UTC at play time — drives local peak-hour
+   *  analytics even when synced later. Optional for back-compat with older
+   *  clients (pre-2026-07 rows have neither). */
+  tz: z.string().max(64).optional(),
+  tz_offset_min: z.number().int().min(-1000).max(1000).optional(),
 });
 
 export const SessionEndEvent = z.object({

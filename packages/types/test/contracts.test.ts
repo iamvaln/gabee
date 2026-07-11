@@ -6,7 +6,9 @@ import {
   ChildEventSchema,
   AnalyticsEventSchema,
   IngestEventsRequestSchema,
+  IngestEventsRequestLenientSchema,
   ChildProfileSchema,
+  DeviceSnapshotSchema,
   EVENT_NAMES,
   GenderSchema,
   FACE_PATHS,
@@ -212,6 +214,71 @@ describe('Events & ingestion envelope', () => {
       ],
     });
     assert.equal(req.events.length, 2);
+  });
+});
+
+describe('DeviceSnapshot', () => {
+  it('accepts a full snapshot', () => {
+    const s = DeviceSnapshotSchema.parse({
+      device_id: '22222222-2222-4222-8222-222222222222',
+      ua_full: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)…',
+      screen_w: 390, screen_h: 844, dpr: 3,
+      tz: 'Europe/Paris', tz_offset_min: 120,
+      locale: 'fr', app_version: 'v2.7.1', pwa_standalone: true,
+    });
+    assert.equal(s.tz, 'Europe/Paris');
+  });
+
+  it('is accepted (optional) on the lenient ingest request', () => {
+    const r = IngestEventsRequestLenientSchema.parse({
+      events: [
+        { event_id: UUID, profile_id: UUID2, session_id: null, client_ts: NOW,
+          event: { name: 'app_launched', locale: 'fr' } },
+      ],
+      device: {
+        device_id: '22222222-2222-4222-8222-222222222222',
+        ua_full: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)…',
+        screen_w: 390, screen_h: 844, dpr: 3,
+        tz: 'Europe/Paris', tz_offset_min: 120,
+        locale: 'fr', app_version: 'v2.7.1', pwa_standalone: true,
+      },
+    });
+    assert.equal(r.device?.tz, 'Europe/Paris');
+  });
+
+  it('drops a malformed device snapshot on the lenient schema instead of rejecting the batch', () => {
+    const result = IngestEventsRequestLenientSchema.safeParse({
+      events: [
+        { event_id: UUID, profile_id: UUID2, session_id: null, client_ts: NOW,
+          event: { name: 'app_launched', locale: 'fr' } },
+      ],
+      device: {
+        device_id: 'not-a-uuid',
+        ua_full: 'x',
+        tz: 'X',
+        tz_offset_min: 0,
+        locale: 'fr',
+        screen_w: -5,
+        screen_h: null,
+        dpr: null,
+        app_version: null,
+        pwa_standalone: false,
+      },
+    });
+    assert.equal(result.success, true);
+    if (result.success) {
+      assert.equal(result.data.device, undefined);
+    }
+  });
+});
+
+describe('session_start tz', () => {
+  it('carries tz + offset', () => {
+    const env = EventEnvelopeSchema.parse({
+      event_id: UUID, profile_id: UUID2, session_id: UUID2, client_ts: NOW,
+      event: { name: 'session_start', initiation_label: null, tz: 'Europe/Paris', tz_offset_min: 120 },
+    });
+    if (env.event.name === 'session_start') assert.equal(env.event.tz_offset_min, 120);
   });
 });
 

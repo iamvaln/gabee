@@ -1,6 +1,7 @@
 import { useStore } from '../store';
 import { enqueueEvent } from './events';
 import { sync } from './sync';
+import { deviceTz, deviceTzOffsetMin } from './device';
 
 // Tracks the screen the child is on, so a `session_end` can report `last_screen`
 // (product §9.3 — feeds the parent's "where do sessions end" drop-off read, §13.4).
@@ -85,7 +86,7 @@ export async function noteForeground(): Promise<{ newSession: false } | { newSes
   armSessionEnd();
   const sessionId = store.startPlay();
   await enqueueEvent(
-    { name: 'session_start', initiation_label: null },
+    { name: 'session_start', initiation_label: null, tz: deviceTz(), tz_offset_min: deviceTzOffsetMin() },
     { profileId: profile.id, sessionId },
   );
   return { newSession: true, sessionId };

@@ -170,6 +170,9 @@ export async function advanceGdprStep(
     if (!steps.verified_at) {
       throw new HttpError(409, 'step_out_of_order', 'Verify identity before executing');
     }
+    // Erasure guarantee: deleting the ParentAccount row cascades (onDelete: Cascade)
+    // through Device -> DeviceIpSighting, so the raw-IP sighting history is removed
+    // along with it. No separate device/IP-history purge step needed in this runbook.
     steps.executed_at = now;
     if (patch.notes !== undefined) steps.execution_notes = patch.notes;
   } else {

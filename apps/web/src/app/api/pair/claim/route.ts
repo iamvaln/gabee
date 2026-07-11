@@ -17,6 +17,7 @@ export const POST = route(async (req) => {
   const result: ClaimDevicePairResponse = await claimPairToken({
     token: input.token,
     userAgentHint: input.user_agent_hint,
+    clientDeviceId: input.client_device_id,
   });
   return json(result);
 });

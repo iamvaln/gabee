@@ -5,6 +5,7 @@ import {
   type IngestEventsResponse,
 } from '@gabee/types';
 import { route, readJson, json, requireParent } from '@/lib/server/http';
+import { getRequestMeta } from '@/lib/server/request-meta';
 import { ingestEvents } from '@/lib/server/services/events';
 
 export const runtime = 'nodejs';
@@ -20,7 +21,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // drain retries the same batch forever, so nothing after the bad event uploads).
 export const POST = route(async (req) => {
   const session = await requireParent(req);
-  const { events: raw } = await readJson(req, IngestEventsRequestLenientSchema);
+  const { events: raw, device } = await readJson(req, IngestEventsRequestLenientSchema);
 
   const valid: EventEnvelope[] = [];
   const rejected: string[] = [];
@@ -37,6 +38,7 @@ export const POST = route(async (req) => {
     if (typeof id === 'string' && UUID_RE.test(id)) rejected.push(id);
   }
 
-  const result = await ingestEvents(session.parentId, valid);
+  const { ip } = getRequestMeta(req);
+  const result = await ingestEvents(session.parentId, valid, { device, ip });
   return json<IngestEventsResponse>({ ...result, rejected: [...result.rejected, ...rejected] });
 });

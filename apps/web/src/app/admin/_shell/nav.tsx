@@ -36,6 +36,7 @@ const NAV: NavEntry[] = [
   { id: 'feedback', icon: 'feedback', href: '/admin/feedback', label: { fr: 'Retours', en: 'Feedback' } },
   { group: { fr: 'Observabilité', en: 'Observability' } },
   { id: 'analytics', icon: 'analytics', href: '/admin/analytics', label: { fr: 'Analytique', en: 'Analytics' } },
+  { id: 'devices', icon: 'device', href: '/admin/devices', label: { fr: 'Appareils', en: 'Devices' } },
   {
     id: 'ops', icon: 'ops', href: '/admin/ops/ai-usage', label: { fr: 'Opérations', en: 'Operations' },
     sub: [
@@ -199,6 +200,7 @@ const CRUMB_LABELS: Record<string, Bi> = {
   gdpr: { fr: 'Demandes RGPD', en: 'GDPR' },
   feedback: { fr: 'Retours', en: 'Feedback' },
   analytics: { fr: 'Analytique', en: 'Analytics' },
+  devices: { fr: 'Appareils', en: 'Devices' },
   ops: { fr: 'Opérations', en: 'Operations' },
   'ai-usage': { fr: 'Usage IA', en: 'AI usage' },
   logs: { fr: 'Journaux', en: 'System logs' },
