@@ -23,7 +23,7 @@ import { getSeen, markSeen } from '../lib/seen';
 import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
 import { ageFromBirthDate } from '../lib/age';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
-import { sfx } from '../lib/audio';
+import { sfx, speak, speakSuccess, stopSpeaking, warmVoice } from '../lib/audio';
 import { AssetGlyph } from '../components/AssetGlyph';
 import { HintLine } from '../components/HintLine';
 
@@ -154,15 +154,28 @@ export function TranslationSession({
       { name: 'question_shown', module: 'translation', level, lesson, question_id: q.id, type: q.type, attempt_num: attempt },
       ctx,
     );
+    // Voiceover moment 1 (audio spec §5): read the source word in ITS language.
+    // Image questions (L1) have nothing to read — and speaking the answer would
+    // give it away — so they stay silent until success.
+    const cfg = q.config as { image?: string; source?: string } | undefined;
+    if (!cfg?.image) speak(cfg?.source ?? displayValue(q.prompt, src), src);
   }, [q, attempt, session, profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function pick(opt: QuestionValue) {
     if (feedback || !q || !session) return;
+    stopSpeaking(); // answering interrupts narration instantly (spec §5)
+    warmVoice();
     const chosen = scalarValue(opt, lang);
     setPicked(chosen);
     const correct = String(chosen) === answerScalar;
     setFeedback(correct ? 'correct' : 'wrong');
     sfx(correct ? 'correct' : 'wrong');
+    if (correct && answerScalar) {
+      // Voiceover moment 2: the answer in the TARGET language, then praise in
+      // the UI language.
+      const dst = src === 'fr' ? 'en' : 'fr';
+      speakSuccess(answerScalar, dst, t('excellent'), lang);
+    }
     void enqueueEvent(
       {
         name: 'question_answered',
