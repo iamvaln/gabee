@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bee } from './Bee';
-import { playMsgDing } from '../lib/messages';
+import { sfx } from '../lib/audio';
 
 /**
  * Mint bandeau at the bottom of the viewport (design handoff §kid-messages). Shown
@@ -23,7 +23,7 @@ export function MessageBandeau({
   const hint = t('message.tapToRead');
 
   useEffect(() => {
-    playMsgDing();
+    sfx('message');
   }, [messageId]);
 
   return (
