@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "node --import tsx --test src/lib/turtle.test.ts src/lib/guide.test.ts src/lib/guideScripts.test.ts src/lib/audio/sfx.test.ts",
-    "test:dom": "node --import tsx --test --test-force-exit src/screens/CodeTurtleSession.guide.test.tsx",
+    "test:dom": "node --import tsx --test --test-force-exit src/screens/CodeTurtleSession.guide.test.tsx src/store.audio.test.tsx",
     "lint": "eslint ."
   },
   "dependencies": {
