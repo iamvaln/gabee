@@ -76,6 +76,10 @@ const resources = {
       },
       settings: {
         title: 'Paramètres',
+        audioTitle: 'Sons et voix',
+        audioHint: 'Les petits sons et la voix de Gabee.',
+        audioOn: 'Activés',
+        audioOff: 'Coupés',
         loadedVersions: 'Versions des contenus chargés',
         connection: 'Connexion :',
         online: 'en ligne',
@@ -276,6 +280,10 @@ const resources = {
       },
       settings: {
         title: 'Settings',
+        audioTitle: 'Sounds & voice',
+        audioHint: "Gabee's little sounds and voice.",
+        audioOn: 'On',
+        audioOff: 'Off',
         loadedVersions: 'Loaded content versions',
         connection: 'Connection:',
         online: 'online',
