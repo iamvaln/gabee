@@ -56,7 +56,8 @@ Constraint: the kid app is offline-first and `store.profile` is not persisted (r
 - Add `audioEnabled: boolean` to `apps/kid/src/store.ts` and to `partialize` (line ~100), mirroring `lang`.
 - **Semantics: the persisted value is "last selected kid's pref."** Always re-seed from `profile.audio_enabled` on profile select (default `true`) — this is what makes a shared device correct for multiple kids.
 - On toggle: (1) flip the local pref immediately (instant, works offline); (2) best-effort `PATCH /api/profiles/:id { audio_enabled }` via a new `updateProfile` helper in `src/lib/api.ts`. Failure is non-fatal; the local pref is source of truth on-device.
-- `audio.isEnabled()` reads this pref; every `sfx()`/`speak()` no-ops when disabled.
+- `audio.isEnabled()` reads this pref; every `sfx()`/`speak()` no-ops when disabled. Turning the switch OFF also silences any in-flight narration immediately.
+- **Known v0.1 limitation:** if the PATCH fails (offline toggle) the server keeps the old value, so the next profile re-select re-seeds the stale server pref — the local change silently reverts. Accepted for v0.1; a retry queue can fix it later if it bites.
 
 ## 4. SFX layer (procedural)
 
@@ -81,7 +82,7 @@ No ducking: while narration is in flight, new SFX are suppressed (single boolean
 
 ## 5. Voiceover layer (TTS now, recorded later)
 
-Per spec §4.7 — primary scope: **Keyboard + Translation** sessions. Two play moments:
+Per spec §4.7 — primary scope: **Keyboard (static) + Translation** sessions. KeyboardScrolling is deliberately excluded: narrating a time-pressured scrolling word works against the exercise; revisit with Phase D if wanted. Two play moments:
 
 1. **On prompt appears** — read the word/prompt aloud in the item's language.
 2. **On success** — read the word again, then a spoken "Bravo !" (reuse i18n strings).
