@@ -34,9 +34,9 @@ export const CUES: Record<CueName, CueNote[]> = {
   // Soft low single "boop" — encouraging, never a buzzer.
   wrong: [{ freq: 329.63, at: 0, dur: 0.25, peak: 0.06 }],
   // Very short tick (catalog-only for now — wiring deferred to tuning QA).
-  tap: [{ freq: 1760, at: 0, dur: 0.05, peak: 0.03, type: 'triangle' }],
+  tap: [{ freq: 1760, at: 0, dur: 0.15, peak: 0.03, type: 'triangle' }],
   // Subtle blip for BottomNav tab changes.
-  navSelect: [{ freq: 1108.73, at: 0, dur: 0.08, peak: 0.05, type: 'triangle' }],
+  navSelect: [{ freq: 1108.73, at: 0, dur: 0.15, peak: 0.05, type: 'triangle' }],
   // Small sparkle arpeggio (catalog-only for now — no map transition exists yet).
   unlock: [
     { freq: 880, at: 0, dur: 0.2, peak: 0.08 },

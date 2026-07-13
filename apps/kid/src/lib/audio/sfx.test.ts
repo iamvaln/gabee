@@ -15,6 +15,7 @@ describe('sfx cue catalog', () => {
     for (const name of CUE_NAMES) {
       for (const n of CUES[name]) {
         assert.ok(n.peak <= 0.12, `${name}: peak ${n.peak} > 0.12`);
+        assert.ok(n.dur >= 0.15, `${name}: dur ${n.dur} under the 150ms floor`);
         assert.ok(n.at + n.dur <= 1.0, `${name}: note ends after 1s`);
         assert.ok(n.freq >= 300 && n.freq <= 2000, `${name}: freq ${n.freq} out of range`);
       }
