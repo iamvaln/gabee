@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { Language } from '@gabee/types';
+import { sfx } from '../lib/audio';
 
 // Bottom navigation — Duolingo-style three-tab bar pinned to the bottom of
 // the kid frame. Visible on the three "browse" tabs (Apprendre / Carte /
@@ -29,13 +30,13 @@ export function BottomNav({
   const { t } = useTranslation();
   return (
     <nav className="kid-bottom-nav" aria-label={t('nav.main')}>
-      <NavBtn active={tab === 'apprendre'} onClick={() => onChange('apprendre')} label={LABEL.apprendre[lang]}>
+      <NavBtn active={tab === 'apprendre'} onClick={() => { sfx('navSelect'); onChange('apprendre'); }} label={LABEL.apprendre[lang]}>
         <PadIcon />
       </NavBtn>
-      <NavBtn active={tab === 'carte'} onClick={() => onChange('carte')} label={LABEL.carte[lang]}>
+      <NavBtn active={tab === 'carte'} onClick={() => { sfx('navSelect'); onChange('carte'); }} label={LABEL.carte[lang]}>
         <MapIcon />
       </NavBtn>
-      <NavBtn active={tab === 'coffre'} onClick={() => onChange('coffre')} label={LABEL.coffre[lang]}>
+      <NavBtn active={tab === 'coffre'} onClick={() => { sfx('navSelect'); onChange('coffre'); }} label={LABEL.coffre[lang]}>
         <ChestIcon />
       </NavBtn>
     </nav>

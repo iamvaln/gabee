@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { BadgeId } from '@gabee/types';
 import { Bee } from './Bee';
 import { BADGE_LABELS } from '../lib/badges';
+import { sfx } from '../lib/audio';
 
 /**
  * Full-screen celebration that fires when the kid earns one or more new badges
@@ -21,6 +22,12 @@ export function MilestoneCelebration({
   onDone: () => void;
 }) {
   const [open, setOpen] = useState(true);
+
+  // Celebratory sting once per celebration mount (audio spec §4). Guarded: the
+  // component also renders (then returns null) when there's nothing to show.
+  useEffect(() => {
+    if (badges.length > 0) sfx('milestone');
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-fade after 6s if untouched — Summary then still has the BadgeRow below.
   useEffect(() => {
