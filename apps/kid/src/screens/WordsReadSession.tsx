@@ -13,6 +13,7 @@ import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { selectSession } from '../lib/selectSession';
 import { getSeen, markSeen } from '../lib/seen';
+import { sfx } from '../lib/audio';
 import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
 import { ageFromBirthDate } from '../lib/age';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
@@ -129,6 +130,7 @@ export function WordsReadSession({
     setPicked(chosen);
     const correct = chosen === answerScalar;
     setFeedback(correct ? 'correct' : 'wrong');
+    sfx(correct ? 'correct' : 'wrong');
     const responseMs = Date.now() - questionStartRef.current;
     void enqueueEvent(
       {

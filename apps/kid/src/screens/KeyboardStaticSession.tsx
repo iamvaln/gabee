@@ -13,6 +13,7 @@ import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { selectSession } from '../lib/selectSession';
 import { ageFromBirthDate } from '../lib/age';
+import { sfx } from '../lib/audio';
 import { displayValue } from '../lib/util';
 import { getSeen, markSeen } from '../lib/seen';
 import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
@@ -366,6 +367,7 @@ export function KeyboardStaticSession({
       if (nextLen === target.length) {
         // Whole prompt typed → mark this question correct & show feedback.
         setFeedback('correct');
+        sfx('correct');
       }
     }
     window.addEventListener('keydown', onKey);
