@@ -2,11 +2,11 @@
 // THE audio boundary (spec §2). Screens import sfx()/speak()/… from here and
 // never touch AudioContext or speechSynthesis directly.
 import { playCue, type CueName } from './sfx';
-import { isEnabled, setEnabled } from './prefs';
+import { isEnabled, setEnabled as setEnabledPref } from './prefs';
 import { WebSpeechVoiceProvider, type VoiceProvider } from './voice';
 
 export type { CueName, VoiceProvider };
-export { isEnabled, setEnabled };
+export { isEnabled };
 
 // v0.1 provider — the one line to change for the recorded-voices upgrade (Phase D).
 const provider = new WebSpeechVoiceProvider();
@@ -27,6 +27,9 @@ export function sfx(name: CueName): void {
 /** Narrate a prompt. Fire-and-forget; replaces any current narration. */
 export function speak(text: string, lang: 'fr' | 'en'): void {
   if (!isEnabled()) return;
+  // A new prompt narration must abandon any pending speakSuccess chain —
+  // stop() bumps the generation — otherwise stale praise cancels the new prompt.
+  provider.stop();
   void provider.speak(text, lang).catch(() => {});
 }
 
@@ -66,4 +69,10 @@ export function warmVoice(): void {
   } catch {
     /* ignore */
   }
+}
+
+/** Flip the master switch. Turning OFF also silences any in-flight narration. */
+export function setEnabled(v: boolean): void {
+  setEnabledPref(v);
+  if (!v) provider.stop();
 }

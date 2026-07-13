@@ -1,6 +1,7 @@
 // apps/kid/src/lib/audio/voice.test.ts
-// Voice picking is the only pure logic in the voice layer — the utterance
-// lifecycle is manual QA (spec §8). Plain node:test, fake voice objects.
+// Voice picking is pure logic; this file also holds the provider lifecycle
+// regression test below (stale onend vs. interrupted utterance). Plain
+// node:test, fake voice objects.
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { pickVoice, WebSpeechVoiceProvider } from './voice';

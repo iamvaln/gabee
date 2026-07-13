@@ -133,6 +133,9 @@ export function TranslationSession({
     [q],
   );
 
+  // Narration must not outlive the session (leaks onto hub/map and suppresses SFX).
+  useEffect(() => () => stopSpeaking(), []);
+
   useEffect(() => {
     if (!session || !q || startedRef.current || !profile) return;
     startedRef.current = true;

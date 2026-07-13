@@ -110,6 +110,9 @@ export function KeyboardStaticSession({
     return out;
   }, [target]);
 
+  // Narration must not outlive the session (leaks onto hub/map and suppresses SFX).
+  useEffect(() => () => stopSpeaking(), []);
+
   // lesson_started — once when the session is ready.
   useEffect(() => {
     if (!session || !q || startedRef.current || !profile) return;

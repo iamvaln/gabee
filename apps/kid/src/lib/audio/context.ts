@@ -12,6 +12,8 @@ export function getAudioContext(): AudioContext | null {
   const AC = window.AudioContext || w.webkitAudioContext;
   if (!AC) return null;
   const ctx = w.__gabeeAudio ?? (w.__gabeeAudio = new AC());
-  if (ctx.state === 'suspended') void ctx.resume();
+  // Gesture-gated rejection is expected here (autoplay policy); swallow it —
+  // an unhandled rejection would otherwise reach Sentry as noise.
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
   return ctx;
 }
