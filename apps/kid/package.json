@@ -8,7 +8,7 @@
     "build": "tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "node --import tsx --test src/lib/turtle.test.ts src/lib/guide.test.ts src/lib/guideScripts.test.ts src/lib/audio/sfx.test.ts",
+    "test": "node --import tsx --test src/lib/turtle.test.ts src/lib/guide.test.ts src/lib/guideScripts.test.ts src/lib/audio/sfx.test.ts src/lib/audio/voice.test.ts",
     "test:dom": "node --import tsx --test --test-force-exit src/screens/CodeTurtleSession.guide.test.tsx src/store.audio.test.tsx",
     "lint": "eslint ."
   },

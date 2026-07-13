@@ -1,17 +1,69 @@
+// apps/kid/src/lib/audio/index.ts
 // THE audio boundary (spec §2). Screens import sfx()/speak()/… from here and
 // never touch AudioContext or speechSynthesis directly.
 import { playCue, type CueName } from './sfx';
 import { isEnabled, setEnabled } from './prefs';
+import { WebSpeechVoiceProvider, type VoiceProvider } from './voice';
 
-export type { CueName };
+export type { CueName, VoiceProvider };
 export { isEnabled, setEnabled };
 
-/** Fire a procedural cue. No-ops when audio is off. Never throws. */
+// v0.1 provider — the one line to change for the recorded-voices upgrade (Phase D).
+const provider = new WebSpeechVoiceProvider();
+
+/**
+ * Fire a procedural cue. No-ops when audio is off, and while narration is
+ * speaking (spec: no ducking in v0.1 — suppression instead). Never throws.
+ */
 export function sfx(name: CueName): void {
   try {
-    if (!isEnabled()) return;
+    if (!isEnabled() || provider.speaking) return;
     playCue(name);
   } catch {
     /* never break a render over audio */
+  }
+}
+
+/** Narrate a prompt. Fire-and-forget; replaces any current narration. */
+export function speak(text: string, lang: 'fr' | 'en'): void {
+  if (!isEnabled()) return;
+  void provider.speak(text, lang).catch(() => {});
+}
+
+/**
+ * Success narration (spec §5): the word again, then a spoken praise. Delayed
+ * 400ms so the `correct` cue lands first; abandoned silently if the child
+ * moves on (stopSpeaking bumps the generation).
+ */
+export function speakSuccess(
+  word: string,
+  wordLang: 'fr' | 'en',
+  praise: string,
+  praiseLang: 'fr' | 'en',
+): void {
+  if (!isEnabled()) return;
+  const gen = provider.generation;
+  window.setTimeout(() => {
+    if (provider.generation !== gen || !isEnabled()) return;
+    void provider
+      .speak(word, wordLang)
+      .then(() => {
+        if (provider.generation === gen) return provider.speak(praise, praiseLang);
+      })
+      .catch(() => {});
+  }, 400);
+}
+
+/** Synchronous + cheap — safe inside hot key handlers ("never blocks input"). */
+export function stopSpeaking(): void {
+  provider.stop();
+}
+
+/** Call from any user-gesture handler; idempotent. */
+export function warmVoice(): void {
+  try {
+    provider.warm?.();
+  } catch {
+    /* ignore */
   }
 }
