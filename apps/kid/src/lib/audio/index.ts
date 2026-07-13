@@ -48,7 +48,7 @@ export function speakSuccess(
     void provider
       .speak(word, wordLang)
       .then(() => {
-        if (provider.generation === gen) return provider.speak(praise, praiseLang);
+        if (provider.generation === gen && isEnabled()) return provider.speak(praise, praiseLang);
       })
       .catch(() => {});
   }, 400);

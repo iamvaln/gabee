@@ -30,6 +30,12 @@ export class WebSpeechVoiceProvider implements VoiceProvider {
   /** Bumped by stop() — in-flight chains check it and abandon silently. */
   generation = 0;
   speaking = false;
+  /**
+   * Bumped per utterance: interrupting speak(B) cancels A, but the browser
+   * fires A's onend LATER — that stale callback must not clear `speaking`
+   * while B is playing. Only the latest utterance may touch the flag.
+   */
+  private utteranceSeq = 0;
 
   private get synth(): SpeechSynthesis | null {
     return typeof window !== 'undefined' && 'speechSynthesis' in window
@@ -43,6 +49,7 @@ export class WebSpeechVoiceProvider implements VoiceProvider {
     const voice = pickVoice(synth.getVoices(), lang);
     if (!voice) return Promise.resolve(); // no matching voice → skip, don't mispronounce
     return new Promise((resolve) => {
+      const token = ++this.utteranceSeq;
       try {
         synth.cancel(); // one narration at a time
         const u = new SpeechSynthesisUtterance(text);
@@ -54,7 +61,7 @@ export class WebSpeechVoiceProvider implements VoiceProvider {
         const finish = () => {
           if (done) return;
           done = true;
-          this.speaking = false;
+          if (this.utteranceSeq === token) this.speaking = false;
           clearTimeout(safety);
           resolve();
         };
@@ -64,7 +71,7 @@ export class WebSpeechVoiceProvider implements VoiceProvider {
         u.onerror = finish;
         synth.speak(u);
       } catch {
-        this.speaking = false;
+        if (this.utteranceSeq === token) this.speaking = false;
         resolve();
       }
     });
