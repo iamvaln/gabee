@@ -1,0 +1,12 @@
+# Pre-push quality gate: fast checks only (lint + types + unit/DOM tests).
+# DB-integration and e2e suites run in CI, not here (they need Postgres/browsers).
+# Skip in a pinch: `git push --no-verify` or `LEFTHOOK=0 git push`.
+pre-push:
+  parallel: true
+  jobs:
+    - name: lint
+      run: pnpm run lint
+    - name: typecheck
+      run: pnpm run typecheck
+    - name: unit tests
+      run: pnpm run test
