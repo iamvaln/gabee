@@ -183,5 +183,10 @@ Each phase lands as its own PR(s); CI stays green throughout.
   traction. First targets then: k6 scripts against `/api/events`,
   `/api/progress/sync` (mass SyncManager replay after reconnection) and
   `/api/bundles` on a prod-like VPS.
-- Unit tests inside `packages/db` (schema covered indirectly by layers 2-3).
+- Unit tests inside `packages/db` — for its *current* content only: schema,
+  generated client, migrations and seed are all exercised for real by layers
+  2-4 (migrate deploy + seed run on every integration/e2e setup; seed rows
+  validated by the ~99 %-covered `@gabee/types` schemas). If the package
+  gains hand-written logic (query helpers, the `testing.ts` factories, seed
+  computation), that logic gets unit tests like any other.
 - Vitest migration (revisit only if node:test DX becomes a bottleneck).
