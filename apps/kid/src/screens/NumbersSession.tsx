@@ -19,6 +19,7 @@ import { getSeen, markSeen } from '../lib/seen';
 import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
 import { ageFromBirthDate } from '../lib/age';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
+import { sfx } from '../lib/audio';
 import type { NumbersSubMode } from './NumbersHub';
 import { SessionLoader } from '../components/SessionLoader';
 import { SessionError } from '../components/SessionError';
@@ -123,6 +124,7 @@ export function NumbersSession({
     setPicked(chosen);
     const correct = chosen === answerScalar;
     setFeedback(correct ? 'correct' : 'wrong');
+    sfx(correct ? 'correct' : 'wrong');
     void enqueueEvent(
       {
         name: 'question_answered',

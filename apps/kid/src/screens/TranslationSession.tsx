@@ -23,6 +23,7 @@ import { getSeen, markSeen } from '../lib/seen';
 import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
 import { ageFromBirthDate } from '../lib/age';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
+import { sfx, speak, speakSuccess, stopSpeaking, warmVoice } from '../lib/audio';
 import { AssetGlyph } from '../components/AssetGlyph';
 import { HintLine } from '../components/HintLine';
 import { SessionLoader } from '../components/SessionLoader';
@@ -135,6 +136,28 @@ export function TranslationSession({
     [q],
   );
 
+  // Voiceover moment 1 (audio spec §5): read the source word in ITS language.
+  // Image questions (all of L1) have no source word — and speaking anything
+  // word-shaped could leak the answer — so they read the INSTRUCTION in the
+  // kid's UI language instead ("Traduis ce mot en anglais."): pre-readers on
+  // L1 are exactly who can't read that line. Its own effect with
+  // stop-on-cleanup so narration halts on question change AND unmount (must not
+  // leak onto hub/map), and survives StrictMode's dev double-mount — a
+  // ref-guarded speak would be cancelled by the replayed cleanup and never
+  // re-fire. Re-narrates on retry (attempt), matching question_shown.
+  useEffect(() => {
+    if (!q || !session || !profile) return;
+    const cfg = q.config as { image?: string; source?: string } | undefined;
+    if (cfg?.image) {
+      // Per-card instruction was too chatty (QA 2026-07-14): read it once
+      // before the exercises, then let the pictures speak for themselves.
+      if (qIdx === 0 && attempt === 1) speak(displayValue(q.prompt, lang), lang);
+    } else {
+      speak(cfg?.source ?? displayValue(q.prompt, src), src);
+    }
+    return () => stopSpeaking();
+  }, [q?.id, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!session || !q || startedRef.current || !profile) return;
     startedRef.current = true;
@@ -160,10 +183,19 @@ export function TranslationSession({
 
   function pick(opt: QuestionValue) {
     if (feedback || !q || !session) return;
+    stopSpeaking(); // answering interrupts narration instantly (spec §5)
+    warmVoice();
     const chosen = scalarValue(opt, lang);
     setPicked(chosen);
     const correct = String(chosen) === answerScalar;
     setFeedback(correct ? 'correct' : 'wrong');
+    sfx(correct ? 'correct' : 'wrong');
+    if (correct && answerScalar) {
+      // Voiceover moment 2: the answer in the TARGET language, then praise in
+      // the UI language.
+      const dst = src === 'fr' ? 'en' : 'fr';
+      speakSuccess(answerScalar, dst, t('excellent'), lang);
+    }
     void enqueueEvent(
       {
         name: 'question_answered',

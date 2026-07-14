@@ -8,6 +8,8 @@ import { useStore } from '../store';
 import { listCachedBundles, refreshIfNewer } from '../lib/bundles';
 import { sync } from '../lib/sync';
 import { useInstall } from '../lib/install';
+import { setEnabled, sfx } from '../lib/audio';
+import { api } from '../lib/api';
 
 // Release version, baked at build time from the git tag (release.yml passes
 // VITE_APP_VERSION=${github.ref_name} → Dockerfile ENV → Vite inlines it).
@@ -41,6 +43,7 @@ export function Settings({
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
   const profile = useStore((s) => s.profile);
+  const audioEnabled = useStore((s) => s.audioEnabled);
 
   const [bundles, setBundles] = useState<BundleRow[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -90,6 +93,16 @@ export function Settings({
     }
   }
 
+  // One-tap master audio switch (spec §7.3 / audio spec §3): flip locally first
+  // (instant, offline-safe), then best-effort persist to the profile. A failed
+  // PATCH is fine — the device pref is authoritative on-device.
+  function toggleAudio() {
+    const next = !audioEnabled;
+    setEnabled(next);
+    sfx('navSelect'); // audible confirmation when turning ON; silent no-op when turning off
+    if (profile) void api.updateProfile(profile.id, { audio_enabled: next }).catch(() => {});
+  }
+
   return (
     <div className="session-screen">
       <Chrome lang={lang} setLang={setLang} title={t('settings.title')} onBack={onBack} onHome={onHome} profile={profile} />
@@ -118,6 +131,30 @@ export function Settings({
               <strong>{t('settings.persistedStorage')}</strong>{' '}
               {persisted === null ? '…' : persisted ? t('settings.yes') : t('settings.no')}
             </div>
+          </div>
+
+          <div
+            style={{
+              padding: 12, borderRadius: 12, marginBottom: 16,
+              background: '#FEF9C3', border: '1px solid #FDE68A',
+              fontSize: 14, color: '#0f172a',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            }}
+          >
+            <div>
+              <strong>{t('settings.audioTitle')}</strong>
+              <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
+                {t('settings.audioHint')}
+              </div>
+            </div>
+            <button
+              className="btn"
+              onClick={toggleAudio}
+              aria-pressed={audioEnabled}
+            >
+              <Icon name={audioEnabled ? 'sound' : 'sound-off'} />{' '}
+              {audioEnabled ? t('settings.audioOn') : t('settings.audioOff')}
+            </button>
           </div>
 
           {/* Manual sync — pushes this device's queued progress + events to the

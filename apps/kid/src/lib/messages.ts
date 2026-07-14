@@ -112,39 +112,3 @@ export async function markRead(
     { profileId: ctx.profileId, sessionId: ctx.sessionId },
   );
 }
-
-// ─── Soft "ding" cue ─────────────────────────────────────────────────────────
-// Tonally consistent with the correct-answer chime (design handoff §kid-messages).
-// Audio may be gesture-gated; we swallow errors so a missing audio context never
-// breaks the bandeau render.
-interface MaybeAudio {
-  __gabeeAudio?: AudioContext;
-  webkitAudioContext?: typeof AudioContext;
-}
-export function playMsgDing(): void {
-  try {
-    const w = window as Window & MaybeAudio;
-    const AC = window.AudioContext || w.webkitAudioContext;
-    if (!AC) return;
-    const ctx = w.__gabeeAudio ?? (w.__gabeeAudio = new AC());
-    if (ctx.state === 'suspended') void ctx.resume();
-    const now = ctx.currentTime;
-    const mk = (freq: number, t0: number, dur: number, peak: number) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'sine';
-      o.frequency.value = freq;
-      g.gain.setValueAtTime(0, now + t0);
-      g.gain.linearRampToValueAtTime(peak, now + t0 + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + t0 + dur);
-      o.connect(g);
-      g.connect(ctx.destination);
-      o.start(now + t0);
-      o.stop(now + t0 + dur + 0.02);
-    };
-    mk(880, 0, 0.5, 0.12); // A5
-    mk(1318.5, 0.1, 0.5, 0.09); // E6
-  } catch {
-    /* audio may be gesture-gated; ignore */
-  }
-}

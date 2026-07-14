@@ -4,6 +4,7 @@ import {
   ClaimDevicePairResponseSchema,
   type ClaimPairCodeRequest,
   ListProfilesResponseSchema,
+  ProfileResponseSchema,
   QuestionBundleResponseSchema,
   IngestEventsResponseSchema,
   ProgressSyncResponseSchema,
@@ -12,6 +13,8 @@ import {
   ClaimGiftResponseSchema,
   type PendingGiftsResponse,
   type ClaimGiftResponse,
+  type ProfileResponse,
+  type UpdateProfileRequest,
   KidEffectiveLimitsSchema,
   KidStreakStateSchema,
   type AuthSessionResponse,
@@ -152,6 +155,16 @@ export const api = {
       }
       throw err;
     }
+  },
+  /**
+   * Best-effort persistence for kid-side profile settings (audio toggle,
+   * spec 2026-07-13-kid-audio §3). Callers treat failure as non-fatal — the
+   * device-local pref is the on-device source of truth.
+   */
+  async updateProfile(profileId: string, patch: UpdateProfileRequest): Promise<ProfileResponse> {
+    return ProfileResponseSchema.parse(
+      await request(`/api/profiles/${profileId}`, { method: 'PATCH', body: JSON.stringify(patch) }),
+    );
   },
   /**
    * Bundles manifest (product §8). Cheap call that lists each module's current

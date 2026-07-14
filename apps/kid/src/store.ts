@@ -37,6 +37,12 @@ interface AppState {
    * so the parent is re-nudged to pair on the next SIGN-IN — not on refresh.
    */
   deviceLinkSkipped: boolean;
+  /**
+   * Master audio switch (spec 2026-07-13-kid-audio §3). Persisted so it works
+   * offline before a profile is picked; semantically it is the LAST SELECTED
+   * kid's pref — always re-seeded from profile.audio_enabled on select.
+   */
+  audioEnabled: boolean;
   /** Selected child profile (re-picked each launch; not persisted). */
   profile: ChildProfile | null;
   /** Current play sitting (a session = one or more lessons). */
@@ -47,6 +53,7 @@ interface AppState {
   clearAuth: () => void;
   skipDeviceLink: () => void;
   setProfile: (profile: ChildProfile | null) => void;
+  setAudioEnabled: (v: boolean) => void;
   /** Start (or reuse) the current play session; returns its id. */
   startPlay: () => string;
   /** Advance and return the lesson's position_in_session. */
@@ -62,6 +69,7 @@ export const useStore = create<AppState>()(
       parent: null,
       needsDeviceLink: false,
       deviceLinkSkipped: false,
+      audioEnabled: true,
       profile: null,
       play: null,
 
@@ -77,7 +85,16 @@ export const useStore = create<AppState>()(
         set({ token: null, parent: null, needsDeviceLink: false, deviceLinkSkipped: false, profile: null, play: null });
       },
       skipDeviceLink: () => set({ deviceLinkSkipped: true }),
-      setProfile: (profile) => set({ profile }),
+      // Selecting a kid seeds the device pref from their saved setting; the
+      // star-update spreads sessions do ({...profile, total_stars}) re-seed
+      // with the same value because setAudioEnabled keeps both sides in sync.
+      setProfile: (profile) =>
+        set(profile ? { profile, audioEnabled: profile.audio_enabled } : { profile }),
+      setAudioEnabled: (v) =>
+        set((s) => ({
+          audioEnabled: v,
+          profile: s.profile ? { ...s.profile, audio_enabled: v } : s.profile,
+        })),
       startPlay: () => {
         const existing = get().play;
         if (existing) return existing.id;
@@ -97,7 +114,7 @@ export const useStore = create<AppState>()(
     {
       name: 'gabee-kid-store',
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ lang: s.lang, token: s.token, parent: s.parent, needsDeviceLink: s.needsDeviceLink, deviceLinkSkipped: s.deviceLinkSkipped }),
+      partialize: (s) => ({ lang: s.lang, token: s.token, parent: s.parent, needsDeviceLink: s.needsDeviceLink, deviceLinkSkipped: s.deviceLinkSkipped, audioEnabled: s.audioEnabled }),
       onRehydrateStorage: () => (state) => {
         if (state?.token) setApiToken(state.token);
       },
