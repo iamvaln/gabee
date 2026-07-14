@@ -1,0 +1,105 @@
+rules:
+  # Reality check (apps/web/src/lib/server/http.ts + a sample of
+  # apps/web/src/app/api/**/route.ts): almost every route body is read via the
+  # `readJson(req, Schema)` helper, which does `await req.json()` +
+  # `schema.safeParse(...)` internally and is never called from route.ts files
+  # in a way this rule would see. The one raw-`req.json()` call found in the
+  # repo (profiles/[id]/lesson-completed/route.ts) awaits a `.catch(...)`
+  # wrapper, not `.json()` directly, and validates via `BodySchema.parseAsync`,
+  # so it doesn't trip this pattern either way. Net effect: this rule is a
+  # forward-looking guard against bypassing `readJson` — it does not currently
+  # fire anywhere, so it's safe to ship as-is.
+  #
+  # Deliberately NOT flagging `req.nextUrl.searchParams` / `new URL(req.url)
+  # .searchParams` reads without a Zod parse: manual query-param validation
+  # (Number.isFinite checks, explicit HttpError throws — see
+  # family/activity/route.ts, gifts/pending/route.ts, admin/audit/route.ts) is
+  # the established idiom for query params in this codebase, not an exception.
+  # Including that branch (as the brief's draft did) would misfire as WARNING
+  # noise on ~10 correct route files.
+  - id: api-route-without-zod-parse
+    languages: [typescript]
+    severity: WARNING
+    message: >-
+      API route reads the request body via `req.json()` directly instead of
+      the `readJson()` helper (apps/web/src/lib/server/http.ts), with no Zod
+      `.parse`/`.safeParse`/`.parseAsync`/`.safeParseAsync` call visible around
+      it. Validate input at the boundary — prefer `readJson(req, Schema)` from
+      packages/types — see app-input-validation.
+    patterns:
+      - pattern: await $REQ.json()
+      - pattern-not-inside: $SCHEMA.safeParse(...)
+      - pattern-not-inside: $SCHEMA.parse(...)
+      - pattern-not-inside: $SCHEMA.safeParseAsync(...)
+      - pattern-not-inside: $SCHEMA.parseAsync(...)
+    paths:
+      include:
+        - 'apps/web/src/app/api/**/route.ts'
+
+  # Confirmed idiom (grep for $queryRawUnsafe/$executeRawUnsafe/$queryRaw
+  # across apps/web/src + packages): the only raw+interpolated usage in the
+  # repo is packages/db/src/testing.ts `resetDb()`, a test-only truncation
+  # helper explicitly commented "NEVER import this from app runtime code".
+  # Its interpolated values come from `pg_tables`/`current_database()`
+  # (server-controlled catalog data), not request input, but it still matches
+  # this pattern shape syntactically — excluded by path rather than weakening
+  # the rule, since a real app-code hit of this shape genuinely is SQL
+  # injection risk and should keep blocking (ERROR).
+  - id: prisma-raw-string-interpolation
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      Raw SQL with template interpolation — SQL injection risk (app-injection).
+      Use parameterized `Prisma.sql` / tagged `$queryRaw`/`$executeRaw`
+      templates (Prisma parameterizes those automatically); never build a
+      `$queryRawUnsafe`/`$executeRawUnsafe` string with `${...}` interpolation.
+    patterns:
+      - pattern-either:
+          - pattern: $P.$queryRawUnsafe(`...${$X}...`)
+          - pattern: $P.$executeRawUnsafe(`...${$X}...`)
+    paths:
+      exclude:
+        - 'packages/db/src/testing.ts'
+
+  # Reality check: `route()` handlers are declared both as `route(async (req)
+  # => {...})` (GET/POST with no route params) and `route<Ctx>(async (req,
+  # ctx) => {...})` (dynamic segments, e.g. devices/[id], bundles/[module]) —
+  # both forms appear throughout apps/web/src/app/api/**. Guards are
+  # `requireParent`/`requireAdmin`/`requireSuperAdmin` from
+  # apps/web/src/lib/server/http.ts, called as a bare statement
+  # (`await requireAdmin(req)`) or captured (`const session = await
+  # requireParent(req)`) — both are covered since pattern-not-inside matches
+  # the call regardless of assignment.
+  #
+  # Scanning every route.ts under apps/web/src/app/api/** for a missing guard
+  # produced false positives on 12/29 files that are intentionally
+  # unauthenticated by design, not missing a guard: contact (public contact
+  # form), health (public health check), auth/* (login/signup/logout/
+  # password-reset/email-confirm — run *before* a session exists), pair/claim
+  # (initial kid-device claim code redemption, pre-session), and cron/* (gated
+  # by a CRON_SECRET bearer check instead of a parent/admin session). Those
+  # paths are excluded below so the rule only fires on genuine parent/admin
+  # surfaces; today that's zero files, so this is a forward-looking guard, not
+  # baseline noise.
+  - id: kid-message-or-parent-route-missing-guard
+    languages: [typescript]
+    severity: WARNING
+    message: >-
+      Parent/admin API route with no requireParent()/requireAdmin()/
+      requireSuperAdmin() guard visible — confirm authz (app-authz-idor).
+    patterns:
+      - pattern-either:
+          - pattern: route(async ($REQ) => { ... })
+          - pattern: route<$CTX>(async ($REQ, $CTX2) => { ... })
+      - pattern-not-inside: requireParent(...)
+      - pattern-not-inside: requireAdmin(...)
+      - pattern-not-inside: requireSuperAdmin(...)
+    paths:
+      include:
+        - 'apps/web/src/app/api/**/route.ts'
+      exclude:
+        - 'apps/web/src/app/api/contact/route.ts'
+        - 'apps/web/src/app/api/health/route.ts'
+        - 'apps/web/src/app/api/auth/**'
+        - 'apps/web/src/app/api/pair/claim/route.ts'
+        - 'apps/web/src/app/api/cron/**'
