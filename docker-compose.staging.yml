@@ -16,8 +16,12 @@ services:
     labels:
       - traefik.http.middlewares.${STACK}-auth.basicauth.users=${WEB_BASIC_AUTH}
       - traefik.http.middlewares.${STACK}-noindex.headers.customresponseheaders.X-Robots-Tag=noindex, nofollow
-      # Redefine the web router to EXCLUDE api.* (overrides the base rule), and gate it.
-      - traefik.http.routers.${STACK}-web.rule=Host(`${WEB_DOMAIN}`) || Host(`www.${WEB_DOMAIN}`) || Host(`parents.${WEB_DOMAIN}`) || Host(`admin.${WEB_DOMAIN}`)
+      # Redefine the web router (overrides the base rule): EXCLUDE api.* (split to its
+      # own un-gated router below) AND the apex/www hosts — staging only has the
+      # `*.staging.gabee.app` wildcard, which does NOT cover the bare apex
+      # `staging.gabee.app` or `www.staging.gabee.app`; bundling them made Let's
+      # Encrypt fail the whole SAN cert, leaving parents/admin uncertified.
+      - traefik.http.routers.${STACK}-web.rule=Host(`parents.${WEB_DOMAIN}`) || Host(`admin.${WEB_DOMAIN}`)
       - traefik.http.routers.${STACK}-web.middlewares=${STACK}-auth,${STACK}-noindex
       # Separate un-gated API router (same web service; JWT-enforced by the app).
       - traefik.http.routers.${STACK}-api.rule=Host(`api.${WEB_DOMAIN}`)
