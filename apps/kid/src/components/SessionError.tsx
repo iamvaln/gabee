@@ -28,17 +28,16 @@ export function SessionError({
     <div className="session-screen" data-module={module}>
       <Chrome lang={lang} setLang={setLang} title={title} onBack={onBack} onHome={onHome} profile={profile} />
       <div className="session-body session-error" role="alert">
-        <Bee size={92} expression="encourage" wings />
+        <div aria-hidden="true"><Bee size={92} expression="encourage" wings /></div>
         <h2 className="session-error-title">{t('session.errorTitle')}</h2>
         <p className="session-error-body">{t('session.errorBody')}</p>
         <div className="session-error-actions">
-          <button className="btn mint" onClick={onRetry}>↻ {t('session.retry')}</button>
+          <button className="btn mint" onClick={onRetry}><span aria-hidden="true">↻ </span>{t('session.retry')}</button>
           <p className="session-error-persist">{t('session.persist')}</p>
           <button
             className={'btn ghost' + (reported ? ' done' : '')}
             onClick={report}
             disabled={reported}
-            aria-live="polite"
           >
             {reported ? t('session.reportThanks') : t('session.report')}
           </button>

@@ -22,8 +22,8 @@ export function SessionLoader({ module, title, lang, setLang, onBack, onHome, pr
   return (
     <div className="session-screen" data-module={module}>
       <Chrome lang={lang} setLang={setLang} title={title} onBack={onBack} onHome={onHome} profile={profile} />
-      <div className="session-body session-loading" aria-busy="true" aria-live="polite">
-        <Bee size={112} expression="idle" wings bob />
+      <div className="session-body session-loading" aria-busy="true">
+        <div aria-hidden="true"><Bee size={112} expression="idle" wings bob /></div>
         <div className="session-loading-dots" aria-hidden="true"><span /><span /><span /></div>
       </div>
     </div>
