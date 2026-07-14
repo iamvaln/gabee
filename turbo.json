@@ -13,6 +13,9 @@
     "test": {
       "dependsOn": ["^build"]
     },
+    "test:dom": {
+      "dependsOn": ["^build"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

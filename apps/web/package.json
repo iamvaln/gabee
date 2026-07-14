@@ -9,7 +9,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
-    "test": "files=$(find src -name '*.test.ts'); if [ -z \"$files\" ]; then echo 'no test files found' >&2; exit 1; fi; node --import tsx --test $files"
+    "test": "files=$(find src \\( -name '*.test.ts' -o -name '*.test.tsx' \\)); if [ -z \"$files\" ]; then echo 'no test files found' >&2; exit 1; fi; node --import tsx --test $files"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

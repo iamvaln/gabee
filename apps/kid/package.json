@@ -8,8 +8,8 @@
     "build": "tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "node --import tsx --test src/lib/turtle.test.ts src/lib/guide.test.ts src/lib/guideScripts.test.ts",
-    "test:dom": "node --import tsx --test --test-force-exit src/screens/CodeTurtleSession.guide.test.tsx",
+    "test": "files=$(find src -name '*.test.ts'); if [ -z \"$files\" ]; then echo 'no unit test files found' >&2; exit 1; fi; node --import tsx --test $files",
+    "test:dom": "files=$(find src -name '*.test.tsx'); if [ -z \"$files\" ]; then echo 'no DOM test files found' >&2; exit 1; fi; node --import tsx --test --test-force-exit $files",
     "lint": "eslint ."
   },
   "dependencies": {
