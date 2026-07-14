@@ -145,8 +145,13 @@ export function TranslationSession({
   useEffect(() => {
     if (!q || !session || !profile) return;
     const cfg = q.config as { image?: string; source?: string } | undefined;
-    if (cfg?.image) speak(displayValue(q.prompt, lang), lang);
-    else speak(cfg?.source ?? displayValue(q.prompt, src), src);
+    if (cfg?.image) {
+      // Per-card instruction was too chatty (QA 2026-07-14): read it once
+      // before the exercises, then let the pictures speak for themselves.
+      if (qIdx === 0 && attempt === 1) speak(displayValue(q.prompt, lang), lang);
+    } else {
+      speak(cfg?.source ?? displayValue(q.prompt, src), src);
+    }
     return () => stopSpeaking();
   }, [q?.id, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
