@@ -9,7 +9,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
-    "test": "files=$(find src \\( -name '*.test.ts' -o -name '*.test.tsx' \\)); if [ -z \"$files\" ]; then echo 'no test files found' >&2; exit 1; fi; node --import tsx --test $files"
+    "test": "files=$(find src \\( -name '*.test.ts' -o -name '*.test.tsx' \\)); if [ -z \"$files\" ]; then echo 'no test files found' >&2; exit 1; fi; node --import tsx --test $files",
+    "test:coverage": "c8 -r text -r lcov -r html -x '**/*.test.*' pnpm run test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
@@ -31,6 +32,7 @@
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "@types/ua-parser-js": "^0.7.39",
+    "c8": "^11.0.0",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3"

@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "files=$(find src -name '*.test.ts'); if [ -z \"$files\" ]; then echo 'no unit test files found' >&2; exit 1; fi; node --import tsx --test $files",
     "test:dom": "files=$(find src -name '*.test.tsx'); if [ -z \"$files\" ]; then echo 'no DOM test files found' >&2; exit 1; fi; node --import tsx --test --test-force-exit $files",
+    "test:coverage": "c8 -r text -r lcov -r html -x '**/*.test.*' -x 'src/test/**' pnpm run test",
     "lint": "eslint ."
   },
   "dependencies": {
@@ -34,6 +35,7 @@
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.2.0",
+    "c8": "^11.0.0",
     "fake-indexeddb": "^6.2.5",
     "global-jsdom": "^29.0.0",
     "jsdom": "^29.1.1",

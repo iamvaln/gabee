@@ -16,6 +16,10 @@
     "test:dom": {
       "dependsOn": ["^build"]
     },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true
