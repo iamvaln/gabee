@@ -101,9 +101,17 @@ table (§4) maps to.
     `pnpm-lock.yaml`.
   - **Trivy** — CVEs in the built `gabee-web/kid/backup` images + Dockerfile/compose
     misconfig.
-- **Dynamic / behavioral (DAST-lite)** — bespoke Playwright + fetch probes against a
-  **live target** (local throwaway à la the e2e, or staging), under
-  `ops/security/dynamic/`:
+- **Dynamic / behavioral (DAST-lite)** — bespoke Playwright + fetch probes under
+  `ops/security/dynamic/`. **Primary target = an ephemeral throwaway** spun up at scan
+  time (`docker compose` with `EMAIL_PROVIDER=noop`, a fresh DB + synthetic fixtures,
+  torn down after — the e2e recipe). This gives full isolation: no real emails, no
+  pollution of the shared staging env, and no rate-limiter state leaking to real
+  testers. The persistent **staging env is NOT the default DAST target** — it uses
+  real Mailgun (the flooding probe would send real mail) and is shared with human
+  testers. An **opt-in "safe subset"** (IDOR / authz-boundary / read-only rate-limit
+  assertions — nothing that emails or mutates shared data) MAY smoke-run against the
+  deployed staging release-candidate when you want to probe the actual artifact.
+  Probes:
   - **auth rate-limit / brute-force**: N logins → assert lockout / `429`.
   - **signup abuse**: N signups → assert the limiter returns `429` **before** any
     send; the target runs with `EMAIL_PROVIDER=noop` so no real email is ever sent.
@@ -179,7 +187,8 @@ review, and threat-model maintenance (add a vector whenever a new surface ships)
 ## Rollout (phased inside v1)
 1. Threat-model doc + routing table + tool configs (`.semgrep/`, `.gitleaks.toml`).
 2. `scan.sh` static layer + tiered gate + waivers + `pnpm security:scan`.
-3. Dynamic probe suite (`ops/security/dynamic/`) against a local throwaway target.
+3. Dynamic probe suite (`ops/security/dynamic/`) against an ephemeral throwaway target
+   (noop email, fresh DB + fixtures); optional safe-subset mode for a staging smoke.
 4. AI threat-review step (diff-scoped).
 5. CI backstop job in `release.yml`.
 6. Human-judgment checklist + first full sweep (triage the gaps it finds).
