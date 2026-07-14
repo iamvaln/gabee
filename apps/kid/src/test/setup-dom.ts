@@ -19,3 +19,10 @@ if (typeof window !== 'undefined') {
 // Tell React we're in an act()-aware environment so Testing Library can flush
 // state updates without "not wrapped in act(...)" warnings.
 g.IS_REACT_ACT_ENVIRONMENT = true;
+
+// `__APP_VERSION__` is a Vite `define` (vite.config.ts) — a build-time textual
+// substitution, not a real global, so it doesn't exist under `node --test` via
+// tsx. Any code path touching `lib/device.ts#buildDeviceSnapshot` (e.g.
+// SyncManager#drainEvents) would otherwise throw `ReferenceError`. Stub it the
+// same way `indexedDB` is stubbed above.
+g.__APP_VERSION__ = 'test';
