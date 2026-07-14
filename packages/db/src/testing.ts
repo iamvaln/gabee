@@ -16,6 +16,14 @@ export function createTestClient(
 
 /** Truncate every public table except _prisma_migrations (schema survives, data goes). */
 export async function resetDb(prisma: PrismaClient): Promise<void> {
+  const rows = await prisma.$queryRaw<{ name: string }[]>`SELECT current_database() AS name`;
+  const name = rows[0]?.name ?? '(unknown)';
+  if (!name.endsWith('_test')) {
+    throw new Error(
+      `resetDb refused to truncate database "${name}": its name does not end with "_test". ` +
+        'Point TEST_DATABASE_URL at a *_test database before running integration tests.',
+    );
+  }
   const tables = await prisma.$queryRaw<{ tablename: string }[]>`
     SELECT tablename FROM pg_tables
     WHERE schemaname = 'public' AND tablename <> '_prisma_migrations'

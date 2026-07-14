@@ -23,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     # Real Postgres service: `prisma migrate deploy` + the test:integration turbo task
     # run against it. DIRECT_URL doubles as the migrate URL (prisma.config.ts reads it).
+    # TEST_DATABASE_URL feeds @gabee/db/testing's createTestClient; DATABASE_URL satisfies
+    # createPrismaClient's default for any build-time consumer.
     env:
       DIRECT_URL: postgresql://postgres:postgres@localhost:5432/gabee_test
       TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gabee_test
