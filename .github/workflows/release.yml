@@ -163,9 +163,14 @@ jobs:
         with:
           scan-args: "--lockfile=pnpm-lock.yaml"
       - name: Semgrep (SAST — ERROR blocks)
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: ".semgrep/gabee.yml p/typescript p/nextjs"
+        # `semgrep/semgrep-action` is deprecated; run the CLI directly. This also
+        # keeps CI's tier identical to `scan.sh` (`semgrep scan --error` blocks on
+        # ERROR only) and matches the runbook's `pip install semgrep`. The `p/*`
+        # configs are fetched from the Semgrep registry at run time.
+        run: |
+          python3 -m pip install --quiet --upgrade semgrep
+          semgrep scan --error --quiet \
+            --config .semgrep/gabee.yml --config p/typescript --config p/nextjs
       - name: Trivy (compose/IaC misconfig — CRITICAL/HIGH block)
         uses: aquasecurity/trivy-action@0.24.0
         with:
