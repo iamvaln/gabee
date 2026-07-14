@@ -31,7 +31,8 @@
     "tsx": "^4.22.3",
     "turbo": "^2.9.15",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.60.0"
+    "typescript-eslint": "^8.60.0",
+    "yaml": "^2.9.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
