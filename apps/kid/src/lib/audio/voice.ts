@@ -56,6 +56,9 @@ export class WebSpeechVoiceProvider implements VoiceProvider {
         u.voice = voice;
         u.lang = BCP47[lang];
         u.rate = 0.9; // slightly slow for young listeners
+        // Lighter/younger "Gabee-ish" tone until Phase D ships a real recorded
+        // character voice. Some voices ignore pitch — harmless where unsupported.
+        u.pitch = 1.3;
         this.speaking = true;
         let done = false;
         const finish = () => {
