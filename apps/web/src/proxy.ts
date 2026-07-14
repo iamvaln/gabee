@@ -122,22 +122,23 @@ function hostRole(host: string): HostRole {
   ) {
     return 'localhost';
   }
+  // Classify by the LEADING label, independent of base-domain depth, so this
+  // works for both prod (`parents.gabee.app`) and staging
+  // (`parents.staging.gabee.app`). Traefik only routes the known hosts to this
+  // container, so a broader match here doesn't weaken the cross-host barrier.
   const parts = hostname.split('.');
-  if (parts.length === 2) return 'apex'; // gabee.app
-  if (parts.length === 3) {
-    switch (parts[0]) {
-      case 'www':
-        return 'apex';
-      case 'parents':
-        return 'parents';
-      case 'admin':
-        return 'admin';
-      case 'api':
-        return 'api';
-      default:
-        return 'unknown';
-    }
+  switch (parts[0]) {
+    case 'www':
+      return 'apex';
+    case 'parents':
+      return 'parents';
+    case 'admin':
+      return 'admin';
+    case 'api':
+      return 'api';
   }
+  // Bare apex only (prod `gabee.app`); a deeper unknown subdomain is a 404.
+  if (parts.length === 2) return 'apex';
   return 'unknown';
 }
 
