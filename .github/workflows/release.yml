@@ -142,9 +142,41 @@ jobs:
           cache-from: type=gha,scope=cron-digest
           cache-to: type=gha,scope=cron-digest,mode=max
 
+  # ── Security backstop: deterministic scanners gate the deploy ────────────────
+  # Same tiers as `pnpm security:scan`, enforced on every v* tag. A block-tier
+  # finding here fails the release before the SSH deploy step runs. AI review +
+  # dynamic probes are Plan 2; this job is the static deterministic core.
+  security:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history — gitleaks scans commits, not just the tree
+      - name: gitleaks (secrets — block)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_CONFIG: .gitleaks.toml
+      - name: osv-scanner (dependency CVEs)
+        uses: google/osv-scanner-action@v1
+        with:
+          scan-args: "--lockfile=pnpm-lock.yaml"
+      - name: Semgrep (SAST — ERROR blocks)
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: ".semgrep/gabee.yml p/typescript p/nextjs"
+      - name: Trivy (compose/IaC misconfig — CRITICAL/HIGH block)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: config
+          scan-ref: docker-compose.yml
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
   # ── Deploy: SSH to the VPS, pull the freshly-pushed tag, restart ────────────
   deploy:
-    needs: [build-web, build-kid, build-backup, build-cron-digest]
+    needs: [build-web, build-kid, build-backup, build-cron-digest, security]
     runs-on: ubuntu-latest
     environment: production # optional manual-approval gate (configure in repo settings)
     steps:
