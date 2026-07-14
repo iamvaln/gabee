@@ -125,6 +125,13 @@ STACK=gabee-staging IMAGE_TAG=staging docker compose -p gabee-staging \
 Only `web` and `kid` need restarting — they're the services carrying the
 `${STACK}-auth` Traefik middleware label. `db`/`migrate` are untouched.
 
+> **Sharp edge — always name the services.** The staging CI (and every command
+> in this runbook) scopes compose to `db migrate web kid`. Do NOT run a bare
+> `docker compose -p gabee-staging … up -d` or `… pull` (no service list): the
+> `backup` and `cron-digest` images are never built as `:staging`, so a bare
+> command tries to pull `gabee-backup:staging` / `gabee-cron-digest:staging` and
+> fails. Always pass the explicit `db migrate web kid` list.
+
 ## 6. Teardown
 
 ```bash

@@ -157,8 +157,8 @@ fixed ids). Testers can also self-serve via real signup (real Mailgun confirms).
 
 ### 8. DNS / TLS
 `*.staging.gabee.app` wildcard A-record → VPS IP, **grey-cloud** (Cloudflare proxy
-OFF — required for Traefik's LE HTTP-01 resolver). Already added. Traefik issues
-per-host certs on first request.
+OFF — required for Traefik's LE TLS-ALPN-01 resolver, which the shared proxy
+uses). Already added. Traefik issues per-host certs on first request.
 
 ## Testing / acceptance
 - After bootstrap: `parents.staging.gabee.app` prompts basic-auth, then serves the

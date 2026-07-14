@@ -2,14 +2,29 @@
 #   docker compose -p gabee-staging --env-file .env.staging \
 #     -f docker-compose.yml -f docker-compose.staging.yml up -d db migrate web kid
 #
-# Adds a single shared basic-auth gate + noindex to the staging routers. The
-# base services `backup` and `cron-digest` are simply never started on staging.
+# Adds a shared basic-auth gate + noindex to the HUMAN staging surfaces
+# (apex/www/parents/admin + the kid PWA). The base services `backup` and
+# `cron-digest` are simply never started on staging.
+#
+# IMPORTANT: `api.${WEB_DOMAIN}` is split onto its OWN router WITHOUT basic-auth.
+# The kid PWA (kids.staging.gabee.app) calls the API cross-origin with a Bearer
+# JWT and CORS credentials disabled, so a basic-auth challenge on api.* would
+# 401 the preflight and break the kid app (login included). The API enforces its
+# own JWT auth; noindex + synthetic data is the staging protection there.
 services:
   web:
     labels:
       - traefik.http.middlewares.${STACK}-auth.basicauth.users=${WEB_BASIC_AUTH}
       - traefik.http.middlewares.${STACK}-noindex.headers.customresponseheaders.X-Robots-Tag=noindex, nofollow
+      # Redefine the web router to EXCLUDE api.* (overrides the base rule), and gate it.
+      - traefik.http.routers.${STACK}-web.rule=Host(`${WEB_DOMAIN}`) || Host(`www.${WEB_DOMAIN}`) || Host(`parents.${WEB_DOMAIN}`) || Host(`admin.${WEB_DOMAIN}`)
       - traefik.http.routers.${STACK}-web.middlewares=${STACK}-auth,${STACK}-noindex
+      # Separate un-gated API router (same web service; JWT-enforced by the app).
+      - traefik.http.routers.${STACK}-api.rule=Host(`api.${WEB_DOMAIN}`)
+      - traefik.http.routers.${STACK}-api.entrypoints=websecure
+      - traefik.http.routers.${STACK}-api.tls.certresolver=le
+      - traefik.http.routers.${STACK}-api.service=${STACK}-web
+      - traefik.http.routers.${STACK}-api.middlewares=${STACK}-noindex
   kid:
     labels:
       - traefik.http.routers.${STACK}-kid.middlewares=${STACK}-auth,${STACK}-noindex
