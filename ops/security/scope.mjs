@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { parse } from 'yaml';
 
 export function resolveChecks(changedPaths, routes) {
@@ -27,7 +27,7 @@ if (process.argv[1] && process.argv[1].endsWith('scope.mjs')) {
   const dir = dirname(fileURLToPath(import.meta.url));
   const ref = process.argv[2] || '';
   const range = ref ? `${ref}..HEAD` : 'HEAD';
-  const out = execSync(`git diff --name-only ${range}`, { encoding: 'utf8' });
+  const out = execFileSync('git', ['diff', '--name-only', range], { encoding: 'utf8' });
   const changed = out.split('\n').filter(Boolean);
   const { checks } = resolveChecks(changed, loadRoutes(dir));
   process.stdout.write([...checks].sort().join('\n') + '\n');
