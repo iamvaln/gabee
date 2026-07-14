@@ -1,0 +1,111 @@
+# Gabee threat-model taxonomy
+
+This is the durable vector taxonomy the security-review framework is built on.
+Every vector below has a stable, kebab-case `id` (`net-*` / `plat-*` / `app-*`)
+that is used as a key elsewhere in the framework:
+
+- **The routing table** (Task 2, `docs/security/routing.md`) maps each `id` to
+  the tool(s) that check it and the CI stage that runs them.
+- **Waivers** (accepted-risk entries recorded next to a finding) reference a
+  vector `id` so a suppressed finding stays scoped to exactly the vector it
+  was waived for, not "everything this tool reports."
+- **`scan.sh`** (the static-tool runner) tags its findings with a vector `id`
+  so output can be grouped, gated, and diffed against waivers per vector
+  rather than per raw tool.
+
+Vectors are grouped into three layers — **Network**, **Platform/infra**,
+**Application** — mirroring where the control actually lives (edge proxy,
+deploy/CD/hosting, and Gabee's own code, in that order). Layers are a
+grouping convenience, not an escalation order: a `net-*` finding is not
+inherently less severe than an `app-*` one — see `tier`.
+
+Each row is:
+
+| column | meaning |
+|---|---|
+| `id` | stable kebab key, referenced by the routing table and waivers |
+| surface | the real Gabee file/mechanism the vector applies to (not a generic description) |
+| check(s) | what a tool or review verifies for this vector, and whether it's static or dynamic/AI |
+| tier | how a finding on this vector is treated in CI: **T1** — blocks release; **T2** — must-fix, blocks merge but not an already-tagged release; **T3** — tracked/backlog, informational only |
+| backing | the standard(s) the vector is grounded in — OWASP (Top 10 2021 / API Top 10), ASVS (v4.0.3 chapter), and/or STRIDE category |
+
+## Static vs. dynamic/AI coverage
+
+This plan (Plan 1) wires up **static** tooling only: SAST/lint rules
+(Semgrep), secret scanning (gitleaks), dependency/image CVE scanning
+(`pnpm audit` / Trivy), and IaC/config linting (compose + Traefik label
+checks) — things that run against source and config without executing the
+app. Vectors marked **dynamic/AI** below need a running instance or a
+reasoning pass (authenticated crawl, prompt-driven review of business logic,
+manual pentest) and are out of scope for Plan 1; they're picked up in Plan 2.
+A vector can appear in both columns when static tooling catches the
+mechanical part (e.g. "is there a Zod schema on this route") but the
+semantic part (e.g. "is the schema actually strict enough") needs a
+dynamic/AI pass.
+
+## Adding a vector
+
+1. Pick a layer and an `id` in the `<layer>-<short-name>` form (e.g.
+   `app-ssrf-webhook`). IDs are permanent once referenced by a waiver or the
+   routing table — don't rename, add a new one and deprecate the old row
+   (strike through, keep the row so old waivers still resolve).
+2. Add a row to the relevant table below: point `surface` at the real file or
+   mechanism, describe the `check(s)` and whether static/dynamic/AI, assign a
+   `tier`, and cite the OWASP/ASVS/STRIDE `backing`.
+3. Add the corresponding entry to the routing table (Task 2) so `scan.sh`
+   knows which tool produces findings for the new `id`.
+
+---
+
+## Layer 1 — Network
+
+Edge-of-the-internet: TLS termination, the reverse proxy, cross-origin and
+cross-host boundaries, and edge-level abuse controls. Traefik (`deploy/proxy/`)
+is the single ingress for every Gabee host; `apps/web/src/proxy.ts` is the
+in-app second gate.
+
+| `id` | surface | check(s) | tier | backing |
+|---|---|---|---|---|
+| `net-tls` | `deploy/proxy/docker-compose.yml` — Traefik `certificatesresolvers.le` with `tlschallenge=true` (TLS-ALPN-01), `websecure` entrypoint on `:443`, HTTP→HTTPS redirect on `:80`. One shared Traefik instance issues per-hostname certs for `gabee.app`, `parents.`, `admin.`, `api.`, `kids.` (staging: `staging.gabee.app` + subdomains). | Static: config lint that the compose file declares `tlschallenge`, a `websecure` HTTPS entrypoint, and the `web→redirect` rule; that `HSTS` (`Strict-Transport-Security`, set in `proxy.ts` `SECURITY_HEADERS`) is present with `includeSubDomains`. Dynamic/AI: live cert-chain validity, expiry, and protocol/cipher check against the deployed hosts (Plan 2). | T1 | ASVS V9 (Communications); STRIDE: Tampering, Information disclosure |
+| `net-cors` | `apps/web/src/lib/server/cors.ts` — `corsHeaders()` reflects only `KID_APP_ORIGIN`, no `Access-Control-Allow-Credentials`, `Vary: Origin`. Applied in `proxy.ts` to every `/api/*` request (including the `OPTIONS` preflight, which short-circuits before hitting a route handler). | Static: Semgrep rule that any `Access-Control-Allow-Origin` computation forbids reflecting the request `Origin` header verbatim without an allowlist check, and forbids `Access-Control-Allow-Credentials: true` paired with a non-fixed origin. Diff review flags any second CORS-header site outside `cors.ts`. | T2 | OWASP API Top 10 API8 (Security Misconfiguration); ASVS V14.5; STRIDE: Spoofing, Information disclosure |
+| `net-host-isolation` | `apps/web/src/proxy.ts` — `hostRole()`/`isPathAllowed()` enforce the apex/`parents.`/`admin.`/`api.` split (one Next.js deployment, host-gated); mirrored by the Traefik `Host()` router rule in `docker-compose.yml` (`web` service) that is the only thing actually reachable from the internet. | Static: unit/contract test (already exists for `proxy.ts`) plus a review rule that any new top-level path under `/admin` or `/parent` is covered by `isPathAllowed`'s switch, and that `FAVICON_PATHS`/`_next` are the only cross-role exceptions. Dynamic/AI: authenticated crawl attempting to reach `/admin/*` via `parents.gabee.app` and vice versa (Plan 2). | T1 | OWASP API Top 10 API1 (Broken Object/Function-level Auth, cross-surface case); ASVS V4; STRIDE: Elevation of privilege |
+| `net-rate-limit-edge` | No edge-level (Traefik) rate limiting exists today — all throttling is in-process via `apps/web/src/lib/server/rate-limit.ts` (in-memory bucket, single-instance MVP; see `app-rate-limit` for the app-level coverage of that module). This vector tracks the absence of a Traefik `ratelimit` middleware in front of it, which matters for volumetric abuse (e.g. an L7 flood that never reaches Node's per-route buckets fairly across replicas). | Static: config check that flags if `docker-compose.yml`/`deploy/proxy/` still has no `traefik.http.middlewares.*.ratelimit` label, so the gap is visible rather than silently assumed-covered by the app-level limiter. Dynamic/AI: load-test confirming the app-level limiter isn't trivially bypassed by rotating `X-Forwarded-For` (Plan 2). | T3 | OWASP API Top 10 API4 (Unrestricted Resource Consumption); STRIDE: Denial of service |
+| `net-exposure` | `docker-compose.staging.yml` — shared basic-auth (`WEB_BASIC_AUTH`) + `noindex` middleware on the human staging surfaces (`web`, `kid` routers), but `api.${WEB_DOMAIN}` is deliberately split onto its own router **without** basic-auth (comment: "JWT and CORS credentials disabled... own JWT auth; noindex + synthetic data is the staging protection there"). This vector is exactly that trade-off: `api.*` on staging is internet-reachable behind app-level auth only. | Static: config check that the `api.*` router in staging never gains the `${STACK}-auth` middleware by accident (that would break the kid PWA's cross-origin calls) and that basic-auth env vars aren't blank/default. Dynamic/AI: confirm staging seed data is genuinely synthetic (no real PII) since `api.*` is unauthenticated-by-network (Plan 2). | T2 | OWASP API Top 10 API9 (Improper Inventory Management); STRIDE: Information disclosure |
+
+## Layer 2 — Platform / infra
+
+The deploy pipeline, container images, secrets handling, and third-party
+infra (object storage, transactional email) that the app runs on.
+
+| `id` | surface | check(s) | tier | backing |
+|---|---|---|---|---|
+| `plat-cd-secrets` | `.github/workflows/release.yml` — GHCR login uses `secrets.GITHUB_TOKEN`; the `deploy` job SSHes to the VPS with `secrets.VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY`/`VPS_PORT` via `appleboy/ssh-action`, and passes `GHCR_TOKEN`/`APP_DIR` into the remote script; `staging.yml` mirrors this for the staging host. | Static: repo/workflow lint (e.g. `zizmor` or equivalent) checking secrets are only referenced via `secrets.*`/`vars.*` (never inlined), the SSH key isn't echoed/logged (`set -euo pipefail` + no `set -x`), and `permissions:` blocks stay minimal (`contents: read`, `packages: write`) per job rather than workflow-wide `write-all`. | T1 | ASVS V14.2 (build/deploy pipeline integrity); STRIDE: Tampering, Elevation of privilege |
+| `plat-compose-misconfig` | `docker-compose.yml` — Traefik labels (`traefik.enable`, `Host()` rules, `certresolver=le`) on `web`/`kid` only; `db`/`migrate`/`backup`/`cron-digest` are on the `internal` network with **no** Traefik labels and are never attached to the external `web` network, so they're unreachable from the internet by construction. `env_file: ${ENV_FILE:-.env.production}` feeds secrets into `web`/`migrate`. | Static: compose-file lint asserting every service that shouldn't be internet-facing (`db`, `backup`, `cron-digest`, `migrate`) has no `web` network membership and no `traefik.enable=true` label; that `db`'s port isn't published (`ports:` absent); that `env_file` targets are gitignored. | T1 | CIS Docker Benchmark (mapped via ASVS V14.2); STRIDE: Elevation of privilege, Information disclosure |
+| `plat-image-cve` | Built images: `gabee-web` (`apps/web/Dockerfile`, Next.js/node runtime), `gabee-kid` (`apps/kid/Dockerfile`, static PWA served by nginx), `gabee-backup` (`ops/backup`), `gabee-cron-digest` (`ops/cron-digest`) — all built and pushed by `release.yml`'s `build-web`/`build-kid`/`build-backup`/`build-cron-digest` jobs. | Static: Trivy (or equivalent) image scan on each built image in CI, gated on HIGH/CRITICAL CVEs in the base image (`node:20-slim`, `nginx:alpine`, etc.) and OS packages; base-image pin freshness check (not floating `:latest` in `FROM`). | T2 | OWASP A06:2021 (Vulnerable and Outdated Components); ASVS V14.2 |
+| `plat-env-handling` | `.env.example`, `.env.production.example`, `.env.staging.example`, `deploy/proxy/.env.example` — tracked files that must contain **placeholder values only**; real secrets live in gitignored `.env.production`/`.env.local` referenced by `env_file:` in compose. | Static: Semgrep/regex rule scanning every tracked `.env*.example` for non-placeholder-looking values (real-looking JWT secrets, API keys matching known provider formats, non-`example.com`/`changeme` values); gitleaks pass across history for any `.env.production`/`.env.local` ever committed. | T1 | OWASP A05:2021 (Security Misconfiguration); ASVS V14.1; STRIDE: Information disclosure |
+| `plat-r2-scope` | `ops/backup/bin/*` (`backup-loop`, `backup-once`, `list-backups`, `restore`) — nightly `pg_dump` uploaded to Cloudflare R2 via `R2_ENDPOINT`/`R2_BUCKET`/`R2_PREFIX` and `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY` (mapped to `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` for the AWS SDK), configured in `docker-compose.yml`'s `backup` service. Full DB dumps (including PII — see `app-pii-exposure`) land in this bucket. | Static: review checklist item (credentials scoped to a single bucket/prefix, not account-wide R2 keys) — largely a config-review, not a mechanically-scannable property; flag if `R2_PREFIX` is missing (dumps at bucket root, easier to collide with other projects sharing the VPS). Dynamic/AI: verify the R2 bucket policy actually denies public read (Plan 2 — requires live credential access, out of static scope). | T2 | ASVS V14.1 (secure configuration of cloud storage); STRIDE: Information disclosure |
+| `plat-mailgun-abuse` | `apps/web/src/lib/server/mailgun.ts` + call sites (`email-confirmation`, `password-reset`, `family` invites, `devices/pair`, `classifications` digest) — outbound transactional email. Abuse surface: unauthenticated endpoints that trigger an email send (signup, forgot-password, resend-confirmation, family invite) can be used to spam a third-party inbox or exhaust the Mailgun quota/reputation. | Static: check every route that calls into `mailgun.ts`/`email.ts` is covered by an entry in `rate-limit.ts` (cross-referenced with `app-rate-limit`); Semgrep rule that `sendConfirmationEmail`/`sendPasswordResetEmail`-style calls are never reachable without a preceding `rateLimit()` call in the same route. | T2 | OWASP API Top 10 API4 (Unrestricted Resource Consumption); STRIDE: Denial of service |
+| `plat-backup-integrity` | `ops/backup/bin/backup-loop` (`BACKUP_SCHEDULE_HOUR_UTC`, `BACKUP_RETENTION_DAYS`) and `restore` — nightly `pg_dump` with a 14-day default retention; `restore` is the only imperative path back from an R2 snapshot. | Static: review checklist that `restore` validates the dump's integrity (checksum/exit code of `pg_restore`) before considering a restore successful, and that retention pruning (`BACKUP_RETENTION_DAYS`) can't delete the *only* remaining backup. Dynamic/AI: periodic restore-drill against a scratch DB to prove backups are actually restorable, not just uploaded (Plan 2). | T2 | ASVS V1.9 (backup/recovery); STRIDE: Repudiation (silent backup failure), Denial of service |
+
+## Layer 3 — Application
+
+Gabee's own Next.js app code: auth, authorization boundaries, data
+validation, injection surfaces, and PII handling.
+
+| `id` | surface | check(s) | tier | backing |
+|---|---|---|---|---|
+| `app-authn` | `apps/web/src/lib/server/auth.ts` — scrypt password hashing (`hashPassword`/`verifyPassword`, constant-time `timingSafeEqual`) + `jose` HS256 session JWTs (`createSessionToken`/`getSession`); httpOnly, `sameSite: lax`, `secure` in prod session cookies (`setSessionCookie`), separate `gabee_parent_session`/`gabee_admin_session` cookies scoped by `COOKIE_DOMAIN_PARENT`/`COOKIE_DOMAIN_ADMIN`; login gated on `ParentAccount.emailConfirmedAt` (signup route defers session issuance until confirmation). | Static: Semgrep rule that password comparisons only ever go through `verifyPassword` (never `===`/`hash === input`); that JWT verification always goes through `jwtVerify`/`getSession` (never manual base64 decode of the payload); that `AUTH_JWT_SECRET` is read from env, never a literal. Dynamic/AI: confirm `emailConfirmedAt` is actually enforced on every login path incl. legacy cookie fallback (Plan 2). | T1 | OWASP A07:2021 (Identification and Authentication Failures); ASVS V2, V3; STRIDE: Spoofing |
+| `app-authz-idor` | `apps/web/src/lib/server/http.ts` — `requireParent`/`requireAdmin`/`requireSuperAdmin` gate *authentication*, but object-level authorization (does this `parentId` actually own this `kidId`/`deviceId`/`messageId`?) lives per-service, e.g. `updateProfile(session.parentId, id, input)` in `profiles/[id]/route.ts`, `revokeDevice(session.parentId, id)` in `devices/[id]/route.ts`. A missing ownership check in any one service function is a direct cross-family IDOR. | Static: Semgrep rule that every dynamic `[id]` route handler passes `session.parentId` (or an equivalent ownership key) into its service call, flagging any handler that calls a mutating service function with only the path `id` and no session-derived scoping argument. Dynamic/AI: authenticated-as-parent-A probe against parent-B's `kidId`/`deviceId`/`messageId` resource IDs across every `[id]` route (Plan 2 — the mechanical grep can't prove the service function *uses* the parentId it's given). | T1 | OWASP API Top 10 API1 (Broken Object Level Authorization) / API5 (Broken Function Level Authorization); ASVS V4.2; STRIDE: Elevation of privilege |
+| `app-injection` | Prisma `$queryRaw` call sites: `apps/web/src/lib/server/services/progress.ts:53`, `services/gifts.ts:52`, `services/admin-funnels.ts` (three call sites) — raw SQL for queries Prisma's query builder can't express efficiently. Also: React/JSX output (XSS sink surface, mitigated by the CSP in `proxy.ts` + React's default escaping), any outbound `fetch()` built from user input (SSRF), and file/path handling (path traversal) if present. | Static: Semgrep rule requiring every `$queryRaw`/`$executeRaw` call to use the tagged-template form (Prisma's `Prisma.sql`/`` $queryRaw`...` `` parameterization) and flagging any string-concatenated raw SQL; `dangerouslySetInnerHTML` usage banned/reviewed; any `fetch(url)` where `url` includes a request-derived value flagged for SSRF review. | T1 | OWASP A03:2021 (Injection); ASVS V5.3; STRIDE: Tampering |
+| `app-input-validation` | Zod schemas from `@gabee/types` (e.g. `SignupRequestSchema`, `UpdateProfileRequestSchema`) consumed via `readJson(req, schema)` in `apps/web/src/lib/server/http.ts` — the boundary discipline: every route that accepts a body is expected to route it through `readJson` rather than reading `req.json()` directly. | Static: Semgrep rule flagging any route handler that calls `req.json()`/`await req.json()` directly instead of `readJson(req, <Schema>)`; a coverage check that every file under `apps/web/src/app/api/**/route.ts` with a `POST`/`PATCH`/`PUT` export references a Zod schema import. | T2 | OWASP A03:2021 (Injection, via missing input constraints); ASVS V5.1; STRIDE: Tampering |
+| `app-rate-limit` | `apps/web/src/lib/server/rate-limit.ts` (in-memory, single-instance bucket) — applied per-route, e.g. signup's 5/15min-per-IP in `apps/web/src/app/api/auth/signup/route.ts`. Sensitive endpoints expected to call `rateLimit()`: login, signup, forgot-password, resend-confirmation, email-sending endpoints, and any AI/content-generation or classification endpoint. | Static: Semgrep rule that every route under `auth/*` (login, signup, forgot-password, resend-confirmation) and every route that triggers outbound email (cross-ref `plat-mailgun-abuse`) or content classification calls `rateLimit()` before doing sensitive work. Dynamic/AI: confirm the in-memory limiter's documented multi-replica gap (`TODO(scale)` comment in `rate-limit.ts`) isn't silently relied upon once the app scales past one instance (Plan 2). | T2 | OWASP API Top 10 API4 (Unrestricted Resource Consumption); ASVS V11.1; STRIDE: Denial of service |
+| `app-secrets-in-code` | Any hardcoded credential, API key, or JWT secret literal in `apps/web/src`, `packages/*`, `ops/*` — as opposed to `plat-env-handling`, which covers the tracked `.env*.example` files; this vector is about secrets embedded directly in source/config rather than env-var plumbing. | Static: gitleaks (or equivalent) full-repo + full-history scan for high-entropy strings and known secret formats (AWS/R2 keys, Mailgun API keys, JWT signing secrets, DB connection strings with embedded passwords). | T1 | OWASP A05:2021 (Security Misconfiguration); ASVS V14.1; STRIDE: Information disclosure |
+| `app-pii-exposure` | `packages/db/prisma/schema.prisma` — `Device` model (`lastIp`, `tz`, `tzOffsetMin`, `uaFull`, `osVersion`, `deviceModel`, `screenW/H`, `locale`) and `DeviceIpSighting` (append-only, **indefinite retention** per the model comment "design 2026-07-10"); IP is surfaced admin-only (super-admin gate via `requireSuperAdmin` in `http.ts`, not plain `requireAdmin`). **This is the pending privacy-policy launch gate** (project memory: raw-IP-indefinite-retention must not ship without an updated privacy policy). | Static: schema-diff check flagging any new PII-shaped column (`ip`, `email`, `phone`, geolocation) added to `schema.prisma` without a corresponding entry in the privacy-policy doc; grep that IP-bearing fields (`lastIp`, `DeviceIpSighting.ip`) are only ever read behind `requireSuperAdmin`, never `requireAdmin`/`requireParent`. Dynamic/AI: confirm no IP/device-metadata field leaks into a parent-facing or kid-facing API response payload (Plan 2). | T1 | OWASP A01:2021 (Broken Access Control, sensitive-field exposure) / GDPR data-minimization principle; ASVS V8; STRIDE: Information disclosure |
+| `app-supply-chain` | Root `pnpm-lock.yaml` + per-package `package.json` across the pnpm workspace (`apps/web`, `apps/kid`, `packages/*`, `ops/*`); `release.yml`/`ci.yml` install via `pnpm install` (assumed frozen-lockfile in CI). | Static: `pnpm audit` (or `pnpm audit --prod`) in CI gated on HIGH/CRITICAL advisories; lockfile-integrity check (`pnpm install --frozen-lockfile` fails the build on drift between `package.json` and `pnpm-lock.yaml`); flag any `package.json` dependency pinned to a git URL/tag rather than a registry version (unpinned supply-chain risk). | T2 | OWASP A06:2021 (Vulnerable and Outdated Components); ASVS V14.2 |
+
+---
+
+*Backing key: **OWASP** = OWASP Top 10:2021 / OWASP API Security Top 10:2023.
+**ASVS** = OWASP Application Security Verification Standard v4.0.3, cited by
+chapter (V-number). **STRIDE** = Spoofing / Tampering / Repudiation /
+Information disclosure / Denial of service / Elevation of privilege.*
