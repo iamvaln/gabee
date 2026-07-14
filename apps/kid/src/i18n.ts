@@ -128,6 +128,14 @@ const resources = {
         guideReplay: '？',
         guideReplayAria: 'Revoir le guide',
       },
+      session: {
+        errorTitle: 'Oups !',
+        errorBody: "Le contenu n'a pas pu charger. Vérifie ta connexion internet.",
+        retry: 'Réessayer',
+        persist: 'Si ça continue :',
+        report: 'Signaler le problème',
+        reportThanks: 'Merci, on regarde 💛',
+      },
       pair: {
         invalidCode: 'Code invalide ou expiré. Vérifie auprès du parent.',
         tooManyAttempts: 'Trop d’essais. Attendez quelques minutes avant de réessayer.',
@@ -327,6 +335,14 @@ const resources = {
         guideSkip: 'I know, skip',
         guideReplay: '？',
         guideReplayAria: 'Replay the guide',
+      },
+      session: {
+        errorTitle: 'Oops!',
+        errorBody: "The content couldn't load. Check your internet connection.",
+        retry: 'Try again',
+        persist: 'If it keeps happening:',
+        report: 'Report the problem',
+        reportThanks: "Thanks, we're on it 💛",
       },
       pair: {
         invalidCode: 'Invalid or expired code. Double-check with the parent.',
