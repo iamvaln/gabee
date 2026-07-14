@@ -133,8 +133,19 @@ export function TranslationSession({
     [q],
   );
 
-  // Narration must not outlive the session (leaks onto hub/map and suppresses SFX).
-  useEffect(() => () => stopSpeaking(), []);
+  // Voiceover moment 1 (audio spec §5): read the source word in ITS language.
+  // Image questions (L1) have nothing to read — and speaking the answer would
+  // give it away — so they stay silent until success. Its own effect with
+  // stop-on-cleanup so narration halts on question change AND unmount (must not
+  // leak onto hub/map), and survives StrictMode's dev double-mount — a
+  // ref-guarded speak would be cancelled by the replayed cleanup and never
+  // re-fire. Re-narrates on retry (attempt), matching question_shown.
+  useEffect(() => {
+    if (!q || !session || !profile) return;
+    const cfg = q.config as { image?: string; source?: string } | undefined;
+    if (!cfg?.image) speak(cfg?.source ?? displayValue(q.prompt, src), src);
+    return () => stopSpeaking();
+  }, [q?.id, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!session || !q || startedRef.current || !profile) return;
@@ -157,11 +168,6 @@ export function TranslationSession({
       { name: 'question_shown', module: 'translation', level, lesson, question_id: q.id, type: q.type, attempt_num: attempt },
       ctx,
     );
-    // Voiceover moment 1 (audio spec §5): read the source word in ITS language.
-    // Image questions (L1) have nothing to read — and speaking the answer would
-    // give it away — so they stay silent until success.
-    const cfg = q.config as { image?: string; source?: string } | undefined;
-    if (!cfg?.image) speak(cfg?.source ?? displayValue(q.prompt, src), src);
   }, [q, attempt, session, profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function pick(opt: QuestionValue) {

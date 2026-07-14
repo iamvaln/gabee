@@ -110,8 +110,16 @@ export function KeyboardStaticSession({
     return out;
   }, [target]);
 
-  // Narration must not outlive the session (leaks onto hub/map and suppresses SFX).
-  useEffect(() => () => stopSpeaking(), []);
+  // Voiceover moment 1 (audio spec §5): read the target aloud in the display
+  // language. Its own effect with stop-on-cleanup so narration halts on question
+  // change AND unmount (must not leak onto hub/map), and survives StrictMode's
+  // dev double-mount — a ref-guarded speak would be cancelled by the replayed
+  // cleanup and never re-fire.
+  useEffect(() => {
+    if (!q || !session || !profile) return;
+    speak(target, lang);
+    return () => stopSpeaking();
+  }, [q?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // lesson_started — once when the session is ready.
   useEffect(() => {
@@ -146,9 +154,6 @@ export function KeyboardStaticSession({
       { name: 'question_shown', module: 'keyboard', level, lesson, question_id: q.id, type: q.type, attempt_num: 1 },
       ctx,
     );
-    // Voiceover moment 1 (audio spec §5): read the target aloud in the display
-    // language. Fire-and-forget; silently skipped if no matching voice exists.
-    speak(target, lang);
   }, [q, session, profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Persist progress against the Keyboard track. Phase 1 carries a sub-mode
