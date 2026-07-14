@@ -36,6 +36,7 @@ test('lenient batch: one malformed event is rejected by id, the valid one lands 
   assert.equal(body.accepted, 1);
   assert.ok(body.rejected.includes(badId));
   assert.equal(await prisma.event.count({ where: { eventId: good.event_id } }), 1);
+  assert.equal(await prisma.event.count(), 1); // malformed event not persisted
 });
 
 test('unauthenticated ingestion is refused with 401', async () => {

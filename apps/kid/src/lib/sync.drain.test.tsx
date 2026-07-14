@@ -17,7 +17,7 @@ function envelope(i: number) {
     session_id: null,
     client_ts: new Date(2026, 0, 1, 0, 0, i % 60).toISOString(),
     schema_version: 1,
-    event: { name: 'app_open' },
+    event: { name: 'app_launched' },
   };
 }
 

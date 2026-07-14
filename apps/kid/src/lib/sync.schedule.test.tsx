@@ -17,7 +17,7 @@ beforeEach(async () => {
   await db.progress.clear();
 });
 
-test('exponential backoff: retries at 2s, then 4s, capped growth', async (t) => {
+test('exponential backoff: retries at 2s, then 4s, capped growth at BACKOFF_MAX_MS (60s)', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
   let fail = true;
   const ingest = t.mock.method(api, 'ingestEvents', async () => {
@@ -25,26 +25,47 @@ test('exponential backoff: retries at 2s, then 4s, capped growth', async (t) => 
     return { accepted: 1, duplicates: 0, rejected: [] };
   });
   t.mock.method(api, 'syncProgress', async () => ({}));
-  await db.events.add({ envelope: { event_id: crypto.randomUUID(), profile_id: null, session_id: null, client_ts: new Date(2026, 0, 1).toISOString(), schema_version: 1, event: { name: 'app_open' } } } as never);
+  await db.events.add({ envelope: { event_id: crypto.randomUUID(), profile_id: null, session_id: null, client_ts: new Date(2026, 0, 1).toISOString(), schema_version: 1, event: { name: 'app_launched' } } } as never);
   const m = new SyncManager();
+
+  // Advance the mocked clock by `ms` and drain the microtask/macrotask chain so an
+  // async retry (flush → drainEvents → ingestEvents) has a chance to run to completion.
+  async function advance(ms: number): Promise<void> {
+    t.mock.timers.tick(ms);
+    await Promise.resolve();
+    await new Promise((r) => setImmediate(r));
+  }
 
   await m.flush(); // failure #1 → retry in 2s
   assert.equal(ingest.mock.callCount(), 1);
 
   t.mock.timers.tick(1_999);
   assert.equal(ingest.mock.callCount(), 1); // not yet
-  t.mock.timers.tick(1);
-  await Promise.resolve(); // let the retry flush start
-  await new Promise((r) => setImmediate(r)); // and finish its async chain
+  await advance(1);
   assert.equal(ingest.mock.callCount(), 2); // failure #2 → retry in 4s
 
   t.mock.timers.tick(3_999);
   await new Promise((r) => setImmediate(r));
   assert.equal(ingest.mock.callCount(), 2);
-  fail = false;
-  t.mock.timers.tick(1);
+  await advance(1);
+  assert.equal(ingest.mock.callCount(), 3); // failure #3 → retry in 8s
+
+  await advance(8_000);
+  assert.equal(ingest.mock.callCount(), 4); // failure #4 → retry in 16s
+
+  await advance(16_000);
+  assert.equal(ingest.mock.callCount(), 5); // failure #5 → retry in 32s
+
+  await advance(32_000);
+  // failure #6: raw delay would be 2s * 2^5 = 64s, which exceeds BACKOFF_MAX_MS — pinned to 60s.
+  assert.equal(ingest.mock.callCount(), 6);
+
+  t.mock.timers.tick(59_999);
   await new Promise((r) => setImmediate(r));
-  assert.equal(ingest.mock.callCount(), 3); // recovered
+  assert.equal(ingest.mock.callCount(), 6); // not yet — capped at 60s, not the raw 64s
+  fail = false;
+  await advance(1);
+  assert.equal(ingest.mock.callCount(), 7); // fires at exactly 60s total; recovered
   assert.equal(await db.events.count(), 0);
 });
 
@@ -56,7 +77,7 @@ test('single-flight: concurrent flush calls coalesce into one drain', async () =
     return { accepted: 1, duplicates: 0, rejected: [] };
   });
   mock.method(api, 'syncProgress', async () => ({}));
-  await db.events.add({ envelope: { event_id: crypto.randomUUID(), profile_id: null, session_id: null, client_ts: new Date(2026, 0, 1).toISOString(), schema_version: 1, event: { name: 'app_open' } } } as never);
+  await db.events.add({ envelope: { event_id: crypto.randomUUID(), profile_id: null, session_id: null, client_ts: new Date(2026, 0, 1).toISOString(), schema_version: 1, event: { name: 'app_launched' } } } as never);
   const m = new SyncManager();
 
   const first = m.flush();
@@ -73,7 +94,12 @@ test('single-flight: concurrent flush calls coalesce into one drain', async () =
 });
 
 test('syncNow reports offline / busy / success with pending count', async () => {
-  mock.method(api, 'ingestEvents', async () => ({ accepted: 2, duplicates: 0, rejected: [] }));
+  let resolveIngest!: () => void;
+  const gate = new Promise<void>((r) => (resolveIngest = r));
+  const ingest = mock.method(api, 'ingestEvents', async (envs: unknown[]) => {
+    await gate;
+    return { accepted: envs.length, duplicates: 0, rejected: [] };
+  });
   mock.method(api, 'syncProgress', async () => ({}));
   const m = new SyncManager();
 
@@ -81,9 +107,18 @@ test('syncNow reports offline / busy / success with pending count', async () => 
   assert.deepEqual(await m.syncNow(), { ok: false, sentEvents: 0, reason: 'offline' });
 
   setOnline(true);
+  await db.events.add({ envelope: { event_id: crypto.randomUUID(), profile_id: null, session_id: null, client_ts: new Date(2026, 0, 1).toISOString(), schema_version: 1, event: { name: 'app_launched' } } } as never);
+
+  const inFlight = m.flush(); // occupies the in-flight guard (blocked on the gate)
+  assert.deepEqual(await m.syncNow(), { ok: false, sentEvents: 0, reason: 'busy' });
+  resolveIngest();
+  await inFlight;
+  assert.equal(ingest.mock.callCount(), 1);
+
+  // Gate is now resolved, so subsequent ingestEvents calls settle immediately.
   await db.events.bulkAdd([
-    { envelope: { event_id: crypto.randomUUID(), profile_id: null, session_id: null, client_ts: new Date(2026, 0, 1).toISOString(), schema_version: 1, event: { name: 'app_open' } } },
-    { envelope: { event_id: crypto.randomUUID(), profile_id: null, session_id: null, client_ts: new Date(2026, 0, 1).toISOString(), schema_version: 1, event: { name: 'app_open' } } },
+    { envelope: { event_id: crypto.randomUUID(), profile_id: null, session_id: null, client_ts: new Date(2026, 0, 1).toISOString(), schema_version: 1, event: { name: 'app_launched' } } },
+    { envelope: { event_id: crypto.randomUUID(), profile_id: null, session_id: null, client_ts: new Date(2026, 0, 1).toISOString(), schema_version: 1, event: { name: 'app_launched' } } },
   ] as never);
   const res = await m.syncNow();
   assert.equal(res.ok, true);
@@ -94,7 +129,7 @@ test('status: syncing while draining, synced flash after a real push, then onlin
   t.mock.timers.enable({ apis: ['setTimeout'] });
   t.mock.method(api, 'ingestEvents', async () => ({ accepted: 1, duplicates: 0, rejected: [] }));
   t.mock.method(api, 'syncProgress', async () => ({}));
-  await db.events.add({ envelope: { event_id: crypto.randomUUID(), profile_id: null, session_id: null, client_ts: new Date(2026, 0, 1).toISOString(), schema_version: 1, event: { name: 'app_open' } } } as never);
+  await db.events.add({ envelope: { event_id: crypto.randomUUID(), profile_id: null, session_id: null, client_ts: new Date(2026, 0, 1).toISOString(), schema_version: 1, event: { name: 'app_launched' } } } as never);
   const m = new SyncManager();
   const seen: string[] = [];
   m.subscribe((s) => seen.push(s));
