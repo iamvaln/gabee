@@ -5,10 +5,10 @@
 # LOGGED (never silently skipped) and fails the run under --strict (CI passes it).
 set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
-cd "$ROOT"
+cd "$ROOT" || { echo "cannot cd to repo root" >&2; exit 2; }
 SINCE=""; FULL=0; STRICT=0
 while [ $# -gt 0 ]; do case "$1" in
-  --since) SINCE="$2"; shift 2;;
+  --since) SINCE="${2:?--since needs a value}"; shift 2;;
   --full) FULL=1; shift;;
   --strict) STRICT=1; shift;;
   *) echo "unknown arg: $1" >&2; exit 2;;
@@ -20,20 +20,33 @@ BLOCK=0; MISSING=""
 have() { command -v "$1" >/dev/null 2>&1; }
 note() { echo "$*" | tee -a "$REPORT"; }
 
+# Resolve the in-scope checks. A resolver FAILURE (bad ref, missing dep, malformed
+# routes.yml) must NEVER collapse to an empty scan that then reports PASS — a gate
+# that goes green when it can't determine scope is worse than no gate. So we fail
+# hard (exit 4) on a nonzero resolver exit OR empty output. Output can't legitimately
+# be empty: routes.always always seeds gitleaks+osv, so "" means the resolver broke.
 if [ "$FULL" -eq 1 ] || [ -z "$SINCE" ]; then
-  CHECKS="$(node -e "const s=require('./ops/security/scope.mjs'); const y=require('yaml'); const r=y.parse(require('fs').readFileSync('ops/security/routes.yml','utf8')); const all=new Set(r.always); r.routes.forEach(x=>x.checks.forEach(c=>all.add(c))); console.log([...all].join('\n'))" 2>/dev/null)"
-  note "# Security scan — FULL"
+  CHECKS="$(node -e "const y=require('yaml'); const r=y.parse(require('fs').readFileSync('ops/security/routes.yml','utf8')); const all=new Set(r.always); r.routes.forEach(x=>x.checks.forEach(c=>all.add(c))); console.log([...all].join('\n'))")" \
+    || { echo "FATAL: route enumeration failed — refusing to report PASS" >&2; exit 4; }
+  SCOPE_LABEL="FULL"
 else
-  CHECKS="$(node ops/security/scope.mjs "$SINCE")"
-  note "# Security scan — since $SINCE"
+  CHECKS="$(node ops/security/scope.mjs "$SINCE")" \
+    || { echo "FATAL: scope resolution failed for ref '$SINCE' — refusing to report PASS" >&2; exit 4; }
+  SCOPE_LABEL="since $SINCE"
 fi
+[ -n "$CHECKS" ] || { echo "FATAL: resolver returned no checks — refusing to report PASS" >&2; exit 4; }
+note "# Security scan — $SCOPE_LABEL"
 runs() { echo "$CHECKS" | grep -qx "$1"; }
 
 # ── gitleaks (always) — secrets, block tier ──
+# Build the diff-scoping flag as an array element (not an unquoted $(...) that
+# word-splits): $SINCE stays a single argv token, so a ref with spaces/metachars
+# can't split into extra git options — it just fails the ref lookup (fail-closed).
+GITLEAKS_SCOPE=()
+[ "$FULL" -eq 0 ] && [ -n "$SINCE" ] && GITLEAKS_SCOPE=("--log-opts=$SINCE..HEAD")
 if runs gitleaks; then
   if have gitleaks; then
-    gitleaks detect --no-banner --redact -c .gitleaks.toml \
-      $( [ "$FULL" -eq 0 ] && [ -n "$SINCE" ] && echo "--log-opts=$SINCE..HEAD" ) \
+    gitleaks detect --no-banner --redact -c .gitleaks.toml "${GITLEAKS_SCOPE[@]+"${GITLEAKS_SCOPE[@]}"}" \
       && note "- gitleaks: clean" || { note "- gitleaks: FINDINGS (block)"; BLOCK=1; }
   else MISSING="$MISSING gitleaks"; fi
 fi
