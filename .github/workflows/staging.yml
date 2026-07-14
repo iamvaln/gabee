@@ -84,7 +84,7 @@ jobs:
             set -euo pipefail
             cd "${STAGING_DIR:-$HOME/gabee-staging}"
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-            export IMAGE_TAG=staging STACK=gabee-staging
+            export IMAGE_TAG=staging STACK=gabee-staging ENV_FILE=.env.staging
             git fetch origin
             git checkout -f main
             git reset --hard origin/main
