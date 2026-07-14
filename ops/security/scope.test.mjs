@@ -26,3 +26,20 @@ describe('resolveChecks', () => {
     assert.ok(checks.has('app-pii-exposure') && checks.has('plat-cd-secrets'));
   });
 });
+
+import { validRef, resolveChecks as rc2 } from './scope.mjs';
+describe('validRef', () => {
+  it('accepts real refs (tags, shas, HEAD~1)', () => {
+    for (const r of ['v2.9.0', '713d06f', 'HEAD~1', 'HEAD^', 'main']) assert.equal(validRef(r), true, r);
+  });
+  it('rejects option injection + traversal', () => {
+    for (const r of ['-x..HEAD', '--output=/etc', 'a..b', '$(rm -rf)', 'a;b']) assert.equal(validRef(r), false, r);
+  });
+});
+describe('matchesRoute (prefix, not substring)', () => {
+  it('does not route a decoy path that only CONTAINS the prefix', () => {
+    const routes = { always: [], routes: [{ glob: 'apps/web/src/app/api/', checks: ['app-authz-idor'] }] };
+    assert.equal(rc2(['x/apps/web/src/app/api-decoy.ts'], routes).checks.has('app-authz-idor'), false);
+    assert.equal(rc2(['apps/web/src/app/api/events/route.ts'], routes).checks.has('app-authz-idor'), true);
+  });
+});
