@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "test": "node --import tsx --test test/contracts.test.ts",
-    "test:coverage": "c8 -r text -r lcov -r html -x 'test/**' pnpm run test"
+    "test:coverage": "c8 -r text -r lcov -r html -x 'test/**' node --import tsx --test test/contracts.test.ts"
   },
   "dependencies": {
     "zod": "^4.4.3"
