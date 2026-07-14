@@ -29,6 +29,9 @@ import { buildGuideScript } from '../lib/guideScripts';
 import { useGuide } from '../lib/useGuide';
 import { guideSeen, markGuideSeen } from '../lib/guide';
 import { GuidePointer } from '../components/GuidePointer';
+import { SessionLoader } from '../components/SessionLoader';
+import { SessionError } from '../components/SessionError';
+import { bundleLoadFailed, isOffline } from '../lib/bundleLoad';
 
 const TOTAL = 5;
 
@@ -108,7 +111,7 @@ export function CodeTurtleSession({
   const play = useStore((s) => s.play);
   const nextLessonPosition = useStore((s) => s.nextLessonPosition);
 
-  const { data: bundle, isLoading } = useQuery({
+  const { data: bundle, isLoading, isError, refetch } = useQuery({
     queryKey: ['bundle', 'code'],
     queryFn: () => api.getBundle('code'),
   });
@@ -345,13 +348,12 @@ export function CodeTurtleSession({
         : result === 'fail' ? (q?.hint ? `💡 ${displayHint(q.hint, lang)}` : t('code.tryAgain'))
           : WORLD_COACH[world][lang];
 
+  const shell = { module: m.id, title: m.label[lang], lang, setLang, onBack, onHome, profile };
+  if (bundleLoadFailed({ isLoading, isError, hasBundle: !!bundle, offline: isOffline() })) {
+    return <SessionError {...shell} onRetry={() => void refetch()} level={level} lesson={lesson} />;
+  }
   if (isLoading || !session || !q || !puzzle || !cur) {
-    return (
-      <div className="session-screen" data-module="code">
-        <Chrome lang={lang} setLang={setLang} title={m.label[lang]} onBack={onBack} onHome={onHome} profile={profile} />
-        <div className="session-body"><div className="skeleton" style={{ height: 220 }} /></div>
-      </div>
-    );
+    return <SessionLoader {...shell} />;
   }
 
   const dim = Math.max(puzzle.w, puzzle.h);

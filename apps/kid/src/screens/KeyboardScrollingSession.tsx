@@ -17,6 +17,9 @@ import { displayValue } from '../lib/util';
 import { getSeen, markSeen } from '../lib/seen';
 import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
 import { HintLine } from '../components/HintLine';
+import { SessionLoader } from '../components/SessionLoader';
+import { SessionError } from '../components/SessionError';
+import { bundleLoadFailed, isOffline } from '../lib/bundleLoad';
 
 const TOTAL = 7;
 
@@ -50,7 +53,7 @@ export function KeyboardScrollingSession({
   const play = useStore((s) => s.play);
   const nextLessonPosition = useStore((s) => s.nextLessonPosition);
 
-  const { data: bundle, isLoading } = useQuery({
+  const { data: bundle, isLoading, isError, refetch } = useQuery({
     queryKey: ['bundle', 'keyboard'],
     queryFn: () => api.getBundle('keyboard'),
   });
@@ -346,15 +349,12 @@ export function KeyboardScrollingSession({
   const beeExpr: BeeExpression = feedback === 'correct' ? 'correct' : feedback === 'wrong' ? 'encourage' : flash === 'err' ? 'encourage' : 'focus';
   const coach = feedback === 'correct' ? t('excellent') : feedback === 'wrong' ? t('youCanDoIt') : flash === 'err' ? t('youCanDoIt') : t('focus');
 
+  const shell = { module: m.id, title: m.label[lang], lang, setLang, onBack, onHome, profile };
+  if (bundleLoadFailed({ isLoading, isError, hasBundle: !!bundle, offline: isOffline() })) {
+    return <SessionError {...shell} onRetry={() => void refetch()} level={level} lesson={lesson} />;
+  }
   if (isLoading || !session || !q) {
-    return (
-      <div className="session-screen" data-module="keyboard">
-        <Chrome lang={lang} setLang={setLang} title={m.label[lang]} onBack={onBack} onHome={onHome} profile={profile} />
-        <div className="session-body">
-          <div className="skeleton" style={{ height: 200 }} />
-        </div>
-      </div>
-    );
+    return <SessionLoader {...shell} />;
   }
 
   return (
