@@ -97,6 +97,19 @@ function isAppPath(pathname: string): boolean {
 
 type HostRole = 'apex' | 'parents' | 'admin' | 'api' | 'localhost' | 'unknown';
 
+// The apex/landing host, derived from the parent-app URL. NEXT_PUBLIC_* is inlined
+// at build time, so this is available in the Edge middleware (runtime env is not).
+// Prod → `gabee.app`; staging → `staging.gabee.app`. Lets the BARE apex be
+// recognized even when it has >2 dot-parts (staging), which the dot-count fallback
+// below can't. Empty in dev (localhost is handled separately).
+const APEX_HOST = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_PARENT_APP_URL ?? '').hostname.replace(/^parents\./, '');
+  } catch {
+    return '';
+  }
+})();
+
 /**
  * Classify the request host into one of the public surfaces. Local
  * development always returns `'localhost'` so dev keeps the relaxed
@@ -137,7 +150,10 @@ function hostRole(host: string): HostRole {
     case 'api':
       return 'api';
   }
-  // Bare apex only (prod `gabee.app`); a deeper unknown subdomain is a 404.
+  // The configured apex host (prod `gabee.app` or staging `staging.gabee.app`).
+  if (APEX_HOST && hostname === APEX_HOST) return 'apex';
+  // Fallback: a bare two-part host (prod `gabee.app`). A deeper unknown subdomain
+  // is a 404.
   if (parts.length === 2) return 'apex';
   return 'unknown';
 }
