@@ -30,6 +30,11 @@
       "cache": false,
       "passThroughEnv": ["TEST_DATABASE_URL", "DATABASE_URL", "DIRECT_URL"]
     },
+    "@gabee/web#test:integration": {
+      "dependsOn": ["^build", "^test:integration"],
+      "cache": false,
+      "passThroughEnv": ["TEST_DATABASE_URL", "DATABASE_URL", "DIRECT_URL"]
+    },
     "dev": {
       "cache": false,
       "persistent": true
