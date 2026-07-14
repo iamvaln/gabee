@@ -18,7 +18,8 @@
     "test:coverage": "turbo run test:coverage",
     "test:integration": "turbo run test:integration",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "security:scan": "bash ops/security/scan.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
