@@ -84,7 +84,7 @@ No ducking: while narration is in flight, new SFX are suppressed (single boolean
 
 Per spec §4.7 — primary scope: **Keyboard (static) + Translation** sessions. KeyboardScrolling is deliberately excluded: narrating a time-pressured scrolling word works against the exercise; revisit with Phase D if wanted. Two play moments:
 
-1. **On prompt appears** — read the word/prompt aloud in the item's language.
+1. **On prompt appears** — read the word/prompt aloud in the item's language. Translation image cards (all of L1) have no source word and anything word-shaped could leak the answer, so they read the INSTRUCTION in the kid's UI language instead ("Traduis ce mot en anglais.") — decided with Valentine during QA 2026-07-14.
 2. **On success** — read the word again, then a spoken "Bravo !" (reuse i18n strings).
 
 Rules (from spec, must honor):

@@ -134,8 +134,10 @@ export function TranslationSession({
   );
 
   // Voiceover moment 1 (audio spec §5): read the source word in ITS language.
-  // Image questions (L1) have nothing to read — and speaking the answer would
-  // give it away — so they stay silent until success. Its own effect with
+  // Image questions (all of L1) have no source word — and speaking anything
+  // word-shaped could leak the answer — so they read the INSTRUCTION in the
+  // kid's UI language instead ("Traduis ce mot en anglais."): pre-readers on
+  // L1 are exactly who can't read that line. Its own effect with
   // stop-on-cleanup so narration halts on question change AND unmount (must not
   // leak onto hub/map), and survives StrictMode's dev double-mount — a
   // ref-guarded speak would be cancelled by the replayed cleanup and never
@@ -143,7 +145,8 @@ export function TranslationSession({
   useEffect(() => {
     if (!q || !session || !profile) return;
     const cfg = q.config as { image?: string; source?: string } | undefined;
-    if (!cfg?.image) speak(cfg?.source ?? displayValue(q.prompt, src), src);
+    if (cfg?.image) speak(displayValue(q.prompt, lang), lang);
+    else speak(cfg?.source ?? displayValue(q.prompt, src), src);
     return () => stopSpeaking();
   }, [q?.id, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
