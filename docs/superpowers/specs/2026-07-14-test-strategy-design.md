@@ -177,6 +177,11 @@ Each phase lands as its own PR(s); CI stays green throughout.
 - Testing the Workbox service worker in isolation (offline behavior is
   verified end-to-end in Playwright instead).
 - Visual-regression/screenshot testing.
-- Load/stress testing.
+- Load/stress testing — deferred, not dismissed. The project is built in
+  public and a viral reshare could spike traffic with no warning. Trigger to
+  revisit: before opening beyond the pilot, or at the first sign of organic
+  traction. First targets then: k6 scripts against `/api/events`,
+  `/api/progress/sync` (mass SyncManager replay after reconnection) and
+  `/api/bundles` on a prod-like VPS.
 - Unit tests inside `packages/db` (schema covered indirectly by layers 2-3).
 - Vitest migration (revisit only if node:test DX becomes a bottleneck).
