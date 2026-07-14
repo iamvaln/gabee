@@ -163,13 +163,14 @@ jobs:
         with:
           scan-args: "--lockfile=pnpm-lock.yaml"
       - name: Semgrep (SAST — ERROR blocks)
-        # `semgrep/semgrep-action` is deprecated; run the CLI directly. This also
-        # keeps CI's tier identical to `scan.sh` (`semgrep scan --error` blocks on
-        # ERROR only) and matches the runbook's `pip install semgrep`. The `p/*`
-        # configs are fetched from the Semgrep registry at run time.
+        # `semgrep/semgrep-action` is deprecated; run the CLI directly, matching
+        # scan.sh's tier exactly. `--error` alone only sets the exit code on ANY
+        # finding — `--severity ERROR` is required so advisory WARNING rules + the
+        # broad p/* rulesets don't fail the gate. Install via pipx (preinstalled on
+        # the runner) — a bare `pip install` fails PEP 668 on ubuntu-latest 24.04.
         run: |
-          python3 -m pip install --quiet --upgrade semgrep
-          semgrep scan --error --quiet \
+          pipx install semgrep
+          semgrep scan --error --severity ERROR --quiet \
             --config .semgrep/gabee.yml --config p/typescript --config p/nextjs
       - name: Trivy (compose/IaC misconfig — CRITICAL/HIGH block)
         uses: aquasecurity/trivy-action@0.24.0

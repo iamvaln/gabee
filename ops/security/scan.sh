@@ -57,10 +57,15 @@ if runs osv; then
       && note "- osv: clean" || { note "- osv: VULN (review; block if High+)"; BLOCK=1; }
   else MISSING="$MISSING osv-scanner"; fi
 fi
-# ── semgrep (scoped) — SAST, block on ERROR ──
+# ── semgrep (scoped) — SAST, block on ERROR only ──
+# `--error` is an exit-code switch (non-zero on ANY reported finding), NOT a
+# severity filter — so `--severity ERROR` is required to keep this at the block
+# tier. Without it, our advisory WARNING rules + the broad p/* community rulesets
+# would fail the gate on every run (a gate that cries wolf blocks every release).
 if runs semgrep; then
   if have semgrep; then
-    semgrep --error --quiet --config .semgrep/gabee.yml --config p/typescript --config p/nextjs \
+    semgrep scan --error --severity ERROR --quiet \
+      --config .semgrep/gabee.yml --config p/typescript --config p/nextjs \
       && note "- semgrep: clean (no ERROR)" || { note "- semgrep: ERROR findings (block)"; BLOCK=1; }
   else MISSING="$MISSING semgrep"; fi
 fi
