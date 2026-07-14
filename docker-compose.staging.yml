@@ -1,0 +1,15 @@
+# Staging-only overlay. Use WITH the base file:
+#   docker compose -p gabee-staging --env-file .env.staging \
+#     -f docker-compose.yml -f docker-compose.staging.yml up -d db migrate web kid
+#
+# Adds a single shared basic-auth gate + noindex to the staging routers. The
+# base services `backup` and `cron-digest` are simply never started on staging.
+services:
+  web:
+    labels:
+      - traefik.http.middlewares.${STACK}-auth.basicauth.users=${WEB_BASIC_AUTH}
+      - traefik.http.middlewares.${STACK}-noindex.headers.customresponseheaders.X-Robots-Tag=noindex, nofollow
+      - traefik.http.routers.${STACK}-web.middlewares=${STACK}-auth,${STACK}-noindex
+  kid:
+    labels:
+      - traefik.http.routers.${STACK}-kid.middlewares=${STACK}-auth,${STACK}-noindex
