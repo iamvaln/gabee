@@ -28,7 +28,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     image: ${REGISTRY:-ghcr.io/iamvaln}/gabee-web:${IMAGE_TAG:-latest}
-    env_file: .env.production
+    env_file: ${ENV_FILE:-.env.production}
     command: ['pnpm', '--filter', '@gabee/db', 'exec', 'prisma', 'migrate', 'deploy']
     restart: 'no'
     depends_on:
@@ -46,7 +46,7 @@ services:
         NEXT_PUBLIC_PARENT_APP_URL: ${NEXT_PUBLIC_PARENT_APP_URL}
     image: ${REGISTRY:-ghcr.io/iamvaln}/gabee-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    env_file: .env.production
+    env_file: ${ENV_FILE:-.env.production}
     depends_on:
       db:
         condition: service_healthy
@@ -71,10 +71,10 @@ services:
       # Same Next.js process serves apex (landing), parents.* (parent dashboard),
       # admin.* (back office) and api.* (REST). The middleware in `proxy.ts`
       # gates each path by host so cross-surface URLs 404 cleanly.
-      - traefik.http.routers.gabee-web.rule=Host(`${WEB_DOMAIN}`) || Host(`www.${WEB_DOMAIN}`) || Host(`parents.${WEB_DOMAIN}`) || Host(`admin.${WEB_DOMAIN}`) || Host(`api.${WEB_DOMAIN}`)
-      - traefik.http.routers.gabee-web.entrypoints=websecure
-      - traefik.http.routers.gabee-web.tls.certresolver=le
-      - traefik.http.services.gabee-web.loadbalancer.server.port=3000
+      - traefik.http.routers.${STACK:-gabee}-web.rule=Host(`${WEB_DOMAIN}`) || Host(`www.${WEB_DOMAIN}`) || Host(`parents.${WEB_DOMAIN}`) || Host(`admin.${WEB_DOMAIN}`) || Host(`api.${WEB_DOMAIN}`)
+      - traefik.http.routers.${STACK:-gabee}-web.entrypoints=websecure
+      - traefik.http.routers.${STACK:-gabee}-web.tls.certresolver=le
+      - traefik.http.services.${STACK:-gabee}-web.loadbalancer.server.port=3000
 
   # ── DB backup sidecar: nightly pg_dump → Cloudflare R2 ──────────────────────
   # Default mode is the long-running scheduler (loop). Restore + one-off
@@ -142,10 +142,10 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=web
-      - traefik.http.routers.gabee-kid.rule=Host(`${KID_DOMAIN}`)
-      - traefik.http.routers.gabee-kid.entrypoints=websecure
-      - traefik.http.routers.gabee-kid.tls.certresolver=le
-      - traefik.http.services.gabee-kid.loadbalancer.server.port=80
+      - traefik.http.routers.${STACK:-gabee}-kid.rule=Host(`${KID_DOMAIN}`)
+      - traefik.http.routers.${STACK:-gabee}-kid.entrypoints=websecure
+      - traefik.http.routers.${STACK:-gabee}-kid.tls.certresolver=le
+      - traefik.http.services.${STACK:-gabee}-kid.loadbalancer.server.port=80
 
 volumes:
   gabee-db:

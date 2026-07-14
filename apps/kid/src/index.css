@@ -6,3 +6,39 @@
   0%, 100% { transform: translate(-50%, -100%); }
   50% { transform: translate(-50%, calc(-100% - 8px)); }
 }
+
+/* Session loading / error shells (SessionLoader / SessionError). Reuses
+   .session-body layout + design tokens from gabee.css; --text-muted and
+   --feedback-correct are the kid app's existing "muted text" / "mint
+   success green" tokens (there is no separate --text-2 / --mint-deep). */
+.session-loading,
+.session-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 260px;
+  text-align: center;
+}
+.session-loading-dots { display: flex; gap: 9px; }
+.session-loading-dots span {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #F5A623; opacity: .35;
+  animation: session-dot 1.2s ease-in-out infinite;
+}
+.session-loading-dots span:nth-child(2) { animation-delay: .18s; }
+.session-loading-dots span:nth-child(3) { animation-delay: .36s; }
+@keyframes session-dot { 0%,100% { opacity: .3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-4px); } }
+.session-error-title { font-size: 1.5rem; font-weight: 800; margin: 4px 0 0; }
+.session-error-body { color: var(--text-muted); max-width: 28ch; margin: 0; line-height: 1.4; }
+.session-error-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 240px; margin-top: 4px; }
+.session-error-persist { font-size: .8rem; color: var(--text-muted); margin: 6px 0 -2px; opacity: .85; }
+.btn.mint {
+  background: #34D399;
+  color: white;
+  box-shadow: 0 5px 0 var(--feedback-correct, #3F7A2E);
+}
+.btn.mint:active { transform: translateY(5px); box-shadow: 0 0 0 var(--feedback-correct, #3F7A2E); }
+.btn.ghost.done { color: var(--feedback-correct, #3F7A2E); cursor: default; }
+@media (prefers-reduced-motion: reduce) { .session-loading-dots span { animation: none; } }

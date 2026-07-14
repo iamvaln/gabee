@@ -21,6 +21,9 @@ import { ageFromBirthDate } from '../lib/age';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
 import { sfx } from '../lib/audio';
 import type { NumbersSubMode } from './NumbersHub';
+import { SessionLoader } from '../components/SessionLoader';
+import { SessionError } from '../components/SessionError';
+import { bundleLoadFailed, isOffline } from '../lib/bundleLoad';
 
 const TOTAL = 7;
 
@@ -52,7 +55,7 @@ export function NumbersSession({
   const play = useStore((s) => s.play);
   const nextLessonPosition = useStore((s) => s.nextLessonPosition);
 
-  const { data: bundle, isLoading } = useQuery({
+  const { data: bundle, isLoading, isError, refetch } = useQuery({
     queryKey: ['bundle', 'numbers'],
     queryFn: () => api.getBundle('numbers'),
   });
@@ -268,15 +271,12 @@ export function NumbersSession({
   const beeExpr: BeeExpression = feedback === 'correct' ? 'correct' : feedback === 'wrong' ? 'encourage' : 'focus';
   const coach = feedback === 'correct' ? t('excellent') : feedback === 'wrong' ? t('youCanDoIt') : t('focus');
 
+  const shell = { module: m.id, title: m.label[lang], lang, setLang, onBack, onHome, profile };
+  if (bundleLoadFailed({ isLoading, isError, hasBundle: !!bundle, offline: isOffline() })) {
+    return <SessionError {...shell} onRetry={() => void refetch()} level={level} lesson={lesson} />;
+  }
   if (isLoading || !session || !q) {
-    return (
-      <div className="session-screen" data-module="numbers">
-        <Chrome lang={lang} setLang={setLang} title={m.label[lang]} onBack={onBack} onHome={onHome} profile={profile} />
-        <div className="session-body">
-          <div className="skeleton" style={{ height: 200 }} />
-        </div>
-      </div>
-    );
+    return <SessionLoader {...shell} />;
   }
 
   return (

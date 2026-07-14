@@ -9,11 +9,14 @@
   },
   "packageManager": "pnpm@10.33.0",
   "scripts": {
+    "prepare": "if git rev-parse --git-dir >/dev/null 2>&1; then lefthook install; fi",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
+    "test": "turbo run test test:dom",
+    "test:coverage": "turbo run test:coverage",
+    "test:integration": "turbo run test:integration",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -23,6 +26,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.6.0",
+    "lefthook": "^2.1.10",
     "prettier": "^3.8.3",
     "tsx": "^4.22.3",
     "turbo": "^2.9.15",
@@ -30,6 +34,11 @@
     "typescript-eslint": "^8.60.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "esbuild", "prisma"]
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
   }
 }

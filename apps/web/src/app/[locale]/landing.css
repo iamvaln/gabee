@@ -1177,12 +1177,14 @@ html.landing-html {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-@media (max-width: 860px) {
-  /* Anchor links move into the burger drawer; sign-in stays visible as
-     a compact text link in the action bar so visitors don't have to
-     hunt through the hamburger to find the way to log in. The original
-     rule hid it alongside the nav links, which is the bug the user
-     flagged ("sign in disappears on mobile"). */
+@media (max-width: 920px) {
+  /* Anchor links move into the burger drawer. 920px (not 860) because
+     with the FR labels the full desktop row (links + lang toggle +
+     sign-in + CTA) needs ~890px — at 861–890 it used to overflow and
+     push the CTA off-screen. Sign-in stays visible as a compact text
+     link in the action bar (down to 600px — below that it moves into
+     the drawer, see the phone block below) so visitors don't have to
+     hunt through the hamburger to find the way to log in. */
   .ltop-links {
     display: none;
   }
@@ -1201,11 +1203,17 @@ html.landing-html {
   .ltop-actions { gap: 8px; }
 }
 
-/* Very narrow phones — hide the inline lang toggle (it lives in the
-   drawer too) so the action bar fits sign-in + Sign up + burger without
-   wrapping. */
+/* Phones and small tablets — the action bar can't fit lang toggle +
+   sign-in + Sign up + burger (the full row needs ~590px), so it used
+   to overflow and push the CTA and burger past the screen edge. Keep
+   only the Sign up CTA and the burger; the lang toggle and sign-in
+   both live in the drawer. */
+@media (max-width: 600px) {
+  .ltop-actions > .lang { display: none; }
+  .ltop-signin { display: none; }
+}
+
 @media (max-width: 480px) {
-  .ltop-actions > .lang-toggle { display: none; }
   .hero-inner {
     grid-template-columns: 1fr;
     text-align: center;
@@ -1293,6 +1301,19 @@ html.landing-html {
   }
   .lfooter-cols {
     grid-template-columns: 1fr;
+  }
+}
+/* Very narrow phones (320px-class): trim chrome so brand + CTA +
+   burger still fit. After the 560px block so its tighter padding wins
+   the cascade. */
+@media (max-width: 380px) {
+  .ltopbar-inner {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .ltop-actions .lbtn-primary {
+    padding-left: 14px;
+    padding-right: 14px;
   }
 }
 @media print {

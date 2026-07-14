@@ -97,6 +97,19 @@ function isAppPath(pathname: string): boolean {
 
 type HostRole = 'apex' | 'parents' | 'admin' | 'api' | 'localhost' | 'unknown';
 
+// The apex/landing host, derived from the parent-app URL. NEXT_PUBLIC_* is inlined
+// at build time, so this is available in the Edge middleware (runtime env is not).
+// Prod → `gabee.app`; staging → `staging.gabee.app`. Lets the BARE apex be
+// recognized even when it has >2 dot-parts (staging), which the dot-count fallback
+// below can't. Empty in dev (localhost is handled separately).
+const APEX_HOST = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_PARENT_APP_URL ?? '').hostname.replace(/^parents\./, '');
+  } catch {
+    return '';
+  }
+})();
+
 /**
  * Classify the request host into one of the public surfaces. Local
  * development always returns `'localhost'` so dev keeps the relaxed
@@ -122,22 +135,26 @@ function hostRole(host: string): HostRole {
   ) {
     return 'localhost';
   }
+  // Classify by the LEADING label, independent of base-domain depth, so this
+  // works for both prod (`parents.gabee.app`) and staging
+  // (`parents.staging.gabee.app`). Traefik only routes the known hosts to this
+  // container, so a broader match here doesn't weaken the cross-host barrier.
   const parts = hostname.split('.');
-  if (parts.length === 2) return 'apex'; // gabee.app
-  if (parts.length === 3) {
-    switch (parts[0]) {
-      case 'www':
-        return 'apex';
-      case 'parents':
-        return 'parents';
-      case 'admin':
-        return 'admin';
-      case 'api':
-        return 'api';
-      default:
-        return 'unknown';
-    }
+  switch (parts[0]) {
+    case 'www':
+      return 'apex';
+    case 'parents':
+      return 'parents';
+    case 'admin':
+      return 'admin';
+    case 'api':
+      return 'api';
   }
+  // The configured apex host (prod `gabee.app` or staging `staging.gabee.app`).
+  if (APEX_HOST && hostname === APEX_HOST) return 'apex';
+  // Fallback: a bare two-part host (prod `gabee.app`). A deeper unknown subdomain
+  // is a 404.
+  if (parts.length === 2) return 'apex';
   return 'unknown';
 }
 

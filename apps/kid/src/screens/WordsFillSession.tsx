@@ -18,6 +18,9 @@ import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
 import { ageFromBirthDate } from '../lib/age';
 import { shuffle, displayValue, scalarValue, distractorValue } from '../lib/util';
 import { HintLine } from '../components/HintLine';
+import { SessionLoader } from '../components/SessionLoader';
+import { SessionError } from '../components/SessionError';
+import { bundleLoadFailed, isOffline } from '../lib/bundleLoad';
 
 const TOTAL = 7;
 // Seed prompts mark the blank with this token (e.g. "The ___ eats an apple.").
@@ -51,7 +54,7 @@ export function WordsFillSession({
   const play = useStore((s) => s.play);
   const nextLessonPosition = useStore((s) => s.nextLessonPosition);
 
-  const { data: bundle, isLoading } = useQuery({
+  const { data: bundle, isLoading, isError, refetch } = useQuery({
     queryKey: ['bundle', 'words'],
     queryFn: () => api.getBundle('words'),
   });
@@ -248,15 +251,12 @@ export function WordsFillSession({
   const beeExpr: BeeExpression = feedback === 'correct' ? 'correct' : feedback === 'wrong' ? 'encourage' : 'focus';
   const coach = feedback === 'correct' ? t('excellent') : feedback === 'wrong' ? t('youCanDoIt') : t('focus');
 
+  const shell = { module: m.id, title: m.label[lang], lang, setLang, onBack, onHome, profile };
+  if (bundleLoadFailed({ isLoading, isError, hasBundle: !!bundle, offline: isOffline() })) {
+    return <SessionError {...shell} onRetry={() => void refetch()} level={level} lesson={lesson} />;
+  }
   if (isLoading || !session || !q || !promptParts) {
-    return (
-      <div className="session-screen" data-module="words">
-        <Chrome lang={lang} setLang={setLang} title={m.label[lang]} onBack={onBack} onHome={onHome} profile={profile} />
-        <div className="session-body">
-          <div className="skeleton" style={{ height: 200 }} />
-        </div>
-      </div>
-    );
+    return <SessionLoader {...shell} />;
   }
 
   // While picked-but-correct, fill the blank with the chosen word so kids see the

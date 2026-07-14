@@ -9,6 +9,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./testing": {
+      "types": "./src/testing.ts",
+      "default": "./src/testing.ts"
     }
   },
   "scripts": {
@@ -16,10 +20,12 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:test": "DIRECT_URL=\"${TEST_DATABASE_URL:-postgresql://$(whoami)@localhost:5432/gabee_test}\" prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:integration": "files=$(find test -name '*.test.ts'); if [ -z \"$files\" ]; then echo 'no integration test files found' >&2; exit 1; fi; node --import tsx --test --test-concurrency=1 $files"
   },
   "dependencies": {
     "@gabee/types": "workspace:*",
