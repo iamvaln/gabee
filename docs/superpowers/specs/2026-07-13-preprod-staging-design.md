@@ -15,25 +15,31 @@ only a local dry-run standing in for staging; that gap is what this closes.
 ## Goal
 A persistent **staging** environment that mirrors prod, auto-updates from
 `main`-HEAD, and runs `migrate deploy` **before** prod does — so migration and
-runtime regressions surface on staging, against realistic (sanitized) data, before
-a release tag is cut.
+runtime regressions surface on staging — against the real prod curriculum plus
+synthetic user fixtures — before a release tag is cut.
 
 ## Settled decisions
 - **Hosting:** same Contabo VPS, a **second compose project** `gabee-staging`
   (shared Traefik + external `web` network; isolated DB volume + `internal` network
   via compose's per-project namespacing).
 - **Trigger:** auto-deploy on **push to `main`**.
-- **Data:** staging DB **persists**; refreshed **on demand** by restoring the latest
-  R2 prod dump and running a **sanitization** pass (never on every deploy).
+- **Data:** staging DB **persists**. No real user/PII data is ever copied. Content
+  (curriculum, modules, sub-modes, questions, content plans, published bundle
+  versions) is **copied from prod** on demand — those tables are PII-free, so no
+  sanitization is needed. User tables are populated only by **synthetic fixtures**
+  (fabricated parents/kids/devices) plus whatever testers create via real signup.
 - **Access:** public URLs behind a **Traefik basic-auth** gate + `noindex`.
 - **Domains:** `*.staging.gabee.app` zone (wildcard DNS already added).
 - **Email:** staging uses the **real Mailgun** (no code bypass).
 
 ## Non-goals (v1)
-- No backup sidecar on staging (data is disposable/restorable).
+- No backup sidecar on staging (nothing on staging is worth backing up).
 - No cron-digest on staging (no real parent digests).
 - No separate Sentry project (Sentry off on staging).
-- No automatic data-refresh on every deploy.
+- **No restore of real prod user data, ever** — no sanitization machinery. (A
+  content-tables-only copy carries no PII; if a future data-shaped migration truly
+  needs real-user-row validation, restoring a sanitized prod dump is a documented
+  *later* option, not built now.)
 - No separate VPS.
 
 ## Architecture
@@ -64,14 +70,12 @@ sets `STACK=gabee-staging`. Compose namespaces the `internal` network and the
 - **`docker-compose.staging.yml`** (override, staging-only): adds the basic-auth
   middleware + `noindex` header to the web + kid routers, and applies staging env
   overrides. It does NOT delete base services (an override can't) — instead the
-  staging **deploy selectively starts only** `db migrate web kid`, so `cron-digest`
-  is defined-but-never-started, and `backup` stays available for **run-only** use by
-  the refresh script (`docker compose … run --rm backup …`), never `up`ed. Sentry
-  env left unset.
+  staging **deploy selectively starts only** `db migrate web kid`, so `backup` and
+  `cron-digest` are defined-but-never-started. Sentry env left unset.
 - **`.env.staging`** (gitignored, on the VPS only): staging domains, separate
   `POSTGRES_USER/PASSWORD/DB`, `STACK=gabee-staging`, `IMAGE_TAG=staging`,
   `WEB_BASIC_AUTH` (htpasswd bcrypt hash), real Mailgun creds, `AUTH_JWT_SECRET`
-  (staging-specific), R2 creds (for restore only). A tracked
+  (staging-specific). No R2 creds needed (no restore path). A tracked
   **`.env.staging.example`** documents every key (no secrets — see the
   secrets-never-in-example rule).
 
@@ -117,36 +121,39 @@ Mirrors `release.yml` structure, but:
   `.env.staging`, `docker compose … up -d`, add DNS (already done), let Traefik mint
   certs.
 
-### 6. Data lifecycle — `ops/staging/refresh-data.sh`
-Manual/periodic (run on the VPS), NOT part of deploy. Runs in the **staging compose
-context** so PGHOST/network/creds resolve to staging:
-1. `docker compose -p gabee-staging --env-file .env.staging -f docker-compose.yml
-   -f docker-compose.staging.yml run --rm backup restore latest` — the `gabee-backup`
-   image pulls prod's newest `backups/*.sql.gz` from R2 and loads it into the
-   **staging** `db` (the backup image already bundles `aws-cli` + `postgresql16-client`;
-   `restore` drop+recreates and `psql`-loads). It reads R2 creds + `PG*` from
-   `.env.staging`, so it targets staging, not prod.
-2. Run `prisma migrate deploy` (via the `migrate` service) to bring the restored
-   (prod-versioned) DB up to `main`-HEAD migrations.
-3. Run **`ops/staging/sanitize.sql`** (see §7).
-Because staging persists between deploys, day-to-day main pushes only run *pending*
-migrations against this prod-mirrored data — exactly what the prod deploy will do.
+### 6. Content copy from prod — `ops/staging/sync-curriculum.sh`
+Manual/on-demand (run on the VPS), NOT part of deploy. Copies the **content tables
+only** (all PII-free) from the prod DB container into the staging DB container,
+on-box — no R2, no secrets in transit, no sanitization:
 
-### 7. Sanitization — `ops/staging/sanitize.sql`
-Runs after every restore. Scrubs PII to **non-deliverable** values so the real
-Mailgun can never reach a real person:
-- `parent_accounts`: `email → 'parent+'||id||'@staging.invalid'`, `name → 'Parent '||left(id::text,8)`, `phone → NULL`, `password_hash → '<known test bcrypt>'` (so testers can log into restored accounts with one shared password). Keep `email_confirmed_at` as-is (restored accounts stay confirmed).
-- `child_profiles`: `name → 'Kid '||left(id::text,8)`. **Keep `birth_date`** (age logic must stay realistic). Keep `gender`, avatar fields, progress.
-- `messages`: body/content → `'[redacted]'`.
-- `device_ip_sightings` / device metadata: `ip → NULL`/`'0.0.0.0'`, UA → `'redacted'`.
-- `auth_event_logs`: `ip → NULL`, UA → `'redacted'`.
-- Truncate any push/notification tokens and password-reset tokens.
-The script is idempotent and lists exactly which columns it touches; new PII columns
-must be added here (a checklist note in the plan).
+```
+# on the VPS; prod + staging dbs are both local containers
+docker compose -p gabee --env-file .env.production exec -T db \
+  pg_dump -U "$PROD_PG_USER" -d "$PROD_PG_DB" --data-only --disable-triggers \
+    -t curricula -t module_defs -t sub_modes -t questions \
+    -t content_plans -t content_bundle_versions \
+| docker compose -p gabee-staging --env-file .env.staging exec -T db \
+    psql -U "$STG_PG_USER" -d "$STG_PG_DB" -v ON_ERROR_STOP=1
+```
 
-Fresh signups on staging use **real** emails → real Mailgun confirmation, so email
-flows are still testable end-to-end; restored accounts are for browsing existing
-data with the shared test password.
+The script first `TRUNCATE … CASCADE`s those staging content tables (idempotent
+re-sync), then loads. It pulls creds from the two env files (never printed). The
+exact `@@map` table names are confirmed in the plan. Run it at bootstrap and again
+whenever admin publishes new content.
+
+### 7. Synthetic fixtures — `ops/staging/seed-fixtures.ts`
+A staging-only script (guarded so it never runs against prod) that fabricates a
+small, deterministic set of **invented** user data — **no real PII, nothing copied
+from prod**:
+- ~2 fake parents (`tester1@staging.gabee.app` / `tester2@…`, `email_confirmed_at`
+  set, a shared known password so testers can log in immediately),
+- ~3 child profiles across the parents (fabricated names, birth dates, avatars,
+  gender, a little progress),
+- 1 paired `DeviceLink` + `Device` so device/pairing screens have data.
+
+This gives user-table migrations actual rows to run against and hands testers a
+ready-to-browse account, with zero sanitization surface. Idempotent (upsert by
+fixed ids). Testers can also self-serve via real signup (real Mailgun confirms).
 
 ### 8. DNS / TLS
 `*.staging.gabee.app` wildcard A-record → VPS IP, **grey-cloud** (Cloudflare proxy
@@ -159,8 +166,11 @@ per-host certs on first request.
 - A push to `main` triggers `staging.yml`, images build, deploy succeeds, `migrate`
   exits 0, staging reflects the new commit (`VITE_APP_VERSION=staging-<sha>` visible
   in kid Settings→About).
-- `refresh-data.sh` restores + sanitizes: spot-check that no `@`-real-domain emails
-  and no real names remain (`SELECT count(*) … WHERE email NOT LIKE '%@staging.invalid'`).
+- `sync-curriculum.sh` copies content: staging question/curriculum counts match prod
+  (`SELECT count(*) FROM questions` equal on both), and **no user rows** were copied
+  (`SELECT count(*) FROM parent_accounts` = only the synthetic fixtures).
+- `seed-fixtures.ts` populates the fake accounts; `tester1@staging.gabee.app` can log
+  in and browse its kids.
 - Prod unaffected: `docker compose -p gabee config` diff on prod shows no change from
   the `${STACK}` default; prod routers still named `gabee-web`/`gabee-kid`.
 
@@ -170,11 +180,12 @@ per-host certs on first request.
 2. Add `docker-compose.staging.yml`, `.env.staging.example`, `ops/staging/*`.
 3. Add `.github/workflows/staging.yml` + `VPS_STAGING_DIR` secret.
 4. One-time VPS bootstrap of `~/gabee-staging` + `.env.staging` + basic-auth hash.
-5. First auto-deploy from main; then run `refresh-data.sh` once for realistic data.
+5. First auto-deploy from main; then run `sync-curriculum.sh` + `seed-fixtures.ts`
+   once to populate content + fixtures.
 
 ## File inventory
 - Modify: `docker-compose.yml` (router/middleware names → `${STACK}` prefix only).
 - Create: `docker-compose.staging.yml`, `.env.staging.example`,
-  `.github/workflows/staging.yml`, `ops/staging/refresh-data.sh`,
-  `ops/staging/sanitize.sql`, `docs/ops/staging.md` (runbook: bootstrap, refresh,
-  basic-auth cred rotation, teardown).
+  `.github/workflows/staging.yml`, `ops/staging/sync-curriculum.sh`,
+  `ops/staging/seed-fixtures.ts`, `docs/ops/staging.md` (runbook: bootstrap, content
+  sync, fixtures, basic-auth cred rotation, teardown).
