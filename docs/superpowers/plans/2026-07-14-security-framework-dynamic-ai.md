@@ -6,7 +6,7 @@
 
 **Architecture:** Plan 1 shipped the static deterministic gate (`ops/security/scan.sh`, `pnpm security:scan`, CI backstop) but blocks at *per-tool* granularity and its waiver helper (`waivers.mjs`) is unit-tested yet unwired. Plan 2 (a) normalizes each tool's JSON output into per-finding fingerprints and wires `applyWaivers` into the gate; (b) adds a `fetch`-based DAST-lite probe suite (auth rate-limit, signup abuse, IDOR, authz boundaries) that runs against a throwaway instance spun up with `EMAIL_PROVIDER=noop` + a fresh DB + the existing `seed-fixtures.ts` tester-A/B data; (c) adds a local, advisory `claude -p` threat-review over the release diff; (d) runs the first `--full` sweep and triages the real gaps it surfaces.
 
-**Tech Stack:** bash (bash-3.2-safe — macOS default), Node ≥20.19 ESM (`node --test`, built-in `fetch`), Docker (throwaway Postgres + the built `gabee-web` image), the deterministic scanners (gitleaks/semgrep/osv-scanner/trivy), `claude` CLI headless (`-p --output-format json`), Prisma 7 / Postgres, `yaml` (already a root devDep).
+**Tech Stack:** bash (bash-3.2-safe — macOS default), Node ≥20.19 ESM (`node --test` for the pure normalizers), **Playwright Test (`@playwright/test`)** for the dynamic probes — using its `request`/APIRequestContext fixture for the current HTTP-level assertions, with the browser `page` fixture available for future DOM/XSS probes, Docker (throwaway Postgres + the built `gabee-web` image), the deterministic scanners (gitleaks/semgrep/osv-scanner/trivy), `claude` CLI headless (`-p --output-format json`), Prisma 7 / Postgres, `yaml` (already a root devDep).
 
 ## Global Constraints
 
@@ -28,11 +28,12 @@
 - `ops/security/fixtures/` — **new.** Committed sample tool-output JSON (`gitleaks.json`, `semgrep.json`, `osv.json`, `trivy.json`) for the normalizer tests.
 - `ops/security/scan.sh` — **modify.** Static tools emit JSON → `findings.mjs` normalizes → `applyWaivers` filters → block on non-waived block-tier. Add the dynamic-probe stage + the AI stage. New exit code `5`.
 - `ops/security/dynamic/target.sh` — **new.** Bring up / tear down the ephemeral throwaway target (Docker Postgres + migrate + seed + `gabee-web` on a published port, `EMAIL_PROVIDER=noop`); prints `BASE_URL`.
-- `ops/security/dynamic/probe-lib.mjs` — **new.** Shared probe helpers: `login()`, `expectStatus()`, a `defineProbe` result shape, `TESTERS` (the seed-fixtures A/B constants).
-- `ops/security/dynamic/probes/rate-limit.test.mjs` — **new.** Auth brute-force + signup-abuse probes.
-- `ops/security/dynamic/probes/idor.test.mjs` — **new.** Object-authz (tester A → tester B's kid/message) probes.
-- `ops/security/dynamic/probes/authz.test.mjs` — **new.** Parent-token-on-admin + unauth-on-gated boundary probes.
-- `ops/security/dynamic/run.mjs` — **new.** Selects which probe files to run from the in-scope surfaces (or all under `--full`), runs them against `BASE_URL`, emits a normalized `Finding[]` (block tier) to stdout as JSON for `scan.sh` to fold in.
+- `ops/security/dynamic/playwright.config.ts` — **new.** Playwright Test config: `testDir: probes/`, `use.baseURL = process.env.SEC_BASE_URL`, a chromium project (browser binaries only needed once DOM probes are added), line + JSON reporter.
+- `ops/security/dynamic/probe-lib.ts` — **new.** Shared probe helpers: `login(request, email, password)`, `TESTERS` (the seed-fixtures A/B constants). Typed against Playwright's `APIRequestContext`.
+- `ops/security/dynamic/probes/rate-limit.spec.ts` — **new.** Auth brute-force + signup-abuse probes (Playwright `request` fixture).
+- `ops/security/dynamic/probes/idor.spec.ts` — **new.** Object-authz (tester A → tester B's kid/message) probes.
+- `ops/security/dynamic/probes/authz.spec.ts` — **new.** Parent-token-on-admin + unauth-on-gated boundary probes.
+- `ops/security/dynamic/run.mjs` — **new.** Selects which probe specs to run from the in-scope surfaces (or all under `--full`), brings the target up, runs `playwright test` against `BASE_URL`, tears down, exits `5` on any probe failure.
 - `ops/security/ai-review.mjs` — **new.** Builds a prompt from `git diff <ref>..HEAD` + `threat-model.md`, invokes `claude -p --output-format json`, parses advisory findings. Graceful skip if `claude` absent.
 - `docs/security/review-process.md` — **modify.** Document the dynamic + AI stages, the throwaway-target lifecycle, and the safe-subset staging option.
 - `docs/security/first-sweep-2026-07.md` — **new.** The triaged output of the first `--full` sweep (findings, severities, disposition: fix / waive / backlog).
@@ -430,86 +431,113 @@ git commit -m "feat(security): ephemeral throwaway DAST target (noop email, fres
 
 ---
 
-## Task 4: Auth rate-limit + signup-abuse probes
+## Task 4: Playwright setup + auth rate-limit / signup-abuse probes
 
 **Files:**
-- Create: `ops/security/dynamic/probe-lib.mjs`
-- Create: `ops/security/dynamic/probes/rate-limit.test.mjs`
+- Modify: root `package.json` (add `@playwright/test` devDep)
+- Create: `ops/security/dynamic/playwright.config.ts`
+- Create: `ops/security/dynamic/probe-lib.ts`
+- Create: `ops/security/dynamic/probes/rate-limit.spec.ts`
 
 **Interfaces:**
-- Consumes: a running target at `process.env.SEC_BASE_URL`.
-- Produces: `probe-lib.mjs` exports `BASE`, `login(email, password)`, `post(path, body, headers)`, `TESTERS = { A: {email:'tester1@staging.gabee.app', password:'staging-pass'}, B: {email:'tester2@staging.gabee.app', password:'staging-pass'} }`. Probes are `node:test` cases; a failing assertion = a block-tier dynamic finding.
+- Consumes: a running target at `process.env.SEC_BASE_URL` (becomes Playwright's `baseURL`).
+- Produces: `probe-lib.ts` exports `TESTERS = { A: {email:'tester1@staging.gabee.app', password:'staging-pass'}, B: {email:'tester2@staging.gabee.app', password:'staging-pass'} }` and `login(request, email, password) -> Promise<string>` (returns the JWT for `Authorization: Bearer`). Probes are Playwright `test` cases using the `request` (APIRequestContext) fixture; a failing `expect` = a block-tier dynamic finding.
 
-- [ ] **Step 1: Write the shared probe lib**
+- [ ] **Step 1: Install Playwright Test (no browser binaries needed yet)**
 
-```js
-// ops/security/dynamic/probe-lib.mjs
-export const BASE = process.env.SEC_BASE_URL;
-if (!BASE) throw new Error('SEC_BASE_URL not set — start ops/security/dynamic/target.sh up');
+Run (node@20 on PATH):
+```bash
+pnpm add -D -w @playwright/test
+```
+Note: the HTTP probes use only the `request` fixture (APIRequestContext), which needs **no** browser download. `npx playwright install chromium` is deferred until DOM/XSS probes are added — call that out in a comment in the config.
+
+- [ ] **Step 2: Write the Playwright config**
+
+`ops/security/dynamic/playwright.config.ts`:
+```ts
+import { defineConfig, devices } from '@playwright/test';
+
+// Dynamic security probes. baseURL is the ephemeral throwaway target
+// (ops/security/dynamic/target.sh). Only the `request` fixture is used today, so
+// no browser binaries are required; add `npx playwright install chromium` + a
+// browser project here when DOM/XSS probes land.
+export default defineConfig({
+  testDir: './probes',
+  fullyParallel: false,          // rate-limit probes share per-IP limiter state
+  workers: 1,
+  reporter: [['line'], ['json', { outputFile: '../../../.security/raw/playwright.json' }]],
+  use: {
+    baseURL: process.env.SEC_BASE_URL,
+    extraHTTPHeaders: { 'content-type': 'application/json' },
+  },
+  projects: [{ name: 'api', use: { ...devices['Desktop Chrome'] } }],
+});
+```
+
+- [ ] **Step 3: Write the shared probe lib**
+
+`ops/security/dynamic/probe-lib.ts`:
+```ts
+import type { APIRequestContext } from '@playwright/test';
+
 export const TESTERS = {
   A: { email: 'tester1@staging.gabee.app', password: 'staging-pass' },
   B: { email: 'tester2@staging.gabee.app', password: 'staging-pass' },
 };
-export async function post(path, body, headers = {}) {
-  return fetch(`${BASE}${path}`, { method: 'POST',
-    headers: { 'content-type': 'application/json', ...headers },
-    body: body === undefined ? undefined : JSON.stringify(body) });
-}
-export async function login(email, password) {
-  const r = await post('/api/auth/login', { email, password });
-  if (!r.ok) throw new Error(`login failed ${r.status}`);
-  return (await r.json()).token; // JWT for Authorization: Bearer
+
+// Log in and return the JWT (usable as Authorization: Bearer). Throws on non-2xx.
+export async function login(request: APIRequestContext, email: string, password: string): Promise<string> {
+  const r = await request.post('/api/auth/login', { data: { email, password } });
+  if (!r.ok()) throw new Error(`login failed ${r.status()}`);
+  return (await r.json()).token;
 }
 ```
 
-- [ ] **Step 2: Write the rate-limit probes (failing until target is up)**
+- [ ] **Step 4: Write the rate-limit probes**
 
-```js
-// ops/security/dynamic/probes/rate-limit.test.mjs
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import { post } from '../probe-lib.mjs';
+`ops/security/dynamic/probes/rate-limit.spec.ts`:
+```ts
+import { test, expect } from '@playwright/test';
 
 // Login limiter = 5 / 5 min (apps/web/.../auth/login/route.ts). The 6th wrong
 // attempt from the same IP MUST be rejected 429, not 401 — else brute-force is open.
-test('auth brute-force is rate-limited (429 by the 6th attempt)', async () => {
+test('auth brute-force is rate-limited (429 by the 6th attempt)', async ({ request }) => {
   let sawLimit = false;
   for (let i = 0; i < 8; i++) {
-    const r = await post('/api/auth/login', { email: 'nobody@x.io', password: 'wrong-'+i });
-    if (r.status === 429) { sawLimit = true; break; }
-    assert.equal(r.status, 401, `attempt ${i} expected 401 got ${r.status}`);
+    const r = await request.post('/api/auth/login', { data: { email: 'nobody@x.io', password: `wrong-${i}` } });
+    if (r.status() === 429) { sawLimit = true; break; }
+    expect(r.status(), `attempt ${i}`).toBe(401);
   }
-  assert.ok(sawLimit, 'no 429 after 8 bad logins — login limiter not enforced');
+  expect(sawLimit, 'no 429 after 8 bad logins — login limiter not enforced').toBe(true);
 });
 
-// Signup limiter = 5 / 15 min. The limiter must trip BEFORE a send; the target
-// runs EMAIL_PROVIDER=noop so nothing is ever actually mailed.
-test('signup abuse is rate-limited (429 before the window fills)', async () => {
+// Signup limiter = 5 / 15 min. Must trip BEFORE a send; target is EMAIL_PROVIDER=noop.
+test('signup abuse is rate-limited (429 before the window fills)', async ({ request }) => {
   let sawLimit = false;
   for (let i = 0; i < 8; i++) {
-    const r = await post('/api/auth/signup', { email: `sec+${i}@example.com`, password: 'Aa1!aaaaaa' });
-    if (r.status === 429) { sawLimit = true; break; }
+    const r = await request.post('/api/auth/signup', { data: { email: `sec+${i}@example.com`, password: 'Aa1!aaaaaa' } });
+    if (r.status() === 429) { sawLimit = true; break; }
   }
-  assert.ok(sawLimit, 'no 429 after 8 signups — signup limiter not enforced');
+  expect(sawLimit, 'no 429 after 8 signups — signup limiter not enforced').toBe(true);
 });
 ```
 
-- [ ] **Step 3: Run against a live target to verify it passes**
+- [ ] **Step 5: Run against a live target to verify it passes**
 
 Run:
 ```bash
 export PATH="/opt/homebrew/opt/node@20/bin:$PATH"
 export SEC_BASE_URL=$(ops/security/dynamic/target.sh up | grep BASE_URL | cut -d= -f2-)
-node --test ops/security/dynamic/probes/rate-limit.test.mjs; RC=$?
+npx playwright test --config ops/security/dynamic/playwright.config.ts probes/rate-limit.spec.ts; RC=$?
 ops/security/dynamic/target.sh down; echo "rc=$RC"
 ```
-Expected: both probes PASS (the app enforces both limiters) → `rc=0`. A `rc!=0` would mean a real gap → a block-tier finding.
+Expected: both probes PASS (the app enforces both limiters) → `rc=0`. A `rc!=0` means a real gap → a block-tier finding.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add ops/security/dynamic/probe-lib.mjs ops/security/dynamic/probes/rate-limit.test.mjs
-git commit -m "feat(security): dynamic probes — auth brute-force + signup-abuse rate limits"
+git add package.json pnpm-lock.yaml ops/security/dynamic/playwright.config.ts ops/security/dynamic/probe-lib.ts ops/security/dynamic/probes/rate-limit.spec.ts
+git commit -m "feat(security): Playwright probe harness + auth brute-force/signup-abuse limits"
 ```
 
 ---
@@ -517,59 +545,62 @@ git commit -m "feat(security): dynamic probes — auth brute-force + signup-abus
 ## Task 5: IDOR / object-authz probes
 
 **Files:**
-- Create: `ops/security/dynamic/probes/idor.test.mjs`
+- Create: `ops/security/dynamic/probes/idor.spec.ts`
 
 **Interfaces:**
-- Consumes: `probe-lib.mjs`, a running target with seed-fixtures (tester A owns kids Ava+Noah; tester B owns Mia).
+- Consumes: `probe-lib.ts`, a running target with seed-fixtures (tester A owns kids Ava+Noah; tester B owns Mia).
 
 - [ ] **Step 1: Write the IDOR probes**
 
-Tester A must not reach tester B's kid. The kid ids are the fixed fixture UUIDs; fetch B's kid id by logging in as B and listing profiles, then attempt the cross-owner mutate as A.
-```js
-// ops/security/dynamic/probes/idor.test.mjs
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import { login, post, BASE, TESTERS } from '../probe-lib.mjs';
+Tester A must not reach tester B's kid. Log in as B, list B's kids, then attempt the cross-owner mutate as A.
+```ts
+// ops/security/dynamic/probes/idor.spec.ts
+import { test, expect, request as apiRequest } from '@playwright/test';
+import { login, TESTERS } from '../probe-lib';
 
-async function listKidIds(token) {
-  const r = await fetch(`${BASE}/api/profiles`, { headers: { authorization: `Bearer ${token}` } });
-  assert.equal(r.status, 200, `GET /api/profiles as owner expected 200 got ${r.status}`);
-  return (await r.json()).map((p) => p.id ?? p.profile_id).filter(Boolean);
+async function listKidIds(request: import('@playwright/test').APIRequestContext, token: string): Promise<string[]> {
+  const r = await request.get('/api/profiles', { headers: { authorization: `Bearer ${token}` } });
+  expect(r.status(), 'GET /api/profiles as owner').toBe(200);
+  const body = await r.json();
+  return (Array.isArray(body) ? body : body.profiles ?? []).map((p: any) => p.id ?? p.profile_id).filter(Boolean);
 }
 
-// Tester A PATCHing tester B's kid profile MUST NOT succeed (404 owner-scoped).
-test('cross-family profile IDOR is denied', async () => {
-  const [tA, tB] = [await login(TESTERS.A.email, TESTERS.A.password), await login(TESTERS.B.email, TESTERS.B.password)];
-  const bKids = await listKidIds(tB);
-  assert.ok(bKids.length > 0, 'fixture: tester B should own a kid');
-  const r = await fetch(`${BASE}/api/profiles/${bKids[0]}`, {
-    method: 'PATCH', headers: { authorization: `Bearer ${tA}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ display_name: 'pwned' }) });
-  assert.ok(r.status === 404 || r.status === 403, `A editing B's kid expected 403/404 got ${r.status}`);
+// Tester A PATCHing tester B's kid profile MUST NOT succeed (owner-scoped → 403/404).
+test('cross-family profile IDOR is denied', async ({ request, baseURL }) => {
+  const tA = await login(request, TESTERS.A.email, TESTERS.A.password);
+  // separate context for B so cookies/headers don't bleed
+  const ctxB = await apiRequest.newContext({ baseURL });
+  const tB = await login(ctxB, TESTERS.B.email, TESTERS.B.password);
+  const bKids = await listKidIds(ctxB, tB);
+  expect(bKids.length, 'fixture: tester B should own a kid').toBeGreaterThan(0);
+  const r = await request.patch(`/api/profiles/${bKids[0]}`, {
+    headers: { authorization: `Bearer ${tA}` }, data: { display_name: 'pwned' } });
+  expect([403, 404], `A editing B's kid got ${r.status()}`).toContain(r.status());
+  await ctxB.dispose();
 });
 
-// Tester A GETting an arbitrary message id scoped to B must 404 (owner-scoped query).
-test('cross-family message read is denied', async () => {
-  const tA = await login(TESTERS.A.email, TESTERS.A.password);
-  const r = await fetch(`${BASE}/api/messages/00000000-0000-4000-8000-0000000000ff`, {
+// Tester A reading an arbitrary message id scoped to B must be 403/404 (owner-scoped).
+test('cross-family message read is denied', async ({ request }) => {
+  const tA = await login(request, TESTERS.A.email, TESTERS.A.password);
+  const r = await request.get('/api/messages/00000000-0000-4000-8000-0000000000ff', {
     headers: { authorization: `Bearer ${tA}` } });
-  assert.ok(r.status === 404 || r.status === 403, `A reading foreign message expected 403/404 got ${r.status}`);
+  expect([403, 404], `A reading foreign message got ${r.status()}`).toContain(r.status());
 });
 ```
-> Implementer note: confirm the `GET /api/profiles` list route + its response field for the kid id (research found `/api/profiles/[id]` has no GET, but the collection route should list the parent's kids). If the list route/field differs, adjust `listKidIds`; the assertion (A cannot touch B's id) is the invariant that matters.
+> Implementer note: confirm the `GET /api/profiles` collection route + its response field for the kid id (research found `/api/profiles/[id]` has no GET, but the collection route should list the parent's kids). If the list route/field differs, adjust `listKidIds`; the invariant that matters is "A cannot touch B's id".
 
 - [ ] **Step 2: Run against a live target**
 
-Run (target up as in Task 4 Step 3), then:
+Run (target up as in Task 4 Step 5), then:
 ```bash
-node --test ops/security/dynamic/probes/idor.test.mjs
+npx playwright test --config ops/security/dynamic/playwright.config.ts probes/idor.spec.ts
 ```
 Expected: PASS (the app scopes by `session.parentId`, so A gets 403/404 on B's objects).
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add ops/security/dynamic/probes/idor.test.mjs
+git add ops/security/dynamic/probes/idor.spec.ts
 git commit -m "feat(security): dynamic IDOR probes — cross-family profile + message access denied"
 ```
 
@@ -578,56 +609,56 @@ git commit -m "feat(security): dynamic IDOR probes — cross-family profile + me
 ## Task 6: Authz-boundary probes + wire the dynamic block-tier into `scan.sh`
 
 **Files:**
-- Create: `ops/security/dynamic/probes/authz.test.mjs`
+- Create: `ops/security/dynamic/probes/authz.spec.ts`
 - Create: `ops/security/dynamic/run.mjs`
 - Modify: `ops/security/scan.sh` (add the dynamic stage; new exit `5`)
 
 **Interfaces:**
-- Consumes: `probe-lib.mjs`; `resolveChecks` (to decide which probe files are in scope); the target script.
-- Produces: `run.mjs` brings the target up, runs the selected probe files via `node --test`, tears down, and exits non-zero if any probe failed; `scan.sh` runs it when a `dynamic` check is in scope (or `--full`), local only, and maps a failure to exit `5`.
+- Consumes: `probe-lib.ts`; the in-scope check list (via `SEC_CHECKS`); the target script.
+- Produces: `run.mjs` brings the target up, runs the selected probe specs via `playwright test`, tears down, and exits `5` if any probe failed; `scan.sh` runs it when a dynamic check is in scope (or `--full`), local only, and maps a failure to exit `5`.
 
 - [ ] **Step 1: Write the authz-boundary probes**
 
-```js
-// ops/security/dynamic/probes/authz.test.mjs
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import { login, BASE, TESTERS } from '../probe-lib.mjs';
+```ts
+// ops/security/dynamic/probes/authz.spec.ts
+import { test, expect } from '@playwright/test';
+import { login, TESTERS } from '../probe-lib';
 
-// A parent token on an admin route MUST be 403 (role read live from DB), and an
-// unauthenticated request to a gated route MUST be 401.
-test('parent token is rejected from admin API (403)', async () => {
-  const tA = await login(TESTERS.A.email, TESTERS.A.password);
-  const r = await fetch(`${BASE}/api/admin/users`, { headers: { authorization: `Bearer ${tA}` } });
-  assert.equal(r.status, 403, `parent on /api/admin/users expected 403 got ${r.status}`);
+// A parent token on an admin route MUST be 403 (role read live from DB).
+test('parent token is rejected from admin API (403)', async ({ request }) => {
+  const tA = await login(request, TESTERS.A.email, TESTERS.A.password);
+  const r = await request.get('/api/admin/users', { headers: { authorization: `Bearer ${tA}` } });
+  expect(r.status(), 'parent on /api/admin/users').toBe(403);
 });
 
-test('unauthenticated request to a gated route is 401', async () => {
-  const r = await fetch(`${BASE}/api/profiles`);
-  assert.equal(r.status, 401, `anon on /api/profiles expected 401 got ${r.status}`);
+// An unauthenticated request to a gated route MUST be 401.
+test('unauthenticated request to a gated route is 401', async ({ request }) => {
+  const r = await request.get('/api/profiles');
+  expect(r.status(), 'anon on /api/profiles').toBe(401);
 });
 ```
 
 - [ ] **Step 2: Write the dynamic runner**
 
 ```js
-// ops/security/dynamic/run.mjs — bring target up, run in-scope probe files, tear down.
+// ops/security/dynamic/run.mjs — bring target up, run in-scope probe specs via
+// Playwright, tear down. Exit 5 on any probe failure (dynamic block-tier).
 import { execFileSync, spawnSync } from 'node:child_process';
 const full = process.argv.includes('--full');
-// Map scope → probe files. In diff mode, scan.sh passes CHECKS via SEC_CHECKS (newline list).
+// In diff mode, scan.sh passes the resolved CHECKS via SEC_CHECKS (newline list).
 const checks = (process.env.SEC_CHECKS ?? '').split('\n').filter(Boolean);
 const wants = (c) => full || checks.includes(c);
-const files = [];
-if (wants('rate-limit')) files.push('ops/security/dynamic/probes/rate-limit.test.mjs');
-if (wants('authz') || wants('idor')) files.push('ops/security/dynamic/probes/idor.test.mjs', 'ops/security/dynamic/probes/authz.test.mjs');
-if (files.length === 0) { console.log('no dynamic probes in scope'); process.exit(0); }
+const specs = [];
+if (wants('rate-limit')) specs.push('probes/rate-limit.spec.ts');
+if (wants('authz') || wants('idor')) specs.push('probes/idor.spec.ts', 'probes/authz.spec.ts');
+if (specs.length === 0) { console.log('no dynamic probes in scope'); process.exit(0); }
 
 let base;
 try {
   const out = execFileSync('ops/security/dynamic/target.sh', ['up'], { encoding: 'utf8' });
   base = (out.match(/BASE_URL=(\S+)/) ?? [])[1];
   if (!base) throw new Error('no BASE_URL from target');
-  const r = spawnSync(process.execPath, ['--test', ...files],
+  const r = spawnSync('npx', ['playwright', 'test', '--config', 'ops/security/dynamic/playwright.config.ts', ...specs],
     { stdio: 'inherit', env: { ...process.env, SEC_BASE_URL: base } });
   process.exitCode = r.status === 0 ? 0 : 5;   // 5 = dynamic block-tier failure
 } finally {
@@ -665,7 +696,7 @@ Expected: `--full` brings the target up, runs all probes, tears down, exits 0 on
 - [ ] **Step 5: Commit**
 
 ```bash
-git add ops/security/dynamic/probes/authz.test.mjs ops/security/dynamic/run.mjs ops/security/scan.sh
+git add ops/security/dynamic/probes/authz.spec.ts ops/security/dynamic/run.mjs ops/security/scan.sh
 git commit -m "feat(security): authz-boundary probes + wire dynamic block-tier into security:scan (exit 5)"
 ```
 
@@ -750,7 +781,7 @@ git commit -m "feat(security): local advisory AI threat-review over the release 
 
 - [ ] **Step 1: Document the dynamic + AI stages in the runbook**
 
-Add sections to `docs/security/review-process.md`: (a) **Dynamic probes** — what they test (auth rate-limit, signup abuse, IDOR, authz boundaries), that they spin up a throwaway target (`ops/security/dynamic/target.sh`, noop email + fresh DB + fixtures), require Docker, are local-only (not CI), and are skippable with `--no-dynamic`; the exit-`5` dynamic-block code; the **opt-in safe-subset staging smoke** (IDOR/authz read-only assertions only — never the rate-limit/signup probes that mutate/flood — via `SEC_BASE_URL=https://staging.gabee.app node --test ops/security/dynamic/probes/{idor,authz}.test.mjs`). (b) **AI review** — advisory, local-only, needs the `claude` CLI, never blocks, `--no-ai` to skip. (c) Update the exit-code table with `5`.
+Add sections to `docs/security/review-process.md`: (a) **Dynamic probes** — what they test (auth rate-limit, signup abuse, IDOR, authz boundaries), that they spin up a throwaway target (`ops/security/dynamic/target.sh`, noop email + fresh DB + fixtures), require Docker, are local-only (not CI), and are skippable with `--no-dynamic`; the exit-`5` dynamic-block code; the **opt-in safe-subset staging smoke** (IDOR/authz read-only assertions only — never the rate-limit/signup probes that mutate/flood — via `SEC_BASE_URL=https://staging.gabee.app npx playwright test --config ops/security/dynamic/playwright.config.ts probes/idor.spec.ts probes/authz.spec.ts`). (b) **AI review** — advisory, local-only, needs the `claude` CLI, never blocks, `--no-ai` to skip. (c) Update the exit-code table with `5`.
 
 - [ ] **Step 2: Run the first full sweep**
 
@@ -785,8 +816,8 @@ git commit -m "docs(security): dynamic+AI runbook + first full-sweep triage"
 - Dynamic block-tier into `security:scan` → Task 6. ✅
 - First full sweep + triage → Task 8. ✅
 - Safety rule (never prod / never real provider) → Global Constraints + Task 3 guard. ✅
-- **Deviation from spec, noted:** the spec lists "Playwright/fetch probes"; the four probe classes it specifies are all API-level (status-code assertions, no DOM), so this plan uses `node --test` + built-in `fetch` and keeps Playwright a documented future add-on for browser/XSS probes. Faithful to intent, lighter to run. Flag for user at handoff.
+- **Probe framework:** Playwright Test (per the spec), using the `request`/APIRequestContext fixture for today's HTTP-level assertions; the browser `page` fixture and `npx playwright install chromium` are ready for future DOM/XSS probes without restructuring.
 
 **Placeholder scan:** none — every step has real code/commands. The two "implementer note" callouts (target migrate/seed fallback in Task 3; the `claude -p` JSON envelope key in Task 7) are explicit first-run confirmations with a stated fallback, not TODOs.
 
-**Type consistency:** `Finding` shape + fingerprint formats defined in Task 1 are consumed verbatim by `aggregate.mjs` (Task 2) and `run.mjs` (Task 6). `applyWaivers(findings, waivers)` matches the Plan 1 signature (`ops/security/waivers.mjs`). `TESTERS`/`login`/`post`/`BASE` defined in Task 4's `probe-lib.mjs` are used unchanged by Tasks 5–6. Exit codes 0–4 preserved from Plan 1; `5` added consistently in `run.mjs`, `scan.sh`, and the runbook.
+**Type consistency:** `Finding` shape + fingerprint formats defined in Task 1 are consumed verbatim by `aggregate.mjs` (Task 2) and `run.mjs` (Task 6). `applyWaivers(findings, waivers)` matches the Plan 1 signature (`ops/security/waivers.mjs`). `TESTERS` + `login(request, email, password)` defined in Task 4's `probe-lib.ts` are imported unchanged by Tasks 5–6; probes use Playwright's `request` fixture + `baseURL` from `SEC_BASE_URL`. Exit codes 0–4 preserved from Plan 1; `5` added consistently in `run.mjs`, `scan.sh`, and the runbook.
