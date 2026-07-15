@@ -1,15 +1,28 @@
 # Privacy policy — device information (draft disclosure section)
 
 > **INTERNAL — remove this box before publishing.**
-> This is the *technical* disclosure for the device-metadata feature (merged to
-> `main` 2026-07-10), written to be accurate to what the code actually collects.
-> It is **not legal advice**. Before publishing:
-> 1. Have a lawyer supply the wording at each **[LAWYER: …]** marker (legal basis,
->    parental-consent mechanism, data-subject-rights procedure, controller/contact
->    details, effective date, cross-border language).
-> 2. ~~Resolve the IP-retention decision.~~ **DONE (2026-07-14): 90 days.** The
->    code now purges raw IPs after 90 days (daily cron job); this draft matches.
-> 3. Reconcile with the existing policy's structure/voice.
+> The *technical* disclosure for the device-metadata feature, written to be
+> accurate to what the code actually does. Every factual claim here was checked
+> against the code. **This is not legal advice** — a lawyer must review it.
+>
+> **🔴 Two blockers make this UNPUBLISHABLE as-is:**
+> 1. **Consent isn't captured.** The "Legal basis and parental consent" section
+>    describes a target state. The product records **no consent at all** (no
+>    field, no signup step, no withdrawal control). Publishing it as written
+>    would be a misrepresentation. → build the consent capture first (see that
+>    section's prerequisites).
+> 2. **Sub-processors need confirming.** The nightly DB backup (Cloudflare R2)
+>    carries the IP tables off our servers — disclosed under "Where it's stored",
+>    but the full sub-processor list + DPAs + any non-EU transfer must be
+>    confirmed by the lawyer.
+>
+> **Then:** fill each **[LAWYER: …]** marker, set the effective date, and
+> reconcile with the existing policy's structure/voice.
+>
+> **Settled:** IP retention = **90 days** (decided 2026-07-14; enforced by
+> `services/device-ip-retention.ts` + the daily `/api/cron/purge-device-ips`).
+> Erasure-on-account-delete is **verified** (`verify-gdpr-cascade.mts`).
+>
 > Reference: `docs/superpowers/specs/2026-07-10-device-metadata-collection-design.md`.
 
 ---
@@ -69,30 +82,110 @@ administrators. This information is **never** written into ordinary system logs.
 
 ### Where it's stored and how it's protected
 
-This information is stored on our servers located in the European Union. IP
-addresses are never sent to any outside service — including for looking up
-location, which we do on our own systems. Access is role-restricted as described
-above. **[LAWYER: cross-border transfer language if any applies; security-measures
-statement to match your standard clause.]**
+This information is stored on our servers located in the European Union. We never
+send IP addresses to an outside service to look up location — where we do that at
+all, we do it on our own systems.
+
+Two third-party providers do handle this data as part of running Gabee:
+
+- **Backups.** A nightly encrypted backup of our database — which includes the
+  device information described here — is stored with our backup provider
+  (Cloudflare R2). Backups are kept for 14 days, then deleted. This means that
+  for up to 14 days after an IP address is deleted from our live systems, a copy
+  may still exist in a backup, until that backup expires.
+- **Error reporting.** When something crashes we send diagnostic reports to our
+  error-reporting provider (Sentry, EU region). These reports never include IP
+  addresses or user-agents.
+
+Access to this information is role-restricted as described above, and IP
+addresses are never written into ordinary system logs.
+
+> ⚠️ **INTERNAL — do not skip.** The bullets above were added because the earlier
+> draft's "never sent to any outside service" was **not accurate**: the nightly
+> `pg_dump` → Cloudflare R2 backup carries the `devices` / `device_ip_sightings`
+> tables off our VPS. Any provider that stores this data is a **processor** and
+> must be disclosed + covered by a DPA. **[LAWYER: confirm the full sub-processor
+> list (backup, error reporting, transactional email) and whether any of them
+> puts data outside the EU/EEA — if so, add the transfer-mechanism clause (SCCs).
+> Also confirm the 14-day backup lag is acceptable against the 90-day IP
+> retention promise, or state it explicitly as we do above.]**
 
 ### Your choices and rights
 
+As the parent or guardian, you can exercise these rights on your child's behalf.
+Write to us at **[privacy@gabee.app — LAWYER/OPS: confirm the address]** and we
+will respond within one month.
+
 - **Deleting this information.** When you delete your Gabee account, the device
   information described here — including the full IP-address history — is
-  **permanently deleted** along with it.
-- **[LAWYER: access / export / correction / objection procedure and how to
-  exercise these rights; retention-vs-erasure interaction; supervisory-authority
-  complaint right.]**
+  **permanently deleted** along with it. (A copy may persist in an encrypted
+  backup for up to 14 days, until that backup expires.)
+- **Seeing what we hold.** You can ask for a copy of the device information
+  associated with your account.
+- **Correcting it.** Most of this information is measured automatically from the
+  device rather than entered by you; if something is wrong, tell us and we'll
+  correct or delete it.
+- **Objecting.** You can ask us to stop using this information for a given
+  purpose. Where we rely on your consent, you can withdraw it at any time —
+  withdrawing does not affect what we did before you withdrew.
+- **Complaining.** If you're not satisfied, you can complain to your data
+  protection authority (in France, the CNIL).
+
+> ⚠️ **INTERNAL:** the erasure claim is **true and verified** — deleting the
+> `ParentAccount` cascades `Device` + `DeviceIpSighting` away (checked by
+> `apps/web/scripts/verify-gdpr-cascade.mts`). Requests are handled through the
+> existing `/admin/gdpr` queue, which is a **manual checklist** — there is no
+> automated self-serve export/erasure. **[LAWYER: confirm the one-month response
+> commitment is one we can actually meet with a manual queue, and the exact
+> contact address.]**
 
 ### Legal basis and parental consent
 
-**[LAWYER: state the legal basis for collecting this information about a child's
-device, the parental-consent mechanism (how consent is obtained from and recorded
-for the parent/guardian), and how consent can be withdrawn. Note that Gabee
-records device information only for accounts held by a parent/guardian who has
-consented.]**
+A Gabee account is held by a parent or guardian, not by a child. When you create
+the account and add your child's profile, you do so as the person responsible for
+them.
+
+We rely on two different grounds, depending on why we use the information:
+
+- **Keeping accounts safe (security).** We rely on our legitimate interest in
+  protecting families' accounts from misuse. This is the ground for collecting
+  the IP address and device identifier.
+- **Understanding and improving Gabee (analytics), and supporting you.** We rely
+  on **your consent**, given when you set up the account. You can withdraw it at
+  any time in **[Settings → …  — PRODUCT: confirm where]**, and we'll stop using
+  the information for those purposes.
+
+Withdrawing consent doesn't affect what we did before you withdrew it, and it
+doesn't affect the security ground above.
+
+> 🔴 **INTERNAL — BLOCKING, THIS IS NOT TRUE YET.** The consent story above
+> describes the **target state**, not what the product does today:
+> - **No consent is captured or recorded anywhere.** `ParentAccount` has no
+>   terms/privacy/consent field, and there is no acceptance step at signup
+>   (checked against `schema.prisma` — the only `acceptedAt` belongs to
+>   `ContentPlan`, unrelated). **Publishing consent language while recording no
+>   consent would be a misrepresentation.**
+> - **There is no withdrawal control** in the product either.
+>
+> **Prerequisites before this section can be published:**
+> 1. A consent step at parent signup (and a re-consent prompt for existing
+>    accounts), recording **who / when / which policy version**.
+> 2. A column to store it (e.g. `ParentAccount.privacyConsentAt` +
+>    `privacyPolicyVersion`), so consent is provable.
+> 3. A withdrawal control + what withdrawal actually turns off.
+>
+> **[LAWYER: decide the split above — is legitimate interest defensible for
+> security on a minor's IP, or should everything sit on consent? If everything
+> rests on consent, note the product consequence: no consent ⇒ no device
+> metadata collected at all, which the code must then enforce.]**
 
 ### Changes to this section
 
-**[LAWYER: standard "we may update this policy / how we notify you" clause +
-effective date.]**
+We may update this policy. If we make a significant change to what we collect or
+why, we'll tell you by email and ask you to review it before it takes effect.
+
+**Last updated: [DATE — set at publication]**
+
+**[LAWYER: match this to your standard change-notification clause + versioning;
+if consent is the basis for any purpose, a material change likely requires
+re-consent, not just notice.]**
