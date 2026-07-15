@@ -9,6 +9,7 @@ import { sync } from './lib/sync';
 import { armSessionEnd, endSession, noteBackground, noteForeground, setLastScreen } from './lib/session';
 import { deviceTz, deviceTzOffsetMin } from './lib/device';
 import { useIdle, installIdleListeners } from './lib/idle';
+import { setMusicZone } from './lib/audio';
 import { LockScreen } from './components/LockScreen';
 import { SyncIndicator } from './components/SyncIndicator';
 import { Login } from './screens/Login';
@@ -61,7 +62,7 @@ import { useHealthyUse } from './lib/healthy-use';
 import { bumpStreak } from './lib/streak';
 import { MessageBandeau } from './components/MessageBandeau';
 import { GiftCard } from './components/GiftCard';
-import { type Route, type PlayTarget, routeToPath, parsePath, restorableRoute, routeModule, routeLevel, moduleHome } from './lib/router';
+import { type Route, type PlayTarget, routeToPath, parsePath, restorableRoute, routeModule, routeLevel, moduleHome, isSessionRoute } from './lib/router';
 import { MessageReader } from './components/MessageReader';
 import { lessonsForLevel, unitsForLevel } from './lib/progression';
 import {
@@ -297,6 +298,13 @@ export function App() {
   useEffect(() => {
     setLastScreen(route.name);
   }, [route]);
+
+  // Ambient music follows navigation: exercise screens are silent, everything
+  // else is ambient (audio phase E spec §2). Cleanup silences on unmount/logout.
+  useEffect(() => {
+    setMusicZone(isSessionRoute(route.name) ? 'silent' : 'ambient');
+    return () => setMusicZone('silent');
+  }, [route.name]);
 
   // Visibility lifecycle (product §9.3). A backgrounded tab is treated as a
   // PAUSED sitting, not a closed one — so `session_end.duration_s` reflects
