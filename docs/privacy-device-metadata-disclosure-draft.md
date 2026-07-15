@@ -100,15 +100,20 @@ Two third-party providers do handle this data as part of running Gabee:
 Access to this information is role-restricted as described above, and IP
 addresses are never written into ordinary system logs.
 
-> ⚠️ **INTERNAL — do not skip.** The bullets above were added because the earlier
-> draft's "never sent to any outside service" was **not accurate**: the nightly
-> `pg_dump` → Cloudflare R2 backup carries the `devices` / `device_ip_sightings`
-> tables off our VPS. Any provider that stores this data is a **processor** and
-> must be disclosed + covered by a DPA. **[LAWYER: confirm the full sub-processor
-> list (backup, error reporting, transactional email) and whether any of them
-> puts data outside the EU/EEA — if so, add the transfer-mechanism clause (SCCs).
-> Also confirm the 14-day backup lag is acceptable against the 90-day IP
-> retention promise, or state it explicitly as we do above.]**
+> ⚠️ **INTERNAL — do not skip.** To be clear about what this is and isn't: the
+> nightly `pg_dump` is a **backup for disaster recovery only**, with a 14-day
+> retention — it is *not* a data export, and nothing reads it for analytics or
+> shares it with anyone. But it is uploaded off the VPS to **Cloudflare R2**
+> (`ops/backup/Dockerfile:3`, `bin/backup-loop:11` → `s3://$R2_BUCKET`), so a
+> third party **stores** personal data on its infrastructure. Under GDPR that
+> makes them a **processor** regardless of the restore-only purpose: it has to
+> be named and covered by a DPA (Cloudflare offers a standard one). That's the
+> only reason it appears in a parent-facing policy — a one-line disclosure.
+> **[LAWYER: confirm the full sub-processor list (backup, error reporting,
+> transactional email) and whether any puts data outside the EU/EEA — if so add
+> the transfer-mechanism clause (SCCs). Also confirm the 14-day backup lag is
+> acceptable against the 90-day IP retention promise, or state it as we do
+> above.]**
 
 ### Your choices and rights
 
@@ -160,18 +165,18 @@ doesn't affect the security ground above.
 
 > 🔴 **INTERNAL — BLOCKING, THIS IS NOT TRUE YET.** The consent story above
 > describes the **target state**, not what the product does today:
-> - **No consent is captured or recorded anywhere.** `ParentAccount` has no
->   terms/privacy/consent field, and there is no acceptance step at signup
->   (checked against `schema.prisma` — the only `acceptedAt` belongs to
->   `ContentPlan`, unrelated). **Publishing consent language while recording no
->   consent would be a misrepresentation.**
+> - **The parent DOES accept T&C at signup** — a required checkbox gating the
+>   submit, linking to `/fr/terms` (`parent/signup/page.tsx:87,132,394`). What's
+>   missing is that the acceptance is **never sent or stored**: the signup API
+>   takes only `{email, password}` and no consent column exists. So today the
+>   consent is **real but unprovable** — we cannot show who accepted what, when.
 > - **There is no withdrawal control** in the product either.
 >
 > **Prerequisites before this section can be published:**
-> 1. A consent step at parent signup (and a re-consent prompt for existing
->    accounts), recording **who / when / which policy version**.
-> 2. A column to store it (e.g. `ParentAccount.privacyConsentAt` +
->    `privacyPolicyVersion`), so consent is provable.
+> 1. Persist the acceptance already collected at signup — **who / when / which
+>    version** (in progress: `ConsentRecord` history table).
+> 2. A re-consent gate when a new T&C version ships (in progress: blocking
+>    screen on next parent-space visit).
 > 3. A withdrawal control + what withdrawal actually turns off.
 >
 > **[LAWYER: decide the split above — is legitimate interest defensible for

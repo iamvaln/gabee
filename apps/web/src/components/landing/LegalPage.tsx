@@ -3,6 +3,7 @@ import { parentLoginHref, parentSignupHref } from './parent-app-links';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { LandingBee, Wordmark } from './LandingBee';
 import { LanguageToggle } from './LanguageToggle';
+import { CURRENT_TERMS_VERSION } from '@/lib/terms';
 
 // Long-scroll legal page (terms or privacy). Mirrors the design source
 // `legal-app.jsx` + spec §8/§9. Sticky TOC at wide widths, anchored sections,
@@ -63,6 +64,15 @@ export async function LegalPage({ kind }: { kind: LegalKind }) {
             <h1>{title}</h1>
             <p className="legal-intro">{intro}</p>
             <p className="legal-updated">{t('updated')}</p>
+            {kind === 'terms' && (
+              // Server-authoritative consent version (see lib/terms.ts) — the
+              // version a "J'accepte" click actually records, distinct from
+              // the hand-written `updated` copy above.
+              <p className="legal-updated">
+                {locale === 'fr' ? 'Version : ' : 'Version: '}
+                {CURRENT_TERMS_VERSION}
+              </p>
+            )}
           </header>
 
           <div className="legal-framework">
