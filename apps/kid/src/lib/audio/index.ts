@@ -4,7 +4,7 @@
 import { playCue, type CueName } from './sfx';
 import { isEnabled, isMusicEnabled, setEnabled as setEnabledPref, setMusicEnabled as setMusicEnabledPref } from './prefs';
 import { WebSpeechVoiceProvider, type VoiceProvider } from './voice';
-import { setMusicZone as musicSetZone, reevaluateMusic, type MusicZone } from './music';
+import { setMusicZone as musicSetZone, reevaluateMusic as reevaluateMusicImpl, type MusicZone } from './music';
 
 export type { CueName, VoiceProvider, MusicZone };
 export { isEnabled, isMusicEnabled };
@@ -76,7 +76,7 @@ export function warmVoice(): void {
 export function setEnabled(v: boolean): void {
   setEnabledPref(v);
   if (!v) provider.stop();
-  reevaluateMusic();
+  reevaluateMusicImpl();
 }
 
 /** Route-driven music zoning; idempotent, never throws (spec §2). */
@@ -91,5 +91,16 @@ export function setMusicZone(zone: MusicZone): void {
 /** Ambient-music switch: flip pref, settle playback immediately. */
 export function setMusicEnabled(v: boolean): void {
   setMusicEnabledPref(v);
-  reevaluateMusic();
+  reevaluateMusicImpl();
+}
+
+/** Re-settle playback against the current zone × prefs; idempotent, never
+ *  throws (spec §2). Callers: profile switch (a new kid's music_enabled just
+ *  seeded) needs this re-evaluated without waiting on a route/zone change. */
+export function reevaluateMusic(): void {
+  try {
+    reevaluateMusicImpl();
+  } catch {
+    /* music must never break a render */
+  }
 }

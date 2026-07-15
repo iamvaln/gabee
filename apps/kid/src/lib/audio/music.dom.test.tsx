@@ -87,7 +87,6 @@ describe('music engine (fake AudioContext)', () => {
     audio.setMusicZone('ambient');
     await tick(); await tick();
     assert.equal(state.sources.length, 0, 'no source while music pref is off');
-    audio.setMusicEnabled(true);
   });
 
   it('master switch off silences music too', async () => {
@@ -95,6 +94,50 @@ describe('music engine (fake AudioContext)', () => {
     await tick(); await tick();
     audio.setEnabled(false);
     assert.ok(state.sources.at(-1)?.stopped, 'master-off stops music');
-    audio.setEnabled(true);
+  });
+
+  // Fix 1 regression: App.tsx's zoning effect used to clean up with
+  // `setMusicZone('silent')` between EVERY re-run, so an ambient→ambient
+  // route change (no lock/session screen in between) stopped and restarted
+  // the loop from t=0. The engine itself must treat re-affirming the same
+  // zone as a no-op.
+  it('ambient→ambient with no silent in between is a no-op (loop keeps playing)', async () => {
+    audio.setMusicZone('ambient');
+    await tick(); await tick();
+    const first = state.sources.at(-1);
+    assert.ok(first?.started, 'first source started');
+    assert.equal(state.sources.length, 1, 'exactly one source created');
+
+    audio.setMusicZone('ambient'); // route-change-like re-fire, still ambient
+    await tick(); await tick();
+
+    assert.equal(state.sources.length, 1, 'no second source created');
+    assert.equal(first?.stopped, false, 'the original source was never stopped');
+  });
+
+  // Fix 5 / spec §7.2: a gesture-locked context must not throw and must not
+  // start until the next user gesture, then must catch up once unlocked.
+  it('locked context: waits for a gesture before starting playback', async () => {
+    const fakeCtx = (window as unknown as {
+      __gabeeAudio: { state: string; resume: () => Promise<void> };
+    }).__gabeeAudio;
+    fakeCtx.state = 'suspended';
+    // Deferred flip (not synchronous): getAudioContext() itself calls resume()
+    // whenever it sees a suspended context, so a synchronous flip would
+    // silently unlock start()'s very first attempt before its own check runs.
+    fakeCtx.resume = () => Promise.resolve().then(() => {
+      fakeCtx.state = 'running';
+    });
+
+    audio.setMusicZone('ambient');
+    await tick();
+    assert.equal(state.sources.length, 0, 'no source while the context is gesture-locked');
+
+    document.dispatchEvent(new window.Event('pointerdown'));
+    await tick(); await tick(); await tick();
+
+    const s = state.sources.at(-1);
+    assert.ok(s?.started, 'source started once the context unlocked');
+    assert.equal(s?.loop, true, 'loop must be gapless');
   });
 });

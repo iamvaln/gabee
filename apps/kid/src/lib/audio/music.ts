@@ -93,11 +93,11 @@ function start(): void {
 }
 
 function stop(): void {
-  const ctx = getAudioContext();
   const s = source, g = gain;
   source = null;
   gain = null;
-  if (!s) return;
+  if (!s) return; // nothing playing — don't instantiate a context just to no-op
+  const ctx = getAudioContext();
   try {
     if (ctx && g) {
       g.gain.cancelScheduledValues(ctx.currentTime);

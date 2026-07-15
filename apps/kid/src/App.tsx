@@ -9,7 +9,7 @@ import { sync } from './lib/sync';
 import { armSessionEnd, endSession, noteBackground, noteForeground, setLastScreen } from './lib/session';
 import { deviceTz, deviceTzOffsetMin } from './lib/device';
 import { useIdle, installIdleListeners } from './lib/idle';
-import { setMusicZone } from './lib/audio';
+import { setMusicZone, reevaluateMusic } from './lib/audio';
 import { LockScreen } from './components/LockScreen';
 import { SyncIndicator } from './components/SyncIndicator';
 import { Login } from './screens/Login';
@@ -299,6 +299,28 @@ export function App() {
     setLastScreen(route.name);
   }, [route]);
 
+  // Hoisted ahead of their "natural" declaration sites (idle lock further
+  // below, device-link gate further below) so both the visibilitychange
+  // handler and the music-zoning effect can compute "should music be
+  // silent" without a stale closure.
+  const idleLocked = useIdle((s) => s.isLocked);
+  const needsDeviceLink = useStore((s) => s.needsDeviceLink);
+  const deviceLinkSkipped = useStore((s) => s.deviceLinkSkipped);
+
+  // Ambient music follows navigation (audio phase E spec §2): the parent-facing
+  // auth gates (Login / LinkDeviceCode — mirrors the render conditions below) are
+  // silent so a password keystroke can't unlock-and-start the music; the daily
+  // and idle lock screens are silent; exercise screens are silent; everything
+  // from profile select onward (browse routes) is ambient.
+  const authGateVisible = !token || (needsDeviceLink && !deviceLinkSkipped && !isOffline);
+  // Daily lock takes precedence over EVERY screen (post-profile-pick).
+  const showDailyLock = !!profile && dailyLocked && !!limits;
+  // Idle lock: shown only while a profile is active and the daily lock isn't
+  // already up.
+  const showIdleLock = !!profile && idleLocked && !showDailyLock;
+  const musicShouldBeSilent =
+    authGateVisible || showDailyLock || showIdleLock || isSessionRoute(route.name);
+
   // Visibility lifecycle (product §9.3). A backgrounded tab is treated as a
   // PAUSED sitting, not a closed one — so `session_end.duration_s` reflects
   // real play time, not first-background time. Only `pagehide` (close) and a
@@ -314,6 +336,9 @@ export function App() {
       if (document.visibilityState === 'hidden') {
         noteBackground();
         pauseSessionTimer();
+        // Chrome doesn't suspend Web Audio in hidden tabs; the PWA must not
+        // play behind the launcher (audio phase E spec §2).
+        setMusicZone('silent');
       } else {
         void noteForeground().then((res) => {
           if (res.newSession) {
@@ -322,6 +347,9 @@ export function App() {
             resumeSessionTimer();
           }
         });
+        // Restore whatever zone the current screen calls for — same decision
+        // the zoning effect below makes.
+        setMusicZone(musicShouldBeSilent ? 'silent' : 'ambient');
       }
     };
     const onPagehide = () => {
@@ -333,11 +361,11 @@ export function App() {
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('pagehide', onPagehide);
     };
-  }, [pauseSessionTimer, resumeSessionTimer, startSessionTimer]);
+  }, [pauseSessionTimer, resumeSessionTimer, startSessionTimer, musicShouldBeSilent]);
 
   // Idle tracker (product §6.3). Activity listeners installed once at mount;
   // re-armed on profile pick. After 3 min of no input → LockScreen renders.
-  const idleLocked = useIdle((s) => s.isLocked);
+  // (idleLocked itself is hoisted above, next to the music-zoning flags.)
   const armIdle = useIdle((s) => s.arm);
   const disarmIdle = useIdle((s) => s.disarm);
   const unlockIdle = useIdle((s) => s.unlock);
@@ -361,6 +389,9 @@ export function App() {
 
   function handlePick(p: ChildProfile) {
     setProfile(p);
+    // The new kid's music_enabled pref just seeded — settle playback
+    // immediately instead of waiting for the zoning effect's next render.
+    reevaluateMusic();
     armSessionEnd();
     const sessionId = startPlay();
     void enqueueEvent(
@@ -532,19 +563,19 @@ export function App() {
   // before this field existed) skip the prompt entirely — no regression.
   // Skipping the prompt (Plus tard) sets an in-session sentinel so we don't
   // re-prompt on the next render, but a refresh re-prompts.
-  const needsDeviceLink = useStore((s) => s.needsDeviceLink);
-  const deviceLinkSkipped = useStore((s) => s.deviceLinkSkipped);
+  // (needsDeviceLink/deviceLinkSkipped/authGateVisible are hoisted above, next
+  // to the other music-zoning flags.)
 
-  // Ambient music follows navigation (audio phase E spec §2): the parent-facing
-  // auth gates (Login / LinkDeviceCode — mirrors the render conditions below) are
-  // silent so a password keystroke can't unlock-and-start the music; exercise
-  // screens are silent; everything from profile select onward is ambient.
-  // Cleanup silences on unmount/logout.
-  const authGateVisible = !token || (needsDeviceLink && !deviceLinkSkipped && !isOffline);
+  // Ambient music follows navigation (audio phase E spec §2): re-settles on
+  // every route change, profile switch (a new kid's music_enabled pref), and
+  // lock-screen transition. No cleanup here — a per-navigation stop+restart
+  // would restart the loop from t=0 on every ambient→ambient route change.
   useEffect(() => {
-    setMusicZone(authGateVisible || isSessionRoute(route.name) ? 'silent' : 'ambient');
-    return () => setMusicZone('silent');
-  }, [authGateVisible, route.name]);
+    setMusicZone(musicShouldBeSilent ? 'silent' : 'ambient');
+  }, [musicShouldBeSilent, profile?.id]);
+
+  // Silence on true unmount only — per-navigation cleanup would restart the loop.
+  useEffect(() => () => setMusicZone('silent'), []);
 
   let screen: React.ReactNode;
   if (!token) {
@@ -1215,12 +1246,9 @@ export function App() {
     }
   }
 
-  // Daily lock takes precedence over EVERY screen (post-profile-pick).
-  const showDailyLock = !!profile && dailyLocked && !!limits;
-  // Idle lock: shown only while a profile is active and the daily lock isn't
-  // already up. Tapping the avatar unlocks; the "Not me" link drops the
-  // profile and routes to ProfileSelect.
-  const showIdleLock = !!profile && idleLocked && !showDailyLock;
+  // Daily lock / idle lock: computed above (hoisted, next to the music-zoning
+  // flags). Tapping the avatar unlocks the idle lock; the "Not me" link drops
+  // the profile and routes to ProfileSelect.
 
   // Bottom nav visibility — present on browse routes once the kid is past
   // login/profile-pick, hidden during sessions / summaries / the daily lock
