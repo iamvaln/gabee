@@ -7,8 +7,10 @@ const full = process.argv.includes('--full');
 const checks = (process.env.SEC_CHECKS ?? '').split('\n').filter(Boolean);
 const wants = (c) => full || checks.includes(c);
 const specs = [];
-if (wants('rate-limit')) specs.push('probes/rate-limit.spec.ts');
-if (wants('authz') || wants('idor')) specs.push('probes/idor.spec.ts', 'probes/authz.spec.ts');
+// Check names must match routes.yml's emitted vector ids (app-rate-limit,
+// app-authz-idor) — otherwise diff-scoped (--since) runs never select any probe.
+if (wants('app-rate-limit')) specs.push('probes/rate-limit.spec.ts');
+if (wants('app-authz-idor')) specs.push('probes/idor.spec.ts', 'probes/authz.spec.ts');
 if (specs.length === 0) { console.log('no dynamic probes in scope'); process.exit(0); }
 
 let base;

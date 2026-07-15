@@ -87,7 +87,7 @@ if node ops/security/aggregate.mjs | tee -a "$REPORT"; then STATIC_BLOCK=0; else
 # Skipped in CI (no target) and skippable with --no-dynamic. A failing authz/
 # IDOR/rate-limit probe is block-tier → exit 5.
 DYN_BLOCK=0
-if [ "${NO_DYNAMIC:-0}" -eq 0 ] && { echo "$CHECKS" | grep -qxE 'rate-limit|idor|authz' || [ "$FULL" -eq 1 ]; }; then
+if [ "${NO_DYNAMIC:-0}" -eq 0 ] && { echo "$CHECKS" | grep -qxE 'app-rate-limit|app-authz-idor' || [ "$FULL" -eq 1 ]; }; then
   if have docker; then
     SEC_CHECKS="$CHECKS" node ops/security/dynamic/run.mjs $( [ "$FULL" -eq 1 ] && echo --full ) \
       && note "- dynamic: probes passed" || { note "- dynamic: PROBE FAILURE (block)"; DYN_BLOCK=1; }
