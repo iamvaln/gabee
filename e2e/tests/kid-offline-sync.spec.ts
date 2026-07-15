@@ -24,6 +24,29 @@ function dexieEventCount(page: Page): Promise<number> {
   );
 }
 
+/** Count rows in the kid app's Dexie 'progress' queue (IndexedDB 'gabee-kid'). */
+function dexieProgressCount(page: Page): Promise<number> {
+  return page.evaluate(
+    () =>
+      new Promise<number>((resolve, reject) => {
+        const open = indexedDB.open('gabee-kid');
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const db = open.result;
+          const req = db.transaction('progress', 'readonly').objectStore('progress').count();
+          req.onsuccess = () => {
+            resolve(req.result);
+            db.close();
+          };
+          req.onerror = () => {
+            reject(req.error);
+            db.close();
+          };
+        };
+      }),
+  );
+}
+
 /** All queued envelope event_ids from the Dexie 'events' queue. */
 function dexieEventIds(page: Page): Promise<string[]> {
   return page.evaluate(
@@ -114,6 +137,10 @@ test('offline session syncs every queued event to Postgres on reconnect', async 
   // so phase B starts from a clean, unambiguous baseline.
   await pollUntil(() => prisma.event.count({ where: { profileId: child.id } }), (c) => c > 0);
   await pollUntil(() => dexieEventCount(page), (c) => c === 0);
+  // Progress rows are only deleted after server ack (apps/kid/src/lib/sync.ts drainProgress),
+  // so the baseline must wait for that drain too — otherwise the warm-up's own stars could
+  // still be in flight and land during phase C, making `s > starsAfterWarmup` a false green.
+  await pollUntil(() => dexieProgressCount(page), (c) => c === 0);
   const starsAfterWarmup = (
     await prisma.childProfile.findUniqueOrThrow({ where: { id: child.id } })
   ).totalStars;

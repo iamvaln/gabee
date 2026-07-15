@@ -23,6 +23,7 @@ export default defineConfig({
   expect: { timeout: 15_000 },
   retries: process.env.CI ? 1 : 0,
   workers: 1, // shared DB + stateful kid flow — never parallelize
+  reporter: [['list'], ['html', { open: 'never' }]],
   globalSetup: './global-setup.ts',
   use: {
     baseURL: KID_URL,
