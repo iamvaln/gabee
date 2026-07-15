@@ -1,0 +1,15 @@
+{
+  "name": "@gabee/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "dependencies": {
+    "@gabee/db": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1"
+  }
+}

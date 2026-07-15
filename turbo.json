@@ -4,7 +4,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "src/generated/**"],
-      "passThroughEnv": ["DATABASE_URL", "DIRECT_URL"]
+      "passThroughEnv": ["DATABASE_URL", "DIRECT_URL", "AUTH_JWT_SECRET"]
     },
     "typecheck": {
       "dependsOn": ["^build"]
