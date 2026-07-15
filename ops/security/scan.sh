@@ -42,47 +42,90 @@ runs() { echo "$CHECKS" | grep -qx "$1"; }
 
 rm -rf .security/raw && mkdir -p .security/raw
 
+# Tools we actually invoke (in scope AND present). aggregate.mjs requires each of
+# these to have produced parseable evidence — a scanner that runs and FAILS must
+# never read as "clean". TOOL_ERR flags an unambiguous error exit; the evidence
+# check in aggregate.mjs is the backstop for tools whose exit codes are ambiguous
+# (gitleaks uses exit 1 for BOTH "leaks found" and "config error" — only the
+# presence of its report distinguishes them).
+EXPECTED=""
+TOOL_ERR=0
+
 # ── gitleaks (always) — secrets, block tier ──
 # Build the diff-scoping flag as an array element (not an unquoted $(...) that
 # word-splits): $SINCE stays a single argv token, so a ref with spaces/metachars
-# can't split into extra git options — it just fails the ref lookup (fail-closed).
+# can't split into extra git options — a bad ref then yields an empty report,
+# which aggregate.mjs catches as missing evidence rather than silent PASS.
 GITLEAKS_SCOPE=()
 [ "$FULL" -eq 0 ] && [ -n "$SINCE" ] && GITLEAKS_SCOPE=("--log-opts=$SINCE..HEAD")
 if runs gitleaks; then
   if have gitleaks; then
-    # JSON report; exit code ignored here, aggregate.mjs decides tier.
+    EXPECTED="$EXPECTED gitleaks"
     gitleaks detect --no-banner --redact -c .gitleaks.toml \
       "${GITLEAKS_SCOPE[@]+"${GITLEAKS_SCOPE[@]}"}" \
-      --report-format json --report-path .security/raw/gitleaks.json >/dev/null 2>&1 || true
+      --report-format json --report-path .security/raw/gitleaks.json >/dev/null 2>&1
+    rc=$?   # 0=clean, 1=leaks OR error (report presence disambiguates), 2=usage
+    note "- gitleaks: ran (exit $rc)"
+    [ "$rc" -gt 1 ] && { note "- gitleaks: ERRORED (exit $rc)"; TOOL_ERR=1; }
   else MISSING="$MISSING gitleaks"; fi
 fi
 # ── osv-scanner (always) — dep CVEs, block on High+ ──
 if runs osv; then
   if have osv-scanner; then
-    osv-scanner --lockfile pnpm-lock.yaml --format json --output .security/raw/osv.json >/dev/null 2>&1 || true
+    EXPECTED="$EXPECTED osv"
+    osv-scanner --lockfile pnpm-lock.yaml --format json --output .security/raw/osv.json >/dev/null 2>&1
+    rc=$?   # 0=no vulns, 1=vulns found, >1=error
+    note "- osv: ran (exit $rc)"
+    [ "$rc" -gt 1 ] && { note "- osv: ERRORED (exit $rc)"; TOOL_ERR=1; }
   else MISSING="$MISSING osv-scanner"; fi
 fi
 # ── semgrep (scoped) — SAST, block on ERROR only (tier decided by aggregate.mjs) ──
 if runs semgrep; then
   if have semgrep; then
+    EXPECTED="$EXPECTED semgrep"
     semgrep scan --quiet \
       --config .semgrep/gabee.yml --config p/typescript --config p/nextjs \
-      --json --output .security/raw/semgrep.json || true
+      --json --output .security/raw/semgrep.json >/dev/null 2>&1
+    rc=$?   # 0=clean, 1=findings, 2=error, 7=invalid/undownloadable config
+    note "- semgrep: ran (exit $rc)"
+    [ "$rc" -gt 1 ] && { note "- semgrep: ERRORED (exit $rc)"; TOOL_ERR=1; }
   else MISSING="$MISSING semgrep"; fi
 fi
 # ── trivy (scoped) — image/IaC misconfig, block on Critical/High ──
 if runs trivy; then
   if have trivy; then
-    trivy config --format json --output .security/raw/trivy.json docker-compose.yml || true
+    EXPECTED="$EXPECTED trivy"
+    trivy config --format json --output .security/raw/trivy.json docker-compose.yml >/dev/null 2>&1
+    rc=$?   # 0=ok (findings reported in JSON; no --exit-code set), >0=error
+    note "- trivy: ran (exit $rc)"
+    [ "$rc" -gt 0 ] && { note "- trivy: ERRORED (exit $rc)"; TOOL_ERR=1; }
   else MISSING="$MISSING trivy"; fi
 fi
 
 [ -n "$MISSING" ] && note "- MISSING tools:$MISSING (install: brew install $MISSING / npx)"
 
-# Static verdict comes from the per-finding aggregator (waiver-aware): it reads
-# whichever .security/raw/<tool>.json files exist, normalizes, applies
-# security-waivers.yml, and prints per-finding lines (BLOCK/waived/note).
-if node ops/security/aggregate.mjs | tee -a "$REPORT"; then STATIC_BLOCK=0; else STATIC_BLOCK=1; fi
+# A scanner that errored means the gate has a blind spot — fail closed (exit 6),
+# regardless of --strict. --strict is about tools that are absent; this is about
+# tools that ran and broke, which is strictly worse because it looks like a scan.
+if [ "$TOOL_ERR" -eq 1 ]; then
+  note ""; note "RESULT: FAIL (a scanner errored — refusing to report PASS)"; exit 6
+fi
+
+# Static verdict comes from the per-finding aggregator (waiver-aware). It is told
+# which tools we invoked ($EXPECTED) and hard-fails (6) if any of them produced no
+# parseable evidence — so a broken scanner can't masquerade as a clean one.
+# PIPESTATUS[0] is the aggregator's own code (not tee's) — bash 3.2 supports it.
+SEC_EXPECTED_TOOLS="$EXPECTED" node ops/security/aggregate.mjs | tee -a "$REPORT"
+AGG_RC=${PIPESTATUS[0]}
+case "$AGG_RC" in
+  0) STATIC_BLOCK=0;;
+  6) note ""; note "RESULT: FAIL (scanner evidence missing/invalid — refusing to report PASS)"; exit 6;;
+  *) STATIC_BLOCK=1;;
+esac
+
+# Short-circuit: once the static tier blocks, the release is already stopped —
+# don't pay a ~2-min Docker build and a 120s claude call to elaborate on it.
+if [ "$STATIC_BLOCK" -eq 1 ]; then note ""; note "RESULT: BLOCK (see $REPORT)"; exit 1; fi
 
 # ── dynamic probes (LOCAL ONLY — needs Docker + a live throwaway target) ──
 # Skipped in CI (no target) and skippable with --no-dynamic. A failing authz/
@@ -101,7 +144,7 @@ if [ "${NO_AI:-0}" -eq 0 ]; then
   node ops/security/ai-review.mjs "$SINCE" | tee -a "$REPORT" || true
 fi
 
-if [ "$STATIC_BLOCK" -eq 1 ]; then note ""; note "RESULT: BLOCK (see $REPORT)"; exit 1; fi
+# (static BLOCK already exited above, before the costly dynamic/AI stages)
 if [ "$DYN_BLOCK" -eq 1 ]; then note ""; note "RESULT: BLOCK (dynamic)"; exit 5; fi
 if [ -n "$MISSING" ] && [ "$STRICT" -eq 1 ]; then note "RESULT: FAIL (missing tools under --strict)"; exit 3; fi
 note ""; note "RESULT: PASS"; exit 0
