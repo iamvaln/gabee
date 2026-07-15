@@ -402,3 +402,53 @@ delete a child profile, read every parent→kid message, revoke the parent's pho
 
 **Do NOT ship the allowlist alone** — it would narrow one route while leaving the
 kid tablet holding parent credentials for every other one.
+
+## 🔴 Finding #7 — "Revoke device" does nothing (verified 2026-07-16)
+
+`revokeDevice` sets `DeviceLink.revokedAt` and returns 204, and the parent UI
+reports success — but **nothing validates a bearer against the DeviceLink**, so the
+revoked device's token keeps working until it expires (up to 180 days). The
+parent's only remedy for a lost/compromised kid tablet is inert.
+
+Proven against the throwaway target:
+```
+BEFORE revoke: device bearer -> GET /api/profiles = 200
+parent revokes device        -> HTTP 204 ("success")
+AFTER  revoke: device bearer -> GET /api/profiles = 200   <- unchanged
+```
+There is also **no refresh flow**: `DeviceLink.refreshTokenId` is generated and
+stored (`devices.ts:306,413`; `schema.prisma:791 @unique`) but never verified and
+never exchanged — no `/refresh` endpoint exists. So the 180d TTL is the *only*
+thing that ever ends a device session.
+
+Fixed together with the scoped-device-token work (finding #5): the `did` claim +
+DeviceLink lookup make revocation real, and any sync/event submitted after
+revocation is rejected because the token no longer authenticates.
+
+## Finding #8 — client-declared progress can be inflated (integrity, in-family)
+
+`POST /api/progress/sync` accepts client-supplied `total_stars`,
+`progress_by_module`, and `badges`. `syncProgress` correctly verifies profile
+ownership (no cross-family tampering) and locks the row, and `total_stars` is
+merged monotonically (`Math.max(cur, req)`) — so a client cannot LOWER progress.
+But it can **inflate** freely: `total_stars: 999999` is accepted and stored, and
+levels can be declared complete without being played.
+
+**Encryption of the local store is not a fix and cannot be** — the key would have to
+ship with the client, so the device's owner can always decrypt/alter/re-encrypt.
+Client-side integrity is unachievable by construction; the boundary is the server.
+
+**Severity:** integrity, scoped within one family — the "attacker" is typically the
+child cheating at their own app. It matters more than cosmetically because stars
+feed the real reward/gift economy. Combined with finding #5, a kid device token can
+sync ANY sibling's profile in the family, so it can inflate a sibling's progress too.
+
+**Options** (product decision):
+1. **Authoritative server-side recomputation** — the event stream (`/api/events`
+   already carries `question_answered` with correctness/timings/attempts) has what's
+   needed to compute stars/progress server-side and stop trusting client totals.
+   Principled fix; the data already exists.
+2. **Plausibility ceilings** — reject implausible deltas (stars/hour, impossible
+   level jumps). Cheap, heuristic, catches casual tampering.
+3. **Accept it** — document that progress is client-asserted and not evidence of
+   learning, and keep the reward economy tolerant of it.
