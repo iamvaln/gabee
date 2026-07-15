@@ -12,7 +12,9 @@ function skip(reason) {
 }
 
 try {
-  execFileSync('claude', ['--version'], { stdio: 'ignore' });
+  // Bounded like the -p call below: an unbounded liveness probe could hang
+  // (auth prompt, update check) and wedge the whole scan with no timeout.
+  execFileSync('claude', ['--version'], { stdio: 'ignore', timeout: 5000 });
 } catch {
   skip('claude CLI not found');
 }
@@ -44,7 +46,10 @@ try {
   const fenced = /```(?:json)?\s*([\s\S]*?)```/.exec(text);
   if (fenced) text = fenced[1];
 
-  const findings = JSON.parse(text).findings ?? [];
+  // Guard the shape: a model that ignores "STRICT JSON" and returns a string for
+  // `findings` would otherwise iterate its characters and emit `[undefined]` noise.
+  const parsed = JSON.parse(text).findings;
+  const findings = Array.isArray(parsed) ? parsed : [];
   if (findings.length === 0) console.log('- ai-review: no risks flagged');
   for (const f of findings) console.log(`- ai-note [${f.severity}] ${f.vector}: ${f.scenario}`);
 } catch (e) {
