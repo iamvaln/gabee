@@ -265,8 +265,8 @@ acting on the notes blindly (as this triage tried to model).
 
 | fingerprint | proposed reason | proposed expiry |
 |---|---|---|
-| `osv:hono@4.12.23:GHSA-88fw-hqm2-52qc` | dev-only transitive dep via `@prisma/dev`, never in the production image | 2026-10-01 |
-| `osv:vite@7.3.3:GHSA-fx2h-pf6j-xcff` | devDependency build tool, Windows-only dev-server CVE, never shipped/deployed on Windows | 2026-10-01 |
+| `osv:hono@4.12.23:GHSA-88fw-hqm2-52qc` | **CORRECTED**: hono IS in the production image (verified: `/app/node_modules/.pnpm/hono@4.12.23/`). Not exploitable because the app never imports hono — the vulnerable CORS middleware is never instantiated. Dead code, not an unreachable dep. | 2026-10-01 |
+| `osv:vite@7.3.3:GHSA-fx2h-pf6j-xcff` | **CORRECTED**: vite IS in the production image (verified). Not exploitable: the CVE is a Windows-only `vite dev` server `fs.deny` bypass; prod is a Linux container that never runs the dev server. Dead code. | 2026-10-01 |
 
 ## Backlog summary (highest to lowest priority by threat-model tier)
 
@@ -289,3 +289,21 @@ acting on the notes blindly (as this triage tried to model).
 Note: this is the same property the probes rely on for bucket isolation, so fixing
 it will require the rate-limit probe to isolate differently (e.g. per-run unique
 credentials, or accepting a shared bucket and running that spec last).
+
+
+## Root cause behind the osv BLOCKs — the prod image ships all devDependencies
+
+Verified 2026-07-15. `apps/web/Dockerfile`'s runtime stage is `FROM build` and
+deliberately keeps the FULL `node_modules` ("so the Prisma CLI (used by the
+`migrate` service) and the generated client are available") — and
+`docker-compose.yml`'s `migrate` service reuses the same `gabee-web` image. So the
+production image carries the entire devDependency tree: **1.1 GB of node_modules**,
+including `hono` and `vite`.
+
+That is *why* both CVEs block, and it is the actual finding — the two waivers below
+treat a symptom. Every future devDependency CVE will block a release the same way,
+so this is a recurring tax, not a one-off.
+
+| finding | vector | tier | disposition |
+|---|---|---|---|
+| Production image ships the full devDependency tree (1.1 GB node_modules incl. hono, vite, the Prisma CLI + its `@prisma/dev` server) because one image serves both `web` and `migrate`. Widens attack surface and makes every devDep CVE a release blocker. | `plat-image-cve` | needs decision | **fix**: give the runtime a pruned prod-only `node_modules` (e.g. `pnpm prune --prod` / `--filter ... deploy` in a separate runtime stage), and either keep a small separate image for `migrate` or install the Prisma CLI only there. Removes both CVEs at the root and shrinks the image. Bigger change — touches the deploy path, so do it deliberately. |
