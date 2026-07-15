@@ -6,12 +6,13 @@
 set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT" || { echo "cannot cd to repo root" >&2; exit 2; }
-SINCE=""; FULL=0; STRICT=0; NO_DYNAMIC=0
+SINCE=""; FULL=0; STRICT=0; NO_DYNAMIC=0; NO_AI=0
 while [ $# -gt 0 ]; do case "$1" in
   --since) SINCE="${2:?--since needs a value}"; shift 2;;
   --full) FULL=1; shift;;
   --strict) STRICT=1; shift;;
   --no-dynamic) NO_DYNAMIC=1; shift;;
+  --no-ai) NO_AI=1; shift;;
   *) echo "unknown arg: $1" >&2; exit 2;;
 esac; done
 [ -z "$SINCE" ] && SINCE="$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null || echo '')"
@@ -92,6 +93,12 @@ if [ "${NO_DYNAMIC:-0}" -eq 0 ] && { echo "$CHECKS" | grep -qxE 'app-rate-limit|
     SEC_CHECKS="$CHECKS" node ops/security/dynamic/run.mjs $( [ "$FULL" -eq 1 ] && echo --full ) \
       && note "- dynamic: probes passed" || { note "- dynamic: PROBE FAILURE (block)"; DYN_BLOCK=1; }
   else note "- dynamic: skipped (docker not available)"; fi
+fi
+
+# ── AI threat-review (LOCAL ONLY, advisory — never blocks, never in CI) ──
+if [ "${NO_AI:-0}" -eq 0 ]; then
+  note "## AI threat-review (advisory)"
+  node ops/security/ai-review.mjs "$SINCE" | tee -a "$REPORT" || true
 fi
 
 if [ "$STATIC_BLOCK" -eq 1 ]; then note ""; note "RESULT: BLOCK (see $REPORT)"; exit 1; fi
