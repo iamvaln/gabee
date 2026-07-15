@@ -27,7 +27,7 @@ test('a valid token confirms the account and is single-use', async () => {
     webRequest('http://localhost/api/auth/confirm-email', { body: { token: rawToken } }),
     undefined,
   );
-  assert.ok(replay.status >= 400);
+  assert.equal(replay.status, 400); // invalid_or_expired_token
 });
 
 test('an expired token is refused and does not confirm', async () => {

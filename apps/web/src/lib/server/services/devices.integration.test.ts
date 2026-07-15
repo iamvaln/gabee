@@ -20,7 +20,7 @@ test('pair-link claim creates a DeviceLink and is single-use (replay → 4xx)', 
   const { devices } = await listDevices(parent.id);
   assert.equal(devices.length, 1);
 
-  await assert.rejects(() => claimPairToken({ token }), (e: unknown) => e instanceof HttpError && e.status >= 400);
+  await assert.rejects(() => claimPairToken({ token }), (e: unknown) => e instanceof HttpError && e.status === 409);
 });
 
 test('claim-by-code binds to the owning parent; a stranger parent + same code → 404', async () => {

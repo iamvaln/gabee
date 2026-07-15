@@ -44,6 +44,7 @@ test('an admin logs in on the admin cookie surface', async () => {
   const res = await POST(webRequest(url, { body: { email: parent.email, password } }), undefined);
   assert.equal(res.status, 200);
   assert.ok(res.cookies.get(ADMIN_SESSION_COOKIE)?.value); // admins get gabee_admin_session
+  assert.equal(res.cookies.get(PARENT_SESSION_COOKIE)?.value, undefined); // NOT the parent cookie
 });
 
 test('rate limit: repeated failures from ONE ip eventually 429', async () => {

@@ -2,7 +2,7 @@ import '../../../test/setup-integration'; // src/lib/server/services -> src/test
 import test, { after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { createTestClient, resetDb } from '@gabee/db/testing';
-import { signup } from './accounts';
+import { signup, login } from './accounts';
 import { HttpError } from '../http';
 
 const prisma = createTestClient();
@@ -20,6 +20,15 @@ test('signup creates the account + one scrypt credential, unconfirmed', async ()
   assert.equal(row.credentials.length, 1);
   assert.equal(row.credentials[0]!.algorithm, 'scrypt');
   assert.notEqual(row.credentials[0]!.hash, 'a-good-password'); // stored hashed, never plaintext
+
+  // Round-trip proof: the stored hash is a real scrypt hash OF THIS PASSWORD,
+  // not just "not plaintext". login() only reaches the email_not_confirmed
+  // gate AFTER verifyPassword succeeds — a broken hash would yield
+  // invalid_credentials instead.
+  await assert.rejects(
+    () => login('New.Person@Example.com', 'a-good-password'),
+    (e: unknown) => e instanceof HttpError && e.code === 'email_not_confirmed',
+  );
 });
 
 test('signup on an existing email is rejected (409 email_taken)', async () => {
