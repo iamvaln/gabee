@@ -1,9 +1,10 @@
 import {
   UpdateProfileRequestSchema,
+  DeviceUpdateProfileRequestSchema,
   type ProfileResponse,
   type OkResponse,
 } from '@gabee/types';
-import { route, readJson, json, requireParent } from '@/lib/server/http';
+import { route, readJson, json, requireParent, requireKidDevice } from '@/lib/server/http';
 import { updateProfile, deleteProfile } from '@/lib/server/services/profiles';
 import { recordFamilyActivity } from '@/lib/server/services/family-activity';
 
@@ -12,9 +13,16 @@ export const runtime = 'nodejs';
 type Ctx = { params: Promise<{ id: string }> };
 
 export const PATCH = route<Ctx>(async (req, ctx) => {
-  const session = await requireParent(req);
+  const session = await requireKidDevice(req);
   const { id } = await ctx.params;
-  const input = await readJson(req, UpdateProfileRequestSchema);
+  // A paired kid device may only flip the audio toggle — that is the ONLY field the
+  // kid PWA writes (Settings.tsx). A parent sign-in gets the full schema. Without
+  // this split, a device token could rewrite its family's names, birth dates, gender
+  // and avatars.
+  const input =
+    session.scope === 'device'
+      ? await readJson(req, DeviceUpdateProfileRequestSchema)
+      : await readJson(req, UpdateProfileRequestSchema);
   const profile = await updateProfile(session.parentId, id, input);
   // Family activity log — surfaced as "X updated <kid>'s profile" on K1.
   void recordFamilyActivity({

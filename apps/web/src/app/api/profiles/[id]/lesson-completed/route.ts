@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { KidStreakStateSchema, type KidStreakState } from '@gabee/types';
-import { route, json, requireParent } from '@/lib/server/http';
+import { route, json, requireKidDevice } from '@/lib/server/http';
 import { assertParentCanAccessKid } from '@/lib/server/kid-access';
 import { bumpStreakOnLessonCompleted } from '@/lib/server/services/healthy-use';
 
@@ -21,7 +21,7 @@ const BodySchema = z.object({}).optional();
  * to bump the streak for a shared kid).
  */
 export const POST = route<Ctx>(async (req, ctx) => {
-  const session = await requireParent(req);
+  const session = await requireKidDevice(req);
   const { id } = await ctx.params;
   await BodySchema.parseAsync(await req.json().catch(() => ({})));
   await assertParentCanAccessKid(session.parentId, id);

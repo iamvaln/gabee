@@ -1,5 +1,5 @@
 import type { BundleManifestEntry, BundleManifestResponse, Module } from '@gabee/types';
-import { route, json, requireParent } from '@/lib/server/http';
+import { route, json, requireKidDevice } from '@/lib/server/http';
 import { prisma } from '@/lib/server/db';
 
 export const runtime = 'nodejs';
@@ -23,7 +23,7 @@ const MODULES: Module[] = ['numbers', 'words', 'keyboard', 'code', 'translation'
  * already reads these fields; the new `version` value is additive.
  */
 export const GET = route(async (req) => {
-  await requireParent(req);
+  await requireKidDevice(req);
 
   const [snapshots, livePool] = await Promise.all([
     // Latest snapshot per module — one query, then reduce by max(version).

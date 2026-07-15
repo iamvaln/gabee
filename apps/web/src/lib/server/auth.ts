@@ -58,17 +58,33 @@ export async function verifyPassword(
 
 const secret = new TextEncoder().encode(AUTH_JWT_SECRET);
 
+/**
+ * Who is calling.
+ *   - `parent` — a real parent login (password → createSessionToken). Full authority.
+ *   - `device` — a paired kid device (claimPairToken → mintDeviceBearer). Restricted
+ *     to the endpoints the kid PWA actually needs; see `requireKidDevice` in http.ts.
+ *
+ * A token with NO scope claim is a parent session minted before scoping shipped —
+ * treated as `parent` so existing logins keep working. Device tokens have always
+ * been minted by `mintDeviceBearer`, which now always stamps `scope: 'device'`, so
+ * no unscoped token can be a device token.
+ */
+export type SessionScope = 'parent' | 'device';
+
 export interface SessionClaims {
   parentId: string;
   email: string;
+  scope: SessionScope;
+  /** DeviceLink id — set only for `device` scope. Makes the token revocable. */
+  deviceLinkId?: string;
 }
 
-/** Mint a session token. Returns the JWT and its absolute expiry. */
+/** Mint a parent session token. Returns the JWT and its absolute expiry. */
 export async function createSessionToken(
-  claims: SessionClaims,
+  claims: Pick<SessionClaims, 'parentId' | 'email'>,
 ): Promise<{ token: string; expiresAt: Date }> {
   const expiresAt = new Date(Date.now() + SESSION_TTL_SECONDS * 1000);
-  const token = await new SignJWT({ email: claims.email })
+  const token = await new SignJWT({ email: claims.email, scope: 'parent' })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(claims.parentId)
     .setIssuedAt()
@@ -81,7 +97,14 @@ async function verifySessionToken(token: string): Promise<SessionClaims | null> 
   try {
     const { payload } = await jwtVerify(token, secret);
     if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') return null;
-    return { parentId: payload.sub, email: payload.email };
+    // Absent scope = a parent session minted before scoping shipped. Device tokens
+    // always carry scope:'device', so defaulting to 'parent' cannot upgrade one.
+    const scope: SessionScope = payload.scope === 'device' ? 'device' : 'parent';
+    const deviceLinkId = typeof payload.did === 'string' ? payload.did : undefined;
+    // A device token without a `did` is not revocable — refuse it rather than let
+    // an unrevocable credential through.
+    if (scope === 'device' && !deviceLinkId) return null;
+    return { parentId: payload.sub, email: payload.email, scope, deviceLinkId };
   } catch {
     return null;
   }
