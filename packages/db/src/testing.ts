@@ -30,7 +30,24 @@ export async function resetDb(prisma: PrismaClient): Promise<void> {
   `;
   if (tables.length === 0) return;
   const list = tables.map((t) => `"public"."${t.tablename}"`).join(', ');
-  await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
+  // Login/confirm routes fire `void logAuthEvent(...)` un-awaited on the
+  // production prisma singleton (a separate pool from this test client). If a
+  // test ends while that insert is still in flight, it can interleave with
+  // this TRUNCATE and hit a lock-order inversion — Postgres resolves that by
+  // killing one session with 40P01 "deadlock detected". That write is
+  // fire-and-forget by design (not a bug we can fix here), so we absorb the
+  // rare collision with a small bounded retry instead of flaking the suite.
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
+      return;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const isDeadlock = /deadlock detected|40P01/i.test(message);
+      if (!isDeadlock || attempt === maxAttempts) throw err;
+    }
+  }
 }
 
 // Monotonic per-process suffix so factory rows never collide on unique columns.
