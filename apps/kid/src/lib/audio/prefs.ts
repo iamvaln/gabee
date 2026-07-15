@@ -14,3 +14,8 @@ export function isMusicEnabled(): boolean {
 export function setEnabled(v: boolean): void {
   useStore.getState().setAudioEnabled(v);
 }
+
+/** Local flip only — the best-effort PATCH to the API is the Settings screen's job. */
+export function setMusicEnabled(v: boolean): void {
+  useStore.getState().setMusicEnabled(v);
+}

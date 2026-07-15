@@ -9,9 +9,15 @@ interface MaybeAudio {
 
 export function getAudioContext(): AudioContext | null {
   const w = window as Window & MaybeAudio;
-  const AC = window.AudioContext || w.webkitAudioContext;
-  if (!AC) return null;
-  const ctx = w.__gabeeAudio ?? (w.__gabeeAudio = new AC());
+  // A pre-existing (real or test-installed fake) context is always reused,
+  // even where no AudioContext constructor is available (e.g. jsdom, which
+  // has no Web Audio API — module tests inject a fake via this slot).
+  let ctx = w.__gabeeAudio;
+  if (!ctx) {
+    const AC = window.AudioContext || w.webkitAudioContext;
+    if (!AC) return null;
+    ctx = w.__gabeeAudio = new AC();
+  }
   // Gesture-gated rejection is expected here (autoplay policy); swallow it —
   // an unhandled rejection would otherwise reach Sentry as noise.
   if (ctx.state === 'suspended') ctx.resume().catch(() => {});
