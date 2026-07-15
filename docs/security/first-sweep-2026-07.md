@@ -348,3 +348,57 @@ stated reasoning was wrong anyway (see the correction section).
 **Two of these (3, 4) were found only because the dynamic layer existed** — a probe
 had to actually log in and read a message to hit them. Neither is visible to a
 static scanner.
+
+## 🔴 ESCALATION of finding #5 — a paired kid device holds FULL parent authority (verified 2026-07-16)
+
+Finding #5 was triaged as "kid-device `PATCH /api/profiles/:id` has no field-level
+allowlist". Investigating it showed the allowlist is a *symptom*. The real issue:
+
+**`claimPairToken` mints the kid device a token that IS a parent session.**
+`mintDeviceBearer(parent.id, parent.email)` (`services/devices.ts:262`) signs
+`{ email, sub: parentId }` with the same `secret` and the same claim shape as
+`createSessionToken` (`auth.ts:67`), the real parent-login minter. `getSession`
+accepts any Bearer and `verifySessionToken` reads only `sub` + `email` — there is
+**no scope/audience/device claim to tell them apart**, so every `requireParent`
+route accepts a kid tablet. And the device TTL is **180 days** vs the parent
+session's 30 — the least-trusted device holds the longest-lived credential.
+
+**Verified empirically** (paired a device against the throwaway target, then used
+its bearer):
+
+| route | kid-device bearer |
+|---|---|
+| `GET /api/profiles` | **200** |
+| `GET /api/messages` | **200** — reads the parent's private messages to kids |
+| `GET /api/devices` | **200** — enumerates (and can revoke) the parent's own devices |
+| `GET /api/family/activity` | **200** |
+
+Decoded claims are byte-identical in shape:
+```
+device: {"email":"…","sub":"…parentId","iat":…,"exp":…}   TTL 180d
+parent: {"email":"…","sub":"…parentId","iat":…,"exp":…}   TTL  30d
+```
+
+**Why it matters:** the kid tablet is the device most likely to be shared, lost, or
+handed around, and it is operated *by a child*. The kid PWA's UI doesn't offer these
+actions — but a UI that hides a capability is not an access control. Anyone holding
+the token (devtools, a lost tablet, a sibling) has the family account for 6 months:
+delete a child profile, read every parent→kid message, revoke the parent's phone.
+
+**Proposed fix** (needs a product decision — this is an auth design change, not a patch):
+1. Add a `scope: 'device'` claim in `mintDeviceBearer`, and a `did` (DeviceLink id)
+   so a device token is revocable and attributable.
+2. `requireParent` rejects `scope: 'device'` tokens.
+3. Add `requireKidDevice` (or `requireParentOrDevice`) and apply it ONLY to the
+   endpoints the kid PWA genuinely needs — bundles, event ingest, progress, its own
+   profile reads, the kid-side settings write.
+4. Everything else (device management, family/coparents, account, profile delete,
+   parent messages) stays parent-session-only.
+5. Then the "field-level allowlist" falls out naturally: give the device scope a
+   narrow update schema (e.g. `audio_enabled` only) rather than the full
+   `UpdateProfileRequestSchema`.
+6. Consider shortening the 180d device TTL and/or binding it to `refreshTokenId`,
+   which is already stored on `DeviceLink` but never checked at verify time.
+
+**Do NOT ship the allowlist alone** — it would narrow one route while leaving the
+kid tablet holding parent credentials for every other one.
