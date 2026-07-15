@@ -74,7 +74,7 @@ One file: `apps/kid/src/assets/music/ambient-hub.m4a` (Vite hashes it; imported 
 
 ## 7. Testing (user-required: unit + e2e, automated)
 
-Three layers, wired into the existing runners (explicit file lists in `apps/kid/package.json`; e2e in `e2e/tests/`):
+Three layers, wired into the existing runners (test files are glob-discovered by the package.json scripts; e2e in `e2e/tests/`):
 
 1. **Unit (plain node:test)** — `apps/kid/src/lib/audio/music.test.ts`:
    - `shouldPlayMusic` truth table (zone × master × music).
