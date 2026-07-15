@@ -6,11 +6,12 @@
 set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT" || { echo "cannot cd to repo root" >&2; exit 2; }
-SINCE=""; FULL=0; STRICT=0
+SINCE=""; FULL=0; STRICT=0; NO_DYNAMIC=0
 while [ $# -gt 0 ]; do case "$1" in
   --since) SINCE="${2:?--since needs a value}"; shift 2;;
   --full) FULL=1; shift;;
   --strict) STRICT=1; shift;;
+  --no-dynamic) NO_DYNAMIC=1; shift;;
   *) echo "unknown arg: $1" >&2; exit 2;;
 esac; done
 [ -z "$SINCE" ] && SINCE="$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null || echo '')"
@@ -82,6 +83,18 @@ fi
 # security-waivers.yml, and prints per-finding lines (BLOCK/waived/note).
 if node ops/security/aggregate.mjs | tee -a "$REPORT"; then STATIC_BLOCK=0; else STATIC_BLOCK=1; fi
 
+# ── dynamic probes (LOCAL ONLY — needs Docker + a live throwaway target) ──
+# Skipped in CI (no target) and skippable with --no-dynamic. A failing authz/
+# IDOR/rate-limit probe is block-tier → exit 5.
+DYN_BLOCK=0
+if [ "${NO_DYNAMIC:-0}" -eq 0 ] && { echo "$CHECKS" | grep -qxE 'rate-limit|idor|authz' || [ "$FULL" -eq 1 ]; }; then
+  if have docker; then
+    SEC_CHECKS="$CHECKS" node ops/security/dynamic/run.mjs $( [ "$FULL" -eq 1 ] && echo --full ) \
+      && note "- dynamic: probes passed" || { note "- dynamic: PROBE FAILURE (block)"; DYN_BLOCK=1; }
+  else note "- dynamic: skipped (docker not available)"; fi
+fi
+
 if [ "$STATIC_BLOCK" -eq 1 ]; then note ""; note "RESULT: BLOCK (see $REPORT)"; exit 1; fi
+if [ "$DYN_BLOCK" -eq 1 ]; then note ""; note "RESULT: BLOCK (dynamic)"; exit 5; fi
 if [ -n "$MISSING" ] && [ "$STRICT" -eq 1 ]; then note "RESULT: FAIL (missing tools under --strict)"; exit 3; fi
 note ""; note "RESULT: PASS"; exit 0
