@@ -66,7 +66,8 @@ browsing activity outside Gabee.
 
 | Information | Retention |
 |---|---|
-| IP address | **90 days**, then automatically deleted. A daily job removes IP addresses older than 90 days — both the history and the last-known address of a device we haven't seen since. |
+| IP address — **device history** | **90 days**, then automatically deleted. A daily job removes the IP addresses recorded against your child's devices once they're older than 90 days, along with the last-known address of any device we haven't seen since. |
+| IP address — **sign-in security log** | **Kept longer.** Each sign-in, sign-up and password reset is recorded with the address it came from, so we can investigate misuse of an account — including misuse we only discover long afterwards. We keep these records for as long as they're useful for that purpose. **[LAWYER: state a concrete period or the criteria — Art. 13(2)(a) requires one; "indefinitely" is the weak point.]** |
 | Device identifier, OS/browser, screen, time zone, language, version, install type | Kept while the device record exists (refreshed to the latest values as the device is used); removed when the account is deleted |
 
 > ✅ **INTERNAL:** the 90-day window is implemented and verified
@@ -86,16 +87,19 @@ This information is stored on our servers located in the European Union. We neve
 send IP addresses to an outside service to look up location — where we do that at
 all, we do it on our own systems.
 
-Two third-party providers do handle this data as part of running Gabee:
+These providers help us run Gabee, and handle data on our behalf:
 
-- **Backups.** A nightly encrypted backup of our database — which includes the
-  device information described here — is stored with our backup provider
-  (Cloudflare R2). Backups are kept for 14 days, then deleted. This means that
-  for up to 14 days after an IP address is deleted from our live systems, a copy
-  may still exist in a backup, until that backup expires.
-- **Error reporting.** When something crashes we send diagnostic reports to our
-  error-reporting provider (Sentry, EU region). These reports never include IP
-  addresses or user-agents.
+| Provider | What they do for us | What they hold |
+|---|---|---|
+| **Contabo** (EU) | Hosts our servers | Everything — the live database runs here |
+| **Cloudflare R2** | Stores our nightly database backup | A full copy of the database, kept 14 days, then deleted. Restore-only; nothing reads it otherwise |
+| **Sentry** (EU region) | Tells us when something crashes | Diagnostic reports. Configured **not** to send IP addresses; may include browser/OS and the page where the error happened |
+| **Mailgun** | Sends our emails (confirmation, password reset, invitations) | Your email address and the message content |
+| **Anthropic** | Helps us write lesson content | Only our content-authoring prompts — **no information about you or your child** |
+
+Because the backup is a full copy of the database, an IP address we've deleted
+from our live systems may still exist inside a backup for up to 14 days, until
+that backup expires.
 
 Access to this information is role-restricted as described above, and IP
 addresses are never written into ordinary system logs.
@@ -122,9 +126,13 @@ Write to us at **[privacy@gabee.app — LAWYER/OPS: confirm the address]** and w
 will respond within one month.
 
 - **Deleting this information.** When you delete your Gabee account, the device
-  information described here — including the full IP-address history — is
+  information described here — including your child's device IP history — is
   **permanently deleted** along with it. (A copy may persist in an encrypted
-  backup for up to 14 days, until that backup expires.)
+  backup for up to 14 days, until that backup expires.) One exception: the
+  **sign-in security log** is kept, so that misuse of an account can still be
+  investigated after the fact. **[LAWYER: this is a deliberate retention against
+  an erasure request — confirm it stands under Art. 17(3) / the overriding-
+  grounds test in Art. 17(1)(c), and say so here in plain words.]**
 - **Seeing what we hold.** You can ask for a copy of the device information
   associated with your account.
 - **Correcting it.** Most of this information is measured automatically from the
@@ -136,12 +144,26 @@ will respond within one month.
 - **Complaining.** If you're not satisfied, you can complain to your data
   protection authority (in France, the CNIL).
 
-> ⚠️ **INTERNAL:** the erasure claim is **true and verified** — deleting the
-> `ParentAccount` cascades `Device` + `DeviceIpSighting` away (checked by
-> `apps/web/scripts/verify-gdpr-cascade.mts`). Requests are handled through the
-> existing `/admin/gdpr` queue, which is a **manual checklist** — there is no
-> automated self-serve export/erasure. **[LAWYER: confirm the one-month response
-> commitment is one we can actually meet with a manual queue, and the exact
+> ⚠️ **INTERNAL — read before publishing the erasure claim.** The *cascade* is
+> true and verified: deleting the `ParentAccount` row takes `Device`,
+> `DeviceIpSighting`, `ConsentRecord` and the rest with it
+> (`verify-gdpr-cascade.mts`, plus `gdpr-erasure.test.ts` which fails if a new
+> table is ever added without a cascade). Two caveats the wording must survive:
+>
+> 1. **"Delete my account" does not delete anything by itself.** It files a
+>    request in the `/admin/gdpr` queue; the purge is performed **by hand** by an
+>    admin (`advanceGdprStep` only timestamps the checklist). Nothing in code
+>    enforces or proves it happened. The one-month promise rests entirely on a
+>    human remembering. Product-owner decision 2026-07-16: keep it manual.
+> 2. **The sign-in security log is anonymised on a delay, not on deletion.**
+>    `AuthEventLog` is `SetNull` by design (the audit row survives), and its
+>    ip/user-agent/detail are cleared by the 90-day job — so a deleted parent's
+>    entries lose their PII **within 90 days of the event**, not at the instant
+>    of deletion. Bounded and automatic, but not immediate.
+>
+> **[LAWYER: given (1), is the one-month commitment safe to publish with a manual
+> queue? And is the ≤90-day lag in (2) acceptable, or must erasure scrub the auth
+> log immediately (which would mean automating the purge)? Also confirm the exact
 > contact address.]**
 
 ### Legal basis and parental consent
@@ -150,39 +172,42 @@ A Gabee account is held by a parent or guardian, not by a child. When you create
 the account and add your child's profile, you do so as the person responsible for
 them.
 
-We rely on two different grounds, depending on why we use the information:
+We rely on two grounds, depending on why we use the information — **not on
+consent**:
 
-- **Keeping accounts safe (security).** We rely on our legitimate interest in
-  protecting families' accounts from misuse. This is the ground for collecting
-  the IP address and device identifier.
-- **Understanding and improving Gabee (analytics), and supporting you.** We rely
-  on **your consent**, given when you set up the account. You can withdraw it at
-  any time in **[Settings → …  — PRODUCT: confirm where]**, and we'll stop using
-  the information for those purposes.
+- **Providing Gabee at all.** The device information described here is part of
+  how the service works: recognising your child's device, syncing their progress
+  from it, and supporting you when something goes wrong. We collect it because
+  we need it to deliver what you signed up for.
+- **Keeping accounts safe.** Protecting families' accounts from misuse is our
+  legitimate interest. This is why we record the IP address.
 
-Withdrawing consent doesn't affect what we did before you withdrew it, and it
-doesn't affect the security ground above.
+Because we don't rely on consent for this, there's no toggle to switch it off:
+Gabee wouldn't work correctly without it. What you can do instead is
+**object** — see *Your choices and rights* — and, of course, delete your account.
 
-> 🔴 **INTERNAL — BLOCKING, THIS IS NOT TRUE YET.** The consent story above
-> describes the **target state**, not what the product does today:
-> - **The parent DOES accept T&C at signup** — a required checkbox gating the
->   submit, linking to `/fr/terms` (`parent/signup/page.tsx:87,132,394`). What's
->   missing is that the acceptance is **never sent or stored**: the signup API
->   takes only `{email, password}` and no consent column exists. So today the
->   consent is **real but unprovable** — we cannot show who accepted what, when.
-> - **There is no withdrawal control** in the product either.
+> ⚠️ **INTERNAL.** Product-owner position (2026-07-16): the metadata is
+> **indissociable from the service** — Gabee can't work correctly without it — so
+> this rests on **contract necessity + legitimate interest, never consent**.
+> That's coherent, and it's *why* there is deliberately **no toggle and no
+> withdrawal control** to build: those are consent obligations (Art. 7(3)), and
+> we don't invoke consent. It also sidesteps the trap of bundling "consent" into
+> a mandatory T&C checkbox — that wouldn't be freely given, so it wouldn't be
+> valid anyway. The measure that replaces them is **making this legible in the
+> T&C**, which is the point of this section.
 >
-> **Prerequisites before this section can be published:**
-> 1. Persist the acceptance already collected at signup — **who / when / which
->    version** (in progress: `ConsentRecord` history table).
-> 2. A re-consent gate when a new T&C version ships (in progress: blocking
->    screen on next parent-space visit).
-> 3. A withdrawal control + what withdrawal actually turns off.
+> Implemented and true: the T&C acceptance is **recorded and provable**
+> (`ConsentRecord` — who / which version / when, append-only) with a blocking
+> re-consent gate on a version bump. That is **contract acceptance**, not GDPR
+> consent — don't let the final wording conflate the two.
 >
-> **[LAWYER: decide the split above — is legitimate interest defensible for
-> security on a minor's IP, or should everything sit on consent? If everything
-> rests on consent, note the product consequence: no consent ⇒ no device
-> metadata collected at all, which the code must then enforce.]**
+> **[LAWYER: confirm the split. The soft spot is Art. 6(1)(b) "necessary for the
+> contract", read narrowly: device id / sync / support plausibly qualify, but
+> product analytics (e.g. peak playing hour) usually does NOT — a child learns
+> fine without it — and lands on legitimate interest (Art. 6(1)(f)) instead.
+> Either way no consent and no withdrawal control is needed; if legitimate
+> interest carries analytics, document the balancing test and honour the right to
+> object.]**
 
 ### Changes to this section
 
