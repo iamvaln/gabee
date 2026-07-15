@@ -4,12 +4,21 @@ always: [gitleaks, osv]
 routes:
   - glob: 'apps/web/src/app/api/'
     checks: [semgrep, app-injection, app-authz-idor, app-rate-limit, app-input-validation]
+  # Consent + T&C version: signup records it, accept-terms re-records it, and
+  # terms.ts is the server-authoritative version. Changing any of these can
+  # silently break provable consent (app-consent-proof).
+  - glob: 'apps/web/src/app/api/auth/'
+    checks: [app-consent-proof]
+  - glob: 'apps/web/src/lib/terms.ts'
+    checks: [app-consent-proof]
+  - glob: 'apps/web/src/app/parent/'
+    checks: [app-consent-proof]
   - glob: 'apps/web/src/lib/server/'
     checks: [semgrep, app-authn, app-authz-idor, net-cors, app-secrets-in-code]
   - glob: 'apps/web/src/proxy.ts'
     checks: [semgrep, net-host-isolation]
   - glob: 'packages/db/prisma/'
-    checks: [app-pii-exposure, app-injection]
+    checks: [app-pii-exposure, app-injection, app-consent-proof]
   - glob: 'docker-compose'
     checks: [trivy, plat-compose-misconfig, plat-env-handling]
   - glob: 'deploy/'
