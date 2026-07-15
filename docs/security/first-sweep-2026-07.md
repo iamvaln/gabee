@@ -279,3 +279,13 @@ acting on the notes blindly (as this triage tried to model).
 7. **Tooling** `.semgrep/gabee.yml`'s `kid-message-or-parent-route-missing-guard` rule has an inverted `pattern-not-inside` and fires on ~all routes regardless of guard presence — needs a rule fix, not an app fix (see Semgrep section).
 8. **Hygiene, no security relevance** — scope the two docs-only Semgrep rule categories (`wildcard-postmessage-configuration`, `react-dangerouslysetinnerhtml`) away from `docs/**` handoff-prototype directories to cut sweep noise.
 9. **Correctness bug, not security** — `to_child_avatar` nullable mismatch (see above) — flagging for the app owner, not proposing a fix here.
+
+## Addendum — finding surfaced while hardening the probes (2026-07-15)
+
+| finding | vector | tier | disposition |
+|---|---|---|---|
+| **App-level rate limiting is bypassable by rotating `X-Forwarded-For`.** `clientIpFrom()` (`apps/web/src/lib/server/rate-limit.ts`) buckets by the **first** `X-Forwarded-For` entry. Traefik *appends* the real client IP rather than replacing the header, so a client that sends its own `X-Forwarded-For: 1.2.3.4` controls the bucket key and can reset every limiter (login, signup, forgot-password, contact) at will by rotating the value. Demonstrated concretely: `rate-limit.spec.ts` now claims its own synthetic bucket (`10.99.0.1`) purely by setting that header. | `app-rate-limit` / `net-rate-limit-edge` | **needs decision** (the threat model already flagged "confirm the app-level limiter isn't trivially bypassed by rotating X-Forwarded-For" as a Plan 2 dynamic check — this confirms it IS) | **fix**: trust only the LAST `X-Forwarded-For` entry (the one the trusted proxy appended), or take Traefik's `X-Real-IP`, or set a trusted-proxy hop count. Until then the limiters deter only naive abuse. |
+
+Note: this is the same property the probes rely on for bucket isolation, so fixing
+it will require the rate-limit probe to isolate differently (e.g. per-run unique
+credentials, or accepting a shared bucket and running that spec last).

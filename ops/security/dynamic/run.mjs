@@ -13,6 +13,15 @@ if (wants('app-rate-limit')) specs.push('probes/rate-limit.spec.ts');
 if (wants('app-authz-idor')) specs.push('probes/idor.spec.ts', 'probes/authz.spec.ts');
 if (specs.length === 0) { console.log('no dynamic probes in scope'); process.exit(0); }
 
+const teardown = () => {
+  try { execFileSync('ops/security/dynamic/target.sh', ['down'], { stdio: 'ignore' }); } catch {}
+};
+// `finally` does not run on SIGINT — without this, Ctrl-C during the Docker build
+// or a probe leaves gabee-sec-* containers running until the next `up` cleans them.
+for (const sig of ['SIGINT', 'SIGTERM']) {
+  process.on(sig, () => { teardown(); process.exit(130); });
+}
+
 let base;
 try {
   const out = execFileSync('ops/security/dynamic/target.sh', ['up'], { encoding: 'utf8' });
@@ -22,5 +31,5 @@ try {
     { stdio: 'inherit', env: { ...process.env, SEC_BASE_URL: base } });
   process.exitCode = r.status === 0 ? 0 : 5;   // 5 = dynamic block-tier failure
 } finally {
-  try { execFileSync('ops/security/dynamic/target.sh', ['down'], { stdio: 'ignore' }); } catch {}
+  teardown();
 }
