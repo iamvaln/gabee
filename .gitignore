@@ -35,3 +35,6 @@ pnpm-debug.log*
 # Test / coverage
 coverage/
 .security/
+
+# SDD process artifacts (task briefs/reports/ledger)
+.superpowers/
