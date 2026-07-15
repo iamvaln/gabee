@@ -1,0 +1,3 @@
+{ "results": [ { "packages": [
+  { "package": { "name": "leftpad" }, "vulnerabilities": [ { "id": "GHSA-xxxx", "database_specific": { "severity": "HIGH" } } ] }
+] } ] }

@@ -1,0 +1,3 @@
+{ "Results": [ { "Target": "docker-compose.yml", "Misconfigurations": [
+  { "ID": "DS002", "Severity": "HIGH", "Title": "root user" }
+] } ] }
