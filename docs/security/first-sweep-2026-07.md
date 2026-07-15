@@ -53,8 +53,8 @@ the right fail-closed thing (block rather than silently skip).
 
 | fingerprint | tool | tier | what it is | proposed disposition |
 |---|---|---|---|---|
-| `osv:hono:GHSA-88fw-hqm2-52qc` | osv-scanner | BLOCK (HIGH) | `hono@4.12.23` CORS middleware reflects any `Origin` with `Access-Control-Allow-Credentials: true` when `origin` is left at its wildcard default. | **waive** — see reasoning below |
-| `osv:vite:GHSA-fx2h-pf6j-xcff` | osv-scanner | BLOCK (HIGH) | `vite@7.3.3` `server.fs.deny` bypass, **Windows-only**, dev-server-only. | **waive** — see reasoning below |
+| `osv:hono@4.12.23:GHSA-88fw-hqm2-52qc` | osv-scanner | BLOCK (HIGH) | `hono@4.12.23` CORS middleware reflects any `Origin` with `Access-Control-Allow-Credentials: true` when `origin` is left at its wildcard default. | **waive** — see reasoning below |
+| `osv:vite@7.3.3:GHSA-fx2h-pf6j-xcff` | osv-scanner | BLOCK (HIGH) | `vite@7.3.3` `server.fs.deny` bypass, **Windows-only**, dev-server-only. | **waive** — see reasoning below |
 
 **Reasoning (both):** neither package reaches the deployed runtime.
 
@@ -74,11 +74,11 @@ the right fail-closed thing (block rather than silently skip).
 **Proposed waiver entries** (for the user to add with a real `approver`):
 
 ```yaml
-  - fingerprint: "osv:hono:GHSA-88fw-hqm2-52qc"
+  - fingerprint: "osv:hono@4.12.23:GHSA-88fw-hqm2-52qc"
     reason: "hono/@hono/node-server arrive only via prisma's bundled @prisma/dev (prisma CLI is a devDependency, prisma dev is never invoked); never present in the apps/web production image."
     approver: "<user>"
     expires: "2026-10-01"
-  - fingerprint: "osv:vite:GHSA-fx2h-pf6j-xcff"
+  - fingerprint: "osv:vite@7.3.3:GHSA-fx2h-pf6j-xcff"
     reason: "vite is a devDependency of apps/kid (build tool only, static output ships); CVE is Windows-only and dev-server-only, and Gabee never builds/deploys on Windows."
     approver: "<user>"
     expires: "2026-10-01"
@@ -265,8 +265,8 @@ acting on the notes blindly (as this triage tried to model).
 
 | fingerprint | proposed reason | proposed expiry |
 |---|---|---|
-| `osv:hono:GHSA-88fw-hqm2-52qc` | dev-only transitive dep via `@prisma/dev`, never in the production image | 2026-10-01 |
-| `osv:vite:GHSA-fx2h-pf6j-xcff` | devDependency build tool, Windows-only dev-server CVE, never shipped/deployed on Windows | 2026-10-01 |
+| `osv:hono@4.12.23:GHSA-88fw-hqm2-52qc` | dev-only transitive dep via `@prisma/dev`, never in the production image | 2026-10-01 |
+| `osv:vite@7.3.3:GHSA-fx2h-pf6j-xcff` | devDependency build tool, Windows-only dev-server CVE, never shipped/deployed on Windows | 2026-10-01 |
 
 ## Backlog summary (highest to lowest priority by threat-model tier)
 

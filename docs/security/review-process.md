@@ -230,9 +230,21 @@ paths, so a waiver survives until the underlying code actually changes):
 | tool | format | example |
 |---|---|---|
 | gitleaks | `gitleaks:<file>:<rule>:<line>` | `gitleaks:apps/web/foo.ts:generic-api-key:42` |
-| semgrep | `semgrep:<check_id>:<file>:<line>` | `semgrep:prisma-raw-string-interpolation:apps/web/src/lib/db.ts:88` |
-| osv | `osv:<package>:<vuln_id>` | `osv:hono:GHSA-xxxx-xxxx-xxxx` |
-| trivy | `trivy:<target>:<check_id>` | `trivy:docker-compose.yml:AVD-DS-0026` |
+| semgrep | `semgrep:<check_id>:<file>:<line>` | `semgrep:semgrep.prisma-raw-string-interpolation:apps/web/src/lib/db.ts:88` |
+| osv | `osv:<package>@<version>:<vuln_id>` | `osv:hono@4.12.23:GHSA-88fw-hqm2-52qc` |
+| trivy | `trivy:<target>:<check_id>:<line>` | `trivy:docker-compose.yml:AVD-DS-0026:40` |
+
+Two things bite people hand-writing these, so copy the fingerprint from the scan
+report rather than composing it yourself:
+- **semgrep prefixes the `check_id` with its config directory.** A rule declared
+  as `prisma-raw-string-interpolation` in `.semgrep/gabee.yml` is emitted as
+  `semgrep.prisma-raw-string-interpolation` — so the fingerprint carries
+  `semgrep:` twice (tool prefix + check_id prefix). That is correct, not a typo.
+- **osv pins the resolved version and trivy pins the line, deliberately.** Waivers
+  for a CVE are almost always reachability claims ("dev-only transitive dep"); a
+  version bump can invalidate that reasoning, so the bump forces re-review instead
+  of silently inheriting the old waiver. Likewise two services in one compose file
+  can trip the same trivy check — the line keeps them separately waivable.
 
 Only block-tier findings are matched against waivers — advisory findings are
 never suppressed (there's nothing to suppress; they don't fail the run). The

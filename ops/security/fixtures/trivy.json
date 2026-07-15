@@ -1,3 +1,13 @@
-{ "Results": [ { "Target": "docker-compose.yml", "Misconfigurations": [
-  { "ID": "DS002", "Severity": "HIGH", "Title": "root user" }
-] } ] }
+{
+  "Results": [
+    {
+      "Target": "docker-compose.yml",
+      "Class": "config",
+      "Type": "dockerfile",
+      "Misconfigurations": [
+        { "ID": "DS002", "Severity": "HIGH", "Title": "root user", "CauseMetadata": { "StartLine": 12, "EndLine": 12 } },
+        { "ID": "DS002", "Severity": "HIGH", "Title": "root user", "CauseMetadata": { "StartLine": 40, "EndLine": 40 } }
+      ]
+    }
+  ]
+}

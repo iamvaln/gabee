@@ -37,26 +37,51 @@ export function normalizeOsv(json) {
   for (const res of json?.results ?? [])
     for (const pkg of res.packages ?? []) {
       const name = pkg.package?.name ?? 'unknown';
+      // Pin the fingerprint to the RESOLVED VERSION. Waivers here are usually
+      // reachability claims ("only a dev-time transitive dep") — version-blind
+      // fingerprints would keep suppressing the same GHSA after the package
+      // becomes a production dep at a vulnerable version. A bump forces re-review.
+      const version = pkg.package?.version ?? 'unknown';
       for (const v of pkg.vulnerabilities ?? []) {
-        const sev = String(v.database_specific?.severity ?? '').toUpperCase();
-        out.push({ tool: 'osv', fingerprint: `osv:${name}:${v.id}`,
-          severity: sev === 'HIGH' || sev === 'CRITICAL' ? 'BLOCK' : 'ADVISORY',
-          title: `${name} ${v.id} (${sev || 'unscored'})`, file: 'pnpm-lock.yaml', line: null });
+        const sev = severityOf(v);
+        out.push({ tool: 'osv', fingerprint: `osv:${name}@${version}:${v.id}`,
+          severity: sev === 'HIGH' || sev === 'CRITICAL' ? 'BLOCK' : sev ? 'ADVISORY' : 'BLOCK',
+          title: `${name}@${version} ${v.id} (${sev || 'UNSCORED — score it or waive it'})`,
+          file: 'pnpm-lock.yaml', line: null });
       }
     }
   return out;
 }
 
-// trivy config --format json → { Results:[{ Target, Misconfigurations:[{ID, Severity, Title}] }] }.
+// Severity for an OSV vuln: GHSA-sourced npm advisories populate
+// `database_specific.severity`; fall back to the top-level OSV `severity[]` CVSS
+// array. An unscorable vuln returns '' and the caller BLOCKs it — for a gate,
+// "we couldn't score this" must get human eyes, not a silent pass.
+function severityOf(v) {
+  const ds = String(v.database_specific?.severity ?? '').toUpperCase();
+  if (ds) return ds;
+  const cvss = (v.severity ?? []).find((s) => String(s.score ?? '').length);
+  if (!cvss) return '';
+  // CVSS v3 base score → qualitative band.
+  const m = /\/AV:.*/.test(String(cvss.score)) ? null : Number(cvss.score);
+  if (Number.isFinite(m)) return m >= 9 ? 'CRITICAL' : m >= 7 ? 'HIGH' : m >= 4 ? 'MODERATE' : 'LOW';
+  return '';
+}
+
+// trivy config --format json → { Results:[{ Target, Misconfigurations:[{ID, Severity, Title, CauseMetadata:{StartLine}}] }] }.
 export function normalizeTrivy(json) {
   const out = [];
   for (const res of json?.Results ?? []) {
     const target = norm(res.Target);
     for (const m of res.Misconfigurations ?? []) {
       const sev = String(m.Severity ?? '').toUpperCase();
-      out.push({ tool: 'trivy', fingerprint: `trivy:${target}:${m.ID}`,
+      // Include the line: two services in one compose file can fail the SAME
+      // check id — without it they collapse to one fingerprint and waiving one
+      // silently waives the other.
+      const line = m.CauseMetadata?.StartLine ?? null;
+      out.push({ tool: 'trivy', fingerprint: `trivy:${target}:${m.ID}:${line ?? '?'}`,
         severity: sev === 'HIGH' || sev === 'CRITICAL' ? 'BLOCK' : 'ADVISORY',
-        title: m.Title ?? m.ID, file: target, line: null });
+        title: m.Title ?? m.ID, file: target, line });
     }
   }
   return out;
