@@ -13,6 +13,7 @@ import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { selectSession } from '../lib/selectSession';
 import { ageFromBirthDate } from '../lib/age';
+import { sfx } from '../lib/audio';
 import { displayValue } from '../lib/util';
 import { getSeen, markSeen } from '../lib/seen';
 import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
@@ -251,6 +252,7 @@ export function KeyboardScrollingSession({
     const newScore = score + inc;
     const isLast = qIdx >= session.questions.length - 1;
     setFeedback(success ? 'correct' : 'wrong');
+    sfx(success ? 'correct' : 'wrong');
     setTimeout(async () => {
       if (isLast) {
         await finishLesson(newScore);

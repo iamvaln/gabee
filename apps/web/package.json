@@ -9,8 +9,9 @@
     "start": "next start",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
-    "test": "files=$(find src \\( -name '*.test.ts' -o -name '*.test.tsx' \\)); if [ -z \"$files\" ]; then echo 'no test files found' >&2; exit 1; fi; node --import tsx --test $files",
-    "test:coverage": "files=$(find src \\( -name '*.test.ts' -o -name '*.test.tsx' \\)); if [ -z \"$files\" ]; then echo 'no test files found' >&2; exit 1; fi; c8 -r text -r lcov -r html -x '**/*.test.*' node --import tsx --test $files"
+    "test": "files=$(find src \\( -name '*.test.ts' -o -name '*.test.tsx' \\) ! -name '*.integration.test.*'); if [ -z \"$files\" ]; then echo 'no test files found' >&2; exit 1; fi; node --import tsx --test $files",
+    "test:coverage": "files=$(find src \\( -name '*.test.ts' -o -name '*.test.tsx' \\) ! -name '*.integration.test.*'); if [ -z \"$files\" ]; then echo 'no test files found' >&2; exit 1; fi; c8 -r text -r lcov -r html -x '**/*.test.*' node --import tsx --test $files",
+    "test:integration": "files=$(find src -name '*.integration.test.ts'); if [ -z \"$files\" ]; then echo 'no integration test files found' >&2; exit 1; fi; node --import tsx --test --test-concurrency=1 $files"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

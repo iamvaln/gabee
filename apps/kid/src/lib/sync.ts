@@ -33,7 +33,7 @@ export type SyncStatus = 'online' | 'offline' | 'syncing' | 'synced';
 
 type Listener = (status: SyncStatus) => void;
 
-class SyncManager {
+export class SyncManager {
   private inFlight = false;
   private failures = 0;
   private backoffTimer: ReturnType<typeof setTimeout> | null = null;

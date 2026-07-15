@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { KidGift } from '@gabee/types';
 import { Bee } from './Bee';
+import { sfx } from '../lib/audio';
 
 /**
  * Loyalty / compensation gift card. A full-screen celebratory overlay shown when a
@@ -25,6 +26,7 @@ export function GiftCard({
     setPhase('claiming');
     try {
       await onClaim();
+      sfx('milestone');
       setPhase('claimed');
     } catch {
       setPhase('error');

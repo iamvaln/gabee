@@ -81,8 +81,12 @@ same PR).
 
 Web services against real Postgres. Priority order:
 
-1. `progress-merge` — server-side last-write-wins per-field merge
-   (product-spec §8). Property: replaying the same sync batch is idempotent.
+1. `progress-merge` + `progress` — server-side MONOTONIC merge under a
+   `FOR UPDATE` row lock (max stars/plays/levels, min best_time, union
+   seen-ids/badges): a stale device must never regress progress, concurrent
+   device syncs must both land, and replaying a snapshot is idempotent.
+   (The kid-side QUEUE is last-write-wins per profile; the server-side merge
+   is deliberately stronger than the spec's original LWW wording.)
 2. `events` — envelope `event_id` idempotency, 500-event batches, rejected
    events dropped-with-log.
 3. `auth` + `accounts` + `email-confirmation` + `password-reset` — signup,

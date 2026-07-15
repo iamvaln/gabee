@@ -65,6 +65,13 @@ jobs:
       - name: Migrate test DB
         run: pnpm --filter @gabee/db run db:migrate:deploy
 
+      # The security tooling's own guard logic — validRef injection/traversal
+      # rejection + waiver accountability — is safety-critical but lives outside
+      # any pnpm workspace, so `pnpm run test` skips it. Run it explicitly here so
+      # a regression in the injection guard or waiver rules can't ship silently.
+      - name: Security tooling unit tests
+        run: node --test ops/security/*.test.mjs
+
       - name: Lint
         run: pnpm run lint
 
@@ -76,3 +83,65 @@ jobs:
 
       - name: Integration tests
         run: pnpm run test:integration
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gabee_test
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/gabee_test
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gabee_test
+      AUTH_JWT_SECRET: e2e-ci-only-jwt-secret-not-a-real-secret
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gabee_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4 # version read from package.json "packageManager"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @gabee/db run db:generate
+
+      - name: Migrate test database
+        run: pnpm --filter @gabee/db run db:migrate:deploy
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @gabee/e2e exec playwright install --with-deps chromium
+
+      - name: Build apps
+        run: pnpm run build
+
+      - name: Run e2e tests
+        run: pnpm --filter @gabee/e2e run test
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            e2e/test-results/
+            e2e/playwright-report/
+          retention-days: 7

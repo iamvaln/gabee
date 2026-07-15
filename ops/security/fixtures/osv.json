@@ -1,0 +1,21 @@
+{
+  "results": [
+    {
+      "source": { "path": "pnpm-lock.yaml", "type": "lockfile" },
+      "packages": [
+        {
+          "package": { "name": "@hono/node-server", "version": "1.19.11", "ecosystem": "npm" },
+          "vulnerabilities": [
+            { "id": "GHSA-92pp-h63x-v22m", "database_specific": { "severity": "HIGH", "cwe_ids": ["CWE-22"], "github_reviewed": true } }
+          ]
+        },
+        {
+          "package": { "name": "vite", "version": "5.4.11", "ecosystem": "npm" },
+          "vulnerabilities": [
+            { "id": "GHSA-moderate-example", "database_specific": { "severity": "MODERATE" } }
+          ]
+        }
+      ]
+    }
+  ]
+}

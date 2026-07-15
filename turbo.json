@@ -4,7 +4,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "src/generated/**"],
-      "passThroughEnv": ["DATABASE_URL", "DIRECT_URL"]
+      "passThroughEnv": ["DATABASE_URL", "DIRECT_URL", "AUTH_JWT_SECRET"]
     },
     "typecheck": {
       "dependsOn": ["^build"]
@@ -27,6 +27,11 @@
     },
     "@gabee/db#test:integration": {
       "dependsOn": ["build", "^build"],
+      "cache": false,
+      "passThroughEnv": ["TEST_DATABASE_URL", "DATABASE_URL", "DIRECT_URL"]
+    },
+    "@gabee/web#test:integration": {
+      "dependsOn": ["^build", "^test:integration"],
       "cache": false,
       "passThroughEnv": ["TEST_DATABASE_URL", "DATABASE_URL", "DIRECT_URL"]
     },

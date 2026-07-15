@@ -34,3 +34,12 @@ pnpm-debug.log*
 
 # Test / coverage
 coverage/
+.security/
+
+# SDD process artifacts (task briefs/reports/ledger)
+.superpowers/
+
+# Playwright artifacts (dynamic-probe suite + e2e workspace)
+test-results/
+e2e/test-results/
+e2e/playwright-report/

@@ -13,6 +13,7 @@ import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { selectSession } from '../lib/selectSession';
 import { ageFromBirthDate } from '../lib/age';
+import { sfx, speak, speakSuccess, stopSpeaking, warmVoice } from '../lib/audio';
 import { displayValue } from '../lib/util';
 import { getSeen, markSeen } from '../lib/seen';
 import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
@@ -111,6 +112,17 @@ export function KeyboardStaticSession({
     if (target.length > 0) out.push(target.length - 1);
     return out;
   }, [target]);
+
+  // Voiceover moment 1 (audio spec §5): read the target aloud in the display
+  // language. Its own effect with stop-on-cleanup so narration halts on question
+  // change AND unmount (must not leak onto hub/map), and survives StrictMode's
+  // dev double-mount — a ref-guarded speak would be cancelled by the replayed
+  // cleanup and never re-fire.
+  useEffect(() => {
+    if (!q || !session || !profile) return;
+    speak(target, lang);
+    return () => stopSpeaking();
+  }, [q?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // lesson_started — once when the session is ready.
   useEffect(() => {
@@ -297,6 +309,11 @@ export function KeyboardStaticSession({
   useEffect(() => {
     if (!q || !session || feedback) return;
     function onKey(e: KeyboardEvent) {
+      // Narration never blocks input (spec §5): kill it on ANY keypress. Both
+      // calls are synchronous, idempotent and error-swallowed — zero added
+      // latency on the typing hot path. warmVoice() piggybacks the gesture.
+      stopSpeaking();
+      warmVoice();
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const key = e.key;
       // Backspace: tracked for telemetry but does NOT rewind the visible cursor —
@@ -369,6 +386,8 @@ export function KeyboardStaticSession({
       if (nextLen === target.length) {
         // Whole prompt typed → mark this question correct & show feedback.
         setFeedback('correct');
+        sfx('correct');
+        speakSuccess(target, lang, t('excellent'), lang);
       }
     }
     window.addEventListener('keydown', onKey);

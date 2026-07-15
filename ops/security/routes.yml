@@ -1,0 +1,24 @@
+# path glob (minimatch-ish, prefix match on dir) -> checks to run for that change.
+# gitleaks + osv always run regardless (see scope.mjs).
+always: [gitleaks, osv]
+routes:
+  - glob: 'apps/web/src/app/api/'
+    checks: [semgrep, app-injection, app-authz-idor, app-rate-limit, app-input-validation]
+  - glob: 'apps/web/src/lib/server/'
+    checks: [semgrep, app-authn, app-authz-idor, net-cors, app-secrets-in-code]
+  - glob: 'apps/web/src/proxy.ts'
+    checks: [semgrep, net-host-isolation]
+  - glob: 'packages/db/prisma/'
+    checks: [app-pii-exposure, app-injection]
+  - glob: 'docker-compose'
+    checks: [trivy, plat-compose-misconfig, plat-env-handling]
+  - glob: 'deploy/'
+    checks: [trivy, plat-compose-misconfig, net-tls]
+  - glob: '.github/workflows/'
+    checks: [plat-cd-secrets, gitleaks]
+  - glob: 'ops/'
+    checks: [plat-cd-secrets, plat-backup-integrity]
+  - glob: 'apps/'
+    checks: [semgrep, trivy]        # any app change → SAST + image scan
+  - glob: 'pnpm-lock.yaml'
+    checks: [osv, app-supply-chain]

@@ -13,6 +13,7 @@ import { selectSession } from '../lib/selectSession';
 import { getSeen, markSeen } from '../lib/seen';
 import { useResumableProgress, sessionResumeKey } from '../lib/sessionResume';
 import { ageFromBirthDate } from '../lib/age';
+import { sfx } from '../lib/audio';
 import {
   parsePuzzle,
   runProgram,
@@ -301,6 +302,7 @@ export function CodeTurtleSession({
         setRunning(false);
         const ok = run.success;
         setResult(ok ? 'ok' : 'fail');
+        sfx(ok ? 'correct' : 'wrong');
         void enqueueEvent(
           {
             name: 'code_run', level, lesson,
