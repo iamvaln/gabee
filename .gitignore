@@ -35,3 +35,7 @@ pnpm-debug.log*
 # Test / coverage
 coverage/
 .security/
+
+# Playwright
+e2e/test-results/
+e2e/playwright-report/
