@@ -1,0 +1,19 @@
+# Code ownership → required reviewers.
+#
+# The security gate must not be silently neutered in the same PR that introduces
+# a threat: a change that plants a secret while adding a .gitleaks allowlist regex
+# (or a self-authored waiver) should force a second reviewer on the gate's own
+# config. These entries name that reviewer; they take effect once branch
+# protection ("Require review from Code Owners") is enabled on the default branch
+# in the repo settings — the file documents the control even before that toggle.
+
+# The security tooling, its configs, and the waiver ledger.
+/ops/security/**        @iamvaln
+/.semgrep/**            @iamvaln
+/.gitleaks.toml         @iamvaln
+/security-waivers.yml   @iamvaln
+/docs/security/**       @iamvaln
+
+# The release gate + CI workflows (the deploy gate and the security job live here).
+/.github/workflows/**   @iamvaln
+/.github/CODEOWNERS     @iamvaln

@@ -1,0 +1,14 @@
+title = "Gabee gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Tracked example env files hold placeholders, not secrets; fixtures use a known staging test password."
+paths = [
+  '''\.env\.[a-z]+\.example$''',
+]
+regexes = [
+  '''CHANGE_ME[A-Za-z0-9_]*''',
+  '''staging-pass''',
+]

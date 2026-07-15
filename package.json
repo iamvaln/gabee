@@ -18,7 +18,8 @@
     "test:coverage": "turbo run test:coverage",
     "test:integration": "turbo run test:integration",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "security:scan": "bash ops/security/scan.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -31,7 +32,8 @@
     "tsx": "^4.22.3",
     "turbo": "^2.9.15",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.60.0"
+    "typescript-eslint": "^8.60.0",
+    "yaml": "^2.9.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -1,0 +1,8 @@
+# Block-tier findings can be temporarily waived here. Each needs a real reason,
+# an approver, and an expiry (ISO date) — expired waivers re-block. NO secrets.
+waivers: []
+# Example (delete when adding a real one):
+#   - fingerprint: "gitleaks:apps/web/foo.ts:generic-api-key:42"
+#     reason: "False positive — example string in a comment."
+#     approver: "valentine"
+#     expires: "2026-09-01"
