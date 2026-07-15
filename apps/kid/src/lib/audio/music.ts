@@ -22,18 +22,23 @@ export function shouldPlayMusic(zone: MusicZone, master: boolean, music: boolean
 let zone: MusicZone = 'silent';
 let buffer: AudioBuffer | null = null;
 let loading = false;
+// Transient blips get retries; a genuinely broken asset stops being fetched on every navigation.
+let loadAttempts = 0;
+const MAX_LOAD_ATTEMPTS = 3;
 let source: AudioBufferSourceNode | null = null;
 let gain: GainNode | null = null;
 
 async function ensureBuffer(): Promise<AudioBuffer | null> {
   if (buffer) return buffer;
-  if (loading) return null; // a concurrent load will re-evaluate when done
+  if (loading || loadAttempts >= MAX_LOAD_ATTEMPTS) return null; // concurrent load re-evaluates when done; exhausted = give up
   loading = true;
+  loadAttempts++;
   try {
     const ctx = getAudioContext();
     if (!ctx) return null;
     const res = await fetch(MUSIC_URL);
     buffer = await ctx.decodeAudioData(await res.arrayBuffer());
+    loadAttempts = 0; // decoded fine — the asset is healthy
     return buffer;
   } catch {
     return null; // missing/undecodable asset must never break the app
