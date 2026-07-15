@@ -15,7 +15,7 @@ while [ $# -gt 0 ]; do case "$1" in
 esac; done
 [ -z "$SINCE" ] && SINCE="$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null || echo '')"
 mkdir -p .security; REPORT=.security/report.md; : > "$REPORT"
-BLOCK=0; MISSING=""
+MISSING=""
 
 have() { command -v "$1" >/dev/null 2>&1; }
 note() { echo "$*" | tee -a "$REPORT"; }
@@ -38,6 +38,8 @@ fi
 note "# Security scan — $SCOPE_LABEL"
 runs() { echo "$CHECKS" | grep -qx "$1"; }
 
+mkdir -p .security/raw
+
 # ── gitleaks (always) — secrets, block tier ──
 # Build the diff-scoping flag as an array element (not an unquoted $(...) that
 # word-splits): $SINCE stays a single argv token, so a ref with spaces/metachars
@@ -46,42 +48,40 @@ GITLEAKS_SCOPE=()
 [ "$FULL" -eq 0 ] && [ -n "$SINCE" ] && GITLEAKS_SCOPE=("--log-opts=$SINCE..HEAD")
 if runs gitleaks; then
   if have gitleaks; then
-    gitleaks detect --no-banner --redact -c .gitleaks.toml "${GITLEAKS_SCOPE[@]+"${GITLEAKS_SCOPE[@]}"}" \
-      && note "- gitleaks: clean" || { note "- gitleaks: FINDINGS (block)"; BLOCK=1; }
+    # JSON report; exit code ignored here, aggregate.mjs decides tier.
+    gitleaks detect --no-banner --redact -c .gitleaks.toml \
+      "${GITLEAKS_SCOPE[@]+"${GITLEAKS_SCOPE[@]}"}" \
+      --report-format json --report-path .security/raw/gitleaks.json >/dev/null 2>&1 || true
   else MISSING="$MISSING gitleaks"; fi
 fi
 # ── osv-scanner (always) — dep CVEs, block on High+ ──
 if runs osv; then
   if have osv-scanner; then
-    osv-scanner --lockfile pnpm-lock.yaml >/dev/null 2>&1 \
-      && note "- osv: clean" || { note "- osv: VULN (review; block if High+)"; BLOCK=1; }
+    osv-scanner --lockfile pnpm-lock.yaml --format json --output .security/raw/osv.json >/dev/null 2>&1 || true
   else MISSING="$MISSING osv-scanner"; fi
 fi
-# ── semgrep (scoped) — SAST, block on ERROR only ──
-# `--error` is an exit-code switch (non-zero on ANY reported finding), NOT a
-# severity filter — so `--severity ERROR` is required to keep this at the block
-# tier. Without it, our advisory WARNING rules + the broad p/* community rulesets
-# would fail the gate on every run (a gate that cries wolf blocks every release).
+# ── semgrep (scoped) — SAST, block on ERROR only (tier decided by aggregate.mjs) ──
 if runs semgrep; then
   if have semgrep; then
-    semgrep scan --error --severity ERROR --quiet \
+    semgrep scan --quiet \
       --config .semgrep/gabee.yml --config p/typescript --config p/nextjs \
-      && note "- semgrep: clean (no ERROR)" || { note "- semgrep: ERROR findings (block)"; BLOCK=1; }
+      --json --output .security/raw/semgrep.json || true
   else MISSING="$MISSING semgrep"; fi
 fi
 # ── trivy (scoped) — image/IaC misconfig, block on Critical/High ──
 if runs trivy; then
   if have trivy; then
-    trivy config --exit-code 1 --severity CRITICAL,HIGH docker-compose.yml \
-      && note "- trivy(config): clean" || { note "- trivy(config): misconfig (block)"; BLOCK=1; }
+    trivy config --format json --output .security/raw/trivy.json docker-compose.yml || true
   else MISSING="$MISSING trivy"; fi
 fi
 
 [ -n "$MISSING" ] && note "- MISSING tools:$MISSING (install: brew install $MISSING / npx)"
-# Waivers: (block-tier findings are hand-fingerprinted into security-waivers.yml;
-# the current tool wiring reports pass/fail per tool — the fingerprint-level
-# waiver application is exercised in Plan 2 when per-finding JSON is parsed.)
 
-if [ "$BLOCK" -eq 1 ]; then note ""; note "RESULT: BLOCK (see $REPORT)"; exit 1; fi
+# Static verdict comes from the per-finding aggregator (waiver-aware): it reads
+# whichever .security/raw/<tool>.json files exist, normalizes, applies
+# security-waivers.yml, and prints per-finding lines (BLOCK/waived/note).
+if node ops/security/aggregate.mjs | tee -a "$REPORT"; then STATIC_BLOCK=0; else STATIC_BLOCK=1; fi
+
+if [ "$STATIC_BLOCK" -eq 1 ]; then note ""; note "RESULT: BLOCK (see $REPORT)"; exit 1; fi
 if [ -n "$MISSING" ] && [ "$STRICT" -eq 1 ]; then note "RESULT: FAIL (missing tools under --strict)"; exit 3; fi
 note ""; note "RESULT: PASS"; exit 0
