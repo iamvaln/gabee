@@ -1,0 +1,3 @@
+[
+  { "RuleID": "generic-api-key", "File": "apps/web/src/x.ts", "StartLine": 42, "Secret": "REDACTED", "Fingerprint": "abc:apps/web/src/x.ts:generic-api-key:42" }
+]
