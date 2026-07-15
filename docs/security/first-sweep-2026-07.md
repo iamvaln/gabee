@@ -333,3 +333,18 @@ stated reasoning was wrong anyway (see the correction section).
    with `@gabee/db`'s prisma devDep — dragging `prisma → @prisma/dev →
    @hono/node-server → hono` into prod. Optional peers can quietly promote a
    devDependency's subtree into production; `pnpm why` alone was misleading here.
+
+## Fix log — 2026-07-15
+
+| # | finding | status |
+|---|---|---|
+| 1 | osv HIGH: hono GHSA-88fw-hqm2-52qc, vite GHSA-fx2h-pf6j-xcff | ✅ **fixed** — bumped (hono→4.12.30 via pnpm override, vite→7.3.6), not waived. Gate: 2 blocking → 0. |
+| 2 | `.semgrep/gabee.yml` `kid-message-or-parent-route-missing-guard` fired on every route (inverted `pattern-not-inside`) | ✅ **fixed** — 79 → 0 hits across 81 route files; verified non-vacuous (flags an unguarded route, silent on a guarded one). |
+| 3 | Rate limiting bypassable by rotating `X-Forwarded-For` | ✅ **fixed** — `clientIpFrom` now reads the LAST hop (the peer Traefik observed). Same bug also fixed in `getRequestMeta`, where it meant the IP stored against devices/auth events was **client-forgeable** — worthless for audit. Tests pin both. |
+| 4 | `to_child_avatar` nullable mismatch → parent Messages 500 | ✅ **fixed** — schema nullable; verified 200 e2e with kids seeded as prod creates them (null legacy avatar). Fixture workaround removed so fixtures mirror prod. |
+| 5 | Kid-device `PATCH /api/profiles/:id` has no field-level allowlist | ⏳ **open** — needs a product decision on which fields a paired kid device may write. |
+| 6 | Prod image ships the full devDependency tree (1.1 GB) | ⏳ **open** — real attack-surface finding. Note it is NOT what blocked the gate (osv scans the lockfile, not the image). |
+
+**Two of these (3, 4) were found only because the dynamic layer existed** — a probe
+had to actually log in and read a message to hit them. Neither is visible to a
+static scanner.
