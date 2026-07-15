@@ -38,3 +38,6 @@ coverage/
 
 # SDD process artifacts (task briefs/reports/ledger)
 .superpowers/
+
+# Playwright dynamic-probe run artifacts
+test-results/
