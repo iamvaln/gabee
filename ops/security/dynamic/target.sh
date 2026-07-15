@@ -56,6 +56,10 @@ teardown() {
 
 up() {
   guard
+  # Clear any residue from a crashed prior run before creating new containers —
+  # otherwise `docker run --name` collides and this invocation fails (self-heals
+  # only on the *next* call). Probe runs call `up` repeatedly, so be idempotent.
+  teardown
   docker network create "$NET" >/dev/null 2>&1 || true
 
   docker run -d --name "$PG_CT" --network "$NET" \
@@ -86,6 +90,8 @@ up() {
   # Build the web image if it isn't already there. NEXT_PUBLIC_* values are
   # inlined at build time; dummy localhost values are fine because the target
   # is only ever probed on 127.0.0.1, where proxy.ts's host-gating is bypassed.
+  # NOTE: a stale `$IMAGE` tag is reused as-is (no source-change detection) — run
+  # `docker rmi $IMAGE` to force a rebuild after pulling new app code.
   if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
     docker build -f apps/web/Dockerfile -t "$IMAGE" \
       --build-arg NEXT_PUBLIC_KID_APP_URL=http://localhost:5173 \
