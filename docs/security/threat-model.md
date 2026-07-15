@@ -26,7 +26,7 @@ Each row is:
 | `id` | stable kebab key, referenced by the routing table and waivers |
 | surface | the real Gabee file/mechanism the vector applies to (not a generic description) |
 | check(s) | what a tool or review verifies for this vector, and whether it's static or dynamic/AI |
-| tier | how a finding on this vector is treated in CI: **T1** — blocks release; **T2** — must-fix, blocks merge but not an already-tagged release; **T3** — tracked/backlog, informational only |
+| tier | severity of a finding on this vector. **T1** — critical, must not ship; **T2** — must-fix; **T3** — tracked/backlog, informational only. **Enforcement today (Plan 1):** the only automated gate is the release job (`release.yml`, on `v*` tags), so both T1 and T2 findings are enforced at the **release** gate — there is no PR-merge security job yet. The merge-vs-release split (T2 blocks merge, T1 blocks release) arrives with a PR-triggered scan in Plan 2. |
 | backing | the standard(s) the vector is grounded in — OWASP (Top 10 2021 / API Top 10), ASVS (v4.0.3 chapter), and/or STRIDE category |
 
 ## Static vs. dynamic/AI coverage
