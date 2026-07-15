@@ -28,6 +28,7 @@ export const CreateProfileRequestSchema = z.object({
   /** ISO date (YYYY-MM-DD); the add-kid form requires it, optional here for API back-compat. */
   birth_date: z.iso.date().optional(),
   audio_enabled: z.boolean().optional(),
+  music_enabled: z.boolean().optional(),
   /**
    * Co-parent extension policy on new-kid creation (parent spec §7.1, co-parent §10).
    * When the creating parent ALREADY has linked co-parents, the client asks:
@@ -55,6 +56,7 @@ export const UpdateProfileRequestSchema = z
     language: LanguageSchema,
     birth_date: z.iso.date(),
     audio_enabled: z.boolean(),
+    music_enabled: z.boolean(),
   })
   .partial();
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
