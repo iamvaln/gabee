@@ -91,9 +91,13 @@ rules:
       - pattern-either:
           - pattern: route(async ($REQ) => { ... })
           - pattern: route<$CTX>(async ($REQ, $CTX2) => { ... })
-      - pattern-not-inside: requireParent(...)
-      - pattern-not-inside: requireAdmin(...)
-      - pattern-not-inside: requireSuperAdmin(...)
+      # The guard lives INSIDE the handler body, so `pattern-not-inside:
+      # requireParent(...)` was inverted — it asked whether the route() call is
+      # nested inside a requireParent() call, which is never true, so the rule
+      # fired on every route whether guarded or not (~79 false positives; a T1
+      # check with no signal). The route(...) match spans the whole body, so a
+      # not-regex over the matched text is the correct "body contains a guard" test.
+      - pattern-not-regex: \b(requireParent|requireAdmin|requireSuperAdmin)\s*\(
     paths:
       include:
         - 'apps/web/src/app/api/**/route.ts'
