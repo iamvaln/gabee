@@ -53,8 +53,8 @@ the right fail-closed thing (block rather than silently skip).
 
 | fingerprint | tool | tier | what it is | proposed disposition |
 |---|---|---|---|---|
-| `osv:hono@4.12.23:GHSA-88fw-hqm2-52qc` | osv-scanner | BLOCK (HIGH) | `hono@4.12.23` CORS middleware reflects any `Origin` with `Access-Control-Allow-Credentials: true` when `origin` is left at its wildcard default. | **waive** — see reasoning below |
-| `osv:vite@7.3.3:GHSA-fx2h-pf6j-xcff` | osv-scanner | BLOCK (HIGH) | `vite@7.3.3` `server.fs.deny` bypass, **Windows-only**, dev-server-only. | **waive** — see reasoning below |
+| `osv:hono@4.12.23:GHSA-88fw-hqm2-52qc` | osv-scanner | BLOCK (HIGH) | `hono@4.12.23` CORS middleware reflects any `Origin` with `Access-Control-Allow-Credentials: true` when `origin` is left at its wildcard default. | ✅ **FIXED 2026-07-15** — bumped, not waived (see resolution note at end) |
+| `osv:vite@7.3.3:GHSA-fx2h-pf6j-xcff` | osv-scanner | BLOCK (HIGH) | `vite@7.3.3` `server.fs.deny` bypass, **Windows-only**, dev-server-only. | ✅ **FIXED 2026-07-15** — bumped, not waived (see resolution note at end) |
 
 **Reasoning (both):** neither package reaches the deployed runtime.
 
@@ -307,3 +307,29 @@ so this is a recurring tax, not a one-off.
 | finding | vector | tier | disposition |
 |---|---|---|---|
 | Production image ships the full devDependency tree (1.1 GB node_modules incl. hono, vite, the Prisma CLI + its `@prisma/dev` server) because one image serves both `web` and `migrate`. Widens attack surface and makes every devDep CVE a release blocker. | `plat-image-cve` | needs decision | **fix**: give the runtime a pruned prod-only `node_modules` (e.g. `pnpm prune --prod` / `--filter ... deploy` in a separate runtime stage), and either keep a small separate image for `migrate` or install the Prisma CLI only there. Removes both CVEs at the root and shrinks the image. Bigger change — touches the deploy path, so do it deliberately. |
+
+
+## ✅ Resolution — the two HIGH CVEs are FIXED, not waived (2026-07-15)
+
+Both had patch-level fixes available, so they were bumped out of the lockfile
+rather than waived. Nothing to expire, nothing to re-justify:
+
+| CVE | was | now | how |
+|---|---|---|---|
+| GHSA-fx2h-pf6j-xcff | vite 7.3.3 | **7.3.6** (fixed in 7.3.5) | already inside apps/kid's `^7.3.3` range |
+| GHSA-88fw-hqm2-52qc | hono 4.12.23 | **4.12.30** (fixed in 4.12.25) | `pnpm.overrides` — hono is transitive |
+
+Verified: osv 11 findings / 2 blocking → **3 findings / 0 blocking**;
+`pnpm security:scan --full` → **RESULT: PASS (exit 0)**; typecheck 7/7, tests 6/6,
+kid app builds on vite 7.3.6. The proposed waivers above are withdrawn — and their
+stated reasoning was wrong anyway (see the correction section).
+
+**Two lessons worth keeping:**
+1. *Pruning the production image would NOT have fixed these.* osv scans
+   `pnpm-lock.yaml`, not the image. Image contents and lockfile contents are
+   different questions — don't conflate them.
+2. *hono is in the PRODUCTION closure*, not dev-only: `@prisma/client` (a real
+   dependency) has an **optional peerDependency on `prisma`**, which pnpm satisfies
+   with `@gabee/db`'s prisma devDep — dragging `prisma → @prisma/dev →
+   @hono/node-server → hono` into prod. Optional peers can quietly promote a
+   devDependency's subtree into production; `pnpm why` alone was misleading here.
