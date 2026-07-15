@@ -19,13 +19,10 @@
  */
 export function getRequestMeta(req: { headers: Headers }): { ip: string | null; ua: string | null } {
   const xff = req.headers.get('x-forwarded-for');
-  let ip: string | null = null;
-  if (xff) {
-    const hops = xff.split(',').map((h) => h.trim()).filter(Boolean);
-    ip = hops[hops.length - 1] ?? null;
-  } else {
-    ip = req.headers.get('x-real-ip')?.trim() || null;
-  }
+  const hops = xff ? xff.split(',').map((h) => h.trim()).filter(Boolean) : [];
+  const ip = hops.length > 0
+    ? (hops[hops.length - 1] ?? null)
+    : (req.headers.get('x-real-ip')?.trim() || null);
   const ua = req.headers.get('user-agent')?.trim() || null;
   return { ip, ua };
 }
