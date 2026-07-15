@@ -48,3 +48,22 @@ if [ -n "${ADMIN_DIGEST_URL:-}" ]; then
     echo "[digest] admin poke FAILED (rc=$?): ${admin_resp:-}" >&2
   fi
 fi
+
+# Secondary, best-effort: purge raw device IPs past the retention window
+# (privacy — see services/device-ip-retention.ts). Idempotent, so a daily poke
+# is safe; on most days it deletes little or nothing. A failure here NEVER
+# changes this script's exit status — we log and move on, same as the admin
+# digest above. The response carries counts only, never an IP value.
+if [ -n "${PURGE_IPS_URL:-}" ]; then
+  echo "[digest] POST ${PURGE_IPS_URL} (ip-retention purge, best-effort)"
+  if purge_resp=$(
+    curl --silent --show-error --fail-with-body \
+      --max-time 60 \
+      -X POST "${PURGE_IPS_URL}" \
+      -H "Authorization: Bearer ${CRON_SECRET}"
+  ); then
+    if command -v jq >/dev/null 2>&1; then echo "$purge_resp" | jq -c '.summary'; else echo "$purge_resp"; fi
+  else
+    echo "[digest] ip-retention purge FAILED (rc=$?): ${purge_resp:-}" >&2
+  fi
+fi

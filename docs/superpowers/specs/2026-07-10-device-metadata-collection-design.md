@@ -37,15 +37,22 @@ Two concrete gaps triggered this work:
 ### Privacy posture — explicit tension
 
 The product spec **§9.1** commits Gabee to *"telemetry is per-child … GDPR-K
-aligned"* — a deliberately data-minimal stance. This feature adds **raw IP with
-indefinite retention, tied to the child's identity** (product-owner decision,
-taken with the risk flagged). That is the most legally exposed option for
-minors' data.
+aligned"* — a deliberately data-minimal stance. This feature adds **raw IP tied
+to the child's identity**, which is directly-identifying data.
+
+**Retention decision (2026-07-14, supersedes the original):** raw IP is kept for
+a **bounded 90-day window**, then purged automatically. The first cut of this
+design kept it *indefinitely* (product-owner call, taken with the risk flagged);
+that was revisited because indefinite retention of a minor's IP is the hardest
+thing here to defend under GDPR-K storage-limitation, and a 90-day window
+preserves the anti-abuse investigation value while removing the long tail of
+PII. Implemented by `services/device-ip-retention.ts` + the daily
+`/api/cron/purge-device-ips` job (§8).
 
 > **BLOCKING PREREQUISITE:** Before this ships, the **privacy policy must be
 > updated** and a **legal basis documented** (parental consent covering device
-> identifiers + IP + indefinite retention). This is a launch gate, tracked
-> alongside implementation, not an afterthought.
+> identifiers + IP collection + the 90-day retention). This is a launch gate,
+> tracked alongside implementation, not an afterthought.
 
 ## 2. Non-goals (YAGNI)
 
@@ -70,8 +77,8 @@ alongside it.
 - A **stable client device id** (localStorage UUID) identifies a browser/PWA
   install.
 - A new **`Device`** table holds the latest snapshot per device id.
-- A new **`DeviceIpSighting`** append-only log holds the full IP history
-  (indefinite retention lives here).
+- A new **`DeviceIpSighting`** append-only log holds the IP history, bounded to
+  the 90-day retention window (§8).
 - The device snapshot **rides on the existing event-sync request** — no separate
   beacon endpoint — so offline behavior is identical to events (already solved).
 - **Timezone is captured per session** in the `session_start` payload and stored
@@ -128,7 +135,7 @@ Indexes: `@@unique([deviceId])`, `@@index([parentId])`, `@@index([deviceLinkId])
 |---|---|---|
 | `id` | uuid PK | |
 | `deviceId` | string FK → Device.deviceId | |
-| `ip` | string | raw, **indefinite retention** |
+| `ip` | string | raw; purged after **90 days** (§8) |
 | `uaFull` | string? | UA at sighting |
 | `seenAt` | datetime | = sync time |
 
@@ -213,9 +220,16 @@ truncation).
   `DeviceIpSighting`. Wire into the existing GDPR deletion flow
   (`/admin/gdpr`) and verify cascades. `Device.parentId` cascades on
   ParentAccount delete.
-- **Retention:** raw IP kept **indefinitely** in `DeviceIpSighting`
-  (product-owner decision). Geo derivation deferred (§2). Revisit retention if
-  the privacy-policy update lands on a bounded window.
+- **Retention (decided 2026-07-14):** raw IP is kept for **90 days**, then
+  purged. `IP_RETENTION_DAYS` + `purgeExpiredDeviceIps()` live in
+  `apps/web/src/lib/server/services/device-ip-retention.ts`; the daily
+  `POST /api/cron/purge-device-ips` endpoint (CRON_SECRET-gated, fail-closed)
+  runs it, poked by the existing `cron-digest` sidecar (`PURGE_IPS_URL`). The
+  purge deletes `DeviceIpSighting` rows older than the cutoff AND clears
+  `Device.lastIp` for devices not seen since — an active device's `lastIp` is
+  inside the window by definition. Idempotent. Geo derivation deferred (§2), so
+  nothing is retained past the window today; if country/city is added later it
+  can outlive the raw IP.
 
 ## 9. Migration & backfill
 
@@ -241,5 +255,4 @@ truncation).
 - Geo resolution (country/city) via **local GeoLite2** DB on the VPS — needs a
   free MaxMind account + periodic DB refresh. Enables new-country alerts + geo
   analytics.
-- Bounded IP retention window, if privacy review requires it.
 - Cross-device family view / suspicious-login heuristics (anti-abuse phase 2).
