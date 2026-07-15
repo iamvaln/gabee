@@ -299,13 +299,6 @@ export function App() {
     setLastScreen(route.name);
   }, [route]);
 
-  // Ambient music follows navigation: exercise screens are silent, everything
-  // else is ambient (audio phase E spec §2). Cleanup silences on unmount/logout.
-  useEffect(() => {
-    setMusicZone(isSessionRoute(route.name) ? 'silent' : 'ambient');
-    return () => setMusicZone('silent');
-  }, [route.name]);
-
   // Visibility lifecycle (product §9.3). A backgrounded tab is treated as a
   // PAUSED sitting, not a closed one — so `session_end.duration_s` reflects
   // real play time, not first-background time. Only `pagehide` (close) and a
@@ -541,6 +534,17 @@ export function App() {
   // re-prompt on the next render, but a refresh re-prompts.
   const needsDeviceLink = useStore((s) => s.needsDeviceLink);
   const deviceLinkSkipped = useStore((s) => s.deviceLinkSkipped);
+
+  // Ambient music follows navigation (audio phase E spec §2): the parent-facing
+  // auth gates (Login / LinkDeviceCode — mirrors the render conditions below) are
+  // silent so a password keystroke can't unlock-and-start the music; exercise
+  // screens are silent; everything from profile select onward is ambient.
+  // Cleanup silences on unmount/logout.
+  const authGateVisible = !token || (needsDeviceLink && !deviceLinkSkipped && !isOffline);
+  useEffect(() => {
+    setMusicZone(authGateVisible || isSessionRoute(route.name) ? 'silent' : 'ambient');
+    return () => setMusicZone('silent');
+  }, [authGateVisible, route.name]);
 
   let screen: React.ReactNode;
   if (!token) {
