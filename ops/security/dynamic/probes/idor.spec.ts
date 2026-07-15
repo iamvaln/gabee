@@ -28,10 +28,13 @@ test('cross-family profile IDOR is denied', async ({ request, baseURL }) => {
   await ctxB.dispose();
 });
 
-// Tester A reading an arbitrary message id scoped to B must be 403/404 (owner-scoped).
+// Tester A reading tester B's message must be 403/404 (owner-scoped). The id below
+// is a REAL fixture message seeded for B (fromParentId=P2) in seed-fixtures.ts —
+// not a nonexistent id — so a 404 here proves ownership scoping actually works
+// (a vulnerable endpoint would return 200 and leak B's message text to A).
 test('cross-family message read is denied', async ({ request }) => {
   const tA = await login(request, TESTERS.A.email, TESTERS.A.password);
-  const r = await request.get('/api/messages/00000000-0000-4000-8000-0000000000ff', {
+  const r = await request.get('/api/messages/00000000-0000-4000-9000-0000000000b1', {
     headers: { authorization: `Bearer ${tA}` } });
   expect([403, 404], `A reading foreign message got ${r.status()}`).toContain(r.status());
 });

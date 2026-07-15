@@ -14,9 +14,9 @@ if (process.env.STAGING_FIXTURES !== '1') {
 const P1 = '00000000-0000-4000-9000-000000000001';
 const P2 = '00000000-0000-4000-9000-000000000002';
 const KIDS = [
-  { id: '00000000-0000-4000-9000-0000000000a1', parentId: P1, name: 'Ava', birthDate: '2018-04-12', gender: 'girl' as const },
-  { id: '00000000-0000-4000-9000-0000000000a2', parentId: P1, name: 'Noah', birthDate: '2016-09-30', gender: 'boy' as const },
-  { id: '00000000-0000-4000-9000-0000000000a3', parentId: P2, name: 'Mia', birthDate: '2019-01-05', gender: 'girl' as const },
+  { id: '00000000-0000-4000-9000-0000000000a1', parentId: P1, name: 'Ava', birthDate: '2018-04-12', gender: 'girl' as const, avatar: 'avatar_1' as const },
+  { id: '00000000-0000-4000-9000-0000000000a2', parentId: P1, name: 'Noah', birthDate: '2016-09-30', gender: 'boy' as const, avatar: 'avatar_2' as const },
+  { id: '00000000-0000-4000-9000-0000000000a3', parentId: P2, name: 'Mia', birthDate: '2019-01-05', gender: 'girl' as const, avatar: 'avatar_3' as const },
 ];
 
 // Shared staging password: "staging-pass" (documented in the runbook).
@@ -57,7 +57,7 @@ async function main() {
     for (const k of KIDS) {
       await prisma.childProfile.upsert({
         where: { id: k.id },
-        update: { name: k.name },
+        update: { name: k.name, avatar: k.avatar },
         create: {
           id: k.id,
           parentId: k.parentId,
@@ -65,12 +65,34 @@ async function main() {
           language: 'fr',
           birthDate: new Date(k.birthDate),
           gender: k.gender,
+          avatar: k.avatar,
+          // avatar is set here (rather than left null, as legacy pre-recolour rows
+          // would be) so GET /api/messages/[id] doesn't 500: ParentKidMessageRowSchema
+          // requires `to_child_avatar: z.string()` but ChildProfile.avatar is nullable
+          // in the DB — a real pre-existing schema/DB mismatch bug, out of scope here
+          // (see task-5-report.md).
         },
       });
     }
+    // Tester-B-owned message, used by the IDOR probe (ops/security/dynamic/probes/idor.spec.ts)
+    // to prove ownership scoping: A must be denied (404) reading a message that
+    // REALLY exists and belongs to B, not a nonexistent id (which would 404 either way).
+    const MESSAGE_ID = '00000000-0000-4000-9000-0000000000b1';
+    await prisma.kidMessage.upsert({
+      where: { id: MESSAGE_ID },
+      update: {},
+      create: {
+        id: MESSAGE_ID,
+        fromParentId: P2,
+        toChildId: '00000000-0000-4000-9000-0000000000a3', // Mia, B's kid
+        text: 'Hello from tester B',
+      },
+    });
+
     const parents = await prisma.parentAccount.count();
     const kids = await prisma.childProfile.count();
-    console.log(`fixtures OK — parents=${parents} kids=${kids}`);
+    const messages = await prisma.kidMessage.count();
+    console.log(`fixtures OK — parents=${parents} kids=${kids} messages=${messages}`);
   } finally {
     await prisma.$disconnect();
   }
