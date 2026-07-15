@@ -80,7 +80,7 @@ const resources = {
         audioHint: 'Les petits sons et la voix de Gabee.',
         audioOn: 'Activés',
         audioOff: 'Coupés',
-        musicTitle: 'Musique d\'ambiance',
+        musicTitle: 'Musique d’ambiance',
         musicOn: 'Activée',
         musicOff: 'Coupée',
         loadedVersions: 'Versions des contenus chargés',
