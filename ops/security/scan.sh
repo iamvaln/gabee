@@ -38,7 +38,7 @@ fi
 note "# Security scan — $SCOPE_LABEL"
 runs() { echo "$CHECKS" | grep -qx "$1"; }
 
-mkdir -p .security/raw
+rm -rf .security/raw && mkdir -p .security/raw
 
 # ── gitleaks (always) — secrets, block tier ──
 # Build the diff-scoping flag as an array element (not an unquoted $(...) that

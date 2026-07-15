@@ -8,11 +8,15 @@ import { applyWaivers } from './waivers.mjs';
 
 const raw = '.security/raw';
 const readJson = (p) => (existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : null);
+const gitleaksRaw = readJson(`${raw}/gitleaks.json`);
+const semgrepRaw = readJson(`${raw}/semgrep.json`);
+const osvRaw = readJson(`${raw}/osv.json`);
+const trivyRaw = readJson(`${raw}/trivy.json`);
 const findings = [
-  ...(readJson(`${raw}/gitleaks.json`) ? normalizeGitleaks(readJson(`${raw}/gitleaks.json`)) : []),
-  ...(readJson(`${raw}/semgrep.json`) ? normalizeSemgrep(readJson(`${raw}/semgrep.json`)) : []),
-  ...(readJson(`${raw}/osv.json`) ? normalizeOsv(readJson(`${raw}/osv.json`)) : []),
-  ...(readJson(`${raw}/trivy.json`) ? normalizeTrivy(readJson(`${raw}/trivy.json`)) : []),
+  ...(gitleaksRaw ? normalizeGitleaks(gitleaksRaw) : []),
+  ...(semgrepRaw ? normalizeSemgrep(semgrepRaw) : []),
+  ...(osvRaw ? normalizeOsv(osvRaw) : []),
+  ...(trivyRaw ? normalizeTrivy(trivyRaw) : []),
 ];
 const waiversDoc = existsSync('security-waivers.yml') ? parse(readFileSync('security-waivers.yml', 'utf8')) : {};
 const blockers = findings.filter(isBlockTier);
