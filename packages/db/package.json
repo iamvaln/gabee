@@ -19,7 +19,8 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "files=$(find prisma -name '*.test.mts'); if [ -z \"$files\" ]; then echo 'no content test files found' >&2; exit 1; fi; node --import tsx --test $files"
   },
   "dependencies": {
     "@gabee/types": "workspace:*",
