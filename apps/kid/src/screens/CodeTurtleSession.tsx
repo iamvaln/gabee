@@ -26,6 +26,12 @@ import {
   type Heading,
 } from '../lib/turtle';
 import { readLocalTrack, writeLocalTrack } from '../lib/codeTrack';
+import {
+  type ProgramState,
+  empty as emptyProgram, addPrim as progAddPrim, addLoop as progAddLoop,
+  setActive as progSetActive, setCount as progSetCount,
+  removeTop as progRemoveTop, removeInLoop as progRemoveInLoop, blockCount,
+} from '../lib/program';
 import { buildGuideScript } from '../lib/guideScripts';
 import { useGuide } from '../lib/useGuide';
 import { guideSeen, markGuideSeen } from '../lib/guide';
@@ -47,6 +53,7 @@ type PrimKey = 'up' | 'down' | 'left' | 'right' | 'pick' | 'drop';
 const GLYPH: Record<PrimKey, string> = {
   up: '⬆️', down: '⬇️', left: '⬅️', right: '➡️', pick: '✋', drop: '📥',
 };
+const LOOP_GLYPH = '🔁';
 // Prims that show a text label under the glyph (the arrows are self-evident).
 const LABELLED: Record<string, { fr: string; en: string }> = {
   pick: { fr: 'Ramasse', en: 'Pick' },
@@ -54,10 +61,6 @@ const LABELLED: Record<string, { fr: string; en: string }> = {
 };
 function primKey(p: Prim): PrimKey {
   return p.op === 'move' ? p.dir : p.op;
-}
-function makePrim(k: PrimKey): Prim {
-  if (k === 'pick' || k === 'drop') return { op: k };
-  return { op: 'move', dir: k };
 }
 // Seed config.blocks token → kid PrimKey. `if`/`repeat` are excluded (the kid
 // builds flat arrow programs; the reference answer's loops/conditions are checked
@@ -127,7 +130,8 @@ export function CodeTurtleSession({
 
   const resumeKey = sessionResumeKey(profile?.id ?? null, `code:${world}`, level, lesson);
   const { qIdx, setQIdx, score, setScore, clear: clearResume } = useResumableProgress(resumeKey);
-  const [program, setProgram] = useState<Prim[]>([]);
+  const [prog, setProg] = useState<ProgramState>(emptyProgram());
+  const program = prog.program; // Op[] consumed by runProgram / flattenProgram
   const [frame, setFrame] = useState(0);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<'ok' | 'fail' | null>(null);
@@ -201,7 +205,7 @@ export function CodeTurtleSession({
     if (shownRef.current === q.id) return;
     shownRef.current = q.id;
     stopTimer();
-    setProgram([]);
+    setProg(emptyProgram());
     setFrame(0);
     setRunning(false);
     setResult(null);
@@ -267,23 +271,44 @@ export function CodeTurtleSession({
   // re-enables and the coach reverts from the hint.
   const editLocked = running || result === 'ok';
   const gated = (anchorKey: string) => guide.active && !(guide.step?.allow.includes(anchorKey) ?? false);
-  function addBlock(k: PrimKey) {
-    if (editLocked) return;
+  const atBudget = puzzle?.maxBlocks !== undefined && blockCount(program) >= puzzle.maxBlocks;
+  function addPrim(k: PrimKey) {
+    if (editLocked || atBudget) return;
     if (result === 'fail') setResult(null);
-    setProgram((p) => [...p, makePrim(k)]);
+    setProg((s) => progAddPrim(s, k));
     setFrame(0);
     if (guide.active) guide.report(k === 'pick' ? 'pick-placed' : k === 'drop' ? 'drop-placed' : 'block-placed');
   }
-  function removeAt(i: number) {
+  function addLoop() {
+    if (editLocked || atBudget) return;
+    if (result === 'fail') setResult(null);
+    setProg((s) => progAddLoop(s));
+    setFrame(0);
+  }
+  function setLoopCount(index: number, n: number) {
+    if (editLocked) return;
+    setProg((s) => progSetCount(s, index, n));
+    setFrame(0);
+  }
+  function stopFilling() {
+    setProg((s) => progSetActive(s, null));
+  }
+  function removeTopBlock(i: number) {
     if (editLocked) return;
     if (result === 'fail') setResult(null);
-    setProgram((p) => p.filter((_, j) => j !== i));
+    setProg((s) => progRemoveTop(s, i));
+    setFrame(0);
+  }
+  function removeBodyBlock(loopIdx: number, bodyIdx: number) {
+    if (editLocked) return;
+    if (result === 'fail') setResult(null);
+    setProg((s) => progRemoveInLoop(s, loopIdx, bodyIdx));
     setFrame(0);
   }
   function clearProgram() {
     if (editLocked) return;
     if (result === 'fail') setResult(null);
-    setProgram([]);
+    setProg(emptyProgram());
     setFrame(0);
   }
   function startRun() {
@@ -306,9 +331,9 @@ export function CodeTurtleSession({
         void enqueueEvent(
           {
             name: 'code_run', level, lesson,
-            program: program.map((p) => primKey(p)),
-            blocks_used: program.length,
-            optimal_blocks: 1, result: ok ? 'success' : 'wrong_position',
+            program: flattenProgram(puzzle, program).map(primKey),
+            blocks_used: blockCount(program),
+            optimal_blocks: puzzle.maxBlocks ?? blockCount(program), result: ok ? 'success' : 'wrong_position',
             wall_hits: 0, attempt_num: attemptsRef.current,
             time_since_level_start_ms: 0,
           },
@@ -379,6 +404,13 @@ export function CodeTurtleSession({
             ? <DrawGrid puzzle={puzzle} cur={cur} cell={CELL} running={running} expr={beeExpr} />
             : <CellGrid puzzle={puzzle} cur={cur} cell={CELL} running={running} expr={beeExpr} result={result} />}
 
+          {/* Block budget (loops levels) */}
+          {puzzle.maxBlocks !== undefined && (
+            <div style={{ textAlign: 'center', marginTop: 8, fontWeight: 700, color: atBudget ? '#dc2626' : '#0f172a' }}>
+              {t('code.blocks')} {blockCount(program)}/{puzzle.maxBlocks}
+            </div>
+          )}
+
           {/* Program strip */}
           <div
             style={{ marginTop: 16, minHeight: 56, padding: 8, borderRadius: 12, background: '#F1F5F9', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}
@@ -387,27 +419,66 @@ export function CodeTurtleSession({
             {program.length === 0 ? (
               <span style={{ color: '#94a3b8', fontSize: 14 }}>{t('code.addBlocks')}</span>
             ) : (
-              program.map((p, i) => {
-                const k = primKey(p);
-                return (
-                  <button
+              program.map((op, i) =>
+                op.op === 'repeat' ? (
+                  <div
                     key={i}
-                    onClick={() => removeAt(i)}
-                    disabled={editLocked || guide.active}
                     style={{
-                      height: 40, padding: '0 10px', borderRadius: 8,
-                      background: running && i < frame ? '#F5A623' : '#34d399',
-                      color: '#0f172a', border: 'none', fontSize: 16, fontWeight: 700,
-                      display: 'flex', alignItems: 'center', gap: 4,
-                      cursor: editLocked ? 'default' : 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 6, padding: 6, borderRadius: 10,
+                      border: prog.active === i ? '3px solid #F5A623' : '2px solid #94a3b8', background: '#fff',
                     }}
-                    aria-label={`remove ${k}`}
                   >
-                    <span style={{ fontSize: 18 }}>{GLYPH[k]}</span>
-                    {LABELLED[k] ? LABELLED[k]![lang] : ''}
-                  </button>
-                );
-              })
+                    <span style={{ fontSize: 18 }}>{LOOP_GLYPH}</span>
+                    <button aria-label="count-down" onClick={() => setLoopCount(i, op.n - 1)} disabled={editLocked || guide.active} className="btn ghost" style={{ minWidth: 28, height: 28, padding: 0 }}>−</button>
+                    <span style={{ fontWeight: 800, minWidth: 18, textAlign: 'center' }}>×{op.n}</span>
+                    <button aria-label="count-up" onClick={() => setLoopCount(i, op.n + 1)} disabled={editLocked || guide.active} className="btn ghost" style={{ minWidth: 28, height: 28, padding: 0 }}>+</button>
+                    <div style={{ display: 'flex', gap: 4, padding: '2px 6px', borderLeft: '2px dashed #cbd5e1' }}>
+                      {op.body.length === 0 ? (
+                        <span style={{ color: '#94a3b8', fontSize: 12 }}>{t('code.loopEmpty')}</span>
+                      ) : (
+                        op.body.map((b, j) => {
+                          const bp = b as Prim;
+                          const bk = bp.op === 'move' ? bp.dir : bp.op;
+                          return (
+                            <button
+                              key={j}
+                              onClick={() => removeBodyBlock(i, j)}
+                              disabled={editLocked || guide.active}
+                              style={{ height: 34, padding: '0 8px', borderRadius: 8, background: '#34d399', color: '#0f172a', border: 'none', fontSize: 15, fontWeight: 700 }}
+                              aria-label={`remove ${bk}`}
+                            >
+                              {GLYPH[bk]}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                    {prog.active === i && (
+                      <button aria-label="loop-done" onClick={stopFilling} disabled={editLocked} className="btn ghost" style={{ height: 28 }}>{t('code.loopDone')}</button>
+                    )}
+                  </div>
+                ) : (() => {
+                  const p = op as Prim;
+                  const k = p.op === 'move' ? p.dir : p.op;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => removeTopBlock(i)}
+                      disabled={editLocked || guide.active}
+                      style={{
+                        height: 40, padding: '0 10px', borderRadius: 8,
+                        background: '#34d399', color: '#0f172a', border: 'none', fontSize: 16, fontWeight: 700,
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        cursor: editLocked ? 'default' : 'pointer',
+                      }}
+                      aria-label={`remove ${k}`}
+                    >
+                      <span style={{ fontSize: 18 }}>{GLYPH[k]}</span>
+                      {LABELLED[k] ? LABELLED[k]![lang] : ''}
+                    </button>
+                  );
+                })(),
+              )
             )}
           </div>
 
@@ -417,8 +488,8 @@ export function CodeTurtleSession({
               <button
                 key={k}
                 ref={setAnchor(`palette:${k}`)}
-                onClick={() => addBlock(k)}
-                disabled={editLocked || gated(`palette:${k}`)}
+                onClick={() => addPrim(k)}
+                disabled={editLocked || atBudget || gated(`palette:${k}`)}
                 style={{
                   minWidth: 56, height: 60, padding: '0 10px', borderRadius: 12,
                   background: LABELLED[k] ? '#FDE9C8' : '#BBEAF2',
@@ -432,6 +503,22 @@ export function CodeTurtleSession({
                 {LABELLED[k] && <span style={{ fontSize: 11 }}>{LABELLED[k]![lang]}</span>}
               </button>
             ))}
+            {puzzle.blocks.includes('repeat') && (
+              <button
+                aria-label="repeat"
+                onClick={addLoop}
+                disabled={editLocked || atBudget}
+                style={{
+                  minWidth: 56, height: 60, padding: '0 10px', borderRadius: 12,
+                  background: '#FDE9C8', color: '#0f172a', border: '2px solid #0f172a',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+                  fontWeight: 700, cursor: editLocked || atBudget ? 'default' : 'pointer',
+                }}
+              >
+                <span style={{ fontSize: 24, lineHeight: 1 }}>{LOOP_GLYPH}</span>
+                <span style={{ fontSize: 11 }}>{t('code.loop')}</span>
+              </button>
+            )}
           </div>
 
           {/* Actions */}
