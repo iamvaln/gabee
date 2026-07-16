@@ -60,6 +60,57 @@ export async function readJson<S extends z.ZodType>(
 export async function requireParent(req: NextRequest): Promise<SessionClaims> {
   const session = await getSession(req);
   if (!session) throw new HttpError(401, 'unauthorized', 'Authentication required');
+  // A paired kid device is NOT a parent. Its bearer carries the parent's id (that's
+  // how it reads the family's bundles/profiles), so without this check every
+  // requireParent route accepted a kid tablet — it could read the parent's messages,
+  // list/revoke their devices, delete a child. The device gets only the endpoints in
+  // `requireKidDevice`.
+  if (session.scope === 'device') {
+    throw new HttpError(403, 'forbidden', 'This action requires a parent sign-in');
+  }
+  const exists = await prisma.parentAccount.findUnique({
+    where: { id: session.parentId },
+    select: { id: true },
+  });
+  if (!exists) throw new HttpError(401, 'session_stale', 'Session is no longer valid');
+  return session;
+}
+
+/**
+ * Allow the endpoints the kid PWA genuinely needs: a parent session OR a valid,
+ * non-revoked paired device. Apply this ONLY to that set (bundles, event ingest,
+ * progress sync, profile reads, the kid-side settings write, pending messages/gifts)
+ * — everything else stays `requireParent`.
+ *
+ * A parent session is accepted because the kid app supports parent login on the
+ * device (`api.login`), so both token kinds legitimately hit these routes.
+ *
+ * The DeviceLink lookup is what makes revocation real: `revokeDevice` sets
+ * `revokedAt`, and the very next request from that device fails here. Anything the
+ * device submits after revocation — events, progress sync — is rejected with it,
+ * because it never gets past this guard.
+ */
+export async function requireKidDevice(req: NextRequest): Promise<SessionClaims> {
+  const session = await getSession(req);
+  if (!session) throw new HttpError(401, 'unauthorized', 'Authentication required');
+
+  if (session.scope === 'device') {
+    // verifySessionToken refuses a device token with no `did`, so this is set.
+    const link = await prisma.deviceLink.findUnique({
+      where: { id: session.deviceLinkId! },
+      select: { id: true, parentId: true, revokedAt: true },
+    });
+    if (!link || link.revokedAt) {
+      throw new HttpError(401, 'device_revoked', 'This device has been unpaired');
+    }
+    // The token's parent must still match the row's — a re-pointed DeviceLink
+    // shouldn't let an old token ride along.
+    if (link.parentId !== session.parentId) {
+      throw new HttpError(401, 'device_revoked', 'This device has been unpaired');
+    }
+    return session;
+  }
+
   const exists = await prisma.parentAccount.findUnique({
     where: { id: session.parentId },
     select: { id: true },

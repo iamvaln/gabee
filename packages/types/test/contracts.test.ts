@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  ParentKidMessageRowSchema,
   QuestionRecordSchema,
   EventEnvelopeSchema,
   ChildEventSchema,
@@ -353,5 +354,35 @@ describe('Gender', () => {
     assert.equal(ChildProfileSchema.parse(base).gender, null);
     assert.equal(ChildProfileSchema.parse({ ...base, gender: 'girl' }).gender, 'girl');
     assert.throws(() => ChildProfileSchema.parse({ ...base, gender: 'other' }));
+  });
+});
+
+describe('ParentKidMessageRow', () => {
+  const row = {
+    id: '00000000-0000-4000-9000-0000000000b1',
+    from_parent_id: '00000000-0000-4000-9000-000000000002',
+    to_child_id: '00000000-0000-4000-9000-0000000000a3',
+    text: 'Hello from tester B',
+    status: 'unread' as const,
+    created_at: NOW,
+    read_at: null,
+    deleted_at: null,
+    to_child_name: 'Mia',
+    from_display_name: 'Tester',
+  };
+
+  // `ChildProfile.avatar` is the LEGACY fixed-look enum, superseded by the recolour
+  // dimensions: the column is nullable and profiles.ts leaves it null on every new
+  // row. Requiring a string here made messages.ts's `.parse()` throw for any kid
+  // created after the recolour migration — 500-ing the parent Messages list and the
+  // single-message route for real families. Null is the NORMAL case now.
+  it('accepts a null to_child_avatar (the normal case for post-recolour kids)', () => {
+    const parsed = ParentKidMessageRowSchema.parse({ ...row, to_child_avatar: null });
+    assert.equal(parsed.to_child_avatar, null);
+  });
+
+  it('still accepts a legacy avatar string', () => {
+    const parsed = ParentKidMessageRowSchema.parse({ ...row, to_child_avatar: 'avatar_3' });
+    assert.equal(parsed.to_child_avatar, 'avatar_3');
   });
 });

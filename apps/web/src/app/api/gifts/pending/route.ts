@@ -1,5 +1,5 @@
 import type { PendingGiftsResponse } from '@gabee/types';
-import { route, json, requireParent, HttpError } from '@/lib/server/http';
+import { route, json, requireKidDevice, HttpError } from '@/lib/server/http';
 import { listPendingGifts } from '@/lib/server/services/gifts';
 
 export const runtime = 'nodejs';
@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 // calls cross-origin with the parent JWT as bearer; `child_id` is required so we can
 // scope to one child and verify it belongs to the parent.
 export const GET = route(async (req) => {
-  const session = await requireParent(req);
+  const session = await requireKidDevice(req);
   const childId = new URL(req.url).searchParams.get('child_id');
   if (!childId) {
     throw new HttpError(400, 'missing_child_id', 'child_id query parameter is required');

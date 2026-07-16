@@ -25,7 +25,14 @@ export type KidMessage = z.infer<typeof KidMessageSchema>;
 /** What the sender sees on M1 — adds the recipient kid name + avatar for the row. */
 export const ParentKidMessageRowSchema = KidMessageSchema.extend({
   to_child_name: z.string(),
-  to_child_avatar: z.string(),
+  // NULLABLE, deliberately: this is the LEGACY fixed-look avatar
+  // (`ChildProfile.avatar`), superseded by the recolour dimensions. That column is
+  // `Avatar?` and profiles.ts leaves it null on every new row — so requiring a
+  // string here made `ParentKidMessageRowSchema.parse()` throw for any kid created
+  // after the recolour migration, 500-ing the parent Messages list and single-message
+  // routes. Nothing currently reads this field; it's a removal candidate, kept for
+  // now so this stays a minimal fix rather than a response-contract change.
+  to_child_avatar: z.string().nullable(),
   from_display_name: z.string(),
 });
 export type ParentKidMessageRow = z.infer<typeof ParentKidMessageRowSchema>;
