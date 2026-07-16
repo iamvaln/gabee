@@ -54,14 +54,60 @@ async function startKeyboardStatic(page: Page): Promise<void> {
  *  must be visible+stable+not-moving across two frames) got stuck retrying
  *  "element is not stable" / "detached from the DOM" for the full 180s test
  *  timeout. `page.keyboard.press('Enter')` dispatches to whatever's focused with
- *  no target-element stability wait, sidestepping that race entirely. */
+ *  no target-element stability wait, sidestepping that race entirely.
+ *
+ *  RACE FIXED HERE (this was the intermittent flake — 1 run in several, ~17s
+ *  hang then `expect(locator).toBeVisible()` timeout): the keydown handler's
+ *  effect closure (KeyboardStaticSession.tsx line ~395) depends on `typedLen` +
+ *  `target` and reads `pos = typedLen` (line ~330). Two failure modes were
+ *  possible:
+ *   1. Reading a STALE target: right after Enter advances `qIdx`, the previous
+ *      question's `.session-prompt span`s can still be the ones in the DOM for
+ *      one tick (same selector matches both), so `chars.allTextContents()`
+ *      could grab the old prompt and type characters that don't match the new
+ *      one. Fixed by waiting for `.session-progress .dots`' `aria-label`
+ *      (`question N of total`, SessionHeader.tsx line ~37) to report the
+ *      expected 1-indexed question number before reading the prompt — that
+ *      attribute is driven by the same `current`/`qIdx` state and commits in
+ *      the same React pass as the prompt spans, and unlike comparing target
+ *      TEXT across questions it can't false-negative when two consecutive L1
+ *      prompts happen to sample the same letter.
+ *   2. Pressing faster than React commits `typedLen`: fixed by typing with a
+ *      settle delay (`keyboard.type(..., { delay: 60 })`) instead of
+ *      back-to-back `press()` calls.
+ *  Belt-and-suspenders: a bounded (max 2 attempts, never unbounded) self-heal
+ *  retype below — if "Suivant" still doesn't show up, read how many chars
+ *  actually registered via the `isTyped` span color (line ~463,
+ *  `#94a3b8` = `rgb(148, 163, 184)`) and retype only the missing suffix. */
 async function typeKeyboardLesson(page: Page, total: number): Promise<void> {
+  const dots = page.locator('.session-progress .dots');
+  const chars = page.locator('.session-prompt span');
+  const typedCount = () =>
+    chars.evaluateAll(
+      (spans) => spans.filter((el) => getComputedStyle(el).color === 'rgb(148, 163, 184)').length,
+    );
+
   for (let q = 0; q < total; q++) {
-    const chars = page.locator('.session-prompt span');
+    // Confirm the DOM has actually committed question `q` before reading its
+    // target — see the RACE FIXED HERE note above.
+    await expect(dots).toHaveAttribute('aria-label', `question ${q + 1} of ${total}`);
     await expect(chars.first()).toBeVisible();
     const target = (await chars.allTextContents()).join('');
-    for (const ch of target) await page.keyboard.press(ch);
-    await expect(page.locator('.feedback-strip .btn')).toBeVisible(); // feedback === 'correct'
+
+    await page.keyboard.type(target, { delay: 60 }); // settle time for typedLen to commit
+
+    // Bounded self-heal: at most one retype of the missing suffix.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await expect(page.locator('.feedback-strip .btn')).toBeVisible({ timeout: 5_000 });
+        break;
+      } catch (err) {
+        if (attempt >= 1) throw err; // never loop unboundedly — surface the failure
+        const registered = await typedCount();
+        const remaining = target.slice(registered);
+        if (remaining.length > 0) await page.keyboard.type(remaining, { delay: 60 });
+      }
+    }
     await page.keyboard.press('Enter'); // same as tapping "Suivant"
   }
 }
