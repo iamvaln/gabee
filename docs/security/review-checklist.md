@@ -28,9 +28,9 @@ legal basis. Draft: `docs/privacy-device-metadata-disclosure-draft.md`.
     the retention promise in the policy (`plat-r2-scope`).
   - **XFF trust.** The recorded IP must come from the **last** X-Forwarded-For
     hop — Traefik appends, so the first hop is caller-controlled and lets an
-    attacker write a forged IP into the history. ⚠️ `main` still reads the
-    **first** hop (`request-meta.ts`); a fix is in flight on
-    `fix/security-sweep-findings`. Verify it lands, then that it can't regress.
+    attacker write a forged IP into the history. Fixed 2026-07-16 (PR #11):
+    `request-meta.ts` and `rate-limit.ts` both read the last hop, with tests
+    pinning it. Standing check: verify neither regresses to the first hop.
   - Revisit the deferred device-transfer decision (a device re-paired to another
     household currently no-ops rather than re-homing).
 - Where: `packages/db/prisma/schema.prisma` (`Device`, `DeviceIpSighting`);
