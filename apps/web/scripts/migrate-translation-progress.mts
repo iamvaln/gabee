@@ -86,6 +86,12 @@ interface ProfileRow {
   raw: Record<string, unknown>; // progress_by_module_per_language, read RAW (not via Zod)
 }
 
+/** Coerce a non-finite/non-numeric `stars` (malformed old blob) to 0 before clamping —
+ *  mirrors the `highest_level` guard above: no `NaN` may ever reach a stored track. */
+function safeStars(v: unknown): number {
+  return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+}
+
 // ── id parsing — the ONLY place the seed prefix scheme is encoded ─────────────
 // Ids look like `translation-fr-en-l1-l1-001` / `translation-en-fr-l3-l1-042`:
 //   translation-<dir:fr-en|en-fr>-l<level>-l<lesson>-<seq>.
@@ -189,16 +195,20 @@ export function reconstructSubLang(
         const last = enrich?.last ?? oldLesson.last_played ?? null;
         return {
           // The grade the child banked for this lesson, carried verbatim (bounded to
-          // the valid 0–3 range) — never fabricated, never dropped.
+          // the valid 0–3 range) — never fabricated, never dropped. `safeStars` coerces
+          // a non-finite/non-numeric old value to 0 first so a malformed blob can never
+          // put NaN into the new track (same guard style as `highest_level` above).
           lesson: oldLesson.lesson,
-          stars: Math.max(0, Math.min(3, oldLesson.stars)) as LessonProgress['stars'],
+          stars: Math.max(0, Math.min(3, safeStars(oldLesson.stars))) as LessonProgress['stars'],
           plays,
           last_played: last,
         };
       });
 
-      // Level grade = the old flat level's banked grade, carried faithfully (bounded).
-      const levelStars = Math.max(0, Math.min(3, oldLevel.stars)) as LevelProgress['stars'];
+      // Level grade = the old flat level's banked grade, carried faithfully (bounded;
+      // `safeStars` guards against a non-finite/non-numeric malformed value, same as
+      // the per-lesson `stars` above).
+      const levelStars = Math.max(0, Math.min(3, safeStars(oldLevel.stars))) as LevelProgress['stars'];
       const evAllSessions = new Set<string>();
       let evLast: string | null = null;
       if (evLevels) {
