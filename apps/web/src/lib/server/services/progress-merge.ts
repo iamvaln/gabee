@@ -100,6 +100,7 @@ export function mergeProgressByModulePerLanguage(
     words_fill: pair('words_fill'),
     words_build: pair('words_build'),
     words_read: pair('words_read'),
-    translation: pair('translation'),
+    translation_fr_en: pair('translation_fr_en'),
+    translation_en_fr: pair('translation_en_fr'),
   };
 }

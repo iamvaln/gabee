@@ -11,11 +11,15 @@ import { useStore } from '../store';
 import { lessonsForLevel, unitsForLevel, unitPassed } from '../lib/progression';
 
 export function TranslationLessonMap({
+  direction,
   level,
   onUnit,
   onHome,
   onBack,
 }: {
+  /** Direction slug ('fr-en'/'en-fr') — scopes both the progress track read and
+   *  the question pool so each direction's lesson map is independent. */
+  direction: 'fr-en' | 'en-fr';
   level: number;
   onUnit: (lesson: number, isRevision: boolean) => void;
   onHome: () => void;
@@ -25,14 +29,25 @@ export function TranslationLessonMap({
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
   const profile = useStore((s) => s.profile);
-  const levels = profile?.progress_by_module_per_language.translation[lang].levels ?? [];
+  // Slug 'fr-en' → progress key 'translation_fr_en'.
+  const dirKey = `translation_${direction.replace('-', '_')}` as 'translation_fr_en' | 'translation_en_fr';
+  const levels = profile?.progress_by_module_per_language[dirKey][lang].levels ?? [];
 
   const { data: bundle, isLoading } = useQuery({
     queryKey: ['bundle', 'translation'],
     queryFn: () => api.getBundle('translation'),
   });
 
-  const questions = useMemo(() => (bundle ? bundle.questions : []), [bundle]);
+  // Only THIS direction's questions drive the lesson/unit count.
+  const questions = useMemo(
+    () =>
+      bundle
+        ? bundle.questions.filter(
+            (q) => ((q.config as { direction?: string } | undefined)?.direction ?? q.sub_mode) === direction,
+          )
+        : [],
+    [bundle, direction],
+  );
   const units = useMemo(
     () => unitsForLevel(lessonsForLevel(questions, level)),
     [questions, level],

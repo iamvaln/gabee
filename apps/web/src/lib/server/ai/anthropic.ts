@@ -202,7 +202,7 @@ const MODULE_SHAPE_NOTE: Record<string, string> = {
   numbers:
     'numbers: `prompt` is the full bilingual question text (e.g. "5 + 0 = ?", "Combien y a-t-il de chats ?"); `answer` is the number (or a bilingual word for parity/comparison). For a counting collection add config {"object":<asset key>,"count":N,"layout":"scatter"}.',
   translation:
-    'translation: config.direction = "fr-en"|"en-fr"; at L1 use config.image (asset key), at L2+ use config.source (the source-language word/phrase). `prompt` is a bilingual instruction; `answer` is the TARGET-language string; distractors are target-language strings.',
+    'translation: config.direction = "fr-en"|"en-fr"; config.source is the source-language word/phrase (L1 = a very common single word, up the ladder to expressions/sentences). `prompt` is a bilingual instruction naming the source; `answer` is the TARGET-language string; distractors are plausible target-language strings. Never use images.',
   keyboard:
     'keyboard: config.target is the text to type — a bare string for a single letter/digit/punctuation (lang null), or {"fr","en"} for a word/phrase (lang both); add config.tolerance {"case":bool,"accents":bool}; for "speed" add config.scroll_speed "slow"|"medium"|"fast". `answer` mirrors config.target; `prompt` is a short instruction.',
 };
