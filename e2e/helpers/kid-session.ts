@@ -90,7 +90,23 @@ export async function startModule(
 }
 
 /** Brute-force an MCQ session: wrong picks replay the same question, so walking the
- *  options always terminates. Loops `total` questions, then returns at the summary. */
+ *  options always terminates. Loops `total` questions, then returns at the summary.
+ *
+ *  Advance via Enter, NOT a mouse click on `.feedback-strip .btn`: every MCQ session
+ *  screen (WordsPicture/WordsFill/WordsBuild/WordsRead/Numbers/KeyboardStatic/
+ *  Translation) wires an identical global `Enter` handler that calls the same
+ *  `next()` the button's onClick calls. A `.click()` on the button is flaky on the
+ *  LAST question of the lesson — `next()`'s finish path there does heavier async
+ *  work (flushEvents, persistProgress, a possible first-badge milestone dialog) and
+ *  can tear the button down mid-transition, so Playwright's mouse-click
+ *  actionability check (element must be visible+stable+not-moving across two
+ *  frames) gets stuck retrying "element is not stable" / "detached from the DOM"
+ *  for the full 180s test timeout (see kid-session-keyboard.spec.ts, which hit this
+ *  first). `page.keyboard.press('Enter')` dispatches with no target-element
+ *  stability wait, sidestepping that race entirely. The feedback label is read
+ *  BEFORE pressing Enter (still needed: "Suivant" vs "Réessayer" tells us whether
+ *  Enter is about to advance to the next question or just clear+retry the current
+ *  one) — `next()` runs identically either way, on click or on Enter. */
 export async function completeMcqLesson(page: Page, total: number): Promise<void> {
   for (let q = 0; q < total; q++) {
     const answers = page.locator('.session-answers .answer-btn');
@@ -101,7 +117,7 @@ export async function completeMcqLesson(page: Page, total: number): Promise<void
       const btn = page.locator('.feedback-strip .btn');
       await expect(btn).toBeVisible();
       const label = (await btn.textContent()) ?? '';
-      await btn.click(); // "Suivant" advances; "Réessayer" replays the same question
+      await page.keyboard.press('Enter'); // "Suivant" advances; "Réessayer" clears+retries
       if (label.includes('Suivant')) break;
     }
   }

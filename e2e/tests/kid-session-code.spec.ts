@@ -9,7 +9,7 @@ import { seedKidAuthAndPickAva, avaProfile, finishToHub } from '../helpers/kid-s
  *  assertion here (it's never claimed, unlike the keyboard-screen server-side bug in
  *  task-2-report.md, where a claim IS made but silently clamped). Code's events DO sync:
  *  `lesson_started` (once) + `question_shown` (once per question) + `lesson_completed`
- *  (once) is a strict increase of at least 5 + 5 + 1 = 11 events for a 5-question lesson.
+ *  (once) is a strict increase of at least 1 + 5 + 1 = 7 events for a 5-question lesson.
  *  A strict count increase is proof the full skip-through flow ran and synced. */
 
 /** `startModule` (kid-session.ts) can't be reused as-is: its post-navigation wait is
