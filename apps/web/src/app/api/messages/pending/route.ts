@@ -1,5 +1,5 @@
 import type { KidPendingMessagesResponse } from '@gabee/types';
-import { route, json, requireParent, HttpError } from '@/lib/server/http';
+import { route, json, requireKidDevice, HttpError } from '@/lib/server/http';
 import { listPendingForChild } from '@/lib/server/services/messages';
 
 export const runtime = 'nodejs';
@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 // JWT as bearer. `child_id` is REQUIRED so we can scope to one child + verify the
 // child belongs to the parent.
 export const GET = route(async (req) => {
-  const session = await requireParent(req);
+  const session = await requireKidDevice(req);
   const url = new URL(req.url);
   const childId = url.searchParams.get('child_id');
   if (!childId) {

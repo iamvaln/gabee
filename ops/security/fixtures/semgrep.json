@@ -1,0 +1,8 @@
+{
+  "results": [
+    { "check_id": "semgrep.prisma-raw-string-interpolation", "path": "apps/web/src/lib/server/db.ts", "start": { "line": 10, "col": 3 }, "end": { "line": 10, "col": 60 }, "extra": { "severity": "ERROR", "message": "raw SQL built by string interpolation" } },
+    { "check_id": "semgrep.api-route-without-zod-parse", "path": "apps/web/src/app/api/x/route.ts", "start": { "line": 3, "col": 1 }, "end": { "line": 3, "col": 20 }, "extra": { "severity": "WARNING", "message": "API route handler without a Zod parse" } }
+  ],
+  "errors": [],
+  "paths": { "scanned": ["apps/web/src/lib/server/db.ts", "apps/web/src/app/api/x/route.ts"] }
+}

@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
     "eslint": "^10.4.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
@@ -42,6 +43,9 @@
       "@prisma/engines",
       "esbuild",
       "prisma"
-    ]
+    ],
+    "overrides": {
+      "hono@<4.12.25": ">=4.12.25"
+    }
   }
 }

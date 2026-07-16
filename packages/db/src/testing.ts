@@ -3,6 +3,7 @@
  * reset, and data factories. Imported as `@gabee/db/testing` by integration
  * and e2e suites. NEVER import this from app runtime code.
  */
+import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Prisma, PrismaClient } from './generated/prisma/client';
 
@@ -30,7 +31,24 @@ export async function resetDb(prisma: PrismaClient): Promise<void> {
   `;
   if (tables.length === 0) return;
   const list = tables.map((t) => `"public"."${t.tablename}"`).join(', ');
-  await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
+  // Login/confirm routes fire `void logAuthEvent(...)` un-awaited on the
+  // production prisma singleton (a separate pool from this test client). If a
+  // test ends while that insert is still in flight, it can interleave with
+  // this TRUNCATE and hit a lock-order inversion — Postgres resolves that by
+  // killing one session with 40P01 "deadlock detected". That write is
+  // fire-and-forget by design (not a bug we can fix here), so we absorb the
+  // rare collision with a small bounded retry instead of flaking the suite.
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${list} RESTART IDENTITY CASCADE`);
+      return;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const isDeadlock = /deadlock detected|40P01/i.test(message);
+      if (!isDeadlock || attempt === maxAttempts) throw err;
+    }
+  }
 }
 
 // Monotonic per-process suffix so factory rows never collide on unique columns.
@@ -57,6 +75,32 @@ export async function createChild(
   return prisma.childProfile.create({
     data: { name: `Kid ${uniq()}`, language: 'fr', ...overrides, parentId },
   });
+}
+
+/**
+ * Seed `count` correct-answer events for a child — the server's evidence that this
+ * many stars were legitimately earned (1 star = 1 correct `question_answered`).
+ * `syncProgress` bounds the client-declared `total_stars` by this count, so any test
+ * that syncs stars must first establish the evidence for them, exactly as real play
+ * does (the kid app drains events before progress). Returns the number seeded.
+ */
+export async function seedCorrectAnswers(
+  prisma: PrismaClient,
+  profileId: string,
+  count: number,
+): Promise<number> {
+  if (count <= 0) return 0;
+  const now = new Date();
+  await prisma.event.createMany({
+    data: Array.from({ length: count }, (_, i) => ({
+      eventId: randomUUID(),
+      profileId,
+      name: 'question_answered',
+      clientTs: now,
+      payload: { name: 'question_answered', correct: true } as Prisma.InputJsonValue,
+    })),
+  });
+  return count;
 }
 
 export async function createCurriculum(

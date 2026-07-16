@@ -68,9 +68,25 @@ async function main() {
         },
       });
     }
+    // Tester-B-owned message, used by the IDOR probe (ops/security/dynamic/probes/idor.spec.ts)
+    // to prove ownership scoping: A must be denied (404) reading a message that
+    // REALLY exists and belongs to B, not a nonexistent id (which would 404 either way).
+    const MESSAGE_ID = '00000000-0000-4000-9000-0000000000b1';
+    await prisma.kidMessage.upsert({
+      where: { id: MESSAGE_ID },
+      update: {},
+      create: {
+        id: MESSAGE_ID,
+        fromParentId: P2,
+        toChildId: '00000000-0000-4000-9000-0000000000a3', // Mia, B's kid
+        text: 'Hello from tester B',
+      },
+    });
+
     const parents = await prisma.parentAccount.count();
     const kids = await prisma.childProfile.count();
-    console.log(`fixtures OK — parents=${parents} kids=${kids}`);
+    const messages = await prisma.kidMessage.count();
+    console.log(`fixtures OK — parents=${parents} kids=${kids} messages=${messages}`);
   } finally {
     await prisma.$disconnect();
   }
