@@ -58,6 +58,7 @@ export interface Puzzle {
   start: Cell;
   facing: Heading;
   blocks: string[];
+  maxBlocks?: number;
   goal?: Cell;
   walls?: Cell[];
   targetSegs?: Set<string>;
@@ -97,6 +98,7 @@ export function parsePuzzle(world: CodeWorld, config: unknown): Puzzle {
     start: c.start ? toCell(c.start) : { x: 0, y: 0 },
     facing: 'S',
     blocks: (c.blocks as string[]) ?? [],
+    maxBlocks: typeof c.maxBlocks === 'number' ? c.maxBlocks : undefined,
   };
   if (world === 'maze') {
     base.goal = c.goal ? toCell(c.goal) : { x: 0, y: 0 };

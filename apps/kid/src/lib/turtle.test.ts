@@ -44,3 +44,14 @@ describe('flattenProgram', () => {
     assert.deepEqual(flattenProgram(puzzle, answer), answer);
   });
 });
+
+describe('parsePuzzle maxBlocks', () => {
+  it('reads config.maxBlocks when present', () => {
+    const p = parsePuzzle('maze', { grid: { w: 5, h: 5 }, start: [0, 0], goal: [1, 0], maxBlocks: 3 });
+    assert.equal(p.maxBlocks, 3);
+  });
+  it('leaves maxBlocks undefined when absent', () => {
+    const p = parsePuzzle('maze', { grid: { w: 5, h: 5 }, start: [0, 0], goal: [1, 0] });
+    assert.equal(p.maxBlocks, undefined);
+  });
+});
