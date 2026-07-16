@@ -41,7 +41,21 @@ osv-scanner covers CVEs, not licensing or abandonment.
 - Where: `pnpm-lock.yaml`, per-package `package.json` across the workspace.
 - Cadence: monthly, and on every new dependency.
 
-## 4. Threat-model maintenance
+## 4. Disposable-email blocklist refresh
+
+The signup guard uses a static, in-repo domain set — it only stays useful if
+someone refreshes it; nothing automated will.
+
+- What: re-curate `DISPOSABLE_DOMAINS` against the upstream
+  [disposable-email-domains](https://github.com/disposable-email-domains/disposable-email-domains)
+  list (add newly mainstream providers; we don't need the full ~4k list, just
+  the well-known ones). Confirm the guard is still wired into every entry point
+  that accepts a new email (today: signup; add email-change if it ships).
+- Where: `apps/web/src/lib/server/disposable-emails.ts`;
+  `apps/web/src/app/api/auth/signup/route.ts`.
+- Cadence: quarterly.
+
+## 5. Threat-model maintenance
 
 Keep the taxonomy and routing in sync with what actually ships.
 
