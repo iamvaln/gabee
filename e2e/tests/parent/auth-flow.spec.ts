@@ -46,6 +46,9 @@ test('parent signup → confirm → login → dashboard → change password', as
   // back to the documented autocomplete-attribute locators. "Nouveau mot de passe" and
   // "Confirmer" both use autocomplete="new-password" (L142, L158); order in the DOM is
   // new password first, confirm second.
+  const before = await prisma.parentCredential.findFirstOrThrow({
+    where: { parentId: parent.id, retiredAt: null },
+  });
   await page.goto('/parent/settings?tab=password');
   await page.locator('input[autocomplete="current-password"]').fill(password);
   const newPasswordInputs = page.locator('input[autocomplete="new-password"]');
@@ -53,4 +56,10 @@ test('parent signup → confirm → login → dashboard → change password', as
   await newPasswordInputs.nth(1).fill('e2eNewPass456');
   await page.getByRole('button', { name: 'Changer le mot de passe' }).click();
   await expect(page.getByText('Mot de passe changé.')).toBeVisible();
+
+  // Effect check: the change actually rotated the credential (guards against a
+  // route that returns 200 without writing) — one active credential, new hash.
+  const active = await prisma.parentCredential.findMany({ where: { parentId: parent.id, retiredAt: null } });
+  expect(active).toHaveLength(1);
+  expect(active[0]!.hash).not.toBe(before.hash);
 });
