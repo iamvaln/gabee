@@ -79,7 +79,12 @@ export function getProgressLevels(
       return track?.[lang]?.levels ?? [];
     }
     case 'translation': {
-      const track = profile.progress_by_module_per_language.translation;
+      // Translation is per-DIRECTION AND per-language. `subMode` carries the
+      // direction SLUG ('fr-en' / 'en-fr'); the progress key uses the underscore
+      // infix ('translation_fr_en' / 'translation_en_fr'). Mirrors the words case.
+      if (!subMode) return [];
+      const key = `translation_${subMode.replace('-', '_')}` as keyof typeof profile.progress_by_module_per_language;
+      const track = profile.progress_by_module_per_language[key];
       return track?.[lang]?.levels ?? [];
     }
     case 'code': {

@@ -67,6 +67,15 @@ function sourceLang(dir: TranslationDirection): Language {
   return dir === 'fr_to_en' ? 'fr' : 'en';
 }
 
+// The direction SLUG a question belongs to ('fr-en' / 'en-fr') — the form used
+// by `q.sub_mode`, `config.direction`, the URL, and the `direction` prop below.
+// Reuses `directionFor`'s config/sub_mode read + deterministic fallback so a
+// direction-scoped session never accidentally pulls the other direction's cards.
+type DirectionSlug = 'fr-en' | 'en-fr';
+function directionSlugFor(q: QuestionRecord): DirectionSlug {
+  return directionFor(q) === 'fr_to_en' ? 'fr-en' : 'en-fr';
+}
+
 function badgeLabel(dir: TranslationDirection): string {
   return dir === 'fr_to_en' ? 'FR → EN' : 'EN → FR';
 }
@@ -75,6 +84,7 @@ function badgeLabel(dir: TranslationDirection): string {
 // word in the target language. Direction is mixed within each level (product
 // §4.5). Per-language progress is on `translation` (product §7.3).
 export function TranslationSession({
+  direction,
   level,
   lesson,
   isRevision,
@@ -83,6 +93,9 @@ export function TranslationSession({
   onHome,
   onBack,
 }: {
+  /** Which direction this session plays. Scopes both question sampling and the
+   *  progress key so the two directions never cross (product §4.5 rework). */
+  direction: DirectionSlug;
   level: number;
   lesson: number;
   isRevision: boolean;
@@ -106,14 +119,18 @@ export function TranslationSession({
 
   const session = useMemo(() => {
     if (!bundle) return null;
-    // Both directions (en-fr + fr-en) are mixed within a level pool by design.
-    const pool = bundle.questions.filter((q) => q.level === level);
+    // One-direction sessions (rework): sample ONLY this direction's cards at the
+    // level. `direction` is the slug ('fr-en'/'en-fr'); match it against each
+    // question's own direction slug.
+    const pool = bundle.questions.filter((q) => q.level === level && directionSlugFor(q) === direction);
     if (pool.length === 0) return null;
-    const seen = getSeen(profile?.id ?? null, 'translation', level);
+    const seen = getSeen(profile?.id ?? null, `translation:${direction}`, level);
     return { questions: selectSession(pool, ageFromBirthDate(profile?.birth_date ?? null), TOTAL, seen) };
-  }, [bundle, level, lesson, isRevision]);
+  }, [bundle, level, lesson, isRevision, direction]);
 
-  const resumeKey = sessionResumeKey(profile?.id ?? null, 'translation', level, lesson);
+  // Seen/resume namespaces are per-direction (track = '<module>:<sub>', like
+  // 'words:picture') so the two directions don't collide at the same level/lesson.
+  const resumeKey = sessionResumeKey(profile?.id ?? null, `translation:${direction}`, level, lesson);
   const { qIdx, setQIdx, score, setScore, clear: clearResume } = useResumableProgress(resumeKey);
   const [attempt, setAttempt] = useState(1);
   const [picked, setPicked] = useState<string | number | null>(null);
@@ -217,7 +234,12 @@ export function TranslationSession({
   async function persistProgress(correctCount: number, ratingStars: number) {
     if (!profile || !session) return;
     const now = new Date().toISOString();
-    const trackPair = profile.progress_by_module_per_language.translation;
+    // Persist to THIS direction's per-language track. Slug 'fr-en' → key
+    // 'translation_fr_en' (underscore infix inside the identifier).
+    const dirKey = `translation_${direction.replace('-', '_')}` as
+      | 'translation_fr_en'
+      | 'translation_en_fr';
+    const trackPair = profile.progress_by_module_per_language[dirKey];
     const track = trackPair[lang];
     const levels = [...track.levels];
     const idx = levels.findIndex((l) => l.level === level);
@@ -238,7 +260,7 @@ export function TranslationSession({
     if (li >= 0) lessons[li] = updatedLesson;
     else lessons.push(updatedLesson);
 
-    markSeen(profile.id, 'translation', level, session.questions.map((q) => q.id));
+    markSeen(profile.id, `translation:${direction}`, level, session.questions.map((q) => q.id));
     const seen = Array.from(
       new Set([...prevLevel.seen_question_ids, ...session.questions.map((q) => q.id)]),
     ).slice(-80);
@@ -257,7 +279,7 @@ export function TranslationSession({
     const nextTrack = { highest_level: Math.max(track.highest_level, level), levels };
     const progress_by_module_per_language = {
       ...profile.progress_by_module_per_language,
-      translation: { ...trackPair, [lang]: nextTrack },
+      [dirKey]: { ...trackPair, [lang]: nextTrack },
     };
     const total_stars = profile.total_stars + correctCount;
 

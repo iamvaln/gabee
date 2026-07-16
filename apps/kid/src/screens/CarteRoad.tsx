@@ -50,7 +50,10 @@ const SUB_MODES_BY_MODULE: Record<Module, SubModeDef[]> = {
     { key: 'draw', label: { fr: 'Dessiner', en: 'Draw' }, icon: '🎨' },
     { key: 'actions', label: { fr: 'Actions', en: 'Actions' }, icon: '⚙️' },
   ],
-  translation: [], // single-track — no pills, render the road directly
+  translation: [
+    { key: 'fr-en', label: { fr: 'FR → EN', en: 'FR → EN' }, icon: '🇫🇷' },
+    { key: 'en-fr', label: { fr: 'EN → FR', en: 'EN → FR' }, icon: '🇬🇧' },
+  ],
 };
 
 interface Stop {

@@ -50,13 +50,16 @@ export function earnedBadges(profile: ChildProfile, streak: KidStreakState): Set
   if (bestL1(perLang.words_fill) >= 3) out.add('words_fill_l1_master');
   if (bestL1(perLang.words_build) >= 3) out.add('words_build_l1_master');
   if (bestL1(perLang.words_read) >= 3) out.add('words_read_l1_master');
-  if (bestL1(perLang.translation) >= 3) out.add('translation_l1_master');
+  // Translation is now two per-direction tracks; the single L1 badge fires when
+  // EITHER direction reaches L1 mastery (product: one translation badge).
+  if (bestL1(perLang.translation_fr_en) >= 3 || bestL1(perLang.translation_en_fr) >= 3)
+    out.add('translation_l1_master');
 
   // Bilingual: starter = both FR and EN have at least one star anywhere;
   // confirmed = both have ≥10 stars cumulative across all word sub-modes + translation.
   function sumStarsForLang(lang: 'fr' | 'en'): number {
     let s = 0;
-    for (const trackName of ['words_picture', 'words_fill', 'words_build', 'words_read', 'translation'] as const) {
+    for (const trackName of ['words_picture', 'words_fill', 'words_build', 'words_read', 'translation_fr_en', 'translation_en_fr'] as const) {
       const t = perLang[trackName]?.[lang];
       for (const lvl of t?.levels ?? []) s += lvl.stars;
     }
