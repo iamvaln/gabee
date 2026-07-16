@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { createTestClient, resetDb } from '@gabee/db/testing';
 import { signup, login } from './accounts';
 import { HttpError } from '../http';
+import { CURRENT_TERMS_VERSION } from '@/lib/terms';
 
 const prisma = createTestClient();
 beforeEach(async () => resetDb(prisma));
@@ -29,6 +30,18 @@ test('signup creates the account + one scrypt credential, unconfirmed', async ()
     () => login('New.Person@Example.com', 'a-good-password'),
     (e: unknown) => e instanceof HttpError && e.code === 'email_not_confirmed',
   );
+});
+
+test('signup records terms consent atomically with the account', async () => {
+  // The route enforces `terms_accepted: z.literal(true)`; the service then creates
+  // the account AND its ConsentRecord in one transaction — no account exists
+  // without proof of consent. Pin both the atomicity and the server-stamped version.
+  const parent = await signup('consenter@example.com', 'a-good-password');
+
+  const consents = await prisma.consentRecord.findMany({ where: { parentId: parent.id } });
+  assert.equal(consents.length, 1, 'exactly one consent row is written at signup');
+  assert.equal(consents[0]!.type, 'terms');
+  assert.equal(consents[0]!.version, CURRENT_TERMS_VERSION); // server-authoritative, not client-sent
 });
 
 test('signup on an existing email is rejected (409 email_taken)', async () => {
