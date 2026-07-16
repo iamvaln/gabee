@@ -30,16 +30,14 @@ test('parent classifies a pending session and the queue empties', async ({ page 
   // regardless of click order. Bounded loop so a real "queue never empties"
   // product bug still fails loudly instead of hanging.
   //
-  // The loop below is more defensive than it looks because of one real
-  // client-side quirk in classify-flow.tsx: choose() re-enables the choice
-  // button immediately once the POST resolves (`finally { setSubmitting
-  // (false) }`), but only swaps in the next card ~260ms later
-  // (`setTimeout(advance, 260)`), or — once the queue is empty — after a
-  // further refill round-trip (GET /api/classifications/pending). Verified
-  // via network trace that clicking on bare enablement re-submits the SAME
-  // session_id repeatedly (200 OK, idempotent) without the queue ever
-  // advancing, and that a plain `.click()` can also catch the button mid
-  // teardown and hang forever waiting for a node that's gone for good. So:
+  // The loop below stays defensive against timing even though the classify
+  // double-submit race is now fixed: choose() keeps the choice button
+  // disabled until the next card mounts (submitting clears inside the
+  // ~260ms `setTimeout(advance, 260)`), and the server write is idempotent
+  // (updateMany gated on `label: null`, so a re-submit is a no-op). A plain
+  // `.click()` can still catch the button mid teardown and hang waiting for
+  // a node that's gone once the card swaps or the queue empties (refill
+  // round-trip via GET /api/classifications/pending). So:
   // `disabled: false` avoids matching the stale/submitting node; `.or
   // (doneHeading)` covers "the last click went straight to the done
   // screen, no next card"; `networkidle` after each click gives the ~260ms

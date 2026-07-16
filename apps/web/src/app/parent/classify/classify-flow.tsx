@@ -175,7 +175,11 @@ export function ClassifyFlow({ initial, kids, lang }: Props) {
 
   const choose = useCallback(
     async (label: InitiationLabel) => {
-      if (!current) return;
+      // Re-entrancy guard: `submitting` stays true across the deferred advance
+      // below, so a second click on the still-mounted (but already-submitted)
+      // card during that window is a no-op instead of re-POSTing the same
+      // session_id (double-submit race — see classifications.ts idempotency).
+      if (!current || submitting) return;
       setSel(label);
       setSubmitting(true);
       setErrorMsg(null);
@@ -199,15 +203,20 @@ export function ClassifyFlow({ initial, kids, lang }: Props) {
         // return). Soft refresh — keeps this flow's client state intact.
         router.refresh();
         // Brief delay so the user sees their selection highlight (per design).
-        setTimeout(advance, 260);
+        // Keep buttons disabled until the NEXT card mounts — closes the
+        // ~260ms window where the just-submitted card was re-clickable
+        // (double-submit race).
+        setTimeout(() => {
+          advance();
+          setSubmitting(false);
+        }, 260);
       } catch (e) {
         setErrorMsg(e instanceof Error ? e.message : 'Submit failed');
         setSel(null);
-      } finally {
-        setSubmitting(false);
+        setSubmitting(false); // error path re-enables immediately for retry
       }
     },
-    [current, advance, router],
+    [current, submitting, advance, router],
   );
 
   // ---- Empty / done state -------------------------------------------------

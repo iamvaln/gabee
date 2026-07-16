@@ -103,6 +103,60 @@ export async function seedCorrectAnswers(
   return count;
 }
 
+/**
+ * Seed `count` `typing_word_completed` events (keyboard star evidence) — mirrors
+ * `seedCorrectAnswers` but for the keyboard module, which never emits
+ * `question_answered`. `mode: 'static'` words are always correct (no
+ * `completed_before_timeout` key); `mode: 'scrolling'` words also fire on
+ * misses, so this factory always seeds a completed-in-time success
+ * (`completed_before_timeout: true`) for that mode.
+ */
+export async function seedTypedWords(
+  prisma: PrismaClient,
+  profileId: string,
+  count: number,
+  mode: 'static' | 'scrolling' = 'static',
+): Promise<number> {
+  if (count <= 0) return 0;
+  const now = new Date();
+  await prisma.event.createMany({
+    data: Array.from({ length: count }, () => ({
+      eventId: randomUUID(),
+      profileId,
+      name: 'typing_word_completed',
+      clientTs: now,
+      payload: (mode === 'static'
+        ? { mode: 'static' }
+        : { mode: 'scrolling', completed_before_timeout: true }) as Prisma.InputJsonValue,
+    })),
+  });
+  return count;
+}
+
+/**
+ * Seed `count` `code_level_solved` events (code star evidence) — mirrors
+ * `seedCorrectAnswers` but for the code module, which never emits
+ * `question_answered`.
+ */
+export async function seedCodeSolved(
+  prisma: PrismaClient,
+  profileId: string,
+  count: number,
+): Promise<number> {
+  if (count <= 0) return 0;
+  const now = new Date();
+  await prisma.event.createMany({
+    data: Array.from({ length: count }, () => ({
+      eventId: randomUUID(),
+      profileId,
+      name: 'code_level_solved',
+      clientTs: now,
+      payload: {} as Prisma.InputJsonValue,
+    })),
+  });
+  return count;
+}
+
 export async function createCurriculum(
   prisma: PrismaClient,
   overrides: Partial<Prisma.CurriculumUncheckedCreateInput> = {},
