@@ -16,6 +16,7 @@ export * from './events';
 export * from './kid-message';
 export * from './family';
 export * from './healthy-use';
+export * from './flags';
 export * from './api';
 export * from './api/messages-health';
 export * from './api/sub-modes';
