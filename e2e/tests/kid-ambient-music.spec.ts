@@ -62,12 +62,13 @@ test('ambient music starts on hub, stops in a session, resumes after', async ({ 
   await page.mouse.click(1, 1);
   await expect.poll(() => liveMusic(page), { timeout: 15_000 }).toBeGreaterThan(0);
 
-  // Enter a translation session. Translation has no sub-mode picker — Hub's
-  // module tile auto-starts the next lesson directly for a profile with no
-  // prior translation progress (App.tsx enterModule → startOrBrowse: tab is
-  // 'apprendre' and a next-lesson exists, so it goes straight to
-  // translation_session, never surfacing the level/lesson maps at all).
+  // Enter a translation session. Post-rework, translation is two independently
+  // tracked directions: the Hub tile opens the sub-hub (FR→EN / EN→FR), picking
+  // a direction opens its lesson map, and the first unlocked lesson starts the
+  // session (App.tsx: translation → translation_subhub → *_lessonmap → *_session).
   await page.locator('button.module-tile[data-module="translation"]').click();
+  await page.getByRole('button', { name: /FR\s*→\s*EN/ }).click();
+  await page.locator('.level-grid .level-tile.unlocked').first().click();
   await expect(page.locator('.session-answers .answer-btn').first()).toBeVisible();
   await expect.poll(() => liveMusic(page), { timeout: 15_000 }).toBe(0);
 
