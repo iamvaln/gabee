@@ -2,15 +2,17 @@ import { expect, test, type Page } from '@playwright/test';
 import { prisma, pollUntil } from '../helpers/db';
 import { seedKidAuthAndPickAva, avaProfile, finishToHub } from '../helpers/kid-session';
 
-/** Code progress is genuinely localStorage-only — CodeTurtleSession.tsx never calls
- *  `queueProgress`/touches `total_stars` (confirmed by reading the source: `finishLesson`
- *  only does `enqueueEvent(lesson_completed)` + `flushEvents()` + `persistLocal` (writes
- *  to `lib/codeTrack`, not the server) + `clearResume`). So `totalStars` can't be the
- *  assertion here (it's never claimed, unlike the keyboard-screen server-side bug in
- *  task-2-report.md, where a claim IS made but silently clamped). Code's events DO sync:
- *  `lesson_started` (once) + `question_shown` (once per question) + `lesson_completed`
- *  (once) is a strict increase of at least 1 + 5 + 1 = 7 events for a 5-question lesson.
- *  A strict count increase is proof the full skip-through flow ran and synced. */
+/** As of the Task 1/2 fix, CodeTurtleSession.tsx emits `code_level_solved` and syncs
+ *  progress (`queueProgress`) for solved puzzles, and the server counts those events
+ *  as star evidence — but THIS spec always completes via "Passer" (skip), never solving
+ *  a puzzle. Skip = 0 solved = 0 `code_level_solved` events = 0 star evidence, so
+ *  `total_stars` never increases here regardless of the fix; asserting it would be
+ *  false. That star/capture path is covered elsewhere: the kid component test
+ *  (CodeTurtleSession) and the server's progress-sync integration test. What THIS e2e
+ *  proves is the skip-completion flow itself: `lesson_started` (once) + `question_shown`
+ *  (once per question) + `lesson_completed` (once) is a strict increase of at least
+ *  1 + 5 + 1 = 7 events for a 5-question lesson, scoped to this session's own
+ *  `lesson_completed` (module='code') below. */
 
 /** `startModule` (kid-session.ts) can't be reused as-is: its post-navigation wait is
  *  MCQ-specific (`.session-answers .answer-btn`), never rendered by the code/turtle
@@ -80,7 +82,8 @@ test('code: a full session completes via skip and syncs its events', async ({ pa
   await skipCodeLesson(page, 5); // CodeTurtleSession TOTAL = 5
   await finishToHub(page);
 
-  // Code progress is localStorage-only (no totalStars claim to assert), but its
-  // lesson_completed event syncs to Postgres — proving the session ran + synced.
+  // Skip-completion scores 0 (no totalStars claim to assert — see the file-header
+  // comment), but the session's own lesson_completed event still syncs to Postgres —
+  // proving the skip-through flow ran and synced.
   await pollUntil(codeCompletions, (c) => c > before);
 });

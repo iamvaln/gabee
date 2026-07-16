@@ -2,26 +2,15 @@ import { expect, test, type Page } from '@playwright/test';
 import { prisma, pollUntil } from '../helpers/db';
 import { seedKidAuthAndPickAva, avaProfile, finishToHub } from '../helpers/kid-session';
 
-/** `total_stars` genuinely cannot be asserted here — this is a confirmed SERVER-SIDE
- *  product bug, not a test-timing issue (see `.superpowers/sdd/task-2-report.md` for
- *  the full live-debugged trail). KeyboardStaticSession.tsx computes
- *  `total_stars = profile.total_stars + correctCount` client-side and syncs the claim
- *  (line ~225), but apps/web/src/lib/server/services/progress.ts's `syncProgress`
- *  bounds every claimed `total_stars` by `countEvidencedStars` — a count of
- *  `question_answered` events with `payload.correct === true` (+ claimed gifts). The
- *  keyboard/typing screens (KeyboardStaticSession.tsx, KeyboardScrollingSession.tsx)
- *  never enqueue `question_answered` — they only emit `lesson_started`,
- *  `question_shown`, `typing_keystroke`, `typing_word_completed`, `lesson_completed`.
- *  So the server's evidence cap never grows from keyboard play, and a keyboard
- *  session's star claim is silently clamped back to the pre-session value — reliably,
- *  every time, regardless of typing speed/accuracy/timing. Confirmed live: after a
- *  full 7/7 correct run, Postgres showed `typing_keystroke` count +7 (one correct
- *  keystroke per single-letter L1 prompt) and `typing_word_completed` +7, but zero
- *  `question_answered` rows and an unchanged `total_stars`.
- *  `typing_keystroke` / `typing_word_completed` are emitted EXCLUSIVELY by the two
+/** `total_stars` IS asserted here (as of the Task 1/2 fix): the server's
+ *  `countEvidencedStars` now counts `typing_word_completed` events (in addition to
+ *  `question_answered`) as star evidence, so a keyboard session's claimed
+ *  `total_stars` is no longer clamped back to its pre-session value. The test below
+ *  reads `totalStars` before the session and polls for a strict increase after.
+ *  `typing_keystroke` / `typing_word_completed` are emitted EXCLUSIVELY by the
  *  keyboard screens (grep confirms no other module uses these event names), so a
- *  strict increase in their count is an unambiguous, non-gameable proof that the
- *  session actually ran the full typing flow — this is the assertion below. */
+ *  strict increase in their count remains a separate, unambiguous, non-gameable proof
+ *  that the session actually ran the full typing flow. */
 
 /** `startModule` (kid-session.ts) can't be reused as-is: its post-navigation
  *  wait is MCQ-specific (`.session-answers .answer-btn`, never rendered by the
@@ -120,13 +109,22 @@ test('keyboard: a full static (copy) session types every prompt and persists eve
   const countKeystrokes = () =>
     prisma.event.count({ where: { profileId: ava.id, name: 'typing_keystroke' } });
   const before = await countKeystrokes();
+  const starsBefore = ava.totalStars;
 
   await startKeyboardStatic(page);
   await typeKeyboardLesson(page, 7); // KeyboardStaticSession TOTAL = 7
   await finishToHub(page);
 
   // One `typing_keystroke` event per correctly-typed prompt (L1 = single-letter
-  // targets, so exactly one correct keystroke each) — see the file-header comment
-  // for why `total_stars` can't be the assertion here.
+  // targets, so exactly one correct keystroke each) — an unambiguous, non-gameable
+  // proof the session ran the full typing flow.
   await pollUntil(countKeystrokes, (n) => n >= before + 7);
+
+  // 7/7 correct prompts → 7 `typing_word_completed` events, now counted as star
+  // evidence server-side (the Task 1 fix) → `total_stars` persists the claim
+  // instead of being clamped back to its pre-session value.
+  await pollUntil(
+    async () => (await prisma.childProfile.findUniqueOrThrow({ where: { id: ava.id } })).totalStars,
+    (s) => s > starsBefore,
+  );
 });
