@@ -21,8 +21,8 @@ describe('isSessionRoute', () => {
   // is added, TypeScript forces it into one of these lists (Route['name'] param).
   const sessions = [
     'session', 'words_picture_session', 'words_fill_session', 'words_build_session',
-    'words_read_session', 'translation_session', 'keyboard_static_session',
-    'keyboard_scrolling_session', 'code_session',
+    'words_read_session', 'translation_fr_en_session', 'translation_en_fr_session',
+    'keyboard_static_session', 'keyboard_scrolling_session', 'code_session',
   ] as const;
   const ambient = [
     'hub', 'carte_road', 'numbers_subhub', 'levelmap', 'lessonmap', 'summary',
@@ -30,7 +30,8 @@ describe('isSessionRoute', () => {
     'words_fill_levelmap', 'words_fill_lessonmap', 'words_fill_summary',
     'words_build_levelmap', 'words_build_lessonmap', 'words_build_summary',
     'words_read_levelmap', 'words_read_lessonmap', 'words_read_summary',
-    'translation_levelmap', 'translation_lessonmap', 'translation_summary',
+    'translation_subhub', 'translation_fr_en_lessonmap', 'translation_en_fr_lessonmap',
+    'translation_fr_en_summary', 'translation_en_fr_summary',
     'keyboard_subhub', 'keyboard_static_levelmap', 'keyboard_static_lessonmap', 'keyboard_static_summary',
     'keyboard_scrolling_levelmap', 'keyboard_scrolling_lessonmap', 'keyboard_scrolling_summary',
     'code_subhub', 'code_levelmap', 'code_lessonmap', 'code_summary', 'settings',

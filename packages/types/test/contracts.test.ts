@@ -344,7 +344,8 @@ describe('ChildProfile', () => {
         words_fill: perLang,
         words_build: perLang,
         words_read: perLang,
-        translation: perLang,
+        translation_fr_en: perLang,
+        translation_en_fr: perLang,
       },
     });
     assert.equal(parsed.music_enabled, true);
