@@ -1,8 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import type { QuestionBundleResponse } from '@gabee/types';
 import { pickNextLesson, subModeHint, nextLessonFor } from './nextLesson';
 
-function q(level: number, sub_mode: string | null = null) {
+// `sub_mode` optional (not nullable) to match BundleLike's `sub_mode?: string`.
+function q(level: number, sub_mode?: string) {
   return { level, sub_mode, id: `q-${level}-${sub_mode ?? 'x'}-${Math.random()}` };
 }
 function lesson(n: number, stars: number) {
@@ -53,10 +55,17 @@ describe('pickNextLesson', () => {
     const levels = [lvl(1, [lesson(1, 3), lesson(2, 3), lesson(3, 3), lesson(4, 0)])];
     assert.deepEqual(pickNextLesson(bundle, levels), { level: 1, lesson: 4, isRevision: true });
   });
+
+  it('an unfinished revision at a level blocks advancing to a higher configured level', () => {
+    const bundle = { questions: [q(1), q(2)] }; // levels 1 and 2 both configured
+    // L1 lessons 1-3 mastered, revision (lesson 4) NOT → must stay on L1's revision, never jump to L2
+    const levels = [lvl(1, [lesson(1, 3), lesson(2, 3), lesson(3, 3), lesson(4, 0)]), lvl(2, [lesson(1, 0)])];
+    assert.deepEqual(pickNextLesson(bundle, levels), { level: 1, lesson: 4, isRevision: true });
+  });
 });
 
 describe('subModeHint', () => {
-  const bundle = { questions: [q(1, 'picture')] };
+  const bundle = { questions: [q(1, 'picture')] } as unknown as QuestionBundleResponse;
   const profileWith = (lessons: ReturnType<typeof lesson>[]) =>
     ({
       id: 'p1',
@@ -77,7 +86,7 @@ describe('subModeHint', () => {
 
 describe('nextLessonFor', () => {
   it('reads the words per-language track and delegates to pickNextLesson', () => {
-    const bundle = { questions: [q(1, 'picture')] };
+    const bundle = { questions: [q(1, 'picture')] } as unknown as QuestionBundleResponse;
     const profile = {
       id: 'p1',
       progress_by_module_per_language: { words_picture: { fr: { highest_level: 1, levels: [lvl(1, [lesson(1, 3), lesson(2, 0)])] }, en: { highest_level: 1, levels: [] } } },
