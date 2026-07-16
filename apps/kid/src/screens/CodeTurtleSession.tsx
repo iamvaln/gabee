@@ -8,6 +8,7 @@ import { SessionHeader } from '../components/SessionHeader';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { enqueueEvent, flushEvents } from '../lib/events';
+import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { selectSession } from '../lib/selectSession';
 import { getSeen, markSeen } from '../lib/seen';
@@ -109,6 +110,7 @@ export function CodeTurtleSession({
   const lang = useStore((s) => s.lang);
   const setLang = useStore((s) => s.setLang);
   const profile = useStore((s) => s.profile);
+  const setProfile = useStore((s) => s.setProfile);
   const play = useStore((s) => s.play);
   const nextLessonPosition = useStore((s) => s.nextLessonPosition);
 
@@ -247,6 +249,79 @@ export function CodeTurtleSession({
     writeLocalTrack(localKey(world), profileId, { levels });
   }
 
+  // Sync the code track server-side (product §7.3/§8) — additive to persistLocal
+  // above, which stays the source of truth for per-world level gating (the
+  // canonical progress_by_module.code track lumps the three worlds together, so
+  // it can't drive independent unlocking). Mirrors KeyboardStaticSession's
+  // persistProgress, keyed by `world` (the code sub-mode) via a `bySubMode`
+  // extension (see the same TODO there re: widening TrackProgressSchema).
+  async function persistProgress(finalScore: number, ratingStars: number) {
+    if (!profile || !session) return;
+    const now = new Date().toISOString();
+    const track = profile.progress_by_module.code as unknown as {
+      highest_level: number;
+      levels: LevelProgress[];
+      bySubMode?: Partial<Record<CodeWorld, { levels: LevelProgress[] }>>;
+    };
+
+    const subLevels = track.bySubMode?.[world]?.levels ?? [];
+    const levels = [...subLevels];
+    const idx = levels.findIndex((l) => l.level === level);
+    const prevLevel: LevelProgress =
+      idx >= 0
+        ? levels[idx]!
+        : { level, stars: 0, plays: 0, best_time_s: null, last_played: null, seen_question_ids: [], lessons: [] };
+
+    const lessons = [...prevLevel.lessons];
+    const li = lessons.findIndex((x) => x.lesson === lesson);
+    const prevLesson: LessonProgress = li >= 0 ? lessons[li]! : { lesson, stars: 0, plays: 0, last_played: null };
+    const updatedLesson: LessonProgress = {
+      lesson,
+      stars: Math.max(prevLesson.stars, ratingStars),
+      plays: prevLesson.plays + 1,
+      last_played: now,
+    };
+    if (li >= 0) lessons[li] = updatedLesson;
+    else lessons.push(updatedLesson);
+
+    const seen = Array.from(
+      new Set([...prevLevel.seen_question_ids, ...session.questions.map((qq) => qq.id)]),
+    ).slice(-80);
+    const updatedLevel: LevelProgress = {
+      ...prevLevel,
+      level,
+      stars: Math.max(prevLevel.stars, ratingStars),
+      plays: prevLevel.plays + 1,
+      last_played: now,
+      seen_question_ids: seen,
+      lessons,
+    };
+    if (idx >= 0) levels[idx] = updatedLevel;
+    else levels.push(updatedLevel);
+
+    const nextTrack = {
+      highest_level: Math.max(track.highest_level, level),
+      levels: track.levels,
+      bySubMode: {
+        ...track.bySubMode,
+        [world]: { levels },
+      },
+    };
+    const progress_by_module = {
+      ...profile.progress_by_module,
+      code: nextTrack as unknown as typeof profile.progress_by_module.code,
+    };
+    const total_stars = profile.total_stars + finalScore;
+
+    setProfile({ ...profile, total_stars, progress_by_module });
+    await sync.queueProgress({
+      profile_id: profile.id,
+      updated_at: now,
+      progress_by_module,
+      total_stars,
+    });
+  }
+
   async function finishLesson(finalScore: number) {
     if (!session) return;
     const total = session.questions.length;
@@ -257,6 +332,7 @@ export function CodeTurtleSession({
     );
     await flushEvents();
     persistLocal(stars);
+    await persistProgress(finalScore, stars);
     clearResume();
     onDone(finalScore, total);
   }
@@ -315,6 +391,43 @@ export function CodeTurtleSession({
           ctx,
         );
         if (ok) {
+          // code_level_solved (product §9.2) — once per solved puzzle, consumed by
+          // the parent dashboard's Code tab (CodeDetailMetrics: solved_puzzles /
+          // efficiency). Fields computed from state already tracked by this
+          // component; two are best-effort defaults (noted below) rather than
+          // invented new refs:
+          //  - used_loop / used_conditional: always false — the kid places only
+          //    flat move/pick/drop prims (see the module comment above); loops
+          //    and conditionals exist solely in the seed reference `answer`, so
+          //    the kid's *own* program never actually uses them.
+          //  - total_wall_hits: RunResult only exposes `frames` + `success`, not
+          //    the interpreter's internal wasted-move counter — same limitation
+          //    as the `code_run` event above, which already hardcodes
+          //    `wall_hits: 0`. Widening this would mean changing turtle.ts's
+          //    RunResult, out of scope here.
+          //  - hints_used: no hint-usage counter exists in this component.
+          //  - duration_ms: no per-question start timestamp is tracked (unlike
+          //    KeyboardStaticSession's wordStartRef) — using time-since-lesson-
+          //    start (lessonStartRef) as the best available proxy rather than
+          //    adding new tracked state.
+          const answer = Array.isArray(q.answer) ? (q.answer as Op[]) : [];
+          const optimalBlocks = Math.max(1, flattenProgram(puzzle, answer).length);
+          const finalBlocksUsed = program.length;
+          void enqueueEvent(
+            {
+              name: 'code_level_solved', level, lesson,
+              total_attempts: attemptsRef.current,
+              final_blocks_used: finalBlocksUsed,
+              optimal_blocks: optimalBlocks,
+              efficiency_ratio: Math.min(1, optimalBlocks / finalBlocksUsed),
+              used_loop: false,
+              used_conditional: false,
+              total_wall_hits: 0,
+              hints_used: 0,
+              duration_ms: Math.max(0, Date.now() - lessonStartRef.current),
+            },
+            ctx,
+          );
           if (guide.active) guide.report('success');
           const newScore = score + 1;
           setTimeout(() => {
