@@ -28,6 +28,7 @@ interface ChildRow {
   language: string;
   birthDate: Date | null;
   audioEnabled: boolean;
+  musicEnabled: boolean;
   createdAt: Date;
   lastActiveAt: Date | null;
   totalStars: number;
@@ -63,6 +64,7 @@ export function mapChildProfile(row: ChildRow): ChildProfile {
     // @db.Date row → "YYYY-MM-DD" (stored at UTC midnight).
     birth_date: row.birthDate ? row.birthDate.toISOString().slice(0, 10) : null,
     audio_enabled: row.audioEnabled,
+    music_enabled: row.musicEnabled,
     created_at: row.createdAt.toISOString(),
     last_active_at: row.lastActiveAt ? row.lastActiveAt.toISOString() : null,
     total_stars: row.totalStars,

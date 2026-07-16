@@ -44,7 +44,7 @@ export default defineConfig({
       workbox: {
         // Precache every build-time asset Vite emits. Bundles travel out-of-band
         // through Dexie, not Workbox, so we don't list them here.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,m4a,wav}'],
         // Mulish webfont (Google Fonts CSS + the woff2s) — cache-first so
         // subsequent launches don't hit the network.
         runtimeCaching: [

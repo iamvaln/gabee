@@ -2,11 +2,12 @@
 // THE audio boundary (spec §2). Screens import sfx()/speak()/… from here and
 // never touch AudioContext or speechSynthesis directly.
 import { playCue, type CueName } from './sfx';
-import { isEnabled, setEnabled as setEnabledPref } from './prefs';
+import { isEnabled, isMusicEnabled, setEnabled as setEnabledPref, setMusicEnabled as setMusicEnabledPref } from './prefs';
 import { WebSpeechVoiceProvider, type VoiceProvider } from './voice';
+import { setMusicZone as musicSetZone, reevaluateMusic as reevaluateMusicImpl, type MusicZone } from './music';
 
-export type { CueName, VoiceProvider };
-export { isEnabled };
+export type { CueName, VoiceProvider, MusicZone };
+export { isEnabled, isMusicEnabled };
 
 // v0.1 provider — the one line to change for the recorded-voices upgrade (Phase D).
 const provider = new WebSpeechVoiceProvider();
@@ -75,4 +76,31 @@ export function warmVoice(): void {
 export function setEnabled(v: boolean): void {
   setEnabledPref(v);
   if (!v) provider.stop();
+  reevaluateMusicImpl();
+}
+
+/** Route-driven music zoning; idempotent, never throws (spec §2). */
+export function setMusicZone(zone: MusicZone): void {
+  try {
+    musicSetZone(zone);
+  } catch {
+    /* music must never break a render */
+  }
+}
+
+/** Ambient-music switch: flip pref, settle playback immediately. */
+export function setMusicEnabled(v: boolean): void {
+  setMusicEnabledPref(v);
+  reevaluateMusicImpl();
+}
+
+/** Re-settle playback against the current zone × prefs; idempotent, never
+ *  throws (spec §2). Callers: profile switch (a new kid's music_enabled just
+ *  seeded) needs this re-evaluated without waiting on a route/zone change. */
+export function reevaluateMusic(): void {
+  try {
+    reevaluateMusicImpl();
+  } catch {
+    /* music must never break a render */
+  }
 }

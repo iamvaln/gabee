@@ -43,6 +43,8 @@ interface AppState {
    * kid's pref — always re-seeded from profile.audio_enabled on select.
    */
   audioEnabled: boolean;
+  /** Ambient music switch (audio phase E) — plays only when audioEnabled is also true. Same "last selected kid's pref" semantics. */
+  musicEnabled: boolean;
   /** Selected child profile (re-picked each launch; not persisted). */
   profile: ChildProfile | null;
   /** Current play sitting (a session = one or more lessons). */
@@ -54,6 +56,7 @@ interface AppState {
   skipDeviceLink: () => void;
   setProfile: (profile: ChildProfile | null) => void;
   setAudioEnabled: (v: boolean) => void;
+  setMusicEnabled: (v: boolean) => void;
   /** Start (or reuse) the current play session; returns its id. */
   startPlay: () => string;
   /** Advance and return the lesson's position_in_session. */
@@ -70,6 +73,7 @@ export const useStore = create<AppState>()(
       needsDeviceLink: false,
       deviceLinkSkipped: false,
       audioEnabled: true,
+      musicEnabled: true,
       profile: null,
       play: null,
 
@@ -89,11 +93,18 @@ export const useStore = create<AppState>()(
       // star-update spreads sessions do ({...profile, total_stars}) re-seed
       // with the same value because setAudioEnabled keeps both sides in sync.
       setProfile: (profile) =>
-        set(profile ? { profile, audioEnabled: profile.audio_enabled } : { profile }),
+        set(profile
+          ? { profile, audioEnabled: profile.audio_enabled, musicEnabled: profile.music_enabled }
+          : { profile }),
       setAudioEnabled: (v) =>
         set((s) => ({
           audioEnabled: v,
           profile: s.profile ? { ...s.profile, audio_enabled: v } : s.profile,
+        })),
+      setMusicEnabled: (v) =>
+        set((s) => ({
+          musicEnabled: v,
+          profile: s.profile ? { ...s.profile, music_enabled: v } : s.profile,
         })),
       startPlay: () => {
         const existing = get().play;
@@ -114,7 +125,7 @@ export const useStore = create<AppState>()(
     {
       name: 'gabee-kid-store',
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ lang: s.lang, token: s.token, parent: s.parent, needsDeviceLink: s.needsDeviceLink, deviceLinkSkipped: s.deviceLinkSkipped, audioEnabled: s.audioEnabled }),
+      partialize: (s) => ({ lang: s.lang, token: s.token, parent: s.parent, needsDeviceLink: s.needsDeviceLink, deviceLinkSkipped: s.deviceLinkSkipped, audioEnabled: s.audioEnabled, musicEnabled: s.musicEnabled }),
       onRehydrateStorage: () => (state) => {
         if (state?.token) setApiToken(state.token);
       },

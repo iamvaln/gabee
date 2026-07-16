@@ -9,6 +9,7 @@ import {
   IngestEventsRequestSchema,
   IngestEventsRequestLenientSchema,
   ChildProfileSchema,
+  UpdateProfileRequestSchema,
   DeviceSnapshotSchema,
   EVENT_NAMES,
   GenderSchema,
@@ -313,6 +314,42 @@ describe('ChildProfile', () => {
     });
     assert.equal(profile.audio_enabled, true);
     assert.equal(profile.total_stars, 0);
+  });
+
+  it('defaults music_enabled to true (audio phase E)', () => {
+    // Reuse the block's existing minimal valid profile fixture:
+    const emptyTrack = { highest_level: 1, levels: [] };
+    const perLang = { fr: emptyTrack, en: emptyTrack };
+    const parsed = ChildProfileSchema.parse({
+      id: UUID,
+      parent_id: UUID2,
+      name: 'Léa',
+      avatar: 'avatar_1',
+      skin_tone: 'skin_2',
+      hair_color: 'hair_brown',
+      hair_style: 'style_short',
+      shirt_color: 'shirt_blue',
+      language: 'fr',
+      created_at: NOW,
+      progress_by_module: {
+        numbers: emptyTrack,
+        keyboard: emptyTrack,
+        code: emptyTrack,
+      },
+      progress_by_module_per_language: {
+        words_picture: perLang,
+        words_fill: perLang,
+        words_build: perLang,
+        words_read: perLang,
+        translation: perLang,
+      },
+    });
+    assert.equal(parsed.music_enabled, true);
+  });
+
+  it('UpdateProfileRequest carries music_enabled through', () => {
+    const parsed = UpdateProfileRequestSchema.parse({ music_enabled: false });
+    assert.equal(parsed.music_enabled, false);
   });
 });
 

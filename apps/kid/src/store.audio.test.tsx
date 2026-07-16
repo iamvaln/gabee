@@ -17,12 +17,13 @@ const useStoreTestProfileBase = {
   name: 'Testkid',
   language: 'fr',
   audio_enabled: true,
+  music_enabled: true,
   total_stars: 0,
 } as unknown as ChildProfile;
 
 describe('store audioEnabled', () => {
   beforeEach(() => {
-    useStore.setState({ profile: null, audioEnabled: true });
+    useStore.setState({ profile: null, audioEnabled: true, musicEnabled: true });
   });
 
   it('defaults to true', () => {
@@ -51,5 +52,22 @@ describe('store audioEnabled', () => {
     useStore.getState().setAudioEnabled(false);
     useStore.getState().setProfile(null);
     assert.equal(useStore.getState().audioEnabled, false);
+  });
+
+  it('seeds musicEnabled from profile.music_enabled on select', () => {
+    useStore.getState().setProfile(kid({ music_enabled: false }));
+    assert.equal(useStore.getState().musicEnabled, false);
+    useStore.getState().setProfile(kid({ music_enabled: true }));
+    assert.equal(useStore.getState().musicEnabled, true);
+  });
+
+  it('setMusicEnabled flips pref AND profile copy so star-spreads keep it', () => {
+    useStore.getState().setProfile(kid({ music_enabled: true }));
+    useStore.getState().setMusicEnabled(false);
+    const s = useStore.getState();
+    assert.equal(s.musicEnabled, false);
+    assert.equal(s.profile?.music_enabled, false);
+    s.setProfile({ ...s.profile!, total_stars: 5 });
+    assert.equal(useStore.getState().musicEnabled, false);
   });
 });

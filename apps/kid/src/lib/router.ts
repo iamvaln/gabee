@@ -74,6 +74,11 @@ export type Route =
   | ({ name: 'code_summary'; world: CodeWorld; score: number; total: number } & PlayTarget)
   | { name: 'settings' };
 
+/** Ambient music is silenced on every exercise screen (audio phase E spec §2). */
+export function isSessionRoute(name: Route['name']): boolean {
+  return name === 'session' || name.endsWith('_session');
+}
+
 // ─── Slug tables ─────────────────────────────────────────────────────────────
 const TAB_SLUG: Record<KidTab, string> = { apprendre: 'learn', carte: 'map', coffre: 'chest' };
 const TAB_BY_SLUG: Record<string, KidTab> = { learn: 'apprendre', map: 'carte', chest: 'coffre' };

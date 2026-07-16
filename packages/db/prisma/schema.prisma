@@ -312,6 +312,7 @@ model ChildProfile {
   // selection. Nullable for profiles created before this field existed.
   birthDate                   DateTime?  @map("birth_date") @db.Date
   audioEnabled                Boolean    @default(true) @map("audio_enabled")
+  musicEnabled                Boolean    @default(true) @map("music_enabled")
   createdAt                   DateTime   @default(now()) @map("created_at")
   lastActiveAt                DateTime?  @map("last_active_at")
   totalStars                  Int        @default(0) @map("total_stars")
