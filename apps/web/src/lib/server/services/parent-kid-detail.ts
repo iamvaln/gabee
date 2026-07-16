@@ -214,9 +214,13 @@ function levelsFromProgress(
       wordsMax = Math.max(wordsMax, fr, en);
     }
     if (wordsMax > 0) out.words = wordsMax;
+    // Translation is now two per-direction tracks; take the highest level reached
+    // in either direction / language (the old single `translation` key is gone).
     const tr = Math.max(
-      b.translation?.fr?.highest_level ?? 0,
-      b.translation?.en?.highest_level ?? 0,
+      b.translation_fr_en?.fr?.highest_level ?? 0,
+      b.translation_fr_en?.en?.highest_level ?? 0,
+      b.translation_en_fr?.fr?.highest_level ?? 0,
+      b.translation_en_fr?.en?.highest_level ?? 0,
     );
     if (tr > 0) out.translation = tr;
   }

@@ -69,7 +69,8 @@ export const ProgressByModulePerLanguageSchema = z.object({
   words_fill: PerLanguageTrackSchema,
   words_build: PerLanguageTrackSchema,
   words_read: PerLanguageTrackSchema,
-  translation: PerLanguageTrackSchema,
+  translation_fr_en: PerLanguageTrackSchema,
+  translation_en_fr: PerLanguageTrackSchema,
 });
 export type ProgressByModulePerLanguage = z.infer<typeof ProgressByModulePerLanguageSchema>;
 
@@ -95,7 +96,8 @@ export function defaultProgressByModulePerLanguage(): ProgressByModulePerLanguag
     words_fill: pair(),
     words_build: pair(),
     words_read: pair(),
-    translation: pair(),
+    translation_fr_en: pair(),
+    translation_en_fr: pair(),
   };
 }
 

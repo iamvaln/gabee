@@ -310,11 +310,14 @@ describe('ChildProfile', () => {
         words_fill: perLang,
         words_build: perLang,
         words_read: perLang,
-        translation: perLang,
+        translation_fr_en: perLang,
+        translation_en_fr: perLang,
       },
     });
     assert.equal(profile.audio_enabled, true);
     assert.equal(profile.total_stars, 0);
+    assert.ok('translation_fr_en' in profile.progress_by_module_per_language);
+    assert.equal('translation' in profile.progress_by_module_per_language, false);
   });
 
   it('defaults music_enabled to true (audio phase E)', () => {
@@ -342,7 +345,8 @@ describe('ChildProfile', () => {
         words_fill: perLang,
         words_build: perLang,
         words_read: perLang,
-        translation: perLang,
+        translation_fr_en: perLang,
+        translation_en_fr: perLang,
       },
     });
     assert.equal(parsed.music_enabled, true);
