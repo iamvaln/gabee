@@ -5,23 +5,33 @@
 > accurate to what the code actually does. Every factual claim here was checked
 > against the code. **This is not legal advice** — a lawyer must review it.
 >
-> **🔴 Two blockers make this UNPUBLISHABLE as-is:**
-> 1. **Consent isn't captured.** The "Legal basis and parental consent" section
->    describes a target state. The product records **no consent at all** (no
->    field, no signup step, no withdrawal control). Publishing it as written
->    would be a misrepresentation. → build the consent capture first (see that
->    section's prerequisites).
-> 2. **Sub-processors need confirming.** The nightly DB backup (Cloudflare R2)
->    carries the IP tables off our servers — disclosed under "Where it's stored",
->    but the full sub-processor list + DPAs + any non-EU transfer must be
->    confirmed by the lawyer.
+> **Status (updated 2026-07-16):** a provisional `p-device` section is now **LIVE**
+> in the policy (`apps/web/messages/{en,fr}.json → legal.privacy`), flagged
+> "Lawyer review required" like the rest of the policy — build-in-public, in-progress.
+> This draft is the fuller working copy the lawyer finalizes; when it's approved,
+> replace the live `p-device` body with the final wording and drop the flag.
 >
-> **Then:** fill each **[LAWYER: …]** marker, set the effective date, and
-> reconcile with the existing policy's structure/voice.
+> **Recently resolved (was blocking):**
+> - ✅ **Consent is now captured.** The provable-consent feature shipped (PR #18):
+>   `ConsentRecord` (append-only), `terms_accepted: z.literal(true)` gating signup,
+>   a server-authoritative `CURRENT_TERMS_VERSION`, and a blocking re-consent gate.
+>   The "Legal basis and parental consent" section is no longer describing a target
+>   state — but the lawyer still supplies the legal-basis wording.
+> - ✅ **The 90-day purge is on `main`** (PR #18: `services/device-ip-retention.ts`
+>   + daily `/api/cron/purge-device-ips`), so the retention promise is backed by
+>   deployed code, not just decided. Confirm the cron actually fires in prod.
+> - ✅ **The recorded IP is tamper-resistant** (PR #11): it's read from the trusted
+>   last `X-Forwarded-For` hop, so a client can't forge the address written into the
+>   history — the disclosure's IP claims are accurate.
 >
-> **Settled:** IP retention = **90 days** (decided 2026-07-14; enforced by
-> `services/device-ip-retention.ts` + the daily `/api/cron/purge-device-ips`).
-> Erasure-on-account-delete is **verified** (`verify-gdpr-cascade.mts`).
+> **Still needs the lawyer:** fill each **[LAWYER: …]** marker (legal basis, DSR
+> procedure, sign-in-log retention period, cross-border language, effective date);
+> confirm the sub-processor list + DPAs (the nightly Cloudflare R2 backup carries the
+> IP tables off our servers — disclosed under "Where it's stored"); reconcile with
+> the existing policy's structure/voice.
+>
+> **Settled:** IP retention = **90 days** (decided 2026-07-14). Erasure-on-account-
+> delete is **verified** (`verify-gdpr-cascade.mts`).
 >
 > Reference: `docs/superpowers/specs/2026-07-10-device-metadata-collection-design.md`.
 
