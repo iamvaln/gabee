@@ -13,7 +13,9 @@ import { HttpError } from '../http';
 /**
  * Healthy-use limits (product §6.3, decided 2026-05-30/31). Two-tier:
  *  - Admin singleton `healthy_use_limits` with min/default/max triplets per
- *    parameter. Default row id = 'default'; seeded at migration time.
+ *    parameter. Default row id = 'default'; lazily created on first save
+ *    (`updateAdminLimits` upserts it) — the migration only sets column defaults,
+ *    it does not insert the row, so reads fall back to product defaults until then.
  *  - Per-kid overrides on `child_profiles` (nullable columns). Null = inherit.
  *
  * The kid app calls `getKidEffectiveLimits(kidId)` once on profile select; the
@@ -31,8 +33,8 @@ function clamp(n: number, lo: number, hi: number): number {
 export async function getAdminLimits(): Promise<HealthyUseLimits> {
   const row = await prisma.healthyUseLimits.findUnique({ where: { id: SINGLETON_ID } });
   if (!row) {
-    // Shouldn't happen — the migration seeds the row — but return sane defaults
-    // so admin-only callers don't 500.
+    // The singleton row is created lazily on the first `updateAdminLimits` save,
+    // so before any admin has saved, return sane product defaults (don't 500).
     return HealthyUseLimitsSchema.parse({
       daily_lesson_target: { min: 1, default: 4, max: 12 },
       session_soft_limit_min: { min: 30, default: 60, max: 120 },
