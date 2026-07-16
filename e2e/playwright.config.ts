@@ -30,7 +30,23 @@ export default defineConfig({
     trace: 'retain-on-failure',
     video: 'retain-on-failure',
   },
-  projects: [{ name: 'kid', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'kid',
+      use: { ...devices['Desktop Chrome'] }, // inherits top-level baseURL: KID_URL
+      testMatch: /(smoke|kid-.*)\.spec\.ts/,
+    },
+    {
+      name: 'parent',
+      use: { ...devices['Desktop Chrome'], baseURL: WEB_URL, extraHTTPHeaders: { 'x-forwarded-for': '10.20.0.1' } },
+      testMatch: /parent\/.*\.spec\.ts/,
+    },
+    {
+      name: 'admin',
+      use: { ...devices['Desktop Chrome'], baseURL: WEB_URL, extraHTTPHeaders: { 'x-forwarded-for': '10.20.0.2' } },
+      testMatch: /admin\/.*\.spec\.ts/,
+    },
+  ],
   webServer: [
     {
       command: 'pnpm --filter @gabee/web run start',
