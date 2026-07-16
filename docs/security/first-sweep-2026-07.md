@@ -452,3 +452,36 @@ sync ANY sibling's profile in the family, so it can inflate a sibling's progress
    level jumps). Cheap, heuristic, catches casual tampering.
 3. **Accept it** — document that progress is client-asserted and not evidence of
    learning, and keep the reward economy tolerant of it.
+
+
+## ✅ Finding #8 resolved — total_stars is now bounded by evidence (2026-07-16)
+
+Option 1 (server-side authoritative accounting) was taken, in its bounded form: the
+server no longer trusts a client-declared total, it caps it by what it can count.
+
+```
+cap = correct `question_answered` events + claimed gifts + stars_baseline
+total_stars = max(cur, min(claimed, cap))   // never lowers, never exceeds evidence
+```
+
+This was exact rather than heuristic because the star rule is exact: 1 star = 1 correct
+answer (every star-awarding screen does `+ correctCount`; Code awards none), events are
+append-only + deduped on `event_id` + never pruned, and `sync.ts` drains events BEFORE
+progress — so the evidence is already stored when the claim arrives.
+
+`stars_baseline` (new column, additive migration, default 0) grandfathers stars that
+predate the rule — the manual grant, anything from before reliable ingest — the first
+time a sync sees them, so the cap can't freeze a real kid. It only ever absorbs stars
+that already existed; a client can't push above the cap, so it can't manufacture
+residue.
+
+Verified live: 999999 with no evidence -> 0 · 3 correct + 1 wrong -> 3 · claim 5 on 3
+-> 3 · manual grant 500 on 3 evidence -> kept 500 (baseline 497) -> 2 more answers ->
+502. Pinned by `probes/progress-integrity.spec.ts`.
+
+**What this does and does not buy.** It does not make the client trustworthy — nothing
+can; local data cannot be tamper-proof because the key would have to ship with it. It
+moves the forgery cost from "set a number in devtools" to "synthesise a plausible,
+deduped event stream", and it makes the server the arbiter of the reward economy. If
+that bar ever needs raising further, the next lever is plausibility on the events
+themselves (answer rate, response-time floors), not client-side obfuscation.
