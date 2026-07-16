@@ -3,7 +3,31 @@
 // then assert music sources against real navigation. Music = looping
 // AudioBufferSource; cues = OscillatorNodes (the discriminator).
 import { test, expect, type Page } from '@playwright/test';
-import { FIXTURES } from '../helpers/db';
+import { FIXTURES, prisma } from '../helpers/db';
+import { seedKidAuthAndPickAva } from '../helpers/kid-session';
+
+// Ambient music is admin-flag-gated (design 2026-07-16) and ships OFF by
+// default. These engine tests predate the flag, so enable it for the fixture
+// parent via a per-account override before each test, and clean up after.
+async function setAmbientMusicFlag(enabled: boolean) {
+  await prisma.featureFlag.upsert({
+    where: { key: 'kid_ambient_music' },
+    update: {},
+    create: { key: 'kid_ambient_music', enabledDefault: false, description: '' },
+  });
+  const parent = await prisma.parentAccount.findUnique({ where: { email: FIXTURES.parentEmail }, select: { id: true } });
+  if (!parent) throw new Error('fixture parent missing');
+  await prisma.featureFlagOverride.upsert({
+    where: { flagKey_parentId: { flagKey: 'kid_ambient_music', parentId: parent.id } },
+    update: { enabled },
+    create: { flagKey: 'kid_ambient_music', parentId: parent.id, enabled },
+  });
+}
+
+async function clearAmbientMusicFlag() {
+  const parent = await prisma.parentAccount.findUnique({ where: { email: FIXTURES.parentEmail }, select: { id: true } });
+  if (parent) await prisma.featureFlagOverride.deleteMany({ where: { flagKey: 'kid_ambient_music', parentId: parent.id } });
+}
 
 declare global {
   interface Window {
@@ -39,21 +63,17 @@ const liveMusic = async (page: Page) =>
   (await musicLog(page)).filter((m) => m.started && m.loop && !m.stopped).length;
 const oscCount = (page: Page) => page.evaluate(() => window.__audioLog.oscillators);
 
-async function loginToHub(page: Page) {
-  await page.goto('/');
-  await page.getByPlaceholder('Adresse e-mail').fill(FIXTURES.parentEmail);
-  await page.getByPlaceholder('Mot de passe').fill(FIXTURES.password);
-  await page.getByRole('button', { name: 'Se connecter' }).click();
-  await page.getByRole('button', { name: /Plus tard/ }).click();
-  await page.getByRole('button', { name: FIXTURES.childName }).click();
-}
-
 test.beforeEach(async ({ page }) => {
+  await setAmbientMusicFlag(true);
   await page.addInitScript(INSTRUMENT);
 });
 
+test.afterEach(async () => {
+  await clearAmbientMusicFlag();
+});
+
 test('ambient music starts on hub, stops in a session, resumes after', async ({ page }) => {
-  await loginToHub(page);
+  await seedKidAuthAndPickAva(page);
   // Autoplay policy: the AudioContext may still be suspended when the hub
   // evaluates its zone; the engine arms a one-shot gesture retry (pointerdown
   // on document — music.ts). This tap is that gesture. Coordinates matter: a
@@ -79,7 +99,7 @@ test('ambient music starts on hub, stops in a session, resumes after', async ({ 
 });
 
 test('music switch silences ambience but keeps cues; master kills both', async ({ page }) => {
-  await loginToHub(page);
+  await seedKidAuthAndPickAva(page);
   await page.mouse.click(1, 1); // autoplay-unlock gesture at a neutral spot (see first test)
   await expect.poll(() => liveMusic(page), { timeout: 15_000 }).toBeGreaterThan(0);
 

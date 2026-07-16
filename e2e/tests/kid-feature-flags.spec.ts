@@ -5,6 +5,7 @@
 // whether the Settings "Musique d'ambiance" row exists — cues stay regardless.
 import { test, expect, type Page } from '@playwright/test';
 import { FIXTURES, prisma } from '../helpers/db';
+import { seedKidAuthAndPickAva } from '../helpers/kid-session';
 
 declare global {
   interface Window {
@@ -58,15 +59,6 @@ async function clearAmbientMusicOverride() {
   }
 }
 
-async function loginToHub(page: Page) {
-  await page.goto('/');
-  await page.getByPlaceholder('Adresse e-mail').fill(FIXTURES.parentEmail);
-  await page.getByPlaceholder('Mot de passe').fill(FIXTURES.password);
-  await page.getByRole('button', { name: 'Se connecter' }).click();
-  await page.getByRole('button', { name: /Plus tard/ }).click();
-  await page.getByRole('button', { name: FIXTURES.childName }).click();
-}
-
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(INSTRUMENT);
 });
@@ -77,7 +69,7 @@ test.afterEach(async () => {
 
 test('kid_ambient_music override ON → music plays and the Settings row is shown', async ({ page }) => {
   await setAmbientMusicOverride(true);
-  await loginToHub(page);
+  await seedKidAuthAndPickAva(page);
   await page.mouse.click(1, 1); // autoplay-unlock gesture (see ambient-music spec)
   await expect.poll(() => liveMusic(page), { timeout: 15_000 }).toBeGreaterThan(0);
 
@@ -88,7 +80,7 @@ test('kid_ambient_music override ON → music plays and the Settings row is show
 
 test('kid_ambient_music override OFF → no music, Settings row hidden, cues still fire', async ({ page }) => {
   await setAmbientMusicOverride(false);
-  await loginToHub(page);
+  await seedKidAuthAndPickAva(page);
   await page.mouse.click(1, 1);
   // Music must never start.
   await page.waitForTimeout(2000);
