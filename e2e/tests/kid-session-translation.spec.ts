@@ -1,9 +1,8 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { prisma, pollUntil } from '../helpers/db';
 import {
   seedKidAuthAndPickAva,
   avaProfile,
-  startModule,
   completeMcqLesson,
   finishToHub,
 } from '../helpers/kid-session';
@@ -13,11 +12,14 @@ test('translation: a full session persists stars', async ({ page }) => {
   const ava = await avaProfile();
   const before = ava.totalStars;
 
-  // Translation has no sub-hub (App.tsx's enterModule, ~line 469-476): tapping the
-  // module tile calls startOrBrowse directly, which auto-starts the next lesson —
-  // one click straight into the session, unlike words/numbers/keyboard/code's
-  // sub-mode tile pick.
-  await startModule(page, { module: 'translation' });
+  // Post-rework, translation is two independently tracked directions: the Hub tile
+  // opens the sub-hub (FR→EN / EN→FR), picking a direction opens its lesson map, and
+  // the first unlocked lesson starts the session (App.tsx: translation →
+  // translation_subhub → *_lessonmap → *_session).
+  await page.locator('button.module-tile[data-module="translation"]').click();
+  await page.getByRole('button', { name: /FR\s*→\s*EN/ }).click();
+  await page.locator('.level-grid .level-tile.unlocked').first().click();
+  await expect(page.locator('.session-answers .answer-btn').first()).toBeVisible();
   await completeMcqLesson(page, 7); // TranslationSession TOTAL = 7
   await finishToHub(page);
 
