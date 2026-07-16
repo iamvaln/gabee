@@ -27,9 +27,12 @@ interface LockedRow {
  * How many stars the SERVER can independently account for.
  *
  * A star is one correct answer: every star-awarding screen does
- * `total_stars = profile.total_stars + correctCount`, and every answer emits a
- * `question_answered` event carrying `correct` (Code awards no stars). Events are
- * append-only, deduped on `event_id`, never pruned, and the kid app drains them
+ * `total_stars = profile.total_stars + correctCount`, and every module emits an
+ * event that evidences it — numbers/words/sentences emit `question_answered`
+ * carrying `correct`; keyboard emits `typing_word_completed` (a static-mode word is
+ * always correct; a scrolling-mode word also fires on misses, so only
+ * `completed_before_timeout: true` counts); code emits `code_level_solved`. Events
+ * are append-only, deduped on `event_id`, never pruned, and the kid app drains them
  * BEFORE progress (`sync.ts`: drainEvents() then drainProgress()) — so by the time a
  * client claims a total, the evidence for it is already stored. Gifts are the one
  * server-side source (`gifts.ts` increments on claim), so they count too.
@@ -42,16 +45,27 @@ async function countEvidencedStars(
   profileId: string,
   baseline: number,
 ): Promise<number> {
-  const [correctAnswers, gifted] = await Promise.all([
+  const [correctAnswers, typedWords, codeSolved, gifted] = await Promise.all([
     tx.event.count({
       where: { profileId, name: 'question_answered', payload: { path: ['correct'], equals: true } },
     }),
+    tx.event.count({
+      where: {
+        profileId,
+        name: 'typing_word_completed',
+        OR: [
+          { payload: { path: ['mode'], equals: 'static' } },
+          { payload: { path: ['completed_before_timeout'], equals: true } },
+        ],
+      },
+    }),
+    tx.event.count({ where: { profileId, name: 'code_level_solved' } }),
     tx.kidGift.aggregate({
       where: { childId: profileId, status: 'claimed' },
       _sum: { amount: true },
     }),
   ]);
-  return correctAnswers + (gifted._sum.amount ?? 0) + baseline;
+  return correctAnswers + typedWords + codeSolved + (gifted._sum.amount ?? 0) + baseline;
 }
 
 /**
