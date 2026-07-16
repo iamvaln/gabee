@@ -68,6 +68,7 @@ Rows for the registry keys are seeded by `seed.ts` (upsert — never overwrite a
   - `PATCH /api/admin/flags/[key]` — update `enabledDefault` (and `description`).
   - `GET/PUT/DELETE /api/admin/flags/[key]/overrides` — list (with parent emails), add by parent **email** (resolve to id; 404 if unknown), remove.
   - Every mutation writes an `audit_logs` row (existing pattern: actor, action `feature_flag_updated` / `feature_flag_override_set` / `..._removed`, payload with key/old/new/target email).
+- **Server-side consumption helper** (parent app & any web surface): `getEffectiveFlagsForParent(parentId)` in the web services layer — the same merge the kid endpoint uses, callable from server components/routes so parent-app pages can gate voice/music UI without an extra HTTP hop. Parent-facing surfaces never expose flags themselves; they just render or omit gated features.
 
 ## 4. Admin UI — `/admin/flags`
 
@@ -79,8 +80,8 @@ New entry in the admin nav. One card per registry flag: key, description (editab
 - Store: `featureFlags: Partial<Record<FlagKey, boolean>>` added to `partialize` (device-level, NOT per-profile — flags are per parent account, and one device = one paired parent).
 - Fetch points: app launch (alongside the bundle-manifest sweep) and profile select (cheap, keeps a long-lived session fresh).
 - **Gates:**
-  - `kid_voiceover` OFF → `speak`/`speakSuccess` no-op (checked inside `lib/audio/index.ts`, next to the existing `isEnabled()` gates). SFX unaffected.
-  - `kid_ambient_music` OFF → `shouldPlayMusic` short-circuits (flag consulted in `reevaluateMusic`'s inputs) AND the "Musique d'ambiance" row in kid Settings is not rendered. The kid's own `music_enabled` pref is untouched — flag back ON restores their choice.
+  - `kid_voiceover` OFF → the ENTIRE voice surface is dark (Valentine, 2026-07-16: "ça doit couvrir tout le voice, including parents app"): `speak`/`speakSuccess` no-op (checked inside `lib/audio/index.ts`, next to the existing `isEnabled()` gates), and any voice-related UI — current or future, kid app or parent app — is not rendered while the flag is off. Today no voice-specific UI exists on either surface (the master "Sons et voix" switch also governs SFX and stays); the binding rule is for what comes next (Phase D voice settings, per-profile voice choice): those surfaces MUST consult this same flag. SFX unaffected.
+  - `kid_ambient_music` OFF → `shouldPlayMusic` short-circuits (flag consulted in `reevaluateMusic`'s inputs) AND the "Musique d'ambiance" row in kid Settings is not rendered (other sound settings stay visible). The kid's own `music_enabled` pref is untouched — flag back ON restores their choice.
 - A flag flip picked up mid-session applies at the next gate evaluation (e.g. next `speak()` call / next `reevaluateMusic()`), no reload needed beyond the fetch points.
 
 ## 6. Semantics & edge cases
