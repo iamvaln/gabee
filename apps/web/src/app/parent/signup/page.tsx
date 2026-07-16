@@ -148,6 +148,7 @@ function SignupInner() {
         email,
         password,
         phone: phoneE164,
+        terms_accepted: accept,
       }),
     });
     if (res.ok) {

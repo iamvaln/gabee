@@ -1,10 +1,12 @@
 import './parent.css';
 import type { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import type { Language } from '@gabee/types';
 import { getServerSession } from '@/lib/server/auth';
 import { prisma } from '@/lib/server/db';
 import { countUnreadFromParent } from '@/lib/server/services/messages';
+import { hasCurrentTermsConsent } from '@/lib/server/services/consent';
 import { ParentShell } from './_components/parent-shell';
 
 // The parent app (incl. /parent/login + /parent/signup) is account-only — keep
@@ -26,7 +28,15 @@ export const metadata: Metadata = {
 // per-page guards (`requireParentPage`) can redirect cleanly.
 export default async function ParentLayout({ children }: { children: React.ReactNode }) {
   const pathname = (await headers()).get('x-pathname') ?? '';
-  if (pathname === '/parent/login' || pathname === '/parent/signup') {
+  // /parent/terms-update is the re-consent gate's own destination page — it
+  // must render bare (no chrome, no gate check) or a parent who hasn't
+  // re-accepted yet would be redirected right back into it, looping forever.
+  // It gates itself on auth via `requireParentPage()` in its own page.tsx.
+  if (
+    pathname === '/parent/login' ||
+    pathname === '/parent/signup' ||
+    pathname === '/parent/terms-update'
+  ) {
     return <>{children}</>;
   }
 
@@ -41,6 +51,16 @@ export default async function ParentLayout({ children }: { children: React.React
   });
   if (!account) {
     return <>{children}</>;
+  }
+
+  // Blocking re-consent gate (provable-consent feature): every other parent
+  // page requires a ConsentRecord for the CURRENT terms version. Existing
+  // accounts (and anyone whose acceptance predates a version bump) have none
+  // yet, so they land here once and accept before seeing anything else in
+  // the parent space. Scoped to pages only — never applies to /api/* routes
+  // (those are gated independently by `requireParent`) or the kid app.
+  if (!(await hasCurrentTermsConsent(account.id))) {
+    redirect('/parent/terms-update');
   }
 
   const [pendingClassifications, unreadMessages] = await Promise.all([

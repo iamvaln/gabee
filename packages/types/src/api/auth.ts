@@ -28,6 +28,13 @@ export const SignupRequestSchema = z.object({
   password: PasswordSchema,
   /** Optional. When omitted the account row's `phone` stays null. */
   phone: PhoneSchema.optional(),
+  /**
+   * Must be `true` — a request without it (or `false`) fails validation
+   * (422). The server never trusts a client-sent *version*: this only proves
+   * the checkbox was checked; the server stamps its own current version onto
+   * the ConsentRecord it creates alongside the account.
+   */
+  terms_accepted: z.literal(true),
 });
 export type SignupRequest = z.infer<typeof SignupRequestSchema>;
 

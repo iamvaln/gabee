@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  SignupRequestSchema,
   ParentKidMessageRowSchema,
   QuestionRecordSchema,
   EventEnvelopeSchema,
@@ -459,5 +460,31 @@ describe('feature flags registry', () => {
     assert.throws(() => SetFlagOverrideRequestSchema.parse({ email: 'nope', enabled: true }));
     const ok = SetFlagOverrideRequestSchema.parse({ email: 'a@b.com', enabled: false });
     assert.equal(ok.enabled, false);
+  });
+});
+
+describe('SignupRequestSchema — provable-consent gate', () => {
+  const valid = { email: 'p@example.com', password: 'a-good-password', terms_accepted: true as const };
+
+  it('accepts a signup that explicitly accepts the terms', () => {
+    assert.equal(SignupRequestSchema.safeParse(valid).success, true);
+  });
+
+  it('rejects a signup with no terms_accepted — the account cannot be created without it', () => {
+    const { terms_accepted, ...noTerms } = valid;
+    void terms_accepted;
+    assert.equal(SignupRequestSchema.safeParse(noTerms).success, false);
+  });
+
+  it('rejects terms_accepted: false (z.literal(true), not a loose boolean)', () => {
+    assert.equal(SignupRequestSchema.safeParse({ ...valid, terms_accepted: false }).success, false);
+    // a truthy string must not slip through either
+    assert.equal(SignupRequestSchema.safeParse({ ...valid, terms_accepted: 'true' }).success, false);
+  });
+
+  it('carries no version field — the server stamps the version, never the client', () => {
+    // z.object strips unknown keys, so a client-sent `version` cannot reach the DB.
+    const parsed = SignupRequestSchema.parse({ ...valid, version: 'attacker-chosen' } as never);
+    assert.equal('version' in parsed, false);
   });
 });
