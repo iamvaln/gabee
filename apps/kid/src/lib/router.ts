@@ -54,10 +54,13 @@ export type Route =
   | { name: 'words_read_lessonmap'; level: number }
   | ({ name: 'words_read_session'; trigger: 'new' | 'replay' } & PlayTarget)
   | ({ name: 'words_read_summary'; score: number; total: number } & PlayTarget)
-  | { name: 'translation_levelmap' }
-  | { name: 'translation_lessonmap'; level: number }
-  | ({ name: 'translation_session'; trigger: 'new' | 'replay' } & PlayTarget)
-  | ({ name: 'translation_summary'; score: number; total: number } & PlayTarget)
+  | { name: 'translation_subhub' }
+  | { name: 'translation_fr_en_lessonmap'; level: number }
+  | ({ name: 'translation_fr_en_session'; trigger: 'new' | 'replay' } & PlayTarget)
+  | ({ name: 'translation_fr_en_summary'; score: number; total: number } & PlayTarget)
+  | { name: 'translation_en_fr_lessonmap'; level: number }
+  | ({ name: 'translation_en_fr_session'; trigger: 'new' | 'replay' } & PlayTarget)
+  | ({ name: 'translation_en_fr_summary'; score: number; total: number } & PlayTarget)
   | { name: 'keyboard_subhub' }
   | { name: 'keyboard_static_levelmap' }
   | { name: 'keyboard_static_lessonmap'; level: number }
@@ -83,6 +86,13 @@ const CODE_WORLDS: readonly CodeWorld[] = ['maze', 'draw', 'actions'];
 // URL sub-slug ⇄ the route-name infix used by words/keyboard tracks.
 const WORDS_SUBS = ['picture', 'fill', 'build', 'read'] as const;
 const KB_SUBS = ['static', 'scrolling'] as const;
+// Translation — URL slug uses a hyphen ('fr-en'); the route-name infix uses an
+// underscore ('fr_en') since it sits inside an identifier.
+const TRANSLATION_SUBS = ['fr-en', 'en-fr'] as const;
+const TRANSLATION_INFIX: Record<(typeof TRANSLATION_SUBS)[number], 'fr_en' | 'en_fr'> = {
+  'fr-en': 'fr_en',
+  'en-fr': 'en_fr',
+};
 
 const tail = (level?: number, lesson?: number): string =>
   (level != null ? `/level-${level}` : '') + (lesson != null ? `/lesson-${lesson}` : '');
@@ -105,6 +115,8 @@ export function routeToPath(route: Route, tab: KidTab): string {
       return '/learn/keyboard';
     case 'code_subhub':
       return '/learn/code';
+    case 'translation_subhub':
+      return '/learn/translation';
 
     // Numbers (legacy route names carry an optional subMode).
     case 'levelmap':
@@ -161,14 +173,18 @@ export function routeToPath(route: Route, tab: KidTab): string {
     case 'keyboard_scrolling_summary':
       return `/learn/keyboard/scrolling${tail(route.level, route.lesson)}`;
 
-    // Translation — no sub-mode segment.
-    case 'translation_levelmap':
-      return '/learn/translation/levels';
-    case 'translation_lessonmap':
-      return `/learn/translation${tail(route.level)}`;
-    case 'translation_session':
-    case 'translation_summary':
-      return `/learn/translation${tail(route.level, route.lesson)}`;
+    // Translation — direction encoded in the route name (mirrors keyboard's
+    // static/scrolling shape); URL slug swaps the underscore for a hyphen.
+    case 'translation_fr_en_lessonmap':
+      return `/learn/translation/fr-en${tail(route.level)}`;
+    case 'translation_fr_en_session':
+    case 'translation_fr_en_summary':
+      return `/learn/translation/fr-en${tail(route.level, route.lesson)}`;
+    case 'translation_en_fr_lessonmap':
+      return `/learn/translation/en-fr${tail(route.level)}`;
+    case 'translation_en_fr_session':
+    case 'translation_en_fr_summary':
+      return `/learn/translation/en-fr${tail(route.level, route.lesson)}`;
 
     // Code — world carried as a param.
     case 'code_levelmap':
@@ -207,17 +223,8 @@ const inLevel = (n: number | undefined): number | undefined => (n != null && n >
 const inLesson = (n: number | undefined): number | undefined => (n != null && n >= 1 && n <= MAX_LESSON ? n : undefined);
 
 /** Build a module content route from parsed segments. `sub` is the 3rd segment
- *  (a sub-mode / world for most modules; for translation it's already the level). */
+ *  (a sub-mode / world / direction for the modules that have one). */
 function contentRoute(module: string, seg2: string | undefined, seg3: string | undefined, seg4: string | undefined): Route | null {
-  // Translation has no sub-mode: /learn/translation[/levels | /level-N[/lesson-M]]
-  if (module === 'translation') {
-    const level = inLevel(parseLevel(seg2));
-    const lesson = inLesson(parseLesson(seg3));
-    if (level != null && lesson != null) return { name: 'translation_session', ...play(level, lesson) };
-    if (level != null) return { name: 'translation_lessonmap', level };
-    return { name: 'translation_levelmap' };
-  }
-
   const sub = seg2;
   const level = inLevel(parseLevel(seg3));
   const lesson = inLesson(parseLesson(seg4));
@@ -247,6 +254,14 @@ function contentRoute(module: string, seg2: string | undefined, seg3: string | u
     if (level != null) return { name: `keyboard_${p}_lessonmap`, level } as Route;
     return { name: `keyboard_${p}_levelmap` } as Route;
   }
+  if (module === 'translation' && (TRANSLATION_SUBS as readonly string[]).includes(sub ?? '')) {
+    const infix = TRANSLATION_INFIX[sub as (typeof TRANSLATION_SUBS)[number]];
+    // No levelmap route for translation (see the Route union above) — a
+    // direction with no level falls back to the sub-hub instead.
+    if (level != null && lesson != null) return { name: `translation_${infix}_session`, ...play(level, lesson) } as Route;
+    if (level != null) return { name: `translation_${infix}_lessonmap`, level } as Route;
+    return { name: 'translation_subhub' };
+  }
   return null;
 }
 
@@ -255,6 +270,7 @@ const SUBHUB: Record<string, Route> = {
   words: { name: 'words_subhub' },
   keyboard: { name: 'keyboard_subhub' },
   code: { name: 'code_subhub' },
+  translation: { name: 'translation_subhub' },
 };
 
 /** Parse a pathname into a tab + route, or null (→ caller falls back to hub). */
@@ -275,9 +291,9 @@ export function parsePath(pathname: string): { tab: KidTab; route: Route } | nul
   if (p0 === 'learn') {
     if (!p1) return { tab: 'apprendre', route: { name: 'hub' } };
     if (!(MODULES as readonly string[]).includes(p1)) return null;
-    // /learn/<module> → sub-hub (translation has none → its level map is home).
+    // /learn/<module> → sub-hub.
     if (!p2) {
-      const hub = SUBHUB[p1] ?? (p1 === 'translation' ? { name: 'translation_levelmap' } : null);
+      const hub = SUBHUB[p1];
       return hub ? { tab: 'apprendre', route: hub } : null;
     }
     const route = contentRoute(p1, p2, p3, p4);
@@ -310,7 +326,7 @@ export function moduleHome(module: Module): Route {
     case 'words': return { name: 'words_subhub' };
     case 'keyboard': return { name: 'keyboard_subhub' };
     case 'code': return { name: 'code_subhub' };
-    case 'translation': return { name: 'translation_levelmap' };
+    case 'translation': return { name: 'translation_subhub' };
   }
 }
 
@@ -327,13 +343,12 @@ export function restorableRoute(route: Route): Route {
       return { name: 'lessonmap', level: route.level, subMode: route.subMode };
     case 'code_summary':
       return { name: 'code_lessonmap', world: route.world, level: route.level };
-    case 'translation_summary':
-      return { name: 'translation_lessonmap', level: route.level };
     default:
       break;
   }
-  // words_*/keyboard_* SUMMARY → the matching lessonmap (sessions pass through).
-  const m = route.name.match(/^(words_(?:picture|fill|build|read)|keyboard_(?:static|scrolling))_summary$/);
+  // words_*/keyboard_*/translation_* SUMMARY → the matching lessonmap
+  // (sessions pass through).
+  const m = route.name.match(/^(words_(?:picture|fill|build|read)|keyboard_(?:static|scrolling)|translation_(?:fr_en|en_fr))_summary$/);
   if (m && 'level' in route) {
     return { name: `${m[1]}_lessonmap`, level: (route as PlayTarget).level } as Route;
   }
