@@ -7921,7 +7921,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 4
       },
       "created_by": "ai",
       "ratings": [],
@@ -8095,7 +8096,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -8277,7 +8279,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -8371,7 +8374,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -8651,7 +8655,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -8741,7 +8746,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -8917,7 +8923,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -9189,7 +9196,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -9639,7 +9647,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 4
       },
       "created_by": "ai",
       "ratings": [],
@@ -9807,7 +9816,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 4
       },
       "created_by": "ai",
       "ratings": [],
@@ -9891,7 +9901,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 4
       },
       "created_by": "ai",
       "ratings": [],
@@ -9975,7 +9986,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 3
       },
       "created_by": "ai",
       "ratings": [],
@@ -10063,7 +10075,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -10149,7 +10162,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 4
       },
       "created_by": "ai",
       "ratings": [],
@@ -10717,7 +10731,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -10807,7 +10822,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -10883,7 +10899,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 3
       },
       "created_by": "ai",
       "ratings": [],
@@ -11247,7 +11264,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -11333,7 +11351,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -11511,7 +11530,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 4
       },
       "created_by": "ai",
       "ratings": [],
@@ -11695,7 +11715,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -12153,7 +12174,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 4
       },
       "created_by": "ai",
       "ratings": [],
@@ -32819,7 +32841,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -33231,7 +33254,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -33329,7 +33353,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -33849,7 +33874,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -34139,7 +34165,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 4
       },
       "created_by": "ai",
       "ratings": [],
@@ -34551,7 +34578,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -34753,7 +34781,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -35161,7 +35190,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -35469,7 +35499,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -36089,7 +36120,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -36185,7 +36217,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -36281,7 +36314,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -36589,7 +36623,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -36791,7 +36826,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 5
       },
       "created_by": "ai",
       "ratings": [],
@@ -37087,7 +37123,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 4
       },
       "created_by": "ai",
       "ratings": [],
@@ -37733,7 +37770,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -37840,7 +37877,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -37947,7 +37984,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -38054,7 +38091,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -38157,7 +38194,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -38256,7 +38293,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -38363,7 +38400,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -38470,7 +38507,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -38577,7 +38614,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -38676,7 +38713,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -38779,7 +38816,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -38886,7 +38923,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -38993,7 +39030,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -39104,7 +39141,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -39219,7 +39256,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -39330,7 +39367,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -39441,7 +39478,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -39544,7 +39581,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -39655,7 +39692,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -39754,7 +39791,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -39861,7 +39898,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -39968,7 +40005,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -40079,7 +40116,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -40190,7 +40227,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -40301,7 +40338,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -40412,7 +40449,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -40519,7 +40556,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -40618,7 +40655,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -40717,7 +40754,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -40816,7 +40853,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -40915,7 +40952,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -41010,7 +41047,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -41113,7 +41150,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -41224,7 +41261,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -41331,7 +41368,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -41430,7 +41467,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -41541,7 +41578,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -41644,7 +41681,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -41751,7 +41788,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -41858,7 +41895,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -41961,7 +41998,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -42068,7 +42105,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -42171,7 +42208,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -42278,7 +42315,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -42385,7 +42422,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -42480,7 +42517,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -42591,7 +42628,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -42702,7 +42739,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -42809,7 +42846,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -42920,7 +42957,7 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 4,
+      "level": 2,
       "lesson": 1,
       "theme": "sequence",
       "type": "code-grid",
@@ -43023,9 +43060,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -43133,7 +43170,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -43145,9 +43183,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -43245,7 +43283,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -43257,9 +43296,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -43383,9 +43422,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -43493,7 +43532,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -43505,9 +43545,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -43631,9 +43671,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -43759,9 +43799,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -43885,9 +43925,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -43991,7 +44031,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -44003,9 +44044,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -44109,7 +44150,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -44121,9 +44163,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -44227,7 +44269,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -44239,9 +44282,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -44345,7 +44388,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -44357,9 +44401,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -44485,9 +44529,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -44583,7 +44627,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -44595,9 +44640,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -44687,7 +44732,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 6
       },
       "created_by": "ai",
       "ratings": [],
@@ -44699,9 +44745,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -44813,9 +44859,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -44943,9 +44989,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -45069,9 +45115,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -45179,7 +45225,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -45191,9 +45238,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -45297,7 +45344,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -45309,9 +45357,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -45437,9 +45485,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -45565,9 +45613,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -45665,7 +45713,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -45677,9 +45726,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -45805,9 +45854,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -45933,9 +45982,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -46043,7 +46092,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -46055,9 +46105,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -46161,7 +46211,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -46173,9 +46224,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -46301,9 +46352,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -46393,7 +46444,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 6
       },
       "created_by": "ai",
       "ratings": [],
@@ -46405,9 +46457,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -46535,9 +46587,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -46661,9 +46713,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -46787,9 +46839,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -46887,7 +46939,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -46899,9 +46952,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -47005,9 +47058,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -47105,7 +47158,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -47117,9 +47171,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -47223,7 +47277,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -47235,9 +47290,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -47345,7 +47400,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -47357,9 +47413,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -47459,7 +47515,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -47471,9 +47528,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -47599,9 +47656,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -47725,9 +47782,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -47833,7 +47890,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -47845,9 +47903,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -47955,7 +48013,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -47967,9 +48026,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -48097,9 +48156,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -48207,7 +48266,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -48219,9 +48279,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -48347,9 +48407,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -48457,7 +48517,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -48469,9 +48530,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -48597,9 +48658,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -48705,7 +48766,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -48717,9 +48779,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -48825,7 +48887,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 8
       },
       "created_by": "ai",
       "ratings": [],
@@ -48837,9 +48900,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -48937,7 +49000,8 @@
           "left",
           "right",
           "repeat"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -48949,9 +49013,9 @@
       "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
       "module": "code",
       "sub_mode": "draw",
-      "level": 5,
+      "level": 3,
       "lesson": 1,
-      "theme": "combo",
+      "theme": "loops",
       "type": "code-grid",
       "objective_ref": "5",
       "prompt": {
@@ -58905,7 +58969,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -59335,7 +59400,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -59775,7 +59841,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -60321,7 +60388,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -60427,7 +60495,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -61173,7 +61242,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -61385,7 +61455,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -61827,7 +61898,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -61937,7 +62009,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -62151,7 +62224,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -62581,7 +62655,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -63025,7 +63100,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -63125,7 +63201,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -63343,7 +63420,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -63451,7 +63529,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -63559,7 +63638,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -63669,7 +63749,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
@@ -63773,7 +63854,8 @@
           "repeat",
           "pick",
           "drop"
-        ]
+        ],
+        "maxBlocks": 7
       },
       "created_by": "ai",
       "ratings": [],
