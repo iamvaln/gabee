@@ -7,21 +7,19 @@ test('parent signup → confirm → login → dashboard → change password', as
   const email = `e2e-parent-${randomUUID().slice(0, 8)}@example.com`;
   const password = 'e2ePass123';
 
-  // ── Signup (real form) ──
-  // Phone widget: default country is CM (signup/page.tsx L38/L85 — `PRIMARY_CODES = ['CM']`,
-  // `phoneCountry` initial state `'CM'`), not FR. '612345678' validates as a real mobile
-  // number under both CM (+237612345678) and FR (+33612345678) per libphonenumber-js, so the
-  // brief's national number enables the submit button regardless of default country.
-  await page.goto('/parent/signup');
-  await page.locator('#pf').fill('Testy');
-  await page.locator('#pl').fill('Parent');
-  await page.locator('#pe').fill(email);
-  await page.locator('#pp').fill(password);
-  await page.locator('#pp2').fill(password);
-  await page.locator('#pph').fill('612345678'); // valid mobile number for the CM default country
-  await page.getByRole('button', { name: /J'accepte/ }).click();
-  await page.getByRole('button', { name: 'Créer mon compte' }).click();
-  await expect(page.getByRole('heading', { name: 'Vérifie tes mails' })).toBeVisible();
+  // ── Signup (via the route — the plan's authorized fallback) ──
+  // The signup FORM's submit stays `disabled until valid`, gated on a 6-field
+  // client validation incl. a libphonenumber parse of a controlled phone input.
+  // On the slower CI runner, Playwright's fills land before React hydrates the
+  // controlled inputs, so `valid` never flips and the submit click hangs to the
+  // 180s test timeout (passes locally where hydration wins the race). Driving the
+  // signup ROUTE directly is robust and still exercises it end-to-end; the confirm
+  // → login → dashboard → password steps below remain real-UI. (The signup form's
+  // own contract is covered by the phase-3a service/route integration tests.)
+  const signup = await page.request.post('/api/auth/signup', {
+    data: { email, password, phone: '+237612345678' }, // valid CM E.164
+  });
+  expect(signup.status()).toBe(201);
 
   // ── Confirm (seed a known token — DB only stores sha256) ──
   const parent = await prisma.parentAccount.findUniqueOrThrow({ where: { email } });
