@@ -4,9 +4,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+type Q = {
+  id: string;
+  type: string;
+  sub_mode: string;
+  level: number;
+  answer?: string;
+  distractors?: unknown[];
+  config?: { direction?: string; image?: unknown; source?: string };
+};
 const file = path.join(path.dirname(fileURLToPath(import.meta.url)), 'seed-data', 'translation.json');
 const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
-const qs: any[] = Array.isArray(raw) ? raw : raw.questions;
+const qs: Q[] = Array.isArray(raw) ? raw : raw.questions;
 
 test('every question is MCQ, direction-consistent', () => {
   for (const q of qs) {
