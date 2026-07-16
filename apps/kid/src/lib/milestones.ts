@@ -47,7 +47,8 @@ function lessonsCompleted(profile: ChildProfile): number {
     visit(lp.words_fill[lang].levels);
     visit(lp.words_build[lang].levels);
     visit(lp.words_read[lang].levels);
-    visit(lp.translation[lang].levels);
+    visit(lp.translation_fr_en[lang].levels);
+    visit(lp.translation_en_fr[lang].levels);
   }
   return total;
 }
@@ -66,7 +67,8 @@ function distinctModulesPlayed(profile: ChildProfile): number {
     note('words', lp.words_fill[lang].levels);
     note('words', lp.words_build[lang].levels);
     note('words', lp.words_read[lang].levels);
-    note('translation', lp.translation[lang].levels);
+    note('translation', lp.translation_fr_en[lang].levels);
+    note('translation', lp.translation_en_fr[lang].levels);
   }
   return set.size;
 }

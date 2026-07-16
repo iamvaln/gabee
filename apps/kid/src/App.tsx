@@ -32,7 +32,7 @@ import { WordsBuildSession } from './screens/WordsBuildSession';
 import { WordsReadLevelMap } from './screens/WordsReadLevelMap';
 import { WordsReadLessonMap } from './screens/WordsReadLessonMap';
 import { WordsReadSession } from './screens/WordsReadSession';
-import { TranslationLevelMap } from './screens/TranslationLevelMap';
+import { TranslationSubhub, type TranslationSubMode } from './screens/TranslationSubhub';
 import { TranslationLessonMap } from './screens/TranslationLessonMap';
 import { TranslationSession } from './screens/TranslationSession';
 import { KeyboardHub, type KeyboardSubMode } from './screens/KeyboardHub';
@@ -199,8 +199,10 @@ export function App() {
     name === 'words_build_summary' ||
     name === 'words_read_session' ||
     name === 'words_read_summary' ||
-    name === 'translation_session' ||
-    name === 'translation_summary' ||
+    name === 'translation_fr_en_session' ||
+    name === 'translation_fr_en_summary' ||
+    name === 'translation_en_fr_session' ||
+    name === 'translation_en_fr_summary' ||
     name === 'keyboard_static_session' ||
     name === 'keyboard_static_summary' ||
     name === 'keyboard_scrolling_session' ||
@@ -216,7 +218,8 @@ export function App() {
     name === 'words_fill_summary' ||
     name === 'words_build_summary' ||
     name === 'words_read_summary' ||
-    name === 'translation_summary' ||
+    name === 'translation_fr_en_summary' ||
+    name === 'translation_en_fr_summary' ||
     name === 'keyboard_static_summary' ||
     name === 'keyboard_scrolling_summary' ||
     name === 'code_summary';
@@ -244,7 +247,7 @@ export function App() {
     module: Module,
     level: number,
     lesson: number,
-    subMode?: 'picture' | 'fill-blank' | 'build-sentence' | 'read-answer' | NumbersSubMode,
+    subMode?: 'picture' | 'fill-blank' | 'build-sentence' | 'read-answer' | 'fr-en' | 'en-fr' | NumbersSubMode,
   ): PlayTarget | null {
     const bundle = queryClient.getQueryData<QuestionBundleResponse>(['bundle', module]);
     if (!bundle) return null;
@@ -466,14 +469,9 @@ export function App() {
     else if (m === 'words') setRoute({ name: 'words_subhub' });
     else if (m === 'keyboard') setRoute({ name: 'keyboard_subhub' });
     else if (m === 'code') setRoute({ name: 'code_subhub' });
-    // Translation has no sub-mode pick — Apprendre auto-starts the next lesson.
-    else if (m === 'translation')
-      void startOrBrowse(
-        'translation',
-        null,
-        (n) => setRoute({ name: 'translation_session', level: n.level, lesson: n.lesson, isRevision: n.isRevision, trigger: 'new' }),
-        () => setRoute({ name: 'translation_levelmap' }),
-      );
+    // Translation now has a direction sub-hub (FR→EN / EN→FR), mirroring the
+    // other multi-sub-mode modules — pick a direction there.
+    else if (m === 'translation') setRoute({ name: 'translation_subhub' });
   }
 
   // Apprendre = resume: auto-start the next not-yet-3-starred lesson for a
@@ -583,7 +581,10 @@ export function App() {
               return;
             }
             case 'translation':
-              setRoute({ name: 'translation_session', ...payload });
+              // The road's direction pill sets p.subMode ('fr-en'/'en-fr');
+              // route to that direction's session (default fr-en if absent).
+              if (p.subMode === 'en-fr') setRoute({ name: 'translation_en_fr_session', ...payload });
+              else setRoute({ name: 'translation_fr_en_session', ...payload });
               return;
           }
         };
@@ -940,53 +941,112 @@ export function App() {
         );
         break;
       }
-      // Translation (no sub-hub — goes directly to its level map; mixed direction inside)
-      case 'translation_levelmap':
+      // ─── Translation ────────────────────────────────────────────────────
+      // Two-direction sub-hub (FR→EN / EN→FR); each direction has its own
+      // lessonmap → session → summary triple, and its own progress + sampling.
+      // There is no per-direction levelmap route (see router.ts) — the sub-hub
+      // is the direction picker and a direction opens at level 1; progression
+      // flows via the summary's onNext + the Carte road for arbitrary levels.
+      case 'translation_subhub':
         screen = (
-          <TranslationLevelMap
-            onLevel={(level) => setRoute({ name: 'translation_lessonmap', level })}
+          <TranslationSubhub
+            onSubMode={(sm: TranslationSubMode) =>
+              setRoute(
+                sm === 'fr-en'
+                  ? { name: 'translation_fr_en_lessonmap', level: 1 }
+                  : { name: 'translation_en_fr_lessonmap', level: 1 },
+              )
+            }
             onHome={goHome}
             onBack={goHome}
           />
         );
         break;
-      case 'translation_lessonmap':
+      // ── FR → EN ──
+      case 'translation_fr_en_lessonmap':
         screen = (
           <TranslationLessonMap
+            direction="fr-en"
             level={route.level}
             onUnit={(lesson, isRevision) =>
-              setRoute({ name: 'translation_session', level: route.level, lesson, isRevision, trigger: 'new' })
+              setRoute({ name: 'translation_fr_en_session', level: route.level, lesson, isRevision, trigger: 'new' })
             }
             onHome={goHome}
-            onBack={() => setRoute({ name: 'translation_levelmap' })}
+            onBack={() => setRoute({ name: 'translation_subhub' })}
           />
         );
         break;
-      case 'translation_session':
+      case 'translation_fr_en_session':
         screen = (
           <TranslationSession
+            direction="fr-en"
             level={route.level}
             lesson={route.lesson}
             isRevision={route.isRevision}
             trigger={route.trigger}
             onDone={(score, total) =>
-              setRoute({ name: 'translation_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
+              setRoute({ name: 'translation_fr_en_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
             }
             onHome={goHome}
             onBack={() => sessionBack('translation')}
           />
         );
         break;
-      case 'translation_summary': {
-        const next = nextTarget('translation', route.level, route.lesson);
+      case 'translation_fr_en_summary': {
+        const next = nextTarget('translation', route.level, route.lesson, 'fr-en');
         screen = (
           <Summary
             score={route.score}
             total={route.total}
             onAgain={() =>
-              setRoute({ name: 'translation_session', level: route.level, lesson: route.lesson, isRevision: route.isRevision, trigger: 'replay' })
+              setRoute({ name: 'translation_fr_en_session', level: route.level, lesson: route.lesson, isRevision: route.isRevision, trigger: 'replay' })
             }
-            onNext={next ? () => setRoute({ name: 'translation_session', ...next, trigger: 'new' }) : undefined}
+            onNext={next ? () => setRoute({ name: 'translation_fr_en_session', ...next, trigger: 'new' }) : undefined}
+            onHome={goHome}
+          />
+        );
+        break;
+      }
+      // ── EN → FR ──
+      case 'translation_en_fr_lessonmap':
+        screen = (
+          <TranslationLessonMap
+            direction="en-fr"
+            level={route.level}
+            onUnit={(lesson, isRevision) =>
+              setRoute({ name: 'translation_en_fr_session', level: route.level, lesson, isRevision, trigger: 'new' })
+            }
+            onHome={goHome}
+            onBack={() => setRoute({ name: 'translation_subhub' })}
+          />
+        );
+        break;
+      case 'translation_en_fr_session':
+        screen = (
+          <TranslationSession
+            direction="en-fr"
+            level={route.level}
+            lesson={route.lesson}
+            isRevision={route.isRevision}
+            trigger={route.trigger}
+            onDone={(score, total) =>
+              setRoute({ name: 'translation_en_fr_summary', level: route.level, lesson: route.lesson, isRevision: route.isRevision, score, total })
+            }
+            onHome={goHome}
+            onBack={() => sessionBack('translation')}
+          />
+        );
+        break;
+      case 'translation_en_fr_summary': {
+        const next = nextTarget('translation', route.level, route.lesson, 'en-fr');
+        screen = (
+          <Summary
+            score={route.score}
+            total={route.total}
+            onAgain={() =>
+              setRoute({ name: 'translation_en_fr_session', level: route.level, lesson: route.lesson, isRevision: route.isRevision, trigger: 'replay' })
+            }
+            onNext={next ? () => setRoute({ name: 'translation_en_fr_session', ...next, trigger: 'new' }) : undefined}
             onHome={goHome}
           />
         );
