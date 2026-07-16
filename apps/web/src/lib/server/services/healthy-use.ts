@@ -98,27 +98,33 @@ export async function updateAdminLimits(req: UpdateHealthyUseLimitsRequest): Pro
     }
   }
 
-  await prisma.healthyUseLimits.update({
+  // The migration creates the table with column defaults but never inserts the
+  // singleton row, so a plain update() 500s (P2025) on the first save in any
+  // freshly-migrated environment. upsert() is self-healing: `merged` is the full
+  // row, so the create branch is complete.
+  const row = {
+    dailyLessonTargetMin: merged.daily_lesson_target.min,
+    dailyLessonTargetDefault: merged.daily_lesson_target.default,
+    dailyLessonTargetMax: merged.daily_lesson_target.max,
+    sessionSoftLimitMinMin: merged.session_soft_limit_min.min,
+    sessionSoftLimitMinDefault: merged.session_soft_limit_min.default,
+    sessionSoftLimitMinMax: merged.session_soft_limit_min.max,
+    sessionHardCapMinMin: merged.session_hard_cap_min.min,
+    sessionHardCapMinDefault: merged.session_hard_cap_min.default,
+    sessionHardCapMinMax: merged.session_hard_cap_min.max,
+    dailyTotalCapMinMin: merged.daily_total_cap_min.min,
+    dailyTotalCapMinDefault: merged.daily_total_cap_min.default,
+    dailyTotalCapMinMax: merged.daily_total_cap_min.max,
+    lookAwayIntervalMin: merged.look_away_interval_min,
+    lookAwayPauseSec: merged.look_away_pause_sec,
+    lookAwayEnabledDefault: merged.look_away_enabled_default,
+    streakEnabled: merged.streak_enabled,
+    badgesEnabled: merged.badges_enabled,
+  };
+  await prisma.healthyUseLimits.upsert({
     where: { id: SINGLETON_ID },
-    data: {
-      dailyLessonTargetMin: merged.daily_lesson_target.min,
-      dailyLessonTargetDefault: merged.daily_lesson_target.default,
-      dailyLessonTargetMax: merged.daily_lesson_target.max,
-      sessionSoftLimitMinMin: merged.session_soft_limit_min.min,
-      sessionSoftLimitMinDefault: merged.session_soft_limit_min.default,
-      sessionSoftLimitMinMax: merged.session_soft_limit_min.max,
-      sessionHardCapMinMin: merged.session_hard_cap_min.min,
-      sessionHardCapMinDefault: merged.session_hard_cap_min.default,
-      sessionHardCapMinMax: merged.session_hard_cap_min.max,
-      dailyTotalCapMinMin: merged.daily_total_cap_min.min,
-      dailyTotalCapMinDefault: merged.daily_total_cap_min.default,
-      dailyTotalCapMinMax: merged.daily_total_cap_min.max,
-      lookAwayIntervalMin: merged.look_away_interval_min,
-      lookAwayPauseSec: merged.look_away_pause_sec,
-      lookAwayEnabledDefault: merged.look_away_enabled_default,
-      streakEnabled: merged.streak_enabled,
-      badgesEnabled: merged.badges_enabled,
-    },
+    update: row,
+    create: { id: SINGLETON_ID, ...row },
   });
   return merged;
 }
