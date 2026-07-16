@@ -54,6 +54,22 @@ async function main() {
         },
       });
     }
+    // Seeded parents have accepted the current T&C. Without a ConsentRecord the
+    // provable-consent gate (apps/web parent layout → hasCurrentTermsConsent)
+    // redirects their login to /parent/terms-update, which breaks e2e + staging
+    // logins. Version mirrors apps/web `lib/terms.ts` CURRENT_TERMS_VERSION — bump
+    // both together when the T&C text materially changes. Fixed ids keep it idempotent.
+    const CURRENT_TERMS_VERSION = '2026-07-15';
+    for (const [parentId, consentId] of [
+      [P1, '00000000-0000-4000-9000-0000000000c1'],
+      [P2, '00000000-0000-4000-9000-0000000000c2'],
+    ] as const) {
+      await prisma.consentRecord.upsert({
+        where: { id: consentId },
+        update: { version: CURRENT_TERMS_VERSION },
+        create: { id: consentId, parentId, type: 'terms', version: CURRENT_TERMS_VERSION },
+      });
+    }
     for (const k of KIDS) {
       await prisma.childProfile.upsert({
         where: { id: k.id },

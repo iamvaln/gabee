@@ -142,6 +142,10 @@ enum FeedbackScope {
   lesson
 }
 
+enum ConsentType {
+  terms
+}
+
 enum FeedbackStatus {
   new
   triaged
@@ -183,6 +187,7 @@ model ParentAccount {
   emailConfirmations EmailConfirmation[]
   authEvents         AuthEventLog[]
   devices            Device[]
+  consents           ConsentRecord[]
   /// Timestamp set when the email confirmation link is opened. While null,
   /// the account exists but the email is "unverified" — some flows (e.g.
   /// sending kid messages) will gate on this in a future iteration. Today
@@ -220,6 +225,20 @@ model EmailConfirmation {
 
   @@index([parentId])
   @@map("email_confirmations")
+}
+
+/// Append-only proof of consent: who accepted which version, when. History is
+/// kept (never overwritten) so we can show what a parent agreed to at any point.
+model ConsentRecord {
+  id         String      @id @default(uuid()) @db.Uuid
+  parentId   String      @map("parent_id") @db.Uuid
+  type       ConsentType @default(terms)
+  /// The version string that was in force when accepted (server-authoritative).
+  version    String
+  acceptedAt DateTime    @default(now()) @map("accepted_at")
+  parent ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  @@index([parentId, type, acceptedAt])
+  @@map("consent_records")
 }
 
 enum AuthEventKind {

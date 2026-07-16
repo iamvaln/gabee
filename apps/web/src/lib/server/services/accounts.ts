@@ -3,10 +3,19 @@ import { prisma } from '../db';
 import { HttpError } from '../http';
 import { hashPassword, verifyPassword } from '../auth';
 import { mapParentAccount } from '../mappers';
+import { CURRENT_TERMS_VERSION } from '@/lib/terms';
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
-/** Create a parent account + its first (active) credential. */
+/**
+ * Create a parent account + its first (active) credential + its first proof
+ * of T&C consent. The account, credential and ConsentRecord are all created
+ * in one `$transaction` so an account can never exist without a recorded
+ * acceptance — the caller (signup route) only reaches here once
+ * `SignupRequestSchema` has already forced `terms_accepted: true`; the
+ * *version* recorded is always our own `CURRENT_TERMS_VERSION`, never
+ * anything the client sent.
+ */
 export async function signup(
   email: string,
   password: string,
@@ -17,13 +26,19 @@ export async function signup(
   if (existing) throw new HttpError(409, 'email_taken', 'An account with this email already exists');
 
   const { hash, salt } = await hashPassword(password);
-  const account = await prisma.parentAccount.create({
-    data: {
-      email: normalized,
-      ...(opts.phone ? { phone: opts.phone } : {}),
-      credentials: { create: { hash, salt, algorithm: 'scrypt' } },
-    },
-    include: { children: true },
+  const account = await prisma.$transaction(async (tx) => {
+    const created = await tx.parentAccount.create({
+      data: {
+        email: normalized,
+        ...(opts.phone ? { phone: opts.phone } : {}),
+        credentials: { create: { hash, salt, algorithm: 'scrypt' } },
+      },
+      include: { children: true },
+    });
+    await tx.consentRecord.create({
+      data: { parentId: created.id, type: 'terms', version: CURRENT_TERMS_VERSION },
+    });
+    return created;
   });
   return mapParentAccount(account);
 }
