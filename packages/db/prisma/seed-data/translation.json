@@ -11,8 +11,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « bed » en français.",
+        "en": "Translate \"bed\" into French."
       },
       "answer": "lit",
       "distractors": [
@@ -37,7 +37,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "bed"
+        "source": "bed"
       },
       "created_by": "ai",
       "ratings": [],
@@ -55,8 +55,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « crab » en français.",
+        "en": "Translate \"crab\" into French."
       },
       "answer": "crabe",
       "distractors": [
@@ -81,7 +81,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "crab"
+        "source": "crab"
       },
       "created_by": "ai",
       "ratings": [],
@@ -99,8 +99,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « bee » en français.",
+        "en": "Translate \"bee\" into French."
       },
       "answer": "abeille",
       "distractors": [
@@ -125,7 +125,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "bee"
+        "source": "bee"
       },
       "created_by": "ai",
       "ratings": [],
@@ -143,8 +143,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « giraffe » en français.",
+        "en": "Translate \"giraffe\" into French."
       },
       "answer": "girafe",
       "distractors": [
@@ -169,7 +169,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "giraffe"
+        "source": "giraffe"
       },
       "created_by": "ai",
       "ratings": [],
@@ -187,8 +187,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « water » en français.",
+        "en": "Translate \"water\" into French."
       },
       "answer": "eau",
       "distractors": [
@@ -213,7 +213,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "water"
+        "source": "water"
       },
       "created_by": "ai",
       "ratings": [],
@@ -231,8 +231,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « star » en français.",
+        "en": "Translate \"star\" into French."
       },
       "answer": "étoile",
       "distractors": [
@@ -257,7 +257,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "star"
+        "source": "star"
       },
       "created_by": "ai",
       "ratings": [],
@@ -275,8 +275,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « book » en français.",
+        "en": "Translate \"book\" into French."
       },
       "answer": "livre",
       "distractors": [
@@ -301,7 +301,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "book"
+        "source": "book"
       },
       "created_by": "ai",
       "ratings": [],
@@ -319,8 +319,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « bread » en français.",
+        "en": "Translate \"bread\" into French."
       },
       "answer": "pain",
       "distractors": [
@@ -345,7 +345,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "bread"
+        "source": "bread"
       },
       "created_by": "ai",
       "ratings": [],
@@ -363,8 +363,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « strawberry » en français.",
+        "en": "Translate \"strawberry\" into French."
       },
       "answer": "fraise",
       "distractors": [
@@ -389,7 +389,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "strawberry"
+        "source": "strawberry"
       },
       "created_by": "ai",
       "ratings": [],
@@ -407,8 +407,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « ball » en français.",
+        "en": "Translate \"ball\" into French."
       },
       "answer": "ballon",
       "distractors": [
@@ -433,7 +433,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "ball"
+        "source": "ball"
       },
       "created_by": "ai",
       "ratings": [],
@@ -451,8 +451,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « friend » en français.",
+        "en": "Translate \"friend\" into French."
       },
       "answer": "ami",
       "distractors": [
@@ -477,7 +477,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "friend"
+        "source": "friend"
       },
       "created_by": "ai",
       "ratings": [],
@@ -495,8 +495,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « parrot » en français.",
+        "en": "Translate \"parrot\" into French."
       },
       "answer": "perroquet",
       "distractors": [
@@ -521,7 +521,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "parrot"
+        "source": "parrot"
       },
       "created_by": "ai",
       "ratings": [],
@@ -539,8 +539,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « moon » en français.",
+        "en": "Translate \"moon\" into French."
       },
       "answer": "lune",
       "distractors": [
@@ -565,7 +565,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "moon"
+        "source": "moon"
       },
       "created_by": "ai",
       "ratings": [],
@@ -583,8 +583,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « milk » en français.",
+        "en": "Translate \"milk\" into French."
       },
       "answer": "lait",
       "distractors": [
@@ -609,7 +609,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "milk"
+        "source": "milk"
       },
       "created_by": "ai",
       "ratings": [],
@@ -627,8 +627,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « butterfly » en français.",
+        "en": "Translate \"butterfly\" into French."
       },
       "answer": "papillon",
       "distractors": [
@@ -653,7 +653,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "butterfly"
+        "source": "butterfly"
       },
       "created_by": "ai",
       "ratings": [],
@@ -671,8 +671,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « car » en français.",
+        "en": "Translate \"car\" into French."
       },
       "answer": "voiture",
       "distractors": [
@@ -697,7 +697,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "car"
+        "source": "car"
       },
       "created_by": "ai",
       "ratings": [],
@@ -715,8 +715,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « sun » en français.",
+        "en": "Translate \"sun\" into French."
       },
       "answer": "soleil",
       "distractors": [
@@ -741,7 +741,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "sun"
+        "source": "sun"
       },
       "created_by": "ai",
       "ratings": [],
@@ -759,8 +759,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « pineapple » en français.",
+        "en": "Translate \"pineapple\" into French."
       },
       "answer": "ananas",
       "distractors": [
@@ -785,7 +785,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "pineapple"
+        "source": "pineapple"
       },
       "created_by": "ai",
       "ratings": [],
@@ -803,8 +803,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « dog » en français.",
+        "en": "Translate \"dog\" into French."
       },
       "answer": "chien",
       "distractors": [
@@ -829,7 +829,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "dog"
+        "source": "dog"
       },
       "created_by": "ai",
       "ratings": [],
@@ -847,8 +847,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « elephant » en français.",
+        "en": "Translate \"elephant\" into French."
       },
       "answer": "éléphant",
       "distractors": [
@@ -873,7 +873,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "elephant"
+        "source": "elephant"
       },
       "created_by": "ai",
       "ratings": [],
@@ -891,8 +891,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « snake » en français.",
+        "en": "Translate \"snake\" into French."
       },
       "answer": "serpent",
       "distractors": [
@@ -917,7 +917,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "snake"
+        "source": "snake"
       },
       "created_by": "ai",
       "ratings": [],
@@ -935,8 +935,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « banana » en français.",
+        "en": "Translate \"banana\" into French."
       },
       "answer": "banane",
       "distractors": [
@@ -961,7 +961,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "banana"
+        "source": "banana"
       },
       "created_by": "ai",
       "ratings": [],
@@ -979,8 +979,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « bird » en français.",
+        "en": "Translate \"bird\" into French."
       },
       "answer": "oiseau",
       "distractors": [
@@ -1005,7 +1005,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "bird"
+        "source": "bird"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1023,8 +1023,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « carrot » en français.",
+        "en": "Translate \"carrot\" into French."
       },
       "answer": "carotte",
       "distractors": [
@@ -1049,7 +1049,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "carrot"
+        "source": "carrot"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1067,8 +1067,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « school » en français.",
+        "en": "Translate \"school\" into French."
       },
       "answer": "école",
       "distractors": [
@@ -1093,7 +1093,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "school"
+        "source": "school"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1111,8 +1111,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « foot » en français.",
+        "en": "Translate \"foot\" into French."
       },
       "answer": "pied",
       "distractors": [
@@ -1137,7 +1137,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "foot"
+        "source": "foot"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1155,8 +1155,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « frog » en français.",
+        "en": "Translate \"frog\" into French."
       },
       "answer": "grenouille",
       "distractors": [
@@ -1181,7 +1181,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "frog"
+        "source": "frog"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1199,8 +1199,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « apple » en français.",
+        "en": "Translate \"apple\" into French."
       },
       "answer": "pomme",
       "distractors": [
@@ -1225,7 +1225,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "apple"
+        "source": "apple"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1243,8 +1243,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « fish » en français.",
+        "en": "Translate \"fish\" into French."
       },
       "answer": "poisson",
       "distractors": [
@@ -1269,7 +1269,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "fish"
+        "source": "fish"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1287,8 +1287,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « grapes » en français.",
+        "en": "Translate \"grapes\" into French."
       },
       "answer": "raisin",
       "distractors": [
@@ -1313,7 +1313,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "grapes"
+        "source": "grapes"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1331,8 +1331,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « turtle » en français.",
+        "en": "Translate \"turtle\" into French."
       },
       "answer": "tortue",
       "distractors": [
@@ -1357,7 +1357,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "turtle"
+        "source": "turtle"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1375,10 +1375,10 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « snow » en français.",
+        "en": "Translate \"snow\" into French."
       },
-      "answer": "lion",
+      "answer": "neige",
       "distractors": [
         {
           "value": "lune"
@@ -1401,7 +1401,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "lion"
+        "source": "snow"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1419,8 +1419,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « monkey » en français.",
+        "en": "Translate \"monkey\" into French."
       },
       "answer": "singe",
       "distractors": [
@@ -1445,7 +1445,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "monkey"
+        "source": "monkey"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1463,10 +1463,10 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « key » en français.",
+        "en": "Translate \"key\" into French."
       },
-      "answer": "table",
+      "answer": "clé",
       "distractors": [
         {
           "value": "tomate"
@@ -1489,7 +1489,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "table"
+        "source": "key"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1507,8 +1507,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « onion » en français.",
+        "en": "Translate \"onion\" into French."
       },
       "answer": "oignon",
       "distractors": [
@@ -1533,7 +1533,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "onion"
+        "source": "onion"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1551,8 +1551,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « owl » en français.",
+        "en": "Translate \"owl\" into French."
       },
       "answer": "hibou",
       "distractors": [
@@ -1577,7 +1577,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "owl"
+        "source": "owl"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1595,8 +1595,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « lemon » en français.",
+        "en": "Translate \"lemon\" into French."
       },
       "answer": "citron",
       "distractors": [
@@ -1621,7 +1621,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "lemon"
+        "source": "lemon"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1639,8 +1639,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « hand » en français.",
+        "en": "Translate \"hand\" into French."
       },
       "answer": "main",
       "distractors": [
@@ -1665,7 +1665,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "hand"
+        "source": "hand"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1683,8 +1683,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « flower » en français.",
+        "en": "Translate \"flower\" into French."
       },
       "answer": "fleur",
       "distractors": [
@@ -1709,7 +1709,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "flower"
+        "source": "flower"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1727,8 +1727,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « cat » en français.",
+        "en": "Translate \"cat\" into French."
       },
       "answer": "chat",
       "distractors": [
@@ -1753,7 +1753,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "cat"
+        "source": "cat"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1771,8 +1771,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « door » en français.",
+        "en": "Translate \"door\" into French."
       },
       "answer": "porte",
       "distractors": [
@@ -1797,7 +1797,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "door"
+        "source": "door"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1815,8 +1815,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « watermelon » en français.",
+        "en": "Translate \"watermelon\" into French."
       },
       "answer": "pastèque",
       "distractors": [
@@ -1841,7 +1841,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "watermelon"
+        "source": "watermelon"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1859,8 +1859,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « tomato » en français.",
+        "en": "Translate \"tomato\" into French."
       },
       "answer": "tomate",
       "distractors": [
@@ -1885,7 +1885,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "tomato"
+        "source": "tomato"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1903,8 +1903,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « house » en français.",
+        "en": "Translate \"house\" into French."
       },
       "answer": "maison",
       "distractors": [
@@ -1929,7 +1929,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "house"
+        "source": "house"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1947,8 +1947,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « tree » en français.",
+        "en": "Translate \"tree\" into French."
       },
       "answer": "arbre",
       "distractors": [
@@ -1973,7 +1973,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "tree"
+        "source": "tree"
       },
       "created_by": "ai",
       "ratings": [],
@@ -1991,8 +1991,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en français.",
-        "en": "Translate this word into French."
+        "fr": "Traduis « chair » en français.",
+        "en": "Translate \"chair\" into French."
       },
       "answer": "chaise",
       "distractors": [
@@ -2017,7 +2017,7 @@
       "lang": "both",
       "config": {
         "direction": "en-fr",
-        "image": "chair"
+        "source": "chair"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12243,8 +12243,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « lit » en anglais.",
+        "en": "Translate \"lit\" into English."
       },
       "answer": "bed",
       "distractors": [
@@ -12269,7 +12269,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "bed"
+        "source": "lit"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12287,8 +12287,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « crabe » en anglais.",
+        "en": "Translate \"crabe\" into English."
       },
       "answer": "crab",
       "distractors": [
@@ -12313,7 +12313,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "crab"
+        "source": "crabe"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12331,8 +12331,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « abeille » en anglais.",
+        "en": "Translate \"abeille\" into English."
       },
       "answer": "bee",
       "distractors": [
@@ -12357,7 +12357,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "bee"
+        "source": "abeille"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12375,8 +12375,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « girafe » en anglais.",
+        "en": "Translate \"girafe\" into English."
       },
       "answer": "giraffe",
       "distractors": [
@@ -12401,7 +12401,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "giraffe"
+        "source": "girafe"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12419,8 +12419,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « eau » en anglais.",
+        "en": "Translate \"eau\" into English."
       },
       "answer": "water",
       "distractors": [
@@ -12445,7 +12445,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "water"
+        "source": "eau"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12463,8 +12463,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « étoile » en anglais.",
+        "en": "Translate \"étoile\" into English."
       },
       "answer": "star",
       "distractors": [
@@ -12489,7 +12489,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "star"
+        "source": "étoile"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12507,8 +12507,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « livre » en anglais.",
+        "en": "Translate \"livre\" into English."
       },
       "answer": "book",
       "distractors": [
@@ -12533,7 +12533,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "book"
+        "source": "livre"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12551,8 +12551,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « pain » en anglais.",
+        "en": "Translate \"pain\" into English."
       },
       "answer": "bread",
       "distractors": [
@@ -12577,7 +12577,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "bread"
+        "source": "pain"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12595,8 +12595,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « fraise » en anglais.",
+        "en": "Translate \"fraise\" into English."
       },
       "answer": "strawberry",
       "distractors": [
@@ -12621,7 +12621,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "strawberry"
+        "source": "fraise"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12639,8 +12639,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « ballon » en anglais.",
+        "en": "Translate \"ballon\" into English."
       },
       "answer": "ball",
       "distractors": [
@@ -12665,7 +12665,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "ball"
+        "source": "ballon"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12683,8 +12683,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « ami » en anglais.",
+        "en": "Translate \"ami\" into English."
       },
       "answer": "friend",
       "distractors": [
@@ -12709,7 +12709,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "friend"
+        "source": "ami"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12727,8 +12727,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « perroquet » en anglais.",
+        "en": "Translate \"perroquet\" into English."
       },
       "answer": "parrot",
       "distractors": [
@@ -12753,7 +12753,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "parrot"
+        "source": "perroquet"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12771,8 +12771,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « lune » en anglais.",
+        "en": "Translate \"lune\" into English."
       },
       "answer": "moon",
       "distractors": [
@@ -12797,7 +12797,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "moon"
+        "source": "lune"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12815,8 +12815,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « lait » en anglais.",
+        "en": "Translate \"lait\" into English."
       },
       "answer": "milk",
       "distractors": [
@@ -12841,7 +12841,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "milk"
+        "source": "lait"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12859,8 +12859,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « papillon » en anglais.",
+        "en": "Translate \"papillon\" into English."
       },
       "answer": "butterfly",
       "distractors": [
@@ -12885,7 +12885,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "butterfly"
+        "source": "papillon"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12903,8 +12903,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « voiture » en anglais.",
+        "en": "Translate \"voiture\" into English."
       },
       "answer": "car",
       "distractors": [
@@ -12929,7 +12929,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "car"
+        "source": "voiture"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12947,8 +12947,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « soleil » en anglais.",
+        "en": "Translate \"soleil\" into English."
       },
       "answer": "sun",
       "distractors": [
@@ -12973,7 +12973,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "sun"
+        "source": "soleil"
       },
       "created_by": "ai",
       "ratings": [],
@@ -12991,8 +12991,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « ananas » en anglais.",
+        "en": "Translate \"ananas\" into English."
       },
       "answer": "pineapple",
       "distractors": [
@@ -13017,7 +13017,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "pineapple"
+        "source": "ananas"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13035,8 +13035,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « chien » en anglais.",
+        "en": "Translate \"chien\" into English."
       },
       "answer": "dog",
       "distractors": [
@@ -13061,7 +13061,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "dog"
+        "source": "chien"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13079,8 +13079,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « éléphant » en anglais.",
+        "en": "Translate \"éléphant\" into English."
       },
       "answer": "elephant",
       "distractors": [
@@ -13105,7 +13105,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "elephant"
+        "source": "éléphant"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13123,8 +13123,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « serpent » en anglais.",
+        "en": "Translate \"serpent\" into English."
       },
       "answer": "snake",
       "distractors": [
@@ -13149,7 +13149,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "snake"
+        "source": "serpent"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13167,8 +13167,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « banane » en anglais.",
+        "en": "Translate \"banane\" into English."
       },
       "answer": "banana",
       "distractors": [
@@ -13193,7 +13193,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "banana"
+        "source": "banane"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13211,8 +13211,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « oiseau » en anglais.",
+        "en": "Translate \"oiseau\" into English."
       },
       "answer": "bird",
       "distractors": [
@@ -13237,7 +13237,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "bird"
+        "source": "oiseau"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13255,8 +13255,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « carotte » en anglais.",
+        "en": "Translate \"carotte\" into English."
       },
       "answer": "carrot",
       "distractors": [
@@ -13281,7 +13281,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "carrot"
+        "source": "carotte"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13299,8 +13299,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « école » en anglais.",
+        "en": "Translate \"école\" into English."
       },
       "answer": "school",
       "distractors": [
@@ -13325,7 +13325,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "school"
+        "source": "école"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13343,8 +13343,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « pied » en anglais.",
+        "en": "Translate \"pied\" into English."
       },
       "answer": "foot",
       "distractors": [
@@ -13369,7 +13369,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "foot"
+        "source": "pied"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13387,8 +13387,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « grenouille » en anglais.",
+        "en": "Translate \"grenouille\" into English."
       },
       "answer": "frog",
       "distractors": [
@@ -13413,7 +13413,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "frog"
+        "source": "grenouille"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13431,8 +13431,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « pomme » en anglais.",
+        "en": "Translate \"pomme\" into English."
       },
       "answer": "apple",
       "distractors": [
@@ -13457,7 +13457,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "apple"
+        "source": "pomme"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13475,8 +13475,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « poisson » en anglais.",
+        "en": "Translate \"poisson\" into English."
       },
       "answer": "fish",
       "distractors": [
@@ -13501,7 +13501,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "fish"
+        "source": "poisson"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13519,8 +13519,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « raisin » en anglais.",
+        "en": "Translate \"raisin\" into English."
       },
       "answer": "grapes",
       "distractors": [
@@ -13545,7 +13545,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "grapes"
+        "source": "raisin"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13563,8 +13563,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « tortue » en anglais.",
+        "en": "Translate \"tortue\" into English."
       },
       "answer": "turtle",
       "distractors": [
@@ -13589,7 +13589,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "turtle"
+        "source": "tortue"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13607,10 +13607,10 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « neige » en anglais.",
+        "en": "Translate \"neige\" into English."
       },
-      "answer": "lion",
+      "answer": "snow",
       "distractors": [
         {
           "value": "lemon"
@@ -13633,7 +13633,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "lion"
+        "source": "neige"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13651,8 +13651,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « singe » en anglais.",
+        "en": "Translate \"singe\" into English."
       },
       "answer": "monkey",
       "distractors": [
@@ -13677,7 +13677,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "monkey"
+        "source": "singe"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13695,10 +13695,10 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « clé » en anglais.",
+        "en": "Translate \"clé\" into English."
       },
-      "answer": "table",
+      "answer": "key",
       "distractors": [
         {
           "value": "grapes"
@@ -13721,7 +13721,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "table"
+        "source": "clé"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13739,8 +13739,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « oignon » en anglais.",
+        "en": "Translate \"oignon\" into English."
       },
       "answer": "onion",
       "distractors": [
@@ -13765,7 +13765,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "onion"
+        "source": "oignon"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13783,8 +13783,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « hibou » en anglais.",
+        "en": "Translate \"hibou\" into English."
       },
       "answer": "owl",
       "distractors": [
@@ -13809,7 +13809,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "owl"
+        "source": "hibou"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13827,8 +13827,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « citron » en anglais.",
+        "en": "Translate \"citron\" into English."
       },
       "answer": "lemon",
       "distractors": [
@@ -13853,7 +13853,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "lemon"
+        "source": "citron"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13871,8 +13871,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « main » en anglais.",
+        "en": "Translate \"main\" into English."
       },
       "answer": "hand",
       "distractors": [
@@ -13897,7 +13897,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "hand"
+        "source": "main"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13915,8 +13915,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « fleur » en anglais.",
+        "en": "Translate \"fleur\" into English."
       },
       "answer": "flower",
       "distractors": [
@@ -13941,7 +13941,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "flower"
+        "source": "fleur"
       },
       "created_by": "ai",
       "ratings": [],
@@ -13959,8 +13959,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « chat » en anglais.",
+        "en": "Translate \"chat\" into English."
       },
       "answer": "cat",
       "distractors": [
@@ -13985,7 +13985,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "cat"
+        "source": "chat"
       },
       "created_by": "ai",
       "ratings": [],
@@ -14003,8 +14003,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « porte » en anglais.",
+        "en": "Translate \"porte\" into English."
       },
       "answer": "door",
       "distractors": [
@@ -14029,7 +14029,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "door"
+        "source": "porte"
       },
       "created_by": "ai",
       "ratings": [],
@@ -14047,8 +14047,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « pastèque » en anglais.",
+        "en": "Translate \"pastèque\" into English."
       },
       "answer": "watermelon",
       "distractors": [
@@ -14073,7 +14073,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "watermelon"
+        "source": "pastèque"
       },
       "created_by": "ai",
       "ratings": [],
@@ -14091,8 +14091,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « tomate » en anglais.",
+        "en": "Translate \"tomate\" into English."
       },
       "answer": "tomato",
       "distractors": [
@@ -14117,7 +14117,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "tomato"
+        "source": "tomate"
       },
       "created_by": "ai",
       "ratings": [],
@@ -14135,8 +14135,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « maison » en anglais.",
+        "en": "Translate \"maison\" into English."
       },
       "answer": "house",
       "distractors": [
@@ -14161,7 +14161,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "house"
+        "source": "maison"
       },
       "created_by": "ai",
       "ratings": [],
@@ -14179,8 +14179,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « arbre » en anglais.",
+        "en": "Translate \"arbre\" into English."
       },
       "answer": "tree",
       "distractors": [
@@ -14205,7 +14205,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "tree"
+        "source": "arbre"
       },
       "created_by": "ai",
       "ratings": [],
@@ -14223,8 +14223,8 @@
       "type": "translation",
       "objective_ref": "1",
       "prompt": {
-        "fr": "Traduis ce mot en anglais.",
-        "en": "Translate this word into English."
+        "fr": "Traduis « chaise » en anglais.",
+        "en": "Translate \"chaise\" into English."
       },
       "answer": "chair",
       "distractors": [
@@ -14249,7 +14249,7 @@
       "lang": "both",
       "config": {
         "direction": "fr-en",
-        "image": "chair"
+        "source": "chaise"
       },
       "created_by": "ai",
       "ratings": [],
