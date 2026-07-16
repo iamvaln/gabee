@@ -119,6 +119,7 @@ export async function completeMcqLesson(page: Page, total: number): Promise<void
       const label = (await btn.textContent()) ?? '';
       await page.keyboard.press('Enter'); // "Suivant" advances; "Réessayer" clears+retries
       if (label.includes('Suivant')) break;
+      if (i === n - 1) throw new Error('exhausted all answer options without finding the correct one');
     }
   }
 }

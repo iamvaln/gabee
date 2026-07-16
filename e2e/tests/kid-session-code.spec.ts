@@ -67,16 +67,20 @@ async function skipCodeLesson(page: Page, total: number): Promise<void> {
 test('code: a full session completes via skip and syncs its events', async ({ page }) => {
   await seedKidAuthAndPickAva(page);
   const ava = await avaProfile();
-  const eventsBefore = await prisma.event.count({ where: { profileId: ava.id } });
+  // Scope to THIS code session's own completion event (module='code' in the
+  // payload — CodeTurtleSession.tsx emits it on finishLesson). Counting all
+  // profile events would false-green on ambient session_start / message events.
+  const codeCompletions = () =>
+    prisma.event.count({
+      where: { profileId: ava.id, name: 'lesson_completed', payload: { path: ['module'], equals: 'code' } },
+    });
+  const before = await codeCompletions();
 
   await startCodeMaze(page);
   await skipCodeLesson(page, 5); // CodeTurtleSession TOTAL = 5
   await finishToHub(page);
 
   // Code progress is localStorage-only (no totalStars claim to assert), but its
-  // events (lesson_started + 5x question_shown + lesson_completed) sync to Postgres.
-  await pollUntil(
-    () => prisma.event.count({ where: { profileId: ava.id } }),
-    (c) => c > eventsBefore,
-  );
+  // lesson_completed event syncs to Postgres — proving the session ran + synced.
+  await pollUntil(codeCompletions, (c) => c > before);
 });
