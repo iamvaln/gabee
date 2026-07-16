@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { QuestionRecordSchema, type QuestionRecord } from '@gabee/types';
+import { QuestionRecordSchema, FLAG_KEYS, FLAG_DEFAULTS, FLAG_DESCRIPTIONS, type QuestionRecord } from '@gabee/types';
 import { Prisma } from '../src/generated/prisma/client';
 import { createPrismaClient } from '../src/client';
 
@@ -248,6 +248,18 @@ async function main(): Promise<void> {
       });
     }
     console.log(`✓ Ensured ${planSet.size} accepted content plans for seeded levels.`);
+
+    // Feature flags (design 2026-07-16). CREATE-ONLY: an empty `update` means an
+    // admin-changed enabledDefault is never clobbered by a re-seed; only missing
+    // rows are inserted with their initial values.
+    for (const key of FLAG_KEYS) {
+      await prisma.featureFlag.upsert({
+        where: { key },
+        update: {},
+        create: { key, enabledDefault: FLAG_DEFAULTS[key], description: FLAG_DESCRIPTIONS[key] },
+      });
+    }
+    console.log(`✓ Ensured ${FLAG_KEYS.length} feature-flag rows.`);
   } finally {
     await prisma.$disconnect();
   }
