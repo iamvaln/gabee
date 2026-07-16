@@ -17,7 +17,10 @@ test('parent signup → confirm → login → dashboard → change password', as
   // → login → dashboard → password steps below remain real-UI. (The signup form's
   // own contract is covered by the phase-3a service/route integration tests.)
   const signup = await page.request.post('/api/auth/signup', {
-    data: { email, password, phone: '+237612345678' }, // valid CM E.164
+    // `terms_accepted` is required (z.literal(true)) since the provable-consent
+    // gate shipped — signup records the acceptance, so this parent won't hit the
+    // re-consent redirect on the login step below.
+    data: { email, password, phone: '+237612345678', terms_accepted: true }, // valid CM E.164
   });
   expect(signup.status()).toBe(201);
 
