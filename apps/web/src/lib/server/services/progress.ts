@@ -17,9 +17,41 @@ import {
 
 interface LockedRow {
   total_stars: number;
+  stars_baseline: number;
   progress_by_module: unknown;
   progress_by_module_per_language: unknown;
   badges: string[];
+}
+
+/**
+ * How many stars the SERVER can independently account for.
+ *
+ * A star is one correct answer: every star-awarding screen does
+ * `total_stars = profile.total_stars + correctCount`, and every answer emits a
+ * `question_answered` event carrying `correct` (Code awards no stars). Events are
+ * append-only, deduped on `event_id`, never pruned, and the kid app drains them
+ * BEFORE progress (`sync.ts`: drainEvents() then drainProgress()) — so by the time a
+ * client claims a total, the evidence for it is already stored. Gifts are the one
+ * server-side source (`gifts.ts` increments on claim), so they count too.
+ *
+ * `baseline` covers stars that predate this rule — a manual grant, or anything from
+ * before ingest was reliable — so applying the cap can't freeze a real kid.
+ */
+async function countEvidencedStars(
+  tx: Prisma.TransactionClient,
+  profileId: string,
+  baseline: number,
+): Promise<number> {
+  const [correctAnswers, gifted] = await Promise.all([
+    tx.event.count({
+      where: { profileId, name: 'question_answered', payload: { path: ['correct'], equals: true } },
+    }),
+    tx.kidGift.aggregate({
+      where: { childId: profileId, status: 'claimed' },
+      _sum: { amount: true },
+    }),
+  ]);
+  return correctAnswers + (gifted._sum.amount ?? 0) + baseline;
 }
 
 /**
@@ -51,7 +83,7 @@ export async function syncProgress(
     // Lock the row for the duration of the read-merge-write so concurrent syncs
     // for the same profile can't race and clobber each other.
     const rows = await tx.$queryRaw<LockedRow[]>`
-      SELECT total_stars, progress_by_module, progress_by_module_per_language, badges
+      SELECT total_stars, stars_baseline, progress_by_module, progress_by_module_per_language, badges
       FROM child_profiles WHERE id = ${req.profile_id}::uuid FOR UPDATE`;
     const cur = rows[0];
     if (!cur) throw new HttpError(404, 'profile_not_found', 'Child profile not found');
@@ -59,8 +91,28 @@ export async function syncProgress(
     const data: Prisma.ChildProfileUpdateInput = { lastActiveAt: new Date() };
 
     if (req.total_stars !== undefined) {
-      // Monotonic: never below what's already stored.
-      data.totalStars = Math.max(cur.total_stars, req.total_stars);
+      // `total_stars` is CLIENT-DECLARED, so it is a claim, not a fact: the device
+      // computes it locally and syncs the total. Monotonic-max alone only stopped it
+      // going DOWN — a tampered client could POST `total_stars: 999999` and the server
+      // stored it, converting devtools into real rewards via the gift economy.
+      // So bound the claim by what the server can independently count.
+      let baseline = cur.stars_baseline;
+      let cap = await countEvidencedStars(tx, req.profile_id, baseline);
+
+      // Stars already on the row that the evidence doesn't explain (a manual grant,
+      // or anything predating reliable ingest) are grandfathered ONCE, here. Without
+      // this, applying the cap would freeze a real kid's stars at their current value.
+      // This can only ever ABSORB stars that already existed: a client cannot push
+      // `total_stars` above the cap, so it cannot manufacture residue to widen it.
+      if (cur.total_stars > cap) {
+        baseline += cur.total_stars - cap;
+        cap = cur.total_stars;
+        data.starsBaseline = baseline;
+      }
+
+      // Never below what's stored (the original monotonic floor — concurrent devices
+      // must not regress each other), and never above the evidence.
+      data.totalStars = Math.max(cur.total_stars, Math.min(req.total_stars, cap));
     }
     if (req.progress_by_module) {
       const server = ProgressByModuleSchema.safeParse(cur.progress_by_module);
