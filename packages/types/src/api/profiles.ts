@@ -28,6 +28,7 @@ export const CreateProfileRequestSchema = z.object({
   /** ISO date (YYYY-MM-DD); the add-kid form requires it, optional here for API back-compat. */
   birth_date: z.iso.date().optional(),
   audio_enabled: z.boolean().optional(),
+  music_enabled: z.boolean().optional(),
   /**
    * Co-parent extension policy on new-kid creation (parent spec §7.1, co-parent §10).
    * When the creating parent ALREADY has linked co-parents, the client asks:
@@ -55,9 +56,27 @@ export const UpdateProfileRequestSchema = z
     language: LanguageSchema,
     birth_date: z.iso.date(),
     audio_enabled: z.boolean(),
+    music_enabled: z.boolean(),
   })
   .partial();
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
+
+/**
+ * What a paired KID DEVICE may write to a profile — the audio toggle and nothing
+ * else. `Settings.tsx` is the kid PWA's only PATCH call site and sends exactly
+ * `{ audio_enabled }`; everything else on the profile (name, birth date, gender,
+ * avatar dimensions, language) is a parent decision.
+ *
+ * `.strict()` so an unknown or parent-only field is REJECTED rather than silently
+ * dropped — a device probing for a wider write gets a 422, not a quiet no-op.
+ */
+export const DeviceUpdateProfileRequestSchema = z
+  .object({
+    audio_enabled: z.boolean(),
+  })
+  .strict()
+  .partial();
+export type DeviceUpdateProfileRequest = z.infer<typeof DeviceUpdateProfileRequestSchema>;
 
 // POST / PATCH response
 export const ProfileResponseSchema = z.object({ profile: ChildProfileSchema });

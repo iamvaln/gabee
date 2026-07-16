@@ -1,4 +1,4 @@
-import { route, json, requireParent } from '@/lib/server/http';
+import { route, json, requireKidDevice } from '@/lib/server/http';
 import { getBundle } from '@/lib/server/services/bundles';
 
 export const runtime = 'nodejs';
@@ -16,7 +16,7 @@ type Ctx = { params: Promise<{ module: string }> };
  * still in flight.
  */
 export const GET = route<Ctx>(async (req, ctx) => {
-  await requireParent(req);
+  await requireKidDevice(req);
   const { module } = await ctx.params;
   const url = new URL(req.url);
   const versionRaw = url.searchParams.get('version');

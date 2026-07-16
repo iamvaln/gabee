@@ -43,6 +43,9 @@
       "@prisma/engines",
       "esbuild",
       "prisma"
-    ]
+    ],
+    "overrides": {
+      "hono@<4.12.25": ">=4.12.25"
+    }
   }
 }

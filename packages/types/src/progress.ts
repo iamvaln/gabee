@@ -127,6 +127,7 @@ export const ChildProfileSchema = z.object({
    *  selection. Nullable for profiles created before the field existed. */
   birth_date: z.iso.date().nullable().default(null),
   audio_enabled: z.boolean().default(true),
+  music_enabled: z.boolean().default(true),
   created_at: z.iso.datetime(),
   last_active_at: z.iso.datetime().nullable().default(null),
   total_stars: z.number().int().min(0).default(0),

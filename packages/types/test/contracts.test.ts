@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  ParentKidMessageRowSchema,
   QuestionRecordSchema,
   EventEnvelopeSchema,
   ChildEventSchema,
@@ -8,6 +9,7 @@ import {
   IngestEventsRequestSchema,
   IngestEventsRequestLenientSchema,
   ChildProfileSchema,
+  UpdateProfileRequestSchema,
   DeviceSnapshotSchema,
   EVENT_NAMES,
   GenderSchema,
@@ -313,6 +315,42 @@ describe('ChildProfile', () => {
     assert.equal(profile.audio_enabled, true);
     assert.equal(profile.total_stars, 0);
   });
+
+  it('defaults music_enabled to true (audio phase E)', () => {
+    // Reuse the block's existing minimal valid profile fixture:
+    const emptyTrack = { highest_level: 1, levels: [] };
+    const perLang = { fr: emptyTrack, en: emptyTrack };
+    const parsed = ChildProfileSchema.parse({
+      id: UUID,
+      parent_id: UUID2,
+      name: 'Léa',
+      avatar: 'avatar_1',
+      skin_tone: 'skin_2',
+      hair_color: 'hair_brown',
+      hair_style: 'style_short',
+      shirt_color: 'shirt_blue',
+      language: 'fr',
+      created_at: NOW,
+      progress_by_module: {
+        numbers: emptyTrack,
+        keyboard: emptyTrack,
+        code: emptyTrack,
+      },
+      progress_by_module_per_language: {
+        words_picture: perLang,
+        words_fill: perLang,
+        words_build: perLang,
+        words_read: perLang,
+        translation: perLang,
+      },
+    });
+    assert.equal(parsed.music_enabled, true);
+  });
+
+  it('UpdateProfileRequest carries music_enabled through', () => {
+    const parsed = UpdateProfileRequestSchema.parse({ music_enabled: false });
+    assert.equal(parsed.music_enabled, false);
+  });
 });
 
 describe('Gender', () => {
@@ -353,5 +391,35 @@ describe('Gender', () => {
     assert.equal(ChildProfileSchema.parse(base).gender, null);
     assert.equal(ChildProfileSchema.parse({ ...base, gender: 'girl' }).gender, 'girl');
     assert.throws(() => ChildProfileSchema.parse({ ...base, gender: 'other' }));
+  });
+});
+
+describe('ParentKidMessageRow', () => {
+  const row = {
+    id: '00000000-0000-4000-9000-0000000000b1',
+    from_parent_id: '00000000-0000-4000-9000-000000000002',
+    to_child_id: '00000000-0000-4000-9000-0000000000a3',
+    text: 'Hello from tester B',
+    status: 'unread' as const,
+    created_at: NOW,
+    read_at: null,
+    deleted_at: null,
+    to_child_name: 'Mia',
+    from_display_name: 'Tester',
+  };
+
+  // `ChildProfile.avatar` is the LEGACY fixed-look enum, superseded by the recolour
+  // dimensions: the column is nullable and profiles.ts leaves it null on every new
+  // row. Requiring a string here made messages.ts's `.parse()` throw for any kid
+  // created after the recolour migration — 500-ing the parent Messages list and the
+  // single-message route for real families. Null is the NORMAL case now.
+  it('accepts a null to_child_avatar (the normal case for post-recolour kids)', () => {
+    const parsed = ParentKidMessageRowSchema.parse({ ...row, to_child_avatar: null });
+    assert.equal(parsed.to_child_avatar, null);
+  });
+
+  it('still accepts a legacy avatar string', () => {
+    const parsed = ParentKidMessageRowSchema.parse({ ...row, to_child_avatar: 'avatar_3' });
+    assert.equal(parsed.to_child_avatar, 'avatar_3');
   });
 });

@@ -6,15 +6,23 @@
 //      `kids.gabee.app/?pair=<jwt>` deep-link + emails it.
 //   2. Kid PWA reads `?pair=` on first launch and POSTs /api/pair/claim →
 //      `claimPairToken` verifies the JWT, finds the row (unused, unexpired),
-//      mints a long-lived (~180d) parent-bearer JWT in the SAME shape as a
-//      normal session token, creates the DeviceLink row, marks the pair
-//      token used, writes a `device_paired` activity entry on EACH of the
-//      parent's kids (the feed is kid-scoped). Returns the bearer + parent.
+//      mints a 30d DEVICE-SCOPED bearer (`scope: 'device'` + `did`), creates the
+//      DeviceLink row, marks the pair token used, writes a `device_paired`
+//      activity entry on EACH of the parent's kids (the feed is kid-scoped).
+//      Returns the bearer + parent.
 //   3. Parent app DELETE /api/devices/[id] → `revokeDevice` flips `revokedAt`
-//      and writes `device_revoked` activity rows. The kid app's bearer
-//      becomes invalid via the next `requireParent` lookup once we choose to
-//      gate on the device row (Phase 1 leaves the bearer alive until expiry
-//      — spec §15 Q4; we still surface revocation in the UI immediately).
+//      and writes `device_revoked` activity rows. The bearer stops working on the
+//      NEXT REQUEST, because `requireKidDevice` resolves the token's `did` against
+//      the DeviceLink row and rejects a revoked/missing one.
+//
+// Both of those used to be otherwise. Until 2026-07-16 the bearer was minted in the
+// SAME claim shape as a parent session (no scope), so a paired kid tablet held full
+// parent authority over the family for 180 days — it could read the parent's
+// messages, list/revoke their devices, delete a child. And revocation was a
+// documented Phase-1 deferral ("leaves the bearer alive until expiry — spec §15 Q4;
+// we still surface revocation in the UI immediately"), which meant the parent was
+// TOLD a lost tablet was cut off while its token kept working. Both are closed now:
+// the scope claim bounds what a device may do, the `did` claim makes it revocable.
 //
 // All DB shaping lives here; routes are thin Zod-validated wrappers.
 
@@ -36,8 +44,22 @@ const secret = new TextEncoder().encode(AUTH_JWT_SECRET);
 
 /** Pair-token JWT lives 24h (parent spec §13 — one-shot, copy-paste-safe window). */
 const PAIR_TOKEN_TTL_SECONDS = 60 * 60 * 24;
-/** Device-bound bearer the kid app keeps lives ~180 days (parent spec §13). */
-const DEVICE_BEARER_TTL_SECONDS = 60 * 60 * 24 * 180;
+/**
+ * Device-bound bearer the kid app keeps. Was 180d — six times the parent session's
+ * 30d, i.e. the least-trusted device (a shared kid tablet) held the longest-lived
+ * credential. Cut to 30d to match a parent session.
+ *
+ * The TTL is no longer the only thing that ends a device session: the token now
+ * carries a `did` (DeviceLink id) that is checked against the DB on every request,
+ * so `revokeDevice` takes effect immediately. That check is the real control — the
+ * TTL is just a backstop for a device that never contacts the server again.
+ *
+ * NOTE: there is no refresh flow (DeviceLink.refreshTokenId is stored but never
+ * exchanged), so this TTL is a hard re-pair deadline for the kid PWA. Shortening it
+ * further trades UX (parent must re-pair the tablet) for little added security now
+ * that revocation works.
+ */
+const DEVICE_BEARER_TTL_SECONDS = 60 * 60 * 24 * 30;
 
 /** Where the kid PWA is hosted. Same default the kid app's `api.ts` falls back to. */
 const KID_APP_URL = process.env.NEXT_PUBLIC_KID_APP_URL ?? 'http://localhost:5173';
@@ -259,9 +281,25 @@ async function verifyPairTokenJwt(token: string): Promise<PairTokenClaims | null
 }
 
 /** Mint a long-lived (~180d) parent-bearer JWT, same shape as `createSessionToken`. */
-async function mintDeviceBearer(parentId: string, email: string): Promise<{ token: string; expiresAt: Date }> {
+/**
+ * Mint the kid device's bearer.
+ *
+ * `scope: 'device'` is what stops this token being a parent session: `requireParent`
+ * rejects it, and only the endpoints the kid PWA actually needs accept it (see
+ * `requireKidDevice`). Before this claim existed, the minted token was byte-identical
+ * in shape to `createSessionToken`'s output — a paired tablet held full parent
+ * authority over the family.
+ *
+ * `did` binds the token to its DeviceLink row so it can be revoked; without it a
+ * lost tablet could only be waited out.
+ */
+async function mintDeviceBearer(
+  parentId: string,
+  email: string,
+  deviceLinkId: string,
+): Promise<{ token: string; expiresAt: Date }> {
   const expiresAt = new Date(Date.now() + DEVICE_BEARER_TTL_SECONDS * 1000);
-  const token = await new SignJWT({ email })
+  const token = await new SignJWT({ email, scope: 'device', did: deviceLinkId })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(parentId)
     .setIssuedAt()
@@ -308,6 +346,7 @@ export async function claimPairToken(
   const { token: bearer, expiresAt: bearerExpiry } = await mintDeviceBearer(
     parent.id,
     parent.email,
+    deviceId,
   );
 
   const kids = await prisma.childProfile.findMany({
@@ -415,6 +454,7 @@ export async function claimByCode(
   const { token: bearer, expiresAt: bearerExpiry } = await mintDeviceBearer(
     parent.id,
     parent.email,
+    deviceId,
   );
 
   const kids = await prisma.childProfile.findMany({

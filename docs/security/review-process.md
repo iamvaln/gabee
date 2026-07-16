@@ -260,3 +260,39 @@ pipx install semgrep        # or: pip install semgrep (may hit PEP 668 on newer 
 
 osv-scanner can also be installed from its GitHub release binary. A missing tool
 is logged in the report; under `--strict` it fails the run (exit `3`).
+
+## Design decision — a revoked device's unsynced work is forfeit (2026-07-16)
+
+`requireKidDevice` rejects a revoked device's token, so anything it submits after
+revocation (events, progress sync) is refused. **This is deliberate. Do not "fix" it
+by accepting late syncs.**
+
+The tempting case: a kid plays offline Monday, the tablet is lost Tuesday, the parent
+revokes, and on Friday the device finds internet and tries to sync Monday's genuine
+sessions. Shouldn't we take them?
+
+No — because **we cannot verify that Monday's data is Monday's data**. The device
+controls both the payload and the timestamps (`client_ts`, `updated_at`), and the
+server never witnessed Monday. So "accept only the legitimate Monday sessions" is not
+an option that exists. The only real choices are:
+  - accept whatever the lost device sends (including fabrications) — revocation
+    becomes void for writes, and a stolen tablet keeps writing until TTL; or
+  - accept nothing — the genuine work is lost along with the fabrications.
+
+"Quarantine for parent review" is not a middle ground either: the parent can't
+distinguish a genuine payload from a tampered one, and a competent thief submits the
+real sessions *plus* inflated stars. It moves an unanswerable question to someone with
+no better evidence.
+
+**Recovery path (device comes back):** re-pair it. `sync.ts`'s flush keeps the queue on
+ANY failure including 401 (`sync.ts` "the queues are kept… nothing is lost"), and
+`clearAuth` (`store.ts`) drops the token but never touches the IndexedDB queues — so a
+re-paired device drains its backlog and the offline work lands. `total_stars` is merged
+monotonically (`Math.max`), so a late-arriving snapshot can't clobber newer progress.
+The parent is the trust anchor, which is right: only they know whether the tablet came
+back or is gone.
+
+**Blast radius when it's never recovered:** only work that never found connectivity
+before the device went missing — the sync manager drains on `online`,
+`visibilitychange`, `pagehide`, and a periodic timer, so anything that had internet is
+already on the server.

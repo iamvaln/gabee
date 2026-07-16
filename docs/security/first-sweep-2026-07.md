@@ -53,8 +53,8 @@ the right fail-closed thing (block rather than silently skip).
 
 | fingerprint | tool | tier | what it is | proposed disposition |
 |---|---|---|---|---|
-| `osv:hono@4.12.23:GHSA-88fw-hqm2-52qc` | osv-scanner | BLOCK (HIGH) | `hono@4.12.23` CORS middleware reflects any `Origin` with `Access-Control-Allow-Credentials: true` when `origin` is left at its wildcard default. | **waive** — see reasoning below |
-| `osv:vite@7.3.3:GHSA-fx2h-pf6j-xcff` | osv-scanner | BLOCK (HIGH) | `vite@7.3.3` `server.fs.deny` bypass, **Windows-only**, dev-server-only. | **waive** — see reasoning below |
+| `osv:hono@4.12.23:GHSA-88fw-hqm2-52qc` | osv-scanner | BLOCK (HIGH) | `hono@4.12.23` CORS middleware reflects any `Origin` with `Access-Control-Allow-Credentials: true` when `origin` is left at its wildcard default. | ✅ **FIXED 2026-07-15** — bumped, not waived (see resolution note at end) |
+| `osv:vite@7.3.3:GHSA-fx2h-pf6j-xcff` | osv-scanner | BLOCK (HIGH) | `vite@7.3.3` `server.fs.deny` bypass, **Windows-only**, dev-server-only. | ✅ **FIXED 2026-07-15** — bumped, not waived (see resolution note at end) |
 
 **Reasoning (both):** neither package reaches the deployed runtime.
 
@@ -265,8 +265,8 @@ acting on the notes blindly (as this triage tried to model).
 
 | fingerprint | proposed reason | proposed expiry |
 |---|---|---|
-| `osv:hono@4.12.23:GHSA-88fw-hqm2-52qc` | dev-only transitive dep via `@prisma/dev`, never in the production image | 2026-10-01 |
-| `osv:vite@7.3.3:GHSA-fx2h-pf6j-xcff` | devDependency build tool, Windows-only dev-server CVE, never shipped/deployed on Windows | 2026-10-01 |
+| `osv:hono@4.12.23:GHSA-88fw-hqm2-52qc` | **CORRECTED**: hono IS in the production image (verified: `/app/node_modules/.pnpm/hono@4.12.23/`). Not exploitable because the app never imports hono — the vulnerable CORS middleware is never instantiated. Dead code, not an unreachable dep. | 2026-10-01 |
+| `osv:vite@7.3.3:GHSA-fx2h-pf6j-xcff` | **CORRECTED**: vite IS in the production image (verified). Not exploitable: the CVE is a Windows-only `vite dev` server `fs.deny` bypass; prod is a Linux container that never runs the dev server. Dead code. | 2026-10-01 |
 
 ## Backlog summary (highest to lowest priority by threat-model tier)
 
@@ -289,3 +289,199 @@ acting on the notes blindly (as this triage tried to model).
 Note: this is the same property the probes rely on for bucket isolation, so fixing
 it will require the rate-limit probe to isolate differently (e.g. per-run unique
 credentials, or accepting a shared bucket and running that spec last).
+
+
+## Root cause behind the osv BLOCKs — the prod image ships all devDependencies
+
+Verified 2026-07-15. `apps/web/Dockerfile`'s runtime stage is `FROM build` and
+deliberately keeps the FULL `node_modules` ("so the Prisma CLI (used by the
+`migrate` service) and the generated client are available") — and
+`docker-compose.yml`'s `migrate` service reuses the same `gabee-web` image. So the
+production image carries the entire devDependency tree: **1.1 GB of node_modules**,
+including `hono` and `vite`.
+
+That is *why* both CVEs block, and it is the actual finding — the two waivers below
+treat a symptom. Every future devDependency CVE will block a release the same way,
+so this is a recurring tax, not a one-off.
+
+| finding | vector | tier | disposition |
+|---|---|---|---|
+| Production image ships the full devDependency tree (1.1 GB node_modules incl. hono, vite, the Prisma CLI + its `@prisma/dev` server) because one image serves both `web` and `migrate`. Widens attack surface and makes every devDep CVE a release blocker. | `plat-image-cve` | needs decision | **fix**: give the runtime a pruned prod-only `node_modules` (e.g. `pnpm prune --prod` / `--filter ... deploy` in a separate runtime stage), and either keep a small separate image for `migrate` or install the Prisma CLI only there. Removes both CVEs at the root and shrinks the image. Bigger change — touches the deploy path, so do it deliberately. |
+
+
+## ✅ Resolution — the two HIGH CVEs are FIXED, not waived (2026-07-15)
+
+Both had patch-level fixes available, so they were bumped out of the lockfile
+rather than waived. Nothing to expire, nothing to re-justify:
+
+| CVE | was | now | how |
+|---|---|---|---|
+| GHSA-fx2h-pf6j-xcff | vite 7.3.3 | **7.3.6** (fixed in 7.3.5) | already inside apps/kid's `^7.3.3` range |
+| GHSA-88fw-hqm2-52qc | hono 4.12.23 | **4.12.30** (fixed in 4.12.25) | `pnpm.overrides` — hono is transitive |
+
+Verified: osv 11 findings / 2 blocking → **3 findings / 0 blocking**;
+`pnpm security:scan --full` → **RESULT: PASS (exit 0)**; typecheck 7/7, tests 6/6,
+kid app builds on vite 7.3.6. The proposed waivers above are withdrawn — and their
+stated reasoning was wrong anyway (see the correction section).
+
+**Two lessons worth keeping:**
+1. *Pruning the production image would NOT have fixed these.* osv scans
+   `pnpm-lock.yaml`, not the image. Image contents and lockfile contents are
+   different questions — don't conflate them.
+2. *hono is in the PRODUCTION closure*, not dev-only: `@prisma/client` (a real
+   dependency) has an **optional peerDependency on `prisma`**, which pnpm satisfies
+   with `@gabee/db`'s prisma devDep — dragging `prisma → @prisma/dev →
+   @hono/node-server → hono` into prod. Optional peers can quietly promote a
+   devDependency's subtree into production; `pnpm why` alone was misleading here.
+
+## Fix log — 2026-07-15
+
+| # | finding | status |
+|---|---|---|
+| 1 | osv HIGH: hono GHSA-88fw-hqm2-52qc, vite GHSA-fx2h-pf6j-xcff | ✅ **fixed** — bumped (hono→4.12.30 via pnpm override, vite→7.3.6), not waived. Gate: 2 blocking → 0. |
+| 2 | `.semgrep/gabee.yml` `kid-message-or-parent-route-missing-guard` fired on every route (inverted `pattern-not-inside`) | ✅ **fixed** — 79 → 0 hits across 81 route files; verified non-vacuous (flags an unguarded route, silent on a guarded one). |
+| 3 | Rate limiting bypassable by rotating `X-Forwarded-For` | ✅ **fixed** — `clientIpFrom` now reads the LAST hop (the peer Traefik observed). Same bug also fixed in `getRequestMeta`, where it meant the IP stored against devices/auth events was **client-forgeable** — worthless for audit. Tests pin both. |
+| 4 | `to_child_avatar` nullable mismatch → parent Messages 500 | ✅ **fixed** — schema nullable; verified 200 e2e with kids seeded as prod creates them (null legacy avatar). Fixture workaround removed so fixtures mirror prod. |
+| 5 | Kid-device `PATCH /api/profiles/:id` has no field-level allowlist | ⏳ **open** — needs a product decision on which fields a paired kid device may write. |
+| 6 | Prod image ships the full devDependency tree (1.1 GB) | ⏳ **open** — real attack-surface finding. Note it is NOT what blocked the gate (osv scans the lockfile, not the image). |
+
+**Two of these (3, 4) were found only because the dynamic layer existed** — a probe
+had to actually log in and read a message to hit them. Neither is visible to a
+static scanner.
+
+## 🔴 ESCALATION of finding #5 — a paired kid device holds FULL parent authority (verified 2026-07-16)
+
+Finding #5 was triaged as "kid-device `PATCH /api/profiles/:id` has no field-level
+allowlist". Investigating it showed the allowlist is a *symptom*. The real issue:
+
+**`claimPairToken` mints the kid device a token that IS a parent session.**
+`mintDeviceBearer(parent.id, parent.email)` (`services/devices.ts:262`) signs
+`{ email, sub: parentId }` with the same `secret` and the same claim shape as
+`createSessionToken` (`auth.ts:67`), the real parent-login minter. `getSession`
+accepts any Bearer and `verifySessionToken` reads only `sub` + `email` — there is
+**no scope/audience/device claim to tell them apart**, so every `requireParent`
+route accepts a kid tablet. And the device TTL is **180 days** vs the parent
+session's 30 — the least-trusted device holds the longest-lived credential.
+
+**Verified empirically** (paired a device against the throwaway target, then used
+its bearer):
+
+| route | kid-device bearer |
+|---|---|
+| `GET /api/profiles` | **200** |
+| `GET /api/messages` | **200** — reads the parent's private messages to kids |
+| `GET /api/devices` | **200** — enumerates (and can revoke) the parent's own devices |
+| `GET /api/family/activity` | **200** |
+
+Decoded claims are byte-identical in shape:
+```
+device: {"email":"…","sub":"…parentId","iat":…,"exp":…}   TTL 180d
+parent: {"email":"…","sub":"…parentId","iat":…,"exp":…}   TTL  30d
+```
+
+**Why it matters:** the kid tablet is the device most likely to be shared, lost, or
+handed around, and it is operated *by a child*. The kid PWA's UI doesn't offer these
+actions — but a UI that hides a capability is not an access control. Anyone holding
+the token (devtools, a lost tablet, a sibling) has the family account for 6 months:
+delete a child profile, read every parent→kid message, revoke the parent's phone.
+
+**Proposed fix** (needs a product decision — this is an auth design change, not a patch):
+1. Add a `scope: 'device'` claim in `mintDeviceBearer`, and a `did` (DeviceLink id)
+   so a device token is revocable and attributable.
+2. `requireParent` rejects `scope: 'device'` tokens.
+3. Add `requireKidDevice` (or `requireParentOrDevice`) and apply it ONLY to the
+   endpoints the kid PWA genuinely needs — bundles, event ingest, progress, its own
+   profile reads, the kid-side settings write.
+4. Everything else (device management, family/coparents, account, profile delete,
+   parent messages) stays parent-session-only.
+5. Then the "field-level allowlist" falls out naturally: give the device scope a
+   narrow update schema (e.g. `audio_enabled` only) rather than the full
+   `UpdateProfileRequestSchema`.
+6. Consider shortening the 180d device TTL and/or binding it to `refreshTokenId`,
+   which is already stored on `DeviceLink` but never checked at verify time.
+
+**Do NOT ship the allowlist alone** — it would narrow one route while leaving the
+kid tablet holding parent credentials for every other one.
+
+## 🔴 Finding #7 — "Revoke device" does nothing (verified 2026-07-16)
+
+`revokeDevice` sets `DeviceLink.revokedAt` and returns 204, and the parent UI
+reports success — but **nothing validates a bearer against the DeviceLink**, so the
+revoked device's token keeps working until it expires (up to 180 days). The
+parent's only remedy for a lost/compromised kid tablet is inert.
+
+Proven against the throwaway target:
+```
+BEFORE revoke: device bearer -> GET /api/profiles = 200
+parent revokes device        -> HTTP 204 ("success")
+AFTER  revoke: device bearer -> GET /api/profiles = 200   <- unchanged
+```
+There is also **no refresh flow**: `DeviceLink.refreshTokenId` is generated and
+stored (`devices.ts:306,413`; `schema.prisma:791 @unique`) but never verified and
+never exchanged — no `/refresh` endpoint exists. So the 180d TTL is the *only*
+thing that ever ends a device session.
+
+Fixed together with the scoped-device-token work (finding #5): the `did` claim +
+DeviceLink lookup make revocation real, and any sync/event submitted after
+revocation is rejected because the token no longer authenticates.
+
+## Finding #8 — client-declared progress can be inflated (integrity, in-family)
+
+`POST /api/progress/sync` accepts client-supplied `total_stars`,
+`progress_by_module`, and `badges`. `syncProgress` correctly verifies profile
+ownership (no cross-family tampering) and locks the row, and `total_stars` is
+merged monotonically (`Math.max(cur, req)`) — so a client cannot LOWER progress.
+But it can **inflate** freely: `total_stars: 999999` is accepted and stored, and
+levels can be declared complete without being played.
+
+**Encryption of the local store is not a fix and cannot be** — the key would have to
+ship with the client, so the device's owner can always decrypt/alter/re-encrypt.
+Client-side integrity is unachievable by construction; the boundary is the server.
+
+**Severity:** integrity, scoped within one family — the "attacker" is typically the
+child cheating at their own app. It matters more than cosmetically because stars
+feed the real reward/gift economy. Combined with finding #5, a kid device token can
+sync ANY sibling's profile in the family, so it can inflate a sibling's progress too.
+
+**Options** (product decision):
+1. **Authoritative server-side recomputation** — the event stream (`/api/events`
+   already carries `question_answered` with correctness/timings/attempts) has what's
+   needed to compute stars/progress server-side and stop trusting client totals.
+   Principled fix; the data already exists.
+2. **Plausibility ceilings** — reject implausible deltas (stars/hour, impossible
+   level jumps). Cheap, heuristic, catches casual tampering.
+3. **Accept it** — document that progress is client-asserted and not evidence of
+   learning, and keep the reward economy tolerant of it.
+
+
+## ✅ Finding #8 resolved — total_stars is now bounded by evidence (2026-07-16)
+
+Option 1 (server-side authoritative accounting) was taken, in its bounded form: the
+server no longer trusts a client-declared total, it caps it by what it can count.
+
+```
+cap = correct `question_answered` events + claimed gifts + stars_baseline
+total_stars = max(cur, min(claimed, cap))   // never lowers, never exceeds evidence
+```
+
+This was exact rather than heuristic because the star rule is exact: 1 star = 1 correct
+answer (every star-awarding screen does `+ correctCount`; Code awards none), events are
+append-only + deduped on `event_id` + never pruned, and `sync.ts` drains events BEFORE
+progress — so the evidence is already stored when the claim arrives.
+
+`stars_baseline` (new column, additive migration, default 0) grandfathers stars that
+predate the rule — the manual grant, anything from before reliable ingest — the first
+time a sync sees them, so the cap can't freeze a real kid. It only ever absorbs stars
+that already existed; a client can't push above the cap, so it can't manufacture
+residue.
+
+Verified live: 999999 with no evidence -> 0 · 3 correct + 1 wrong -> 3 · claim 5 on 3
+-> 3 · manual grant 500 on 3 evidence -> kept 500 (baseline 497) -> 2 more answers ->
+502. Pinned by `probes/progress-integrity.spec.ts`.
+
+**What this does and does not buy.** It does not make the client trustworthy — nothing
+can; local data cannot be tamper-proof because the key would have to ship with it. It
+moves the forgery cost from "set a number in devtools" to "synthesise a plausible,
+deduped event stream", and it makes the server the arbiter of the reward economy. If
+that bar ever needs raising further, the next lever is plausibility on the events
+themselves (answer rate, response-time floors), not client-side obfuscation.

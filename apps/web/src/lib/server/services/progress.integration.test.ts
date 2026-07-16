@@ -1,7 +1,7 @@
 import '../../../test/setup-integration';
 import test, { after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { createTestClient, resetDb, createParent, createChild } from '@gabee/db/testing';
+import { createTestClient, resetDb, createParent, createChild, seedCorrectAnswers } from '@gabee/db/testing';
 import { defaultProgressByModule } from '@gabee/types';
 import { syncProgress } from './progress';
 import { HttpError } from '../http';
@@ -30,6 +30,9 @@ function numbersProgress(stars: number, highestLevel: number) {
 test('a stale device can never regress progress (monotonic merge)', async () => {
   const parent = await createParent(prisma);
   const child = await createChild(prisma, { parentId: parent.id });
+  // The stars are real: syncProgress now bounds total_stars by counted evidence, so
+  // this test establishes it (10 correct answers) exactly as play would.
+  await seedCorrectAnswers(prisma, child.id, 10);
 
   await syncProgress(parent.id, { profile_id: child.id, total_stars: 10, progress_by_module: numbersProgress(10, 3) } as never);
   const res = await syncProgress(parent.id, { profile_id: child.id, total_stars: 4, progress_by_module: numbersProgress(4, 1) } as never);
@@ -53,6 +56,7 @@ test('badges are a union — a stale device cannot strip an earned badge', async
 test('two concurrent device syncs both land (row lock serializes the merge)', async () => {
   const parent = await createParent(prisma);
   const child = await createChild(prisma, { parentId: parent.id });
+  await seedCorrectAnswers(prisma, child.id, 8); // evidence for the winning total
 
   await Promise.all([
     syncProgress(parent.id, { profile_id: child.id, total_stars: 5, badges: ['a'] } as never),
@@ -67,6 +71,7 @@ test('two concurrent device syncs both land (row lock serializes the merge)', as
 test('replaying the same snapshot is idempotent', async () => {
   const parent = await createParent(prisma);
   const child = await createChild(prisma, { parentId: parent.id });
+  await seedCorrectAnswers(prisma, child.id, 6);
   const body = { profile_id: child.id, total_stars: 6, progress_by_module: numbersProgress(6, 2) };
 
   const first = await syncProgress(parent.id, body as never);
@@ -74,6 +79,31 @@ test('replaying the same snapshot is idempotent', async () => {
 
   assert.deepEqual(second.progress_by_module, first.progress_by_module);
   assert.equal(second.total_stars, first.total_stars);
+});
+
+test('total_stars is bounded by counted evidence — an unbacked claim is clamped', async () => {
+  const parent = await createParent(prisma);
+  const child = await createChild(prisma, { parentId: parent.id });
+  await seedCorrectAnswers(prisma, child.id, 3); // only 3 correct answers exist
+
+  const res = await syncProgress(parent.id, { profile_id: child.id, total_stars: 999999 } as never);
+  assert.equal(res.total_stars, 3, 'a client cannot declare stars it has no evidence for');
+});
+
+test('a manual/legacy star grant is grandfathered, not frozen by the evidence cap', async () => {
+  const parent = await createParent(prisma);
+  // 500 stars on the row with no event evidence — a manual grant / pre-ingest total.
+  const child = await createChild(prisma, { parentId: parent.id, totalStars: 500 });
+
+  // First sync sees the unexplained residue and grandfathers it (baseline), rather
+  // than clamping the kid down to 0.
+  const kept = await syncProgress(parent.id, { profile_id: child.id, total_stars: 500 } as never);
+  assert.equal(kept.total_stars, 500);
+
+  // Real play on top still earns: 2 more correct answers → 502.
+  await seedCorrectAnswers(prisma, child.id, 2);
+  const earned = await syncProgress(parent.id, { profile_id: child.id, total_stars: 502 } as never);
+  assert.equal(earned.total_stars, 502);
 });
 
 test("syncing another parent's child 404s", async () => {

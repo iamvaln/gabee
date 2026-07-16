@@ -6,7 +6,16 @@ export function isEnabled(): boolean {
   return useStore.getState().audioEnabled;
 }
 
+export function isMusicEnabled(): boolean {
+  return useStore.getState().musicEnabled;
+}
+
 /** Local flip only — the best-effort PATCH to the API is the Settings screen's job. */
 export function setEnabled(v: boolean): void {
   useStore.getState().setAudioEnabled(v);
+}
+
+/** Local flip only — the best-effort PATCH to the API is the Settings screen's job. */
+export function setMusicEnabled(v: boolean): void {
+  useStore.getState().setMusicEnabled(v);
 }

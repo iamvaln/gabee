@@ -101,6 +101,7 @@ export async function createProfile(
         language: input.language,
         birthDate: input.birth_date ? new Date(input.birth_date) : null,
         audioEnabled: input.audio_enabled ?? true,
+        musicEnabled: input.music_enabled ?? true,
         progressByModule: defaultProgressByModule(),
         progressByModulePerLanguage: defaultProgressByModulePerLanguage(),
       },
@@ -153,6 +154,7 @@ export async function updateProfile(
       ...(input.language !== undefined ? { language: input.language } : {}),
       ...(input.birth_date !== undefined ? { birthDate: new Date(input.birth_date) } : {}),
       ...(input.audio_enabled !== undefined ? { audioEnabled: input.audio_enabled } : {}),
+      ...(input.music_enabled !== undefined ? { musicEnabled: input.music_enabled } : {}),
     },
   });
   return mapChildProfile(row);

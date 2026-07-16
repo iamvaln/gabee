@@ -26,13 +26,29 @@ export interface RateLimitOptions {
   windowMs: number;
 }
 
-/** Best-effort client IP from common reverse-proxy headers (Traefik sets these). */
+/**
+ * Best-effort client IP from common reverse-proxy headers (Traefik sets these).
+ *
+ * Takes the LAST `X-Forwarded-For` entry, not the first. The first entry is the
+ * textbook "original client", but that only holds when a trusted proxy REPLACES
+ * the header. Traefik APPENDS: a request arriving with `X-Forwarded-For: 1.2.3.4`
+ * is forwarded as `1.2.3.4, <real peer>`. Reading the first entry therefore hands
+ * the bucket key to the caller — anyone could rotate `X-Forwarded-For` and reset
+ * every limiter (login, signup, password-reset, contact) at will, i.e. no rate
+ * limiting at all against a deliberate attacker.
+ *
+ * The last entry is the peer address Traefik actually observed, so it cannot be
+ * spoofed by the client. This assumes exactly one trusted hop (Traefik) in front
+ * of the app, which holds here: Traefik is internet-facing (Cloudflare is
+ * grey-cloud/DNS-only) and the container is not otherwise reachable. If another
+ * proxy is ever put in front, this needs a trusted-hop count instead.
+ */
 export function clientIpFrom(req: NextRequest): string {
   const fwd = req.headers.get('x-forwarded-for');
   if (fwd) {
-    // First entry is the original client; the rest are intermediary proxies.
-    const first = fwd.split(',')[0]?.trim();
-    if (first) return first;
+    const parts = fwd.split(',').map((p) => p.trim()).filter(Boolean);
+    const last = parts[parts.length - 1];
+    if (last) return last;
   }
   const real = req.headers.get('x-real-ip');
   if (real) return real.trim();

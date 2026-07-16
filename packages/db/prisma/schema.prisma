@@ -162,24 +162,24 @@ enum FeedbackStatus {
 // (changes-v1 §4.1, parent spec §8.2 / §10.1). Defaults to first part of email; the
 // parent can customise it in Settings → Profile.
 model ParentAccount {
-  id                 String             @id @default(uuid()) @db.Uuid
-  email              String             @unique
+  id                 String              @id @default(uuid()) @db.Uuid
+  email              String              @unique
   /// E.164 phone number (e.g. +33612345678). Optional today; collected at
   /// signup behind a country picker, validated client- and server-side via
   /// libphonenumber-js. Reserved for SMS recovery + future account-recovery
   /// flows where email alone isn't safe (compromised mailbox).
   phone              String?
   // Single auth system: admins are accounts with an elevated role (admin spec D1).
-  role               AccountRole        @default(parent)
-  displayNameForKids String             @default("") @map("display_name_for_kids") @db.VarChar(50)
-  createdAt          DateTime           @default(now()) @map("created_at")
-  lastLoginAt        DateTime?          @map("last_login_at")
+  role               AccountRole         @default(parent)
+  displayNameForKids String              @default("") @map("display_name_for_kids") @db.VarChar(50)
+  createdAt          DateTime            @default(now()) @map("created_at")
+  lastLoginAt        DateTime?           @map("last_login_at")
   children           ChildProfile[]
   credentials        ParentCredential[]
   feedback           Feedback[]
   sentMessages       KidMessage[]
-  childLinks         ParentChildLink[]     @relation("ParentChildLinkParent")
-  sentInvites        CoparentInvite[]      @relation("CoparentInviteInviter")
+  childLinks         ParentChildLink[]   @relation("ParentChildLinkParent")
+  sentInvites        CoparentInvite[]    @relation("CoparentInviteInviter")
   deviceLinks        DeviceLink[]
   notificationPrefs  NotificationPrefs?
   familyActions      FamilyActivityLog[]
@@ -193,7 +193,7 @@ model ParentAccount {
   /// sending kid messages) will gate on this in a future iteration. Today
   /// everything works pre-confirmation; the field exists to enable the gate
   /// without another migration.
-  emailConfirmedAt   DateTime?          @map("email_confirmed_at")
+  emailConfirmedAt   DateTime?           @map("email_confirmed_at")
 
   /// Activation funnel milestones (admin analytics §funnels). Each column
   /// is set ONCE — the first time the parent performs the action — so a
@@ -202,10 +202,10 @@ model ParentAccount {
   /// point since". Backfilled to NULL on existing rows; existing parents
   /// won't count toward firstX metrics retroactively. That's intentional:
   /// the cohort baseline starts at the day we land the migration.
-  firstLoginAt           DateTime? @map("first_login_at")
-  firstKidAddedAt        DateTime? @map("first_kid_added_at")
-  firstClassificationAt  DateTime? @map("first_classification_at")
-  firstMessageSentAt     DateTime? @map("first_message_sent_at")
+  firstLoginAt          DateTime? @map("first_login_at")
+  firstKidAddedAt       DateTime? @map("first_kid_added_at")
+  firstClassificationAt DateTime? @map("first_classification_at")
+  firstMessageSentAt    DateTime? @map("first_message_sent_at")
 
   @@map("parent_accounts")
 }
@@ -314,44 +314,54 @@ model ParentCredential {
 // `name` is the child's real first name. Progress is stored as JSON matching the Zod
 // shapes in @gabee/types (language-agnostic vs per-language tracks, product §7.3).
 model ChildProfile {
-  id                          String                  @id @default(uuid()) @db.Uuid
-  parentId                    String                  @map("parent_id") @db.Uuid
+  id                          String     @id @default(uuid()) @db.Uuid
+  parentId                    String     @map("parent_id") @db.Uuid
   name                        String
   /// Legacy fixed-look id; null on rows created after the recolour system.
   avatar                      Avatar?
   /// Recolourable look — backfilled from `avatar` for pre-existing rows.
-  skinTone                    SkinTone                @default(skin_2) @map("skin_tone")
-  hairColor                   HairColor               @default(hair_brown) @map("hair_color")
-  hairStyle                   HairStyle               @default(style_short) @map("hair_style")
-  shirtColor                  ShirtColor              @default(shirt_blue) @map("shirt_color")
+  skinTone                    SkinTone   @default(skin_2) @map("skin_tone")
+  hairColor                   HairColor  @default(hair_brown) @map("hair_color")
+  hairStyle                   HairStyle  @default(style_short) @map("hair_style")
+  shirtColor                  ShirtColor @default(shirt_blue) @map("shirt_color")
   /// Chosen by the parent in the avatar picker; null = unspecified (renders as boy).
   gender                      Gender?
   language                    Language
   // Collected at add-kid (required in the form); drives age-based content
   // selection. Nullable for profiles created before this field existed.
-  birthDate                   DateTime?               @map("birth_date") @db.Date
-  audioEnabled                Boolean                 @default(true) @map("audio_enabled")
-  createdAt                   DateTime                @default(now()) @map("created_at")
-  lastActiveAt                DateTime?               @map("last_active_at")
-  totalStars                  Int                     @default(0) @map("total_stars")
-  badges                      String[]                @default([])
-  progressByModule            Json                    @default("{}") @map("progress_by_module")
-  progressByModulePerLanguage Json                    @default("{}") @map("progress_by_module_per_language")
+  birthDate                   DateTime?  @map("birth_date") @db.Date
+  audioEnabled                Boolean    @default(true) @map("audio_enabled")
+  musicEnabled                Boolean    @default(true) @map("music_enabled")
+  createdAt                   DateTime   @default(now()) @map("created_at")
+  lastActiveAt                DateTime?  @map("last_active_at")
+  totalStars                  Int        @default(0) @map("total_stars")
+  /// Stars this profile holds that no `question_answered` event or claimed gift
+  /// explains — e.g. a manual grant, or progress from before event ingest was
+  /// reliable. `syncProgress` bounds `total_stars` by the evidence it can count
+  /// (correct answers + claimed gifts) so a client can't simply declare
+  /// `total_stars: 999999`; this baseline grandfathers the unexplained residue ONCE,
+  /// the first time a sync sees it, so real kids don't get their stars frozen by the
+  /// new cap. It is only ever raised for stars that already existed — a client can
+  /// never push `total_stars` above the cap, so it cannot manufacture residue.
+  starsBaseline               Int        @default(0) @map("stars_baseline")
+  badges                      String[]   @default([])
+  progressByModule            Json       @default("{}") @map("progress_by_module")
+  progressByModulePerLanguage Json       @default("{}") @map("progress_by_module_per_language")
 
   // Healthy-use overrides (product §6.3). Each is nullable — null = inherit
   // the admin default from `HealthyUseLimits`. The parent UI surfaces sliders
   // bounded by the admin's min/max so a parent can never go above the cap.
-  dailyLessonTargetOverride   Int?                    @map("daily_lesson_target_override")
-  sessionSoftLimitMinOverride Int?                    @map("session_soft_limit_min_override")
-  sessionHardCapMinOverride   Int?                    @map("session_hard_cap_min_override")
-  dailyTotalCapMinOverride    Int?                    @map("daily_total_cap_min_override")
-  lookAwayEnabledOverride     Boolean?                @map("look_away_enabled_override")
+  dailyLessonTargetOverride   Int?     @map("daily_lesson_target_override")
+  sessionSoftLimitMinOverride Int?     @map("session_soft_limit_min_override")
+  sessionHardCapMinOverride   Int?     @map("session_hard_cap_min_override")
+  dailyTotalCapMinOverride    Int?     @map("daily_total_cap_min_override")
+  lookAwayEnabledOverride     Boolean? @map("look_away_enabled_override")
 
   // Streak tracking (product §6.3 + decisions: consistency, not pressure).
   // Streak is incremented at most once per local day on `lesson_completed`.
-  streakDays                  Int                     @default(0) @map("streak_days")
-  longestStreakDays           Int                     @default(0) @map("longest_streak_days")
-  lastLessonDate              DateTime?               @map("last_lesson_date") @db.Date
+  streakDays        Int       @default(0) @map("streak_days")
+  longestStreakDays Int       @default(0) @map("longest_streak_days")
+  lastLessonDate    DateTime? @map("last_lesson_date") @db.Date
 
   parent           ParentAccount           @relation(fields: [parentId], references: [id], onDelete: Cascade)
   events           Event[]
@@ -435,14 +445,14 @@ model ContentBundleVersion {
 // envelope — unique, so offline replays are idempotent. `payload` holds the validated
 // event object; `profileId` is null for parent-side events (§9.5).
 model Event {
-  id            String    @id @default(uuid()) @db.Uuid
-  eventId       String    @unique @map("event_id") @db.Uuid
-  profileId     String?   @map("profile_id") @db.Uuid
-  sessionId     String?   @map("session_id") @db.Uuid
+  id            String   @id @default(uuid()) @db.Uuid
+  eventId       String   @unique @map("event_id") @db.Uuid
+  profileId     String?  @map("profile_id") @db.Uuid
+  sessionId     String?  @map("session_id") @db.Uuid
   name          String
-  clientTs      DateTime  @map("client_ts")
-  serverTs      DateTime  @default(now()) @map("server_ts")
-  schemaVersion Int       @default(1) @map("schema_version")
+  clientTs      DateTime @map("client_ts")
+  serverTs      DateTime @default(now()) @map("server_ts")
+  schemaVersion Int      @default(1) @map("schema_version")
   payload       Json
 
   profile ChildProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -466,8 +476,8 @@ model SessionClassification {
   classifiedAt DateTime?        @map("classified_at")
   nudgeSentAt  DateTime?        @map("nudge_sent_at")
   createdAt    DateTime         @default(now()) @map("created_at")
-  tz          String?  // IANA zone from session_start
-  tzOffsetMin Int?     @map("tz_offset_min")
+  tz           String? // IANA zone from session_start
+  tzOffsetMin  Int?             @map("tz_offset_min")
 
   profile ChildProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
@@ -556,8 +566,8 @@ model ContentPlan {
 model SubMode {
   id                String   @id // "numbers.arithmetic" etc.
   module            Module
-  key               String   // "arithmetic"
-  name              Json     // {fr, en}
+  key               String // "arithmetic"
+  name              Json // {fr, en}
   languageDependent Boolean  @map("language_dependent")
   displayOrder      Int      @map("display_order")
   mechanicHint      String   @map("mechanic_hint") @db.Text
@@ -810,8 +820,8 @@ model DeviceLink {
   refreshTokenId String    @unique @map("refresh_token_id") @db.Uuid
   pairedAt       DateTime  @default(now()) @map("paired_at")
   lastActiveAt   DateTime? @map("last_active_at")
-  revokedAt     DateTime? @map("revoked_at")
-  clientDeviceId String? @map("client_device_id")
+  revokedAt      DateTime? @map("revoked_at")
+  clientDeviceId String?   @map("client_device_id")
 
   parent ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
@@ -822,20 +832,20 @@ model DeviceLink {
 // One-shot email-pair token — created on "send link to device", redeemed by
 // the kid app to mint a DeviceLink. 24h TTL. `usedAt` blocks replays.
 model DevicePairToken {
-  id             String    @id @default(uuid()) @db.Uuid
-  parentId       String    @map("parent_id") @db.Uuid
-  token          String    @unique
+  id                String    @id @default(uuid()) @db.Uuid
+  parentId          String    @map("parent_id") @db.Uuid
+  token             String    @unique
   /// 6-char (XXX-XXX) human-typable code for the parent to enter on the kid
   /// device AFTER signing in. Optional for back-compat with older link-only
   /// rows; new rows always carry it. Uniqueness is partial — only on
   /// unused tokens (see the migration's partial index) so re-issued codes
   /// don't collide with consumed ones.
-  shortCode      String?   @map("short_code")
-  targetEmail    String    @map("target_email")
-  expiresAt      DateTime  @map("expires_at")
-  usedAt         DateTime? @map("used_at")
-  resultingDeviceId String? @map("resulting_device_id") @db.Uuid
-  createdAt      DateTime  @default(now()) @map("created_at")
+  shortCode         String?   @map("short_code")
+  targetEmail       String    @map("target_email")
+  expiresAt         DateTime  @map("expires_at")
+  usedAt            DateTime? @map("used_at")
+  resultingDeviceId String?   @map("resulting_device_id") @db.Uuid
+  createdAt         DateTime  @default(now()) @map("created_at")
 
   @@index([parentId, expiresAt])
   @@map("device_pair_tokens")
@@ -869,7 +879,7 @@ model Device {
   firstSeen      DateTime    @default(now()) @map("first_seen")
   lastSeen       DateTime    @default(now()) @map("last_seen")
 
-  parent   ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  parent    ParentAccount      @relation(fields: [parentId], references: [id], onDelete: Cascade)
   sightings DeviceIpSighting[]
 
   @@index([parentId])
@@ -895,15 +905,15 @@ model DeviceIpSighting {
 // Per-parent notification preferences (parent spec §4.3 + §10.5). Security +
 // co-parent invite emails are always-on and not stored here.
 model NotificationPrefs {
-  parentId           String                    @id @map("parent_id") @db.Uuid
-  classificationDigest NotificationDigestCadence @default(daily) @map("classification_digest")
-  weeklySummary      Boolean                   @default(true) @map("weekly_summary")
-  feedbackResponse   Boolean                   @default(true) @map("feedback_response")
+  parentId                       String                    @id @map("parent_id") @db.Uuid
+  classificationDigest           NotificationDigestCadence @default(daily) @map("classification_digest")
+  weeklySummary                  Boolean                   @default(true) @map("weekly_summary")
+  feedbackResponse               Boolean                   @default(true) @map("feedback_response")
   /// Set by the digest cron sidecar on successful send. Drives the per-parent
   /// dedupe — the cron fires daily but a parent on `weekly` only gets a mail
   /// every 7 days. Null = never sent; treated as immediately due.
-  lastClassificationDigestSentAt DateTime?     @map("last_classification_digest_sent_at")
-  updatedAt          DateTime                  @updatedAt @map("updated_at")
+  lastClassificationDigestSentAt DateTime?                 @map("last_classification_digest_sent_at")
+  updatedAt                      DateTime                  @updatedAt @map("updated_at")
 
   parent ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
@@ -937,22 +947,22 @@ model HealthyUseLimits {
   id String @id @default("default")
 
   // Daily lesson target (sessions/day)
-  dailyLessonTargetMin     Int @default(1)  @map("daily_lesson_target_min")
-  dailyLessonTargetDefault Int @default(4)  @map("daily_lesson_target_default")
+  dailyLessonTargetMin     Int @default(1) @map("daily_lesson_target_min")
+  dailyLessonTargetDefault Int @default(4) @map("daily_lesson_target_default")
   dailyLessonTargetMax     Int @default(12) @map("daily_lesson_target_max")
 
   // Session soft limit (minutes — overlay invites a break)
-  sessionSoftLimitMinMin     Int @default(30)  @map("session_soft_limit_min_min")
-  sessionSoftLimitMinDefault Int @default(60)  @map("session_soft_limit_min_default")
+  sessionSoftLimitMinMin     Int @default(30) @map("session_soft_limit_min_min")
+  sessionSoftLimitMinDefault Int @default(60) @map("session_soft_limit_min_default")
   sessionSoftLimitMinMax     Int @default(120) @map("session_soft_limit_min_max")
 
   // Session hard cap (minutes — ends the session)
-  sessionHardCapMinMin     Int @default(45)  @map("session_hard_cap_min_min")
+  sessionHardCapMinMin     Int @default(45) @map("session_hard_cap_min_min")
   sessionHardCapMinDefault Int @default(120) @map("session_hard_cap_min_default")
   sessionHardCapMinMax     Int @default(180) @map("session_hard_cap_min_max")
 
   // Daily total cumul cap (minutes — locks the Hub until tomorrow)
-  dailyTotalCapMinMin     Int @default(60)  @map("daily_total_cap_min_min")
+  dailyTotalCapMinMin     Int @default(60) @map("daily_total_cap_min_min")
   dailyTotalCapMinDefault Int @default(180) @map("daily_total_cap_min_default")
   dailyTotalCapMinMax     Int @default(300) @map("daily_total_cap_min_max")
 

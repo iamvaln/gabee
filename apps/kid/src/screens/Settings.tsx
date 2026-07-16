@@ -8,7 +8,7 @@ import { useStore } from '../store';
 import { listCachedBundles, refreshIfNewer } from '../lib/bundles';
 import { sync } from '../lib/sync';
 import { useInstall } from '../lib/install';
-import { setEnabled, sfx } from '../lib/audio';
+import { setEnabled, setMusicEnabled, sfx } from '../lib/audio';
 import { api } from '../lib/api';
 
 // Release version, baked at build time from the git tag (release.yml passes
@@ -44,6 +44,7 @@ export function Settings({
   const setLang = useStore((s) => s.setLang);
   const profile = useStore((s) => s.profile);
   const audioEnabled = useStore((s) => s.audioEnabled);
+  const musicEnabled = useStore((s) => s.musicEnabled);
 
   const [bundles, setBundles] = useState<BundleRow[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -103,6 +104,15 @@ export function Settings({
     if (profile) void api.updateProfile(profile.id, { audio_enabled: next }).catch(() => {});
   }
 
+  // Ambient-music sub-switch (audio phase E spec §4): same offline-first flow —
+  // flip locally (setMusicEnabled also settles playback instantly), best-effort
+  // PATCH. Settings is an ambient zone, so turning it ON is its own feedback.
+  function toggleMusic() {
+    const next = !musicEnabled;
+    setMusicEnabled(next);
+    if (profile) void api.updateProfile(profile.id, { music_enabled: next }).catch(() => {});
+  }
+
   return (
     <div className="session-screen">
       <Chrome lang={lang} setLang={setLang} title={t('settings.title')} onBack={onBack} onHome={onHome} profile={profile} />
@@ -138,23 +148,36 @@ export function Settings({
               padding: 12, borderRadius: 12, marginBottom: 16,
               background: '#FEF9C3', border: '1px solid #FDE68A',
               fontSize: 14, color: '#0f172a',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
             }}
           >
-            <div>
-              <strong>{t('settings.audioTitle')}</strong>
-              <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
-                {t('settings.audioHint')}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div>
+                <strong>{t('settings.audioTitle')}</strong>
+                <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
+                  {t('settings.audioHint')}
+                </div>
               </div>
+              <button
+                className="btn"
+                onClick={toggleAudio}
+                aria-pressed={audioEnabled}
+              >
+                <Icon name={audioEnabled ? 'sound' : 'sound-off'} />{' '}
+                {audioEnabled ? t('settings.audioOn') : t('settings.audioOff')}
+              </button>
             </div>
-            <button
-              className="btn"
-              onClick={toggleAudio}
-              aria-pressed={audioEnabled}
-            >
-              <Icon name={audioEnabled ? 'sound' : 'sound-off'} />{' '}
-              {audioEnabled ? t('settings.audioOn') : t('settings.audioOff')}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 10, paddingTop: 10, borderTop: '1px solid #FDE68A', opacity: audioEnabled ? 1 : 0.45 }}>
+              <div style={{ fontSize: 13 }}>{t('settings.musicTitle')}</div>
+              <button
+                className="btn ghost"
+                onClick={toggleMusic}
+                disabled={!audioEnabled}
+                aria-pressed={musicEnabled}
+              >
+                <Icon name={musicEnabled ? 'sound' : 'sound-off'} size={16} />{' '}
+                {musicEnabled ? t('settings.musicOn') : t('settings.musicOff')}
+              </button>
+            </div>
           </div>
 
           {/* Manual sync — pushes this device's queued progress + events to the

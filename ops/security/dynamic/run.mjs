@@ -10,7 +10,10 @@ const specs = [];
 // Check names must match routes.yml's emitted vector ids (app-rate-limit,
 // app-authz-idor) — otherwise diff-scoped (--since) runs never select any probe.
 if (wants('app-rate-limit')) specs.push('probes/rate-limit.spec.ts');
-if (wants('app-authz-idor')) specs.push('probes/idor.spec.ts', 'probes/authz.spec.ts');
+if (wants('app-authz-idor')) specs.push('probes/idor.spec.ts', 'probes/authz.spec.ts', 'probes/device-scope.spec.ts');
+// Progress integrity rides the same vector: total_stars is client-declared, so the
+// server must bound it by evidence it can count itself.
+if (wants('app-authz-idor') || wants('app-input-validation')) specs.push('probes/progress-integrity.spec.ts');
 if (specs.length === 0) { console.log('no dynamic probes in scope'); process.exit(0); }
 
 const teardown = () => {

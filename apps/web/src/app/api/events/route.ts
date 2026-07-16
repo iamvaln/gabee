@@ -4,7 +4,7 @@ import {
   type EventEnvelope,
   type IngestEventsResponse,
 } from '@gabee/types';
-import { route, readJson, json, requireParent } from '@/lib/server/http';
+import { route, readJson, json, requireKidDevice } from '@/lib/server/http';
 import { getRequestMeta } from '@/lib/server/request-meta';
 import { ingestEvents } from '@/lib/server/services/events';
 
@@ -20,7 +20,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // whole batch on one bad event — that would wedge the kid's offline queue (the
 // drain retries the same batch forever, so nothing after the bad event uploads).
 export const POST = route(async (req) => {
-  const session = await requireParent(req);
+  const session = await requireKidDevice(req);
   const { events: raw, device } = await readJson(req, IngestEventsRequestLenientSchema);
 
   const valid: EventEnvelope[] = [];

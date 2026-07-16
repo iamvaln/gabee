@@ -1,5 +1,5 @@
 import type { KidEffectiveLimits } from '@gabee/types';
-import { route, json, requireParent } from '@/lib/server/http';
+import { route, json, requireKidDevice } from '@/lib/server/http';
 import { assertParentCanAccessKid } from '@/lib/server/kid-access';
 import { getKidEffectiveLimits } from '@/lib/server/services/healthy-use';
 
@@ -16,7 +16,7 @@ type Ctx = { params: Promise<{ id: string }> };
  * effective limits for the shared kid.
  */
 export const GET = route<Ctx>(async (req, ctx) => {
-  const session = await requireParent(req);
+  const session = await requireKidDevice(req);
   const { id } = await ctx.params;
   await assertParentCanAccessKid(session.parentId, id);
   const limits = await getKidEffectiveLimits(id);

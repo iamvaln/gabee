@@ -31,4 +31,12 @@ export default async function globalSetup(): Promise<void> {
   run('pnpm --filter @gabee/db exec tsx prisma/publish.mts');
   // Login fixtures: tester1/tester2 parents (password "staging-pass") + children Ava/Noah/Mia.
   run('pnpm --filter @gabee/db exec tsx prisma/seed-fixtures.ts', { STAGING_FIXTURES: '1' });
+
+  // tester2 is a plain parent fixture; promote it so the admin project has a super_admin session.
+  const promote = createTestClient();
+  await promote.parentAccount.update({
+    where: { email: 'tester2@staging.gabee.app' },
+    data: { role: 'super_admin' },
+  });
+  await promote.$disconnect();
 }

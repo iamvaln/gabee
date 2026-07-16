@@ -1,5 +1,5 @@
 import type { Prisma } from '@gabee/db';
-import { route, json, requireParent } from '@/lib/server/http';
+import { route, json, requireKidDevice } from '@/lib/server/http';
 import { prisma } from '@/lib/server/db';
 import { markAsRead } from '@/lib/server/services/messages';
 
@@ -11,7 +11,7 @@ type Ctx = { params: Promise<{ id: string }> };
 // reader screen. Sets the message to `read`, fires the read event server-side
 // so the analytics view has it even if the kid app is offline at sync time.
 export const POST = route<Ctx>(async (req, ctx) => {
-  const session = await requireParent(req);
+  const session = await requireKidDevice(req);
   const { id } = await ctx.params;
   const { message, childId, timeToReadMs } = await markAsRead(session.parentId, id);
 
