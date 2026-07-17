@@ -23,6 +23,6 @@ test('paired parent → effective flags (code fallbacks with no DB rows)', async
   const res = await GET(webRequest(url, { method: 'GET', bearer: token }), undefined);
   assert.equal(res.status, 200);
   const body = await res.json();
-  assert.equal(body.flags.kid_voiceover, true);
+  assert.equal(body.flags.kid_voiceover, false); // audio ships dark
   assert.equal(body.flags.kid_ambient_music, false);
 });

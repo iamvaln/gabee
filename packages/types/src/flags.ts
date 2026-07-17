@@ -11,18 +11,18 @@ export type FlagKey = (typeof FLAG_KEYS)[number];
 
 /** Code fallback when the device has NEVER fetched flags (offline-first). */
 export const FLAG_FALLBACKS: Record<FlagKey, boolean> = {
-  kid_voiceover: true, // live before flags existed — dark-launch OFF would regress
+  kid_voiceover: false, // audio ships dark by product decision — parent opts in
   kid_ambient_music: false, // ships dark; admin releases
-  kid_game_sounds: true, // SFX cues are live — dark-launch OFF would regress
+  kid_game_sounds: false, // audio ships dark by product decision — parent opts in
   code_l6: false, // content flag — ships dark
   code_draw_l4: false, // content flag — ships dark
 };
 
 /** Initial DB `enabledDefault`, seeded ONCE (create-only; admin edits thereafter). */
 export const FLAG_DEFAULTS: Record<FlagKey, boolean> = {
-  kid_voiceover: true,
+  kid_voiceover: false,
   kid_ambient_music: false,
-  kid_game_sounds: true,
+  kid_game_sounds: false,
   code_l6: false,
   code_draw_l4: false,
 };

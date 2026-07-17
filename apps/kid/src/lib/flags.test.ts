@@ -8,8 +8,8 @@ describe('isFeatureEnabled', () => {
     useStore.setState({ featureFlags: {} });
   });
 
-  it('falls back to the code default when never fetched', () => {
-    assert.equal(isFeatureEnabled('kid_voiceover'), true);
+  it('falls back to the code default when never fetched (all audio dark)', () => {
+    assert.equal(isFeatureEnabled('kid_voiceover'), false);
     assert.equal(isFeatureEnabled('kid_ambient_music'), false);
   });
 
