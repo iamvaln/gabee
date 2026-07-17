@@ -15,21 +15,18 @@ after(async () => prisma.$disconnect());
  * (confirm + mint a `ContentBundleVersion` snapshot). These tests mirror that
  * promotion directly via Prisma rather than mocking anything.
  *
- * `createQuestion`'s default `prompt: { text: ... }` isn't a valid
- * `QuestionValueSchema` (bare string/number, or bilingual `{fr,en}` — see
- * packages/types/src/question.ts) and blows up `mapQuestion` once a confirmed
- * question actually gets served through `getBundle`. Every question below
- * that's expected to reach `mapQuestion` overrides `prompt` with a bare string.
+ * `createQuestion`'s default `prompt` is a bare string (a valid
+ * `QuestionValueSchema` — see packages/types/src/question.ts), so these
+ * questions map cleanly when served through `getBundle`; no override needed.
  */
-const VALID_PROMPT = '2 + 2';
 
 test('getManifest: only lists modules with confirmed content; a candidate-only module is absent', async () => {
   const curriculum = await createCurriculum(prisma);
   // numbers: 2 confirmed questions.
-  await createQuestion(prisma, { curriculumId: curriculum.id, module: 'numbers', status: 'confirmed', prompt: VALID_PROMPT });
-  await createQuestion(prisma, { curriculumId: curriculum.id, module: 'numbers', status: 'confirmed', prompt: VALID_PROMPT });
+  await createQuestion(prisma, { curriculumId: curriculum.id, module: 'numbers', status: 'confirmed' });
+  await createQuestion(prisma, { curriculumId: curriculum.id, module: 'numbers', status: 'confirmed' });
   // words: candidate only — must NOT appear in the manifest.
-  await createQuestion(prisma, { curriculumId: curriculum.id, module: 'words', status: 'candidate', prompt: VALID_PROMPT });
+  await createQuestion(prisma, { curriculumId: curriculum.id, module: 'words', status: 'candidate' });
 
   const manifest = await getManifest();
 
@@ -50,19 +47,16 @@ test('getBundle(module): live confirmed-pool fallback (no snapshot) returns only
     curriculumId: curriculum.id,
     module: 'numbers',
     status: 'confirmed',
-    prompt: VALID_PROMPT,
   });
   const candidate = await createQuestion(prisma, {
     curriculumId: curriculum.id,
     module: 'numbers',
     status: 'candidate',
-    prompt: VALID_PROMPT,
   });
   const rejected = await createQuestion(prisma, {
     curriculumId: curriculum.id,
     module: 'numbers',
     status: 'rejected',
-    prompt: VALID_PROMPT,
   });
 
   const bundle = await getBundle('numbers');
@@ -81,7 +75,6 @@ test('getBundle(module): with a published snapshot, returns exactly the snapshot
     curriculumId: curriculum.id,
     module: 'numbers',
     status: 'confirmed',
-    prompt: VALID_PROMPT,
   });
 
   const publishedAt = new Date('2026-01-01T00:00:00.000Z');
@@ -100,7 +93,6 @@ test('getBundle(module): with a published snapshot, returns exactly the snapshot
     curriculumId: curriculum.id,
     module: 'numbers',
     status: 'confirmed',
-    prompt: VALID_PROMPT,
   });
 
   const bundle = await getBundle('numbers');
@@ -120,13 +112,11 @@ test('getBundle(module, version): an explicit version loads that exact snapshot 
     curriculumId: curriculum.id,
     module: 'numbers',
     status: 'confirmed',
-    prompt: VALID_PROMPT,
   });
   const v2Question = await createQuestion(prisma, {
     curriculumId: curriculum.id,
     module: 'numbers',
     status: 'confirmed',
-    prompt: VALID_PROMPT,
   });
 
   await prisma.contentBundleVersion.create({
