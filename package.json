@@ -18,6 +18,7 @@
     "test:e2e": "turbo run build && pnpm --filter @gabee/e2e run test",
     "test:coverage": "turbo run test:coverage",
     "test:integration": "turbo run test:integration",
+    "size": "size-limit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "security:scan": "bash ops/security/scan.sh"
@@ -25,12 +26,14 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
+    "@size-limit/file": "^12.1.0",
     "eslint": "^10.4.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.6.0",
     "lefthook": "^2.1.10",
     "prettier": "^3.8.3",
+    "size-limit": "^12.1.0",
     "tsx": "^4.22.3",
     "turbo": "^2.9.15",
     "typescript": "^6.0.3",
