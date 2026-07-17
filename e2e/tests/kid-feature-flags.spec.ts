@@ -67,9 +67,22 @@ test.afterEach(async () => {
   await clearAmbientMusicOverride();
 });
 
+async function dumpDiag(page: Page, label: string) {
+  const diag = await page.evaluate(() => ({
+    store: JSON.parse(localStorage.getItem('gabee-kid-store') || '{}').state ?? null,
+    audioLog: (window as unknown as { __audioLog?: unknown }).__audioLog,
+    acState: (window as unknown as { __gabeeAudio?: { state?: string } }).__gabeeAudio?.state ?? 'no-ctx',
+  }));
+  // eslint-disable-next-line no-console
+  console.log(`DIAG[${label}]`, JSON.stringify(diag));
+}
+
 test('kid_ambient_music override ON → music plays and the Settings row is shown', async ({ page }) => {
   await setAmbientMusicOverride(true);
   await seedKidAuthAndPickAva(page);
+  await page.mouse.click(1, 1);
+  await page.waitForTimeout(3000);
+  await dumpDiag(page, 'ON');
   // Seeded auth boots instantly, so the /api/flags/effective fetch can still be
   // in flight when the AudioContext first unlocks — and the unlock gesture is a
   // one-shot (music.ts armUnlockRetry). Re-issue the gesture each poll so that
@@ -101,6 +114,7 @@ test('kid_ambient_music override OFF → no music, Settings row hidden, cues sti
   // Self-healing tap (like the ON test): a BottomNav blip fires a cue on every
   // tap, so re-tapping until the counter moves absorbs any settle/timing races.
   await page.getByRole('button', { name: 'Retour' }).click();
+  await dumpDiag(page, 'OFF');
   const before = await page.evaluate(() => window.__audioLog.oscillators);
   await expect
     .poll(async () => {
