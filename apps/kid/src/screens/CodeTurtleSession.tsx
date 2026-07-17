@@ -30,7 +30,7 @@ import {
   type ProgramState,
   empty as emptyProgram, addPrim as progAddPrim, addLoop as progAddLoop,
   setActive as progSetActive, setCount as progSetCount,
-  removeTop as progRemoveTop, removeInLoop as progRemoveInLoop, blockCount,
+  removeTop as progRemoveTop, removeInside as progRemoveInside, blockCount,
 } from '../lib/program';
 import { buildGuideScript } from '../lib/guideScripts';
 import { useGuide } from '../lib/useGuide';
@@ -302,7 +302,7 @@ export function CodeTurtleSession({
   function removeBodyBlock(loopIdx: number, bodyIdx: number) {
     if (editLocked) return;
     if (result === 'fail') setResult(null);
-    setProg((s) => progRemoveInLoop(s, loopIdx, bodyIdx));
+    setProg((s) => progRemoveInside(s, loopIdx, 'body', bodyIdx));
     setFrame(0);
   }
   function clearProgram() {
