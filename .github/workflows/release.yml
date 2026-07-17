@@ -159,7 +159,7 @@ jobs:
         env:
           GITLEAKS_CONFIG: .gitleaks.toml
       - name: osv-scanner (dependency CVEs)
-        uses: google/osv-scanner-action@v1
+        uses: google/osv-scanner-action@v1.9.2
         with:
           scan-args: "--lockfile=pnpm-lock.yaml"
       - name: Semgrep (SAST — ERROR blocks)
@@ -173,7 +173,7 @@ jobs:
           semgrep scan --error --severity ERROR --quiet \
             --config .semgrep/gabee.yml --config p/typescript --config p/nextjs
       - name: Trivy (compose/IaC misconfig — CRITICAL/HIGH block)
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@v0.24.0
         with:
           scan-type: config
           scan-ref: docker-compose.yml
