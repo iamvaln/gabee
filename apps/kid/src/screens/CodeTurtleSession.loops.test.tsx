@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import type { QuestionBundleResponse } from '@gabee/types';
 import { api } from '../lib/api';
+import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { CodeTurtleSession } from './CodeTurtleSession';
 
@@ -50,7 +51,7 @@ function loopBundle(): QuestionBundleResponse {
 function seedStore() {
   useStore.setState({
     lang: 'fr',
-    profile: { id: PROFILE_ID, name: 'Test', birth_date: null } as never,
+    profile: { id: PROFILE_ID, name: 'Test', birth_date: null, progress_by_module: { code: { highest_level: 0, levels: [], bySubMode: {} } } } as never,
     play: { id: 'play-1' } as never,
   });
 }
@@ -73,6 +74,7 @@ const coachText = () => document.querySelector('.bee-coach-text')?.textContent ?
 beforeEach(() => {
   localStorage.clear();
   api.getBundle = async () => loopBundle();
+  sync.flush = (async () => {}) as typeof sync.flush;
   seedStore();
 });
 afterEach(() => cleanup());
