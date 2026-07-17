@@ -62240,6 +62240,3446 @@
       "ratings": [],
       "avg_rating": null,
       "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-000",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    2,
+                    0
+                  ],
+                  [
+                    3,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    3,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-001",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    2,
+                    0
+                  ],
+                  [
+                    4,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    4,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-002",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                2,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    2,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    3,
+                    0
+                  ],
+                  [
+                    4,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    4,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-003",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    1,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    2,
+                    0
+                  ],
+                  [
+                    5,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    5,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-004",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                2,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    2,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    3,
+                    0
+                  ],
+                  [
+                    5,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    5,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-005",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                3,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    3,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    5,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    5,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-006",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    2,
+                    1
+                  ],
+                  [
+                    3,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    3,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-007",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    2,
+                    1
+                  ],
+                  [
+                    4,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    4,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-008",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                2,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    2,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    3,
+                    1
+                  ],
+                  [
+                    4,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    4,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-009",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    2,
+                    1
+                  ],
+                  [
+                    5,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    5,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-010",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                2,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    2,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    3,
+                    1
+                  ],
+                  [
+                    5,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    5,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-011",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                3,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    3,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    4,
+                    1
+                  ],
+                  [
+                    5,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    5,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-012",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 4
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    2
+                  ],
+                  [
+                    0,
+                    3
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    3
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-013",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 5
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    2
+                  ],
+                  [
+                    0,
+                    4
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-014",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 5
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                2
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    2
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    3
+                  ],
+                  [
+                    0,
+                    4
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-015",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 6
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    2
+                  ],
+                  [
+                    0,
+                    5
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-016",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 6
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                2
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    2
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    3
+                  ],
+                  [
+                    0,
+                    5
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-017",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 6
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                3
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    3
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    0,
+                    5
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-018",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 4
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    2
+                  ],
+                  [
+                    1,
+                    3
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    3
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-019",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 5
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    2
+                  ],
+                  [
+                    1,
+                    4
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    4
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-020",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 5
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                2
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    2
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    3
+                  ],
+                  [
+                    1,
+                    4
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    4
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-021",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 6
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    2
+                  ],
+                  [
+                    1,
+                    5
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    5
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-022",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 6
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                2
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    2
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    3
+                  ],
+                  [
+                    1,
+                    5
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    5
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-cond-gen-023",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 4,
+      "lesson": 1,
+      "theme": "conditions",
+      "type": "code-grid",
+      "objective_ref": "4",
+      "prompt": {
+        "fr": "Un seul programme pour les deux dessins — lève le crayon si besoin !",
+        "en": "One program for both drawings — lift the pen if needed!"
+      },
+      "answer": [
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Si un mur touche la case, lève le crayon pour laisser un trou.",
+        "en": "If a wall touches the cell, lift the pen to leave a gap."
+      },
+      "lang": "both",
+      "difficulty": 3,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 6
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "conditions",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "if"
+        ],
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                3
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    3
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    4
+                  ],
+                  [
+                    1,
+                    5
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    5
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
     }
   ]
 }
