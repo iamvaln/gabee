@@ -119,3 +119,35 @@ describe('pen (draw world)', () => {
     assert.equal(runProgram(puzzle, prog).success, false); // draws the middle gap too
   });
 });
+
+describe('draw pen-conditions (L4): if wall_<dir> lifts the pen', () => {
+  // One program across two boards. A wall beside the decision cell (2nd cell) means
+  // "leave a gap"; no wall means "draw straight through". The `if` must sense the
+  // draw-world wall — the regression this guards is parsePuzzle dropping draw walls.
+  const config = {
+    grid: { w: 4, h: 2 }, start: [0, 0], blocks: ['right', 'pen_up', 'pen_down', 'if'],
+    boards: [
+      { walls: [[1, 1]], target: { paths: [[[0, 0], [1, 0]], [[2, 0], [3, 0]]] } }, // gapped
+      { walls: [], target: { paths: [[[0, 0], [3, 0]]] } },                          // solid
+    ],
+  };
+  const answer: Op[] = [
+    { op: 'move', dir: 'right' },
+    { op: 'if', cond: 'wall_down',
+      then: [{ op: 'pen', state: 'up' }, { op: 'move', dir: 'right' }, { op: 'pen', state: 'down' }],
+      else: [{ op: 'move', dir: 'right' }] },
+    { op: 'move', dir: 'right' },
+  ];
+  it('the same program solves both the gapped and the solid board', () => {
+    assert.equal(runBoards(boardsFor('draw', config), answer).success, true);
+  });
+  it('is forcing: always-lift fails the solid board', () => {
+    const alwaysLift: Op[] = [
+      { op: 'move', dir: 'right' }, { op: 'pen', state: 'up' }, { op: 'move', dir: 'right' },
+      { op: 'pen', state: 'down' }, { op: 'move', dir: 'right' },
+    ];
+    const [gapped, solid] = boardsFor('draw', config);
+    assert.equal(runProgram(gapped!, alwaysLift).success, true);
+    assert.equal(runProgram(solid!, alwaysLift).success, false);
+  });
+});

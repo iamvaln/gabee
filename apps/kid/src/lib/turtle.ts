@@ -117,6 +117,9 @@ export function parsePuzzle(world: CodeWorld, config: unknown): Puzzle {
     for (const p of paths) vertexPathToSegs(p, segs);
     base.targetSegs = segs;
     base.targetVertices = paths;
+    // Draw L4 pen-conditions place walls beside the path purely as `if wall_<dir>`
+    // sensors (never on the drawn line). Older draw content has none → walls: [].
+    base.walls = ((c.walls as unknown[]) ?? []).map(toCell);
   } else {
     base.items = ((c.items as unknown[]) ?? []).map(toCell);
     base.targets = ((c.targets as unknown[]) ?? []).map(toCell);
