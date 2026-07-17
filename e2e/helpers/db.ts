@@ -9,6 +9,8 @@ export const FIXTURES = {
   childName: 'Ava',
   adminEmail: 'tester2@staging.gabee.app', // promoted to super_admin in global-setup.ts
   adminPassword: 'staging-pass',
+  adminOnlyEmail: 'tester3@staging.gabee.app', // promoted to plain `admin` (not super) in global-setup.ts
+  adminOnlyPassword: 'staging-pass',
 } as const;
 
 /** Poll `fn` until `pred` accepts its value; throws with the last value on timeout. */
