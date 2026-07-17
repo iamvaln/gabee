@@ -20,7 +20,7 @@ describe('isFeatureEnabled', () => {
   });
 });
 
-import { isModuleVisibleWith, isLevelVisibleWith, visibleLevels } from './flags';
+import { isModuleVisibleWith, isLevelVisibleWith, visibleLevels, isWorldLevelVisibleWith, visibleWorldLevels } from './flags';
 import type { FlagKey } from '@gabee/types';
 
 describe('content visibility', () => {
@@ -38,5 +38,30 @@ describe('content visibility', () => {
   it('visibleLevels filters a level list by the lookup', () => {
     assert.deepEqual(visibleLevels('code', [1, 2, 6], off), [1, 2]);
     assert.deepEqual(visibleLevels('code', [1, 2, 6], on), [1, 2, 6]);
+  });
+});
+
+describe('world-scoped visibility (code_draw_l4)', () => {
+  // Only draw:4 carries a world flag; a lookup that turns everything off must
+  // still leave maze/actions L4 visible and gate ONLY the draw world's L4.
+  const only = (key: FlagKey) => (k: FlagKey) => k === key;
+  const allOff = (_k: FlagKey) => false;
+  const drawOff = (k: FlagKey) => k !== 'code_draw_l4'; // everything on except the draw gate
+  it('gates draw L4 without touching maze/actions L4', () => {
+    assert.equal(isWorldLevelVisibleWith('code', 'draw', 4, drawOff), false);
+    assert.equal(isWorldLevelVisibleWith('code', 'maze', 4, drawOff), true);
+    assert.equal(isWorldLevelVisibleWith('code', 'actions', 4, drawOff), true);
+  });
+  it('draw L4 appears once its flag is on', () => {
+    assert.equal(isWorldLevelVisibleWith('code', 'draw', 4, only('code_draw_l4')), true);
+  });
+  it('still honours the module-level gate (code_l6) in every world', () => {
+    assert.equal(isWorldLevelVisibleWith('code', 'draw', 6, allOff), false); // code_l6 off → L6 hidden
+    assert.equal(isWorldLevelVisibleWith('code', 'maze', 6, allOff), false);
+    assert.equal(isWorldLevelVisibleWith('code', 'draw', 6, only('code_l6')), true); // L6 on; draw:6 has no world flag
+  });
+  it('visibleWorldLevels filters draw but not maze', () => {
+    assert.deepEqual(visibleWorldLevels('code', 'draw', [1, 2, 3, 4], drawOff), [1, 2, 3]);
+    assert.deepEqual(visibleWorldLevels('code', 'maze', [1, 2, 3, 4], drawOff), [1, 2, 3, 4]);
   });
 });

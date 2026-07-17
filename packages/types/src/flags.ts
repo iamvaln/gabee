@@ -6,7 +6,7 @@ import type { Module } from './enums';
  * data — a typo'd key is a compile error. Precedence at read time:
  * parent override > DB enabledDefault > code fallback (never-fetched only).
  */
-export const FLAG_KEYS = ['kid_voiceover', 'kid_ambient_music', 'kid_game_sounds', 'code_l6'] as const;
+export const FLAG_KEYS = ['kid_voiceover', 'kid_ambient_music', 'kid_game_sounds', 'code_l6', 'code_draw_l4'] as const;
 export type FlagKey = (typeof FLAG_KEYS)[number];
 
 /** Code fallback when the device has NEVER fetched flags (offline-first). */
@@ -15,6 +15,7 @@ export const FLAG_FALLBACKS: Record<FlagKey, boolean> = {
   kid_ambient_music: false, // ships dark; admin releases
   kid_game_sounds: true, // SFX cues are live — dark-launch OFF would regress
   code_l6: false, // content flag — ships dark
+  code_draw_l4: false, // content flag — ships dark
 };
 
 /** Initial DB `enabledDefault`, seeded ONCE (create-only; admin edits thereafter). */
@@ -23,6 +24,7 @@ export const FLAG_DEFAULTS: Record<FlagKey, boolean> = {
   kid_ambient_music: false,
   kid_game_sounds: true,
   code_l6: false,
+  code_draw_l4: false,
 };
 
 /** Seeded description; the admin UI can edit the stored copy. */
@@ -32,6 +34,7 @@ export const FLAG_DESCRIPTIONS: Record<FlagKey, string> = {
   kid_ambient_music: 'Ambient background music on non-session kid screens.',
   kid_game_sounds: 'Game sound effects — correct/wrong cues, navigation blips, celebration.',
   code_l6: 'Coding level 6 (Debugging) — rollout gate. Dark until released per parent.',
+  code_draw_l4: 'Coding Draw world, level 4 (Pen conditions) — rollout gate. Dark until released per parent.',
 };
 
 export const FlagKeySchema = z.enum(FLAG_KEYS);
@@ -96,4 +99,16 @@ export function moduleFlag(m: Module): FlagKey | undefined {
 }
 export function levelFlag(m: Module, level: number): FlagKey | undefined {
   return LEVEL_FLAG[`${m}:${level}`];
+}
+
+// World-scoped level gate — for modules (only `code`) whose levels split into
+// parallel worlds that ship on their own schedule. `code:6` (debug) gates every
+// world's L6 via LEVEL_FLAG; `code:draw:4` gates ONLY the draw world's L4 (pen
+// conditions), leaving the already-live maze/actions L4 untouched. Keyed
+// `${module}:${world}:${level}`; absent → no world gate (module gate still applies).
+export const WORLD_LEVEL_FLAG: Record<string, FlagKey> = {
+  'code:draw:4': 'code_draw_l4',
+};
+export function worldLevelFlag(m: Module, world: string, level: number): FlagKey | undefined {
+  return WORLD_LEVEL_FLAG[`${m}:${world}:${level}`];
 }

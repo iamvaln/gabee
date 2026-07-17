@@ -3,7 +3,7 @@
 // persisted store; falls back to the code-declared default when never fetched.
 // refreshFlags is best-effort — offline / unpaired failures are swallowed and
 // the last-known values are kept.
-import { FLAG_KEYS, FLAG_FALLBACKS, moduleFlag, levelFlag, type FlagKey, type Module } from '@gabee/types';
+import { FLAG_KEYS, FLAG_FALLBACKS, moduleFlag, levelFlag, worldLevelFlag, type FlagKey, type Module } from '@gabee/types';
 import { useStore } from '../store';
 import { api } from './api';
 
@@ -42,6 +42,18 @@ export function isLevelVisibleWith(m: Module, level: number, lookup: (k: FlagKey
   const f = levelFlag(m, level);
   return f === undefined || lookup(f);
 }
+/** A level in a specific world is visible only if BOTH its module-level gate
+ *  (world-blind, e.g. code_l6) and its world-level gate (e.g. code_draw_l4) pass. */
+export function isWorldLevelVisibleWith(
+  m: Module,
+  world: string,
+  level: number,
+  lookup: (k: FlagKey) => boolean,
+): boolean {
+  if (!isLevelVisibleWith(m, level, lookup)) return false;
+  const f = worldLevelFlag(m, world, level);
+  return f === undefined || lookup(f);
+}
 /** Production gates over the live flag store. */
 export const isModuleVisible = (m: Module): boolean => isModuleVisibleWith(m, isFeatureEnabled);
 export const isLevelVisible = (m: Module, level: number): boolean => isLevelVisibleWith(m, level, isFeatureEnabled);
@@ -51,3 +63,10 @@ export const visibleLevels = (
   levels: number[],
   lookup: (k: FlagKey) => boolean = isFeatureEnabled,
 ): number[] => levels.filter((lvl) => isLevelVisibleWith(m, lvl, lookup));
+/** World-scoped variant — applies both the module-level and world-level gates. */
+export const visibleWorldLevels = (
+  m: Module,
+  world: string,
+  levels: number[],
+  lookup: (k: FlagKey) => boolean = isFeatureEnabled,
+): number[] => levels.filter((lvl) => isWorldLevelVisibleWith(m, world, lvl, lookup));

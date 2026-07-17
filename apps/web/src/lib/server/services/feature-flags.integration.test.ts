@@ -42,7 +42,7 @@ test('listFlagsForAdmin returns every registry key with override counts', async 
   const { parent } = await createLoginableParent(prisma);
   await setFlagOverride('kid_ambient_music', { email: parent.email, enabled: true });
   const { flags } = await listFlagsForAdmin();
-  assert.deepEqual(flags.map((f) => f.key).sort(), ['code_l6', 'kid_ambient_music', 'kid_game_sounds', 'kid_voiceover']);
+  assert.deepEqual(flags.map((f) => f.key).sort(), ['code_draw_l4', 'code_l6', 'kid_ambient_music', 'kid_game_sounds', 'kid_voiceover']);
   const music = flags.find((f) => f.key === 'kid_ambient_music')!;
   assert.equal(music.override_count, 1);
 });
