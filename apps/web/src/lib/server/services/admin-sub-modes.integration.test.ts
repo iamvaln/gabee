@@ -47,6 +47,22 @@ test('listSubModes: returns all, filters by module, and 400s an invalid module',
   );
 });
 
+test('createSubMode + listSubModes accept a HYPHENATED key (regression: SubModeDefSchema.key must allow -)', async () => {
+  // The Curriculum v0.1 keys include hyphens (words.fill-blank, numbers.word-problems).
+  // The old `^[a-z_]+$` key regex rejected them, and since createSubMode/listSubModes
+  // Zod-parse the row on read (toDef), listing any module with a hyphenated seeded
+  // sub-mode 500'd the admin module page. This pins the fix.
+  const created = await createSubMode(subModeBody({ module: 'numbers', key: 'word-problems' }));
+  assert.equal(created.id, 'numbers.word-problems');
+  assert.equal(created.key, 'word-problems');
+
+  const list = await listSubModes('numbers');
+  assert.ok(
+    list.sub_modes.some((s) => s.id === 'numbers.word-problems'),
+    'listSubModes returns the hyphenated-key sub-mode instead of throwing on parse',
+  );
+});
+
 test('createSubMode: creates a (module, key) slot; a duplicate 409s sub_mode_exists', async () => {
   const created = await createSubMode(subModeBody({ module: 'numbers', key: 'counting' }));
   assert.equal(created.id, 'numbers.counting');
