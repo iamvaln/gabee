@@ -125,6 +125,7 @@ const resources = {
       },
       code: {
         nice: 'Bravo ! ✨',
+        shorter: 'Bravo ! Tu peux faire plus court 💡',
         tryAgain: 'Réessaie !',
         yourProgram: 'Ton programme',
         addBlocks: 'Ajoute des blocs en bas →',
@@ -348,6 +349,7 @@ const resources = {
       },
       code: {
         nice: 'Nice! ✨',
+        shorter: 'Nice! You can make it shorter 💡',
         tryAgain: 'Try again!',
         yourProgram: 'Your program',
         addBlocks: 'Add blocks from below →',

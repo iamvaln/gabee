@@ -64880,6 +64880,4350 @@
       "ratings": [],
       "avg_rating": null,
       "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-000",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          3,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-001",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          4,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-002",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          5,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-003",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 7,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          6,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-004",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 7,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 8,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          7,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-005",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 4
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          3,
+          3
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-006",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 2,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 3
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          4,
+          2
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-007",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 2,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 3,
+          "h": 5
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          2,
+          4
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-008",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 5
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          3,
+          4
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-009",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 4
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          0,
+          3
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-010",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 5
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          0,
+          4
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-011",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 6
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          0,
+          5
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-012",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 7
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          0,
+          6
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-013",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 7,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 8
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          0,
+          7
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-014",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 4
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          3,
+          3
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-015",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 2,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 3,
+          "h": 5
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          2,
+          4
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-016",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 2,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 3
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          4,
+          2
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-017",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 4
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          4,
+          3
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-018",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 1
+        },
+        "start": [
+          3,
+          0
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-019",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 1
+        },
+        "start": [
+          4,
+          0
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-020",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 1
+        },
+        "start": [
+          5,
+          0
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-021",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 7,
+          "h": 1
+        },
+        "start": [
+          6,
+          0
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-022",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 7,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 8,
+          "h": 1
+        },
+        "start": [
+          7,
+          0
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-023",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 4
+        },
+        "start": [
+          3,
+          0
+        ],
+        "goal": [
+          0,
+          3
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-024",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 2,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 3
+        },
+        "start": [
+          4,
+          0
+        ],
+        "goal": [
+          0,
+          2
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-025",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 2,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 3,
+          "h": 5
+        },
+        "start": [
+          2,
+          0
+        ],
+        "goal": [
+          0,
+          4
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-026",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 5
+        },
+        "start": [
+          3,
+          0
+        ],
+        "goal": [
+          0,
+          4
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-027",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 4
+        },
+        "start": [
+          0,
+          3
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-028",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 5
+        },
+        "start": [
+          0,
+          4
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-029",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 6
+        },
+        "start": [
+          0,
+          5
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-030",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 7
+        },
+        "start": [
+          0,
+          6
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-031",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 7,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 8
+        },
+        "start": [
+          0,
+          7
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 2
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-032",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 4
+        },
+        "start": [
+          0,
+          3
+        ],
+        "goal": [
+          3,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-033",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 2,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 3,
+          "h": 5
+        },
+        "start": [
+          0,
+          4
+        ],
+        "goal": [
+          2,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-034",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 2,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 3
+        },
+        "start": [
+          0,
+          2
+        ],
+        "goal": [
+          4,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-eff-gen-035",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Atteins l’étoile — au plus court !",
+        "en": "Reach the star — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 4
+        },
+        "start": [
+          0,
+          3
+        ],
+        "goal": [
+          4,
+          0
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-000",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            3,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-001",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            4,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-002",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            5,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-003",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 7,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            6,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-004",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 7,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 8,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            7,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-005",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 4
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            3
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-006",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 5
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            4
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-007",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 6
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            5
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-008",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 7
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            6
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-009",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 7,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 8
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            7
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-010",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 1
+        },
+        "start": [
+          3,
+          0
+        ],
+        "items": [
+          [
+            3,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-011",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 1
+        },
+        "start": [
+          4,
+          0
+        ],
+        "items": [
+          [
+            4,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-012",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 1
+        },
+        "start": [
+          5,
+          0
+        ],
+        "items": [
+          [
+            5,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-013",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 7,
+          "h": 1
+        },
+        "start": [
+          6,
+          0
+        ],
+        "items": [
+          [
+            6,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-014",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 7,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 8,
+          "h": 1
+        },
+        "start": [
+          7,
+          0
+        ],
+        "items": [
+          [
+            7,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-015",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 4
+        },
+        "start": [
+          0,
+          3
+        ],
+        "items": [
+          [
+            0,
+            3
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-016",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 5
+        },
+        "start": [
+          0,
+          4
+        ],
+        "items": [
+          [
+            0,
+            4
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-017",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 6
+        },
+        "start": [
+          0,
+          5
+        ],
+        "items": [
+          [
+            0,
+            5
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-018",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 7
+        },
+        "start": [
+          0,
+          6
+        ],
+        "items": [
+          [
+            0,
+            6
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-eff-gen-019",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 7,
+      "lesson": 1,
+      "theme": "efficiency",
+      "type": "code-grid",
+      "objective_ref": "7",
+      "prompt": {
+        "fr": "Livre l’objet — au plus court !",
+        "en": "Deliver the object — in the fewest blocks!"
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 7,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Utilise une boucle pour faire court.",
+        "en": "Use a loop to keep it short."
+      },
+      "lang": "both",
+      "difficulty": 5,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "efficiency",
+        "loops",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 8
+        },
+        "start": [
+          0,
+          7
+        ],
+        "items": [
+          [
+            0,
+            7
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "efficiency",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "pick",
+          "drop"
+        ],
+        "optimalBlocks": 4
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
     }
   ]
 }
