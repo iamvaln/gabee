@@ -10,7 +10,7 @@ import { armSessionEnd, endSession, noteBackground, noteForeground, setLastScree
 import { deviceTz, deviceTzOffsetMin } from './lib/device';
 import { useIdle, installIdleListeners } from './lib/idle';
 import { setMusicZone, reevaluateMusic } from './lib/audio';
-import { refreshFlags } from './lib/flags';
+import { refreshFlags, isModuleVisible, isLevelVisible } from './lib/flags';
 import { LockScreen } from './components/LockScreen';
 import { SyncIndicator } from './components/SyncIndicator';
 import { Login } from './screens/Login';
@@ -115,8 +115,13 @@ export function App() {
   // bundle isn't cached yet we trust the route (the screens degrade gracefully).
   function safeRoute(r: Route): Route {
     const module = routeModule(r);
+    // A gated-off module falls back to the hub; a gated-off (or missing) level
+    // falls back to the module home. Guards a deep-link / stale-resume into
+    // content that rolled out dark (or flipped off) since the URL was minted.
+    if (module && !isModuleVisible(module)) return { name: 'hub' };
     const level = routeLevel(r);
     if (!module || level == null) return r;
+    if (!isLevelVisible(module, level)) return moduleHome(module);
     const bundle = queryClient.getQueryData<QuestionBundleResponse>(['bundle', module]);
     if (!bundle) return r;
     const exists = bundle.questions.some((q) => q.level === level);
