@@ -8,6 +8,7 @@ import { Icon } from '../components/Icon';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
+import { visibleLevels } from '../lib/flags';
 import { lessonsForLevel, unitsForLevel, levelComplete } from '../lib/progression';
 
 // Curriculum concept per Words/Build the sentence level (product §4.2). Only the
@@ -51,7 +52,7 @@ export function WordsBuildLevelMap({
     [bundle],
   );
   const configuredLevels = useMemo(
-    () => [...new Set(build.map((q) => q.level))].sort((a, b) => a - b),
+    () => visibleLevels('words', [...new Set(build.map((q) => q.level))].sort((a, b) => a - b)),
     [build],
   );
 

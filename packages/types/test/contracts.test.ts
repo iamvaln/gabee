@@ -494,3 +494,21 @@ describe('SignupRequestSchema — provable-consent gate', () => {
     assert.equal('version' in parsed, false);
   });
 });
+
+import { FLAG_KEYS, FLAG_FALLBACKS, FLAG_DEFAULTS, moduleFlag, levelFlag } from '../src/flags';
+
+describe('content rollout flags', () => {
+  it('registers code_l6 as a dark content flag', () => {
+    assert.ok((FLAG_KEYS as readonly string[]).includes('code_l6'));
+    assert.equal((FLAG_FALLBACKS as Record<string, boolean>)['code_l6'], false);
+    assert.equal((FLAG_DEFAULTS as Record<string, boolean>)['code_l6'], false);
+  });
+  it('levelFlag maps code:6 to code_l6 and returns undefined for unflagged units', () => {
+    assert.equal(levelFlag('code', 6), 'code_l6');
+    assert.equal(levelFlag('code', 3), undefined);
+    assert.equal(levelFlag('numbers', 1), undefined);
+  });
+  it('moduleFlag returns undefined for unflagged modules', () => {
+    assert.equal(moduleFlag('code'), undefined);
+  });
+});

@@ -9,6 +9,7 @@ import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
 import { lessonsForLevel, unitsForLevel, levelComplete } from '../lib/progression';
+import { visibleLevels } from '../lib/flags';
 import { readLocalTrack } from '../lib/codeTrack';
 import type { CodeWorld } from '../lib/turtle';
 
@@ -54,7 +55,7 @@ export function CodeWorldLevelMap({
     [bundle, world],
   );
   const configuredLevels = useMemo(
-    () => [...new Set(worldQs.map((q) => q.level))].sort((a, b) => a - b),
+    () => visibleLevels('code', [...new Set(worldQs.map((q) => q.level))].sort((a, b) => a - b)),
     [worldQs],
   );
 

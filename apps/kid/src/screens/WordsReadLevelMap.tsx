@@ -8,6 +8,7 @@ import { Icon } from '../components/Icon';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
+import { visibleLevels } from '../lib/flags';
 import { lessonsForLevel, unitsForLevel, levelComplete } from '../lib/progression';
 
 // Curriculum concept per Words/Read level (product §4.2). L1→L10 progression:
@@ -43,7 +44,7 @@ export function WordsReadLevelMap({
     [bundle],
   );
   const configuredLevels = useMemo(
-    () => [...new Set(read.map((q) => q.level))].sort((a, b) => a - b),
+    () => visibleLevels('words', [...new Set(read.map((q) => q.level))].sort((a, b) => a - b)),
     [read],
   );
 

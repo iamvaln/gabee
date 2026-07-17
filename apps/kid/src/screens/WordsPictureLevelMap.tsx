@@ -8,6 +8,7 @@ import { Icon } from '../components/Icon';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
+import { visibleLevels } from '../lib/flags';
 import { lessonsForLevel, unitsForLevel, levelComplete } from '../lib/progression';
 
 // Curriculum concept per Words/Picture level (product §4.2). Only the levels actually
@@ -44,7 +45,7 @@ export function WordsPictureLevelMap({
     [bundle],
   );
   const configuredLevels = useMemo(
-    () => [...new Set(picture.map((q) => q.level))].sort((a, b) => a - b),
+    () => visibleLevels('words', [...new Set(picture.map((q) => q.level))].sort((a, b) => a - b)),
     [picture],
   );
 

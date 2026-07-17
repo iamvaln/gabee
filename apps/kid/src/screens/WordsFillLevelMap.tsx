@@ -8,6 +8,7 @@ import { Icon } from '../components/Icon';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
+import { visibleLevels } from '../lib/flags';
 import { lessonsForLevel, unitsForLevel, levelComplete } from '../lib/progression';
 
 // Curriculum concept per Words/Fill level (product §4.2). Only the levels actually
@@ -44,7 +45,7 @@ export function WordsFillLevelMap({
     [bundle],
   );
   const configuredLevels = useMemo(
-    () => [...new Set(fill.map((q) => q.level))].sort((a, b) => a - b),
+    () => visibleLevels('words', [...new Set(fill.map((q) => q.level))].sort((a, b) => a - b)),
     [fill],
   );
 
