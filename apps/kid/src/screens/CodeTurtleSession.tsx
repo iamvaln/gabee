@@ -147,6 +147,11 @@ export function CodeTurtleSession({
   const efficientRef = useRef(0);   // # questions solved within optimalBlocks this lesson
   const hasOptimalRef = useRef(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  // The post-win "advance to next question / finish lesson" is deferred ~900ms;
+  // hold its id so unmount (or a new run) can cancel it. Otherwise it fires after
+  // the component is gone and `finishLesson`/`persistToProfile` reads a torn-down
+  // profile store (undefined.code) — an unhandled async leak that fails tests.
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startedRef = useRef(false);
   const shownRef = useRef<string | null>(null);
   const lessonStartRef = useRef(Date.now());
@@ -200,6 +205,8 @@ export function CodeTurtleSession({
   function stopTimer() {
     if (timer.current) clearInterval(timer.current);
     timer.current = null;
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    advanceTimer.current = null;
   }
   useEffect(() => stopTimer, []);
 
@@ -503,7 +510,8 @@ export function CodeTurtleSession({
           if (eff) efficientRef.current += 1;
           setLastEfficient(puzzle.optimalBlocks === undefined ? null : eff);
           const newScore = score + 1;
-          setTimeout(() => {
+          advanceTimer.current = setTimeout(() => {
+            advanceTimer.current = null;
             const isLast = qIdx >= (session!.questions.length - 1);
             if (isLast) void finishLesson(newScore);
             else { setScore(newScore); setQIdx((n) => n + 1); }

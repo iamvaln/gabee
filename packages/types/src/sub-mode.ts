@@ -18,8 +18,13 @@ export const SubModeDefSchema = z.object({
   /** Registry id — `<module>.<key>`, e.g. `"words.picture"`. */
   id: SubModeKeySchema,
   module: ModuleSchema,
-  /** Short, lowercase key — unique within `module`. */
-  key: z.string().regex(/^[a-z_]+$/, 'key must be lowercase a-z/_'),
+  /**
+   * Short, lowercase key — unique within `module`. Curriculum v0.1 keys include
+   * hyphens (`fill-blank`, `build-sentence`, `read-answer`, `word-problems` — see
+   * enums.ts / WORDS_SUB_MODES), so the key must allow `-` as well as `_`. The old
+   * `^[a-z_]+$` rejected the seeded hyphenated keys, 500ing the admin module page.
+   */
+  key: z.string().regex(/^[a-z][a-z_-]*$/, 'key must be lowercase a-z with _ or -'),
   name: BilingualStringSchema,
   language_dependent: z.boolean(),
   display_order: z.number().int().min(1),

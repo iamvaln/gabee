@@ -13,6 +13,9 @@ if (process.env.STAGING_FIXTURES !== '1') {
 // Fixed ids → idempotent upserts (safe to re-run).
 const P1 = '00000000-0000-4000-9000-000000000001';
 const P2 = '00000000-0000-4000-9000-000000000002';
+// tester3 = a plain-`admin` fixture (promoted in e2e/global-setup.ts), for the
+// admin-vs-super_admin browser authz boundary. No kids.
+const P3 = '00000000-0000-4000-9000-000000000003';
 const KIDS = [
   { id: '00000000-0000-4000-9000-0000000000a1', parentId: P1, name: 'Ava', birthDate: '2018-04-12', gender: 'girl' as const },
   { id: '00000000-0000-4000-9000-0000000000a2', parentId: P1, name: 'Noah', birthDate: '2016-09-30', gender: 'boy' as const },
@@ -39,6 +42,7 @@ async function main() {
     for (const [id, email] of [
       [P1, 'tester1@staging.gabee.app'],
       [P2, 'tester2@staging.gabee.app'],
+      [P3, 'tester3@staging.gabee.app'],
     ] as const) {
       await prisma.parentAccount.upsert({
         where: { id },
@@ -63,6 +67,7 @@ async function main() {
     for (const [parentId, consentId] of [
       [P1, '00000000-0000-4000-9000-0000000000c1'],
       [P2, '00000000-0000-4000-9000-0000000000c2'],
+      [P3, '00000000-0000-4000-9000-0000000000c3'],
     ] as const) {
       await prisma.consentRecord.upsert({
         where: { id: consentId },
