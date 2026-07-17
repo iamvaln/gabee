@@ -1,6 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import { FIXTURES, seedPendingPublish } from '../../helpers/db';
 
+test.use({ extraHTTPHeaders: { 'x-forwarded-for': '10.20.0.6' } }); // distinct IP: admin login rate-limit is per-IP
+
 async function loginPlainAdmin(page: Page) {
   await page.goto('/admin/login');
   await page.locator('#ae').fill(FIXTURES.adminOnlyEmail);

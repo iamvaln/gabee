@@ -1,6 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import { prisma, FIXTURES, pollUntil } from '../../helpers/db';
 
+test.use({ extraHTTPHeaders: { 'x-forwarded-for': '10.20.0.4' } }); // distinct IP: admin login rate-limit is per-IP
+
 async function loginSuperAdmin(page: Page) {
   await page.goto('/admin/login');
   await page.locator('#ae').fill(FIXTURES.adminEmail);
