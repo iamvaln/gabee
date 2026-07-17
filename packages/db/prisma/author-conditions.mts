@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// Tooling script: the board `config`/`Op` blobs are intrinsically unstructured
+// JSON at this boundary (same as publish.mts), so `any` is the natural param
+// type; the alternative is a wall of `unknown` casts that adds no real safety.
 /**
  * Author forcing multi-board conditions puzzles for the L4 pool and replace the
  * old single-board L4 (maze + actions). Each puzzle:
