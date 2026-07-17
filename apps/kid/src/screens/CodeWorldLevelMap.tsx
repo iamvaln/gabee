@@ -15,12 +15,16 @@ import type { CodeWorld } from '../lib/turtle';
 
 // The concept ramp is shared across the three Code worlds (Curriculum v0.1 §4):
 // sequences → conditions → loops → loops+conditions → debugging.
+// Ladder as actually built (Slices 1–5): sequences → loops → conditions → combine
+// → debugging → efficiency. (Earlier labels were stale after the retrofit.)
 const CODE_LEVEL_LABELS: Record<number, { fr: string; en: string }> = {
   1: { fr: 'Séquences', en: 'Sequences' },
-  2: { fr: 'Conditions', en: 'Conditions' },
+  2: { fr: 'Séquences', en: 'Sequences' },
   3: { fr: 'Boucles', en: 'Loops' },
-  4: { fr: 'Boucles + conditions', en: 'Loops + conditions' },
-  5: { fr: 'Débogage', en: 'Debugging' },
+  4: { fr: 'Conditions', en: 'Conditions' },
+  5: { fr: 'Combiner', en: 'Combine' },
+  6: { fr: 'Débogage', en: 'Debugging' },
+  7: { fr: 'Efficacité', en: 'Efficiency' },
 };
 
 export const CODE_WORLD_TITLE: Record<CodeWorld, { fr: string; en: string }> = {

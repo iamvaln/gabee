@@ -21,6 +21,12 @@ export function empty(): ProgramState {
   return { program: [], active: null, slot: 'body' };
 }
 
+/** Seed the editor with a pre-existing program (debugging levels: a broken
+ *  `config.given_program` the child fixes). Nothing is active until they tap in. */
+export function load(program: Op[]): ProgramState {
+  return { program, active: null, slot: 'body' };
+}
+
 export function addPrim(s: ProgramState, k: PrimKey): ProgramState {
   const prim = makePrim(k);
   if (s.active === null) return { ...s, program: [...s.program, prim] };

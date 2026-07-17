@@ -60852,6 +60852,4034 @@
       "ratings": [],
       "avg_rating": null,
       "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-000",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          3,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 2,
+            "body": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-001",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          3,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-002",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          4,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 3,
+            "body": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-003",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          4,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 5,
+            "body": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-004",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          5,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-005",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 4
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          0,
+          3
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 2,
+            "body": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-006",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 5
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          0,
+          3
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-007",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 5
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          0,
+          4
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 3,
+            "body": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-008",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 6
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          0,
+          4
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 5,
+            "body": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-009",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 6
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          0,
+          5
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-010",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 1
+        },
+        "start": [
+          3,
+          0
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 2,
+            "body": [
+              {
+                "op": "move",
+                "dir": "left"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-011",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 1
+        },
+        "start": [
+          4,
+          0
+        ],
+        "goal": [
+          1,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "left"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-012",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 1
+        },
+        "start": [
+          4,
+          0
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 3,
+            "body": [
+              {
+                "op": "move",
+                "dir": "left"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-013",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 1
+        },
+        "start": [
+          5,
+          0
+        ],
+        "goal": [
+          1,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 5,
+            "body": [
+              {
+                "op": "move",
+                "dir": "left"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-014",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 1
+        },
+        "start": [
+          5,
+          0
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "left"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-015",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 4
+        },
+        "start": [
+          0,
+          3
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 2,
+            "body": [
+              {
+                "op": "move",
+                "dir": "up"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-016",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 5
+        },
+        "start": [
+          0,
+          4
+        ],
+        "goal": [
+          0,
+          1
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "up"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-017",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 5
+        },
+        "start": [
+          0,
+          4
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 3,
+            "body": [
+              {
+                "op": "move",
+                "dir": "up"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-018",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 6
+        },
+        "start": [
+          0,
+          5
+        ],
+        "goal": [
+          0,
+          1
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 5,
+            "body": [
+              {
+                "op": "move",
+                "dir": "up"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-019",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 6
+        },
+        "start": [
+          0,
+          5
+        ],
+        "goal": [
+          0,
+          0
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "up"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-020",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          0,
+          1
+        ],
+        "walls": [
+          [
+            1,
+            0
+          ]
+        ],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "if",
+            "cond": "wall_down",
+            "then": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ],
+            "else": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-021",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "goal": [
+          1,
+          0
+        ],
+        "walls": [
+          [
+            0,
+            1
+          ]
+        ],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "if",
+            "cond": "wall_right",
+            "then": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ],
+            "else": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-022",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 2
+        },
+        "start": [
+          1,
+          0
+        ],
+        "goal": [
+          1,
+          1
+        ],
+        "walls": [
+          [
+            0,
+            0
+          ]
+        ],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "if",
+            "cond": "wall_down",
+            "then": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ],
+            "else": [
+              {
+                "op": "move",
+                "dir": "left"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-maze-debug-gen-023",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "maze",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "Le programme rate ! Corrige-le.",
+        "en": "The program fails! Fix it."
+      },
+      "answer": [
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "maze"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "goal": [
+          1,
+          1
+        ],
+        "walls": [
+          [
+            0,
+            0
+          ]
+        ],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if"
+        ],
+        "given_program": [
+          {
+            "op": "if",
+            "cond": "wall_right",
+            "then": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ],
+            "else": [
+              {
+                "op": "move",
+                "dir": "up"
+              }
+            ]
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-000",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            3,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 2,
+            "body": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-001",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            3,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-002",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            4,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 3,
+            "body": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-003",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            4,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 5,
+            "body": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-004",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 1
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            5,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "right"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-005",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 4
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            3
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 2,
+            "body": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-006",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 5
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            3
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-007",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 5
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            4
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 3,
+            "body": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-008",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 6
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            4
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 5,
+            "body": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-009",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 6
+        },
+        "start": [
+          0,
+          0
+        ],
+        "items": [
+          [
+            0,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            5
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "down"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-010",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 4,
+          "h": 1
+        },
+        "start": [
+          3,
+          0
+        ],
+        "items": [
+          [
+            3,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 2,
+            "body": [
+              {
+                "op": "move",
+                "dir": "left"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-011",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 1
+        },
+        "start": [
+          4,
+          0
+        ],
+        "items": [
+          [
+            4,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            1,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "left"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-012",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 5,
+          "h": 1
+        },
+        "start": [
+          4,
+          0
+        ],
+        "items": [
+          [
+            4,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 3,
+            "body": [
+              {
+                "op": "move",
+                "dir": "left"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-013",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 1
+        },
+        "start": [
+          5,
+          0
+        ],
+        "items": [
+          [
+            5,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            1,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 5,
+            "body": [
+              {
+                "op": "move",
+                "dir": "left"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-014",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "left"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 1
+        },
+        "start": [
+          5,
+          0
+        ],
+        "items": [
+          [
+            5,
+            0
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "left"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-015",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 4
+        },
+        "start": [
+          0,
+          3
+        ],
+        "items": [
+          [
+            0,
+            3
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 2,
+            "body": [
+              {
+                "op": "move",
+                "dir": "up"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-016",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 5
+        },
+        "start": [
+          0,
+          4
+        ],
+        "items": [
+          [
+            0,
+            4
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            1
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "up"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-017",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 5
+        },
+        "start": [
+          0,
+          4
+        ],
+        "items": [
+          [
+            0,
+            4
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 3,
+            "body": [
+              {
+                "op": "move",
+                "dir": "up"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-018",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 6
+        },
+        "start": [
+          0,
+          5
+        ],
+        "items": [
+          [
+            0,
+            5
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            1
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 5,
+            "body": [
+              {
+                "op": "move",
+                "dir": "up"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-actions-debug-gen-019",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "actions",
+      "level": 6,
+      "lesson": 1,
+      "theme": "debug",
+      "type": "code-grid",
+      "objective_ref": "6",
+      "prompt": {
+        "fr": "La livraison rate ! Corrige le programme.",
+        "en": "The delivery fails! Fix the program."
+      },
+      "answer": [
+        {
+          "op": "pick"
+        },
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "up"
+            }
+          ]
+        },
+        {
+          "op": "drop"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Regarde le nombre de répétitions ou la condition.",
+        "en": "Check the repeat count or the condition."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 8,
+      "age_max": 9,
+      "concept_tags": [
+        "debug",
+        "actions"
+      ],
+      "config": {
+        "grid": {
+          "w": 1,
+          "h": 6
+        },
+        "start": [
+          0,
+          5
+        ],
+        "items": [
+          [
+            0,
+            5
+          ]
+        ],
+        "targets": [
+          [
+            0,
+            0
+          ]
+        ],
+        "walls": [],
+        "concept": "debug",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "repeat",
+          "if",
+          "pick",
+          "drop"
+        ],
+        "given_program": [
+          {
+            "op": "pick"
+          },
+          {
+            "op": "repeat",
+            "n": 4,
+            "body": [
+              {
+                "op": "move",
+                "dir": "up"
+              }
+            ]
+          },
+          {
+            "op": "drop"
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
     }
   ]
 }

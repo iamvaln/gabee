@@ -30,7 +30,7 @@ import {
 import { readLocalTrack, writeLocalTrack } from '../lib/codeTrack';
 import {
   type ProgramState, type Cond,
-  empty as emptyProgram, addPrim as progAddPrim, addLoop as progAddLoop, addIf as progAddIf,
+  empty as emptyProgram, load as loadProgram, addPrim as progAddPrim, addLoop as progAddLoop, addIf as progAddIf,
   setActive as progSetActive, setCount as progSetCount, setCond as progSetCond,
   removeTop as progRemoveTop, removeInside as progRemoveInside, blockCount,
 } from '../lib/program';
@@ -216,7 +216,9 @@ export function CodeTurtleSession({
     if (shownRef.current === q.id) return;
     shownRef.current = q.id;
     stopTimer();
-    setProg(emptyProgram());
+    // Debugging levels pre-load a broken program the child fixes; others start empty.
+    const given = (q.config as { given_program?: Op[] } | null)?.given_program;
+    setProg(Array.isArray(given) ? loadProgram(given) : emptyProgram());
     setFrame(0);
     setRunning(false);
     setResult(null);
