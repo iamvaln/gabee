@@ -598,7 +598,11 @@ export function CodeTurtleSession({
       />
 
       <div className="session-body">
-        <div className="session-stage">
+        <div className="code-work">
+          {/* LEFT zone — the play surface (board + coach) */}
+          <div className="code-stage">
+            <span className="code-zone-label">{t('code.board')}</span>
+            <div className="code-play">
           <div className="code-boards">
             {puzzles.map((pz, bi) => {
               const r = boardsRun.perBoard[bi]!;
@@ -623,19 +627,46 @@ export function CodeTurtleSession({
               );
             })}
           </div>
+            </div>{/* code-play */}
 
-          {/* Block budget (loops/combine levels) — chunky pips + count */}
-          {puzzle.maxBlocks !== undefined && (
-            <div className={`code-budget${atBudget ? ' over' : ''}`}>
-              {t('code.blocks')}
-              <span className="code-pips" aria-hidden="true">
-                {Array.from({ length: puzzle.maxBlocks }).map((_, k) => (
-                  <i key={k} className={k < blockCount(program) ? 'on' : ''} />
-                ))}
-              </span>
-              {blockCount(program)}/{puzzle.maxBlocks}
+            {/* Coach bee, tucked beneath the board */}
+            <div className="code-coach">
+              <Bee size={96} expression={beeExpr} wings bob />
+              <div className="bee-coach-text">{coach}</div>
+              {guide.active ? (
+                <button className="btn ghost code-coach-btn" onClick={guide.skip}>{t('code.guideSkip')}</button>
+              ) : introTool ? (
+                <button className="btn code-coach-btn" onClick={() => dismissIntro()}>{t('code.gotIt')}</button>
+              ) : (
+                <button
+                  className="btn ghost code-coach-btn"
+                  aria-label={t('code.guideReplayAria')}
+                  onClick={() => { clearProgram(); guide.restart(); setForceGuide(true); }}
+                  disabled={editLocked}
+                >
+                  {t('code.guideReplay')}
+                </button>
+              )}
             </div>
-          )}
+          </div>{/* code-stage */}
+
+          {/* RIGHT zone — the workbench card */}
+          <div className="code-panel">
+            <div className="code-panel-head">
+              <h3>{t('code.yourProgram')}</h3>
+              {puzzle.maxBlocks !== undefined && (
+                <div className={`code-budget${atBudget ? ' over' : ''}`}>
+                  {t('code.blocks')}
+                  <span className="code-pips" aria-hidden="true">
+                    {Array.from({ length: puzzle.maxBlocks }).map((_, k) => (
+                      <i key={k} className={k < blockCount(program) ? 'on' : ''} />
+                    ))}
+                  </span>
+                  {blockCount(program)}/{puzzle.maxBlocks}
+                </div>
+              )}
+            </div>
+            <div className="code-panel-body">
 
           {/* Program strip */}
           <div className="code-strip" aria-label={t('code.yourProgram')}>
@@ -716,6 +747,7 @@ export function CodeTurtleSession({
           </div>
 
           {/* Block bank — derived from this puzzle's config.blocks */}
+          <span className="code-bank-label">{t('code.blocks')}</span>
           <div className="code-bank">
             {paletteFor(puzzle.blocks).map((k) => (
               <button
@@ -744,9 +776,9 @@ export function CodeTurtleSession({
             )}
           </div>
 
-          {/* Actions */}
-          <div style={{ marginTop: 16, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button ref={setAnchor('run')} className="btn" onClick={() => void startRun()} disabled={editLocked || program.length === 0 || gated('run')}>
+          {/* Run bar — pinned at the bottom of the workbench */}
+          <div className="code-runbar">
+            <button ref={setAnchor('run')} className="btn code-run" onClick={() => void startRun()} disabled={editLocked || program.length === 0 || gated('run')}>
               <Icon name="play" size={18} /> {t('code.run')}
             </button>
             <button className="btn ghost" onClick={clearProgram} disabled={editLocked || program.length === 0 || guide.active}>
@@ -756,31 +788,9 @@ export function CodeTurtleSession({
               {t('code.skip')}
             </button>
           </div>
-        </div>
-
-        <div className="session-aside">
-          <Bee size={120} expression={beeExpr} wings bob />
-          <div className="bee-coach-text">{coach}</div>
-          {guide.active ? (
-            <button className="btn ghost" onClick={guide.skip} style={{ marginTop: 8 }}>
-              {t('code.guideSkip')}
-            </button>
-          ) : introTool ? (
-            <button className="btn" onClick={() => dismissIntro()} style={{ marginTop: 8 }}>
-              {t('code.gotIt')}
-            </button>
-          ) : (
-            <button
-              className="btn ghost"
-              aria-label={t('code.guideReplayAria')}
-              onClick={() => { clearProgram(); guide.restart(); setForceGuide(true); }}
-              disabled={editLocked}
-              style={{ marginTop: 8, minWidth: 44 }}
-            >
-              {t('code.guideReplay')}
-            </button>
-          )}
-        </div>
+            </div>{/* code-panel-body */}
+          </div>{/* code-panel */}
+        </div>{/* code-work */}
       </div>
 
       {(guide.active || (introTool && !result)) && (
@@ -825,7 +835,7 @@ function CellGrid({
       style={{
         position: 'relative', width: puzzle.w * cell, height: puzzle.h * cell, marginInline: 'auto',
         display: 'grid', gridTemplateColumns: `repeat(${puzzle.w}, ${cell}px)`, gridTemplateRows: `repeat(${puzzle.h}, ${cell}px)`,
-        background: '#FFFBEC', border: '3px solid #FCD34D', borderRadius: 12,
+        background: 'var(--code-canvas)', border: '3px solid var(--code-canvas-edge)', borderRadius: 12,
       }}
     >
       {Array.from({ length: puzzle.h }).map((_, y) =>
@@ -864,7 +874,7 @@ function CellGrid({
       }}>
         <div style={{ position: 'relative' }}>
           <HeadingBee size={Math.max(22, cell - 12)} heading={cur.heading} expr={expr} running={running} />
-          {cur.carrying !== null && <span style={{ position: 'absolute', top: -8, right: -8, width: 12, height: 12, borderRadius: '50%', background: 'var(--feedback-retry)', border: '2px solid #fff' }} />}
+          {cur.carrying !== null && <span style={{ position: 'absolute', top: -8, right: -8, width: 12, height: 12, borderRadius: '50%', background: 'var(--feedback-retry)', border: '2px solid var(--surface)' }} />}
         </div>
       </div>
       {result === 'ok' && <span style={{ display: 'none' }} />}
@@ -884,12 +894,12 @@ function DrawGrid({
   const beeSize = Math.max(22, cell - 14);
   return (
     <div style={{ position: 'relative', width: w, height: h, marginInline: 'auto' }}>
-      <svg width={w} height={h} style={{ background: '#FFFBEC', borderRadius: 12, border: '3px solid #FCD34D', display: 'block' }}>
+      <svg width={w} height={h} style={{ background: 'var(--code-canvas)', borderRadius: 12, border: '3px solid var(--code-canvas-edge)', display: 'block' }}>
         {Array.from({ length: puzzle.w }).map((_, x) => (
-          <line key={`v${x}`} x1={px(x)} y1={px(0)} x2={px(x)} y2={px(puzzle.h - 1)} stroke="#EFE7CB" strokeWidth={1.5} />
+          <line key={`v${x}`} x1={px(x)} y1={px(0)} x2={px(x)} y2={px(puzzle.h - 1)} stroke="var(--code-canvas-line)" strokeWidth={1.5} />
         ))}
         {Array.from({ length: puzzle.h }).map((_, y) => (
-          <line key={`hl${y}`} x1={px(0)} y1={px(y)} x2={px(puzzle.w - 1)} y2={px(y)} stroke="#EFE7CB" strokeWidth={1.5} />
+          <line key={`hl${y}`} x1={px(0)} y1={px(y)} x2={px(puzzle.w - 1)} y2={px(y)} stroke="var(--code-canvas-line)" strokeWidth={1.5} />
         ))}
         {(puzzle.targetVertices ?? []).map((path, i) => (
           <polyline key={`t${i}`} points={path.map((p) => `${px(p.x)},${px(p.y)}`).join(' ')} fill="none" stroke="#9AD8E6" strokeWidth={14} strokeLinecap="round" strokeLinejoin="round" opacity={0.4} />

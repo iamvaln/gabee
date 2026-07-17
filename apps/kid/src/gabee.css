@@ -38,6 +38,10 @@
   --bounce: cubic-bezier(.34, 1.56, .64, 1);
   /* press-down shadow (used for chunky buttons / tiles) */
   --shadow-pop: 0 4px 0 rgba(32, 36, 46, .12);
+  /* coding play surface — the "paper" the bee draws on */
+  --code-canvas: #FFF9E9;
+  --code-canvas-edge: #F4C948;
+  --code-canvas-line: #EFE3C4;
   /* density scale (tweakable) */
   --scale: 1;
   /* Fluid gutter — the responsive baseline. Every screen-level padding
@@ -448,6 +452,11 @@ a:focus-visible,
   z-index: 30;
   pointer-events: none;
   animation: sync-pill-in var(--motion-base) var(--easing);
+}
+/* On phones the centred pill collides with the chrome controls (profile +
+   language + home). Drop it to the bottom of the screen, out of their way. */
+@media (max-width: 560px) {
+  .sync-pill { top: auto; bottom: 16px; }
 }
 .sync-pill.sync-offline {
   /* calm, reassuring — "everything is saved", not an error */
@@ -2206,3 +2215,71 @@ a:focus-visible,
 .code-chip.loop { border-color: var(--module-code); background: rgba(123, 47, 247, .10); color: var(--module-code); }
 .code-chip.loop .lbl { color: var(--module-code); }
 .code-chip.iff { border-color: var(--color-accent); }
+
+/* ── Coding editor — desktop-first two-zone workbench ────────────────────
+   The code screen replaces the shared stage/aside with two balanced zones:
+   LEFT = Plateau (board + coach), RIGHT = workbench card (program/bank/run).
+   Neutralise the inherited session-body grid first (its aside moved inside). */
+.session-screen[data-module="code"] .session-body { display: block; }
+.code-work { display: flex; flex-direction: column; gap: clamp(16px, 2.5vw, 24px); }
+@media (min-width: 860px) {
+  .code-work {
+    display: grid; grid-template-columns: 1.08fr 1fr;
+    align-items: stretch; gap: clamp(18px, 2.5vw, 30px);
+  }
+}
+.code-zone-label, .code-bank-label {
+  font-size: 12px; font-weight: 800; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--text-muted); display: block;
+}
+
+/* LEFT — stage */
+.code-stage { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.code-play {
+  background: var(--surface-muted); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: clamp(18px, 3vw, 30px);
+  display: grid; place-items: center; min-height: clamp(280px, 42vh, 430px);
+  flex: 1 1 auto; /* absorb spare height so the columns stay balanced */
+}
+.code-play .code-boards { margin: 0; }
+.code-coach { display: flex; align-items: flex-end; gap: clamp(8px, 1.5vw, 14px); flex-wrap: wrap; }
+.code-coach .bee { width: clamp(60px, 9vw, 92px) !important; height: auto !important; flex-shrink: 0; }
+.code-coach .bee-coach-text { flex: 1 1 200px; text-align: left; }
+/* tail points left, at the bee, instead of down */
+.code-coach .bee-coach-text::after { bottom: auto; top: 18px; left: -9px; transform: rotate(135deg); }
+.code-coach-btn { flex: 0 0 auto; align-self: center; margin-left: 4px; }
+
+/* RIGHT — workbench card */
+.code-panel {
+  background: var(--surface); border: 3px solid var(--module-code);
+  border-radius: var(--radius-xl); box-shadow: 0 6px 0 var(--module-code);
+  display: flex; flex-direction: column; overflow: hidden; min-width: 0;
+}
+.code-panel-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 13px 18px; background: rgba(123, 47, 247, .06);
+  border-bottom: 2px solid rgba(123, 47, 247, .15);
+}
+.code-panel-head h3 { margin: 0; font-size: 16px; font-weight: 800; color: var(--module-code); }
+.code-panel-body { padding: clamp(14px, 2vw, 18px); display: flex; flex-direction: column; gap: 14px; flex: 1; }
+
+/* budget moves into the head — flatten the old centred pips + margins */
+.code-panel-head .code-budget { margin: 0; font-size: 13px; color: var(--text-muted); }
+.code-panel-head .code-pips i { width: 13px; height: 13px; border-radius: 4px; border: 0; background: var(--border); }
+.code-panel-head .code-pips i.on { background: var(--module-code); }
+
+/* strip + bank drop their standalone stacking margins inside the panel */
+.code-panel-body .code-strip { margin-top: 0; }
+.code-panel-body .code-bank { margin-top: 0; justify-content: flex-start; }
+
+/* run bar pinned at the foot of the workbench (fills the balanced column) */
+.code-runbar { display: flex; gap: 10px; margin-top: auto; padding-top: 6px; }
+.code-runbar .code-run { flex: 1; justify-content: center; }
+
+@media (max-width: 859px) {
+  .code-coach .bee-coach-text::after { top: auto; bottom: -10px; left: 20px; transform: rotate(45deg); }
+  /* Coach fills the row and the button drops below it, so nothing crowds. */
+  .code-coach { align-items: flex-start; }
+  .code-coach .bee-coach-text { flex: 1 1 100%; }
+  .code-coach-btn { margin-left: 0; }
+}
