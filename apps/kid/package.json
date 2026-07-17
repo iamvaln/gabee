@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "files=$(find src -name '*.test.ts'); if [ -z \"$files\" ]; then echo 'no unit test files found' >&2; exit 1; fi; node --import tsx --test $files",
     "test:dom": "files=$(find src -name '*.test.tsx'); if [ -z \"$files\" ]; then echo 'no DOM test files found' >&2; exit 1; fi; node --import tsx --test --test-force-exit $files",
-    "test:coverage": "files=$(find src -name '*.test.ts'); if [ -z \"$files\" ]; then echo 'no unit test files found' >&2; exit 1; fi; c8 -r text -r lcov -r html -x '**/*.test.*' -x 'src/test/**' node --import tsx --test $files",
+    "test:coverage": "files=$(find src -name '*.test.ts'); if [ -z \"$files\" ]; then echo 'no unit test files found' >&2; exit 1; fi; c8 --check-coverage --lines 67 --statements 67 --functions 52 --branches 80 -r text -r lcov -r html -x '**/*.test.*' -x 'src/test/**' node --import tsx --test $files",
     "lint": "eslint ."
   },
   "dependencies": {
