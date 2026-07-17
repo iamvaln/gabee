@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { blockCount, flatLen, loopBudget } from './loop-budgets.mts';
+import { blockCount, flatLen, loopBudget } from './loop-budgets.mjs';
 
 describe('blockCount (container + body)', () => {
   it('counts each primitive and each loop container as 1', () => {

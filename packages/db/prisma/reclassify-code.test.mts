@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { classify, targetLevel } from './reclassify-code.mts';
+import { classify, targetLevel } from './reclassify-code.mjs';
 
 describe('classify', () => {
   it('sequence: only move/pick/drop', () => {
