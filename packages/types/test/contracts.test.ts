@@ -442,8 +442,10 @@ describe('feature flags registry', () => {
   it('initial values match the design decisions', () => {
     assert.equal(FLAG_FALLBACKS.kid_voiceover, true);
     assert.equal(FLAG_FALLBACKS.kid_ambient_music, false);
+    assert.equal(FLAG_FALLBACKS.kid_game_sounds, true);
     assert.equal(FLAG_DEFAULTS.kid_voiceover, true);
     assert.equal(FLAG_DEFAULTS.kid_ambient_music, false);
+    assert.equal(FLAG_DEFAULTS.kid_game_sounds, true);
   });
 
   it('EffectiveFlagsResponseSchema accepts a boolean map', () => {

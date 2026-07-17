@@ -33,7 +33,7 @@ test('admin can list; only super_admin can PATCH a default', async () => {
   const { token: adminTok } = await admin('admin');
   const listed = await GET(webRequest(listUrl, { method: 'GET', cookie: adminCookie(adminTok) }), undefined);
   assert.equal(listed.status, 200);
-  assert.equal((await listed.json()).flags.length, 2);
+  assert.equal((await listed.json()).flags.length, 3);
 
   // a plain admin cannot write
   const forbid = await PATCH(

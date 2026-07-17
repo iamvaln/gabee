@@ -24,7 +24,7 @@ function voiceEnabled(): boolean {
  */
 export function sfx(name: CueName): void {
   try {
-    if (!isEnabled() || provider.speaking) return;
+    if (!isEnabled() || !isFeatureEnabled('kid_game_sounds') || provider.speaking) return;
     playCue(name);
   } catch {
     /* never break a render over audio */

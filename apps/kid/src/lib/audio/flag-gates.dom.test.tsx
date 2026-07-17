@@ -16,7 +16,7 @@ interface FakeSource {
 }
 
 function installFakeAudio() {
-  const state = { sources: [] as FakeSource[] };
+  const state = { sources: [] as FakeSource[], oscillators: 0 };
   const fakeCtx = {
     state: 'running',
     currentTime: 0,
@@ -24,9 +24,19 @@ function installFakeAudio() {
     resume: () => Promise.resolve(),
     decodeAudioData: (_: ArrayBuffer) => Promise.resolve({ duration: 4 }),
     createGain: () => ({
-      gain: { value: 0, setValueAtTime: () => {}, cancelScheduledValues: () => {}, linearRampToValueAtTime: () => {} },
+      gain: {
+        value: 0,
+        setValueAtTime: () => {},
+        cancelScheduledValues: () => {},
+        linearRampToValueAtTime: () => {},
+        exponentialRampToValueAtTime: () => {},
+      },
       connect: () => {},
     }),
+    createOscillator: () => {
+      state.oscillators++;
+      return { type: 'sine', frequency: { value: 0 }, connect: () => {}, start: () => {}, stop: () => {} };
+    },
     createBufferSource: () => {
       const s: FakeSource = {
         buffer: null, loop: false, started: false, stopped: false,
@@ -72,6 +82,29 @@ describe('kid_ambient_music flag gate', () => {
     const s = state.sources.at(-1);
     assert.ok(s?.started, 'source started once the flag is on');
     assert.equal(s?.loop, true, 'loop must be gapless');
+  });
+});
+
+describe('kid_game_sounds flag gate', () => {
+  let audio: typeof import('./index');
+  let state: ReturnType<typeof installFakeAudio>;
+
+  beforeEach(async () => {
+    state = installFakeAudio();
+    audio = await import('./index');
+    audio.setEnabled(true); // master on — the flag is the only variable under test
+  });
+
+  it('flag OFF → sfx() fires no cue (no oscillator), master still on', () => {
+    useStore.setState({ featureFlags: { kid_game_sounds: false } });
+    audio.sfx('correct');
+    assert.equal(state.oscillators, 0, 'game sounds must be silent while the flag is off');
+  });
+
+  it('flag ON → sfx() fires a cue', () => {
+    useStore.setState({ featureFlags: { kid_game_sounds: true } });
+    audio.sfx('correct');
+    assert.ok(state.oscillators > 0, 'cue plays when the flag is on');
   });
 });
 

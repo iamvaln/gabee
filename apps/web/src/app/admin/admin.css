@@ -1010,3 +1010,22 @@ textarea:focus-visible {
 
 /* Selected candidate card (bulk actions). */
 .cand.selected { outline: 2px solid var(--mascot-admin); outline-offset: 1px; }
+
+/* ── Toggle switch (feature flags) ─────────────────────────────────────────── */
+.switch { position: relative; display: inline-flex; align-items: center; width: 46px; height: 26px; flex: none; }
+.switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.switch .slider {
+  position: absolute; inset: 0; cursor: pointer; border-radius: 999px;
+  background: #cbd0d9; transition: background .15s ease;
+}
+.switch .slider::before {
+  content: ''; position: absolute; height: 20px; width: 20px; left: 3px; top: 3px;
+  background: #fff; border-radius: 50%; transition: transform .15s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,.25);
+}
+.switch input:checked + .slider { background: var(--ink); }
+.switch input:checked + .slider::before { transform: translateX(20px); }
+.switch input:focus-visible + .slider { outline: 2px solid var(--brand); outline-offset: 2px; }
+.switch input:disabled + .slider { opacity: .45; cursor: not-allowed; }
+.switch-row { display: inline-flex; align-items: center; gap: 8px; }
+.switch-row .switch-label { font-size: 13px; color: var(--ink); min-width: 5.5em; }
