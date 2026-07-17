@@ -19,3 +19,24 @@ describe('isFeatureEnabled', () => {
     assert.equal(isFeatureEnabled('kid_ambient_music'), true);
   });
 });
+
+import { isModuleVisibleWith, isLevelVisibleWith, visibleLevels } from './flags';
+import type { FlagKey } from '@gabee/types';
+
+describe('content visibility', () => {
+  const on = (_k: FlagKey) => true;
+  const off = (_k: FlagKey) => false;
+  it('unflagged module/level is always visible regardless of lookup', () => {
+    assert.equal(isModuleVisibleWith('code', off), true);
+    assert.equal(isLevelVisibleWith('code', 3, off), true);
+    assert.equal(isLevelVisibleWith('numbers', 1, off), true);
+  });
+  it('flagged level follows the lookup', () => {
+    assert.equal(isLevelVisibleWith('code', 6, off), false);
+    assert.equal(isLevelVisibleWith('code', 6, on), true);
+  });
+  it('visibleLevels filters a level list by the lookup', () => {
+    assert.deepEqual(visibleLevels('code', [1, 2, 6], off), [1, 2]);
+    assert.deepEqual(visibleLevels('code', [1, 2, 6], on), [1, 2, 6]);
+  });
+});
