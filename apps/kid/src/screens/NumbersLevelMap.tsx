@@ -9,6 +9,7 @@ import { Icon } from '../components/Icon';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
+import { visibleLevels } from '../lib/flags';
 import { lessonsForLevel, unitsForLevel, levelComplete } from '../lib/progression';
 import type { NumbersSubMode } from './NumbersHub';
 
@@ -91,7 +92,7 @@ export function NumbersLevelMap({
     );
   }, [bundle, subMode]);
   const configuredLevels = useMemo(
-    () => [...new Set(subModeQuestions.map((q) => q.level))].sort((a, b) => a - b),
+    () => visibleLevels('numbers', [...new Set(subModeQuestions.map((q) => q.level))].sort((a, b) => a - b)),
     [subModeQuestions],
   );
 
