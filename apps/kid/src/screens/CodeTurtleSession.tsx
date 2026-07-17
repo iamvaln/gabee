@@ -52,10 +52,11 @@ const TOTAL = 5;
 // ABSOLUTE-direction palette: four arrows (no "forward + turn"). pick/drop for
 // the actions world. Loops/conditions live in the seed reference answer only —
 // the kid builds a FLAT arrow program (always solvable for these levels).
-type PrimKey = 'up' | 'down' | 'left' | 'right' | 'pick' | 'drop';
+type PrimKey = 'up' | 'down' | 'left' | 'right' | 'pick' | 'drop' | 'pen_up' | 'pen_down';
 // Drawn line icons (Icon.tsx), not emoji — arrows/loop already exist; branch/pick/drop added.
 const PRIM_ICON: Record<PrimKey, IconName> = {
   up: 'arrow-up', down: 'arrow-down', left: 'arrow-left-i', right: 'arrow-right-i', pick: 'pick', drop: 'drop',
+  pen_up: 'pen-up', pen_down: 'pen-down',
 };
 const COND_ICON: Record<Cond, IconName> = {
   wall_up: 'arrow-up', wall_down: 'arrow-down', wall_left: 'arrow-left-i', wall_right: 'arrow-right-i',
@@ -65,8 +66,11 @@ const CONDS: Cond[] = ['wall_up', 'wall_down', 'wall_left', 'wall_right'];
 const LABELLED: Record<string, { fr: string; en: string }> = {
   pick: { fr: 'Ramasse', en: 'Pick' },
   drop: { fr: 'Pose', en: 'Drop' },
+  pen_up: { fr: 'Lève', en: 'Pen up' },
+  pen_down: { fr: 'Baisse', en: 'Pen down' },
 };
 function primKey(p: Prim): PrimKey {
+  if (p.op === 'pen') return p.state === 'up' ? 'pen_up' : 'pen_down';
   return p.op === 'move' ? p.dir : p.op;
 }
 // Seed config.blocks token → kid PrimKey. `if`/`repeat` are excluded (the kid
@@ -74,6 +78,7 @@ function primKey(p: Prim): PrimKey {
 // by simulation, not required of the kid).
 const BLOCK_TO_PRIM: Record<string, PrimKey | null> = {
   up: 'up', down: 'down', left: 'left', right: 'right', pick: 'pick', drop: 'drop',
+  pen_up: 'pen_up', pen_down: 'pen_down',
   if: null, repeat: null,
 };
 function paletteFor(blocks: string[]): PrimKey[] {
@@ -635,7 +640,7 @@ export function CodeTurtleSession({
                         <span className="tag">{t(slot === 'then' ? 'code.then' : 'code.else')}</span>
                         {((slot === 'then' ? op.then : op.else) ?? []).map((b, j) => {
                           const bp = b as Prim;
-                          const bk = bp.op === 'move' ? bp.dir : bp.op;
+                          const bk = primKey(bp);
                           return (
                             <span key={j} className="code-mini" onClick={(e) => { e.stopPropagation(); removeBranchBlock(i, slot, j); }} aria-label={`remove ${slot} ${bk}`}>
                               <Icon name={PRIM_ICON[bk]} size={18} />
@@ -659,7 +664,7 @@ export function CodeTurtleSession({
                       ) : (
                         op.body.map((b, j) => {
                           const bp = b as Prim;
-                          const bk = bp.op === 'move' ? bp.dir : bp.op;
+                          const bk = primKey(bp);
                           return (
                             <button key={j} className="code-mini" onClick={() => removeBodyBlock(i, j)} disabled={editLocked || guide.active} aria-label={`remove ${bk}`}>
                               <Icon name={PRIM_ICON[bk]} size={18} />
@@ -674,7 +679,7 @@ export function CodeTurtleSession({
                   </div>
                 ) : (() => {
                   const p = op as Prim;
-                  const k = p.op === 'move' ? p.dir : p.op;
+                  const k = primKey(p);
                   return (
                     <button key={i} className="code-step" onClick={() => removeTopBlock(i)} disabled={editLocked || guide.active} aria-label={`remove ${k}`}>
                       <Icon name={PRIM_ICON[k]} size={18} />

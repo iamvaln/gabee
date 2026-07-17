@@ -2,7 +2,7 @@ export type IconName =
   | 'home' | 'back' | 'gear' | 'lock' | 'star' | 'check' | 'cross' | 'play'
   | 'arrow-right' | 'wifi-off' | 'sound' | 'sound-off' | 'refresh' | 'sparkle'
   | 'arrow-up' | 'arrow-down' | 'arrow-left-i' | 'arrow-right-i' | 'loop'
-  | 'branch' | 'pick' | 'drop';
+  | 'branch' | 'pick' | 'drop' | 'pen-up' | 'pen-down';
 
 export function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
   const common = {
@@ -60,6 +60,10 @@ export function Icon({ name, size = 22 }: { name: IconName; size?: number }) {
       return <svg {...common}><path d="M5 21 H19 M12 15 V4 M8 8 L12 4 L16 8" /></svg>;
     case 'drop': // place an item down into a tray
       return <svg {...common}><path d="M5 21 H19 M12 4 V15 M8 11 L12 15 L16 11" /></svg>;
+    case 'pen-down': // a pencil touching the surface (drawing)
+      return <svg {...common}><path d="M15 4 L20 9 L9 20 L4 20 L4 15 Z" /><path d="M6 22 H18" /></svg>;
+    case 'pen-up': // a pencil lifted (with an up chevron)
+      return <svg {...common}><path d="M15 7 L20 12 L11 21 L6 21 L6 16 Z" /><path d="M12 4 L9 7 M12 4 L15 7 M12 4 V1" /></svg>;
     default:
       return null;
   }
