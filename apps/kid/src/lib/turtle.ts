@@ -23,7 +23,8 @@ export type CodeWorld = 'maze' | 'draw' | 'actions';
 export type Prim =
   | { op: 'move'; dir: MoveDir }
   | { op: 'pick' }
-  | { op: 'drop' };
+  | { op: 'drop' }
+  | { op: 'pen'; state: 'up' | 'down' };
 
 /** Full op set, including the control structures the seed `answer` may use. */
 export type Op =
@@ -154,7 +155,7 @@ export function runProgram(puzzle: Puzzle, program: Op[]): RunResult {
   let pos = { ...puzzle.start };
   let heading = puzzle.facing;
   let carrying: number | null = null;
-  const penDown = true;
+  let penDown = true; // draw world: a move records a segment only while down
   const items = (puzzle.items ?? []).map((c) => ({ ...c }));
   const walls = puzzle.walls ?? [];
   const obstacles = puzzle.obstacles ?? [];
@@ -179,13 +180,17 @@ export function runProgram(puzzle: Puzzle, program: Op[]): RunResult {
           heading = DIR_TO_HEADING[op.dir];
           if (blocked(nxt)) { wasted += 1; }
           else {
-            if (puzzle.world === 'draw') { drawn.push({ a: { ...pos }, b: { ...nxt } }); drawnKeys.push(segKey(pos, nxt)); }
+            if (puzzle.world === 'draw' && penDown) { drawn.push({ a: { ...pos }, b: { ...nxt } }); drawnKeys.push(segKey(pos, nxt)); }
             pos = nxt;
             if (carrying !== null) items[carrying] = { ...pos };
           }
           snapshot();
           break;
         }
+        case 'pen':
+          penDown = op.state === 'down';
+          snapshot();
+          break;
         case 'pick': {
           const idx = items.findIndex((it, i) => i !== carrying && eq(it, pos));
           if (carrying !== null || idx < 0) wasted += 1;
@@ -301,6 +306,9 @@ export function flattenProgram(puzzle: Puzzle, program: Op[]): Prim[] {
         case 'drop':
           out.push({ op: 'drop' });
           if (carrying !== null) carrying = null;
+          break;
+        case 'pen':
+          out.push({ op: 'pen', state: op.state });
           break;
         case 'repeat':
           for (let i = 0; i < op.n; i++) exec(op.body);

@@ -44,7 +44,7 @@ function solves(world: string, config: any, program: any[]): boolean {
   const c = config ?? {};
   const w = c.grid?.w ?? 5, h = c.grid?.h ?? 5;
   let pos: Cell = c.start ? cell(c.start) : { x: 0, y: 0 };
-  let carrying: number | null = null, wasted = 0;
+  let carrying: number | null = null, wasted = 0, penDown = true;
   const items: Cell[] = (c.items ?? []).map(cell);
   // Absolute content stores blockers under `walls` (older content used `obstacles`).
   const walls: Cell[] = [...(c.walls ?? []), ...(c.obstacles ?? [])].map(cell);
@@ -56,8 +56,9 @@ function solves(world: string, config: any, program: any[]): boolean {
       if (op.op === 'move') {
         const d = MOVE[op.dir]!; const n = { x: pos.x + d.x, y: pos.y + d.y };
         if (blocked(n)) wasted++;
-        else { if (world === 'draw') drawn.push(segKey(pos, n)); pos = n; if (carrying !== null) items[carrying] = { ...pos }; }
-      } else if (op.op === 'pick') {
+        else { if (world === 'draw' && penDown) drawn.push(segKey(pos, n)); pos = n; if (carrying !== null) items[carrying] = { ...pos }; }
+      } else if (op.op === 'pen') { penDown = op.state === 'down'; }
+      else if (op.op === 'pick') {
         const i = items.findIndex((it, j) => j !== carrying && eq(it, pos));
         if (carrying !== null || i < 0) wasted++; else carrying = i;
       } else if (op.op === 'drop') { if (carrying === null) wasted++; else carrying = null; }

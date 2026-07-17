@@ -38,6 +38,7 @@ import {
 import { buildGuideScript } from '../lib/guideScripts';
 import { useGuide } from '../lib/useGuide';
 import { guideSeen, markGuideSeen } from '../lib/guide';
+import { newTools, markToolSeen, INTRO_COPY, type IntroTool } from '../lib/toolIntro';
 import { GuidePointer } from '../components/GuidePointer';
 import { SessionLoader } from '../components/SessionLoader';
 import { SessionError } from '../components/SessionError';
@@ -52,10 +53,11 @@ const TOTAL = 5;
 // ABSOLUTE-direction palette: four arrows (no "forward + turn"). pick/drop for
 // the actions world. Loops/conditions live in the seed reference answer only —
 // the kid builds a FLAT arrow program (always solvable for these levels).
-type PrimKey = 'up' | 'down' | 'left' | 'right' | 'pick' | 'drop';
+type PrimKey = 'up' | 'down' | 'left' | 'right' | 'pick' | 'drop' | 'pen_up' | 'pen_down';
 // Drawn line icons (Icon.tsx), not emoji — arrows/loop already exist; branch/pick/drop added.
 const PRIM_ICON: Record<PrimKey, IconName> = {
   up: 'arrow-up', down: 'arrow-down', left: 'arrow-left-i', right: 'arrow-right-i', pick: 'pick', drop: 'drop',
+  pen_up: 'pen-up', pen_down: 'pen-down',
 };
 const COND_ICON: Record<Cond, IconName> = {
   wall_up: 'arrow-up', wall_down: 'arrow-down', wall_left: 'arrow-left-i', wall_right: 'arrow-right-i',
@@ -65,8 +67,11 @@ const CONDS: Cond[] = ['wall_up', 'wall_down', 'wall_left', 'wall_right'];
 const LABELLED: Record<string, { fr: string; en: string }> = {
   pick: { fr: 'Ramasse', en: 'Pick' },
   drop: { fr: 'Pose', en: 'Drop' },
+  pen_up: { fr: 'Lève', en: 'Pen up' },
+  pen_down: { fr: 'Baisse', en: 'Pen down' },
 };
 function primKey(p: Prim): PrimKey {
+  if (p.op === 'pen') return p.state === 'up' ? 'pen_up' : 'pen_down';
   return p.op === 'move' ? p.dir : p.op;
 }
 // Seed config.blocks token → kid PrimKey. `if`/`repeat` are excluded (the kid
@@ -74,6 +79,7 @@ function primKey(p: Prim): PrimKey {
 // by simulation, not required of the kid).
 const BLOCK_TO_PRIM: Record<string, PrimKey | null> = {
   up: 'up', down: 'down', left: 'left', right: 'right', pick: 'pick', drop: 'drop',
+  pen_up: 'pen_up', pen_down: 'pen_down',
   if: null, repeat: null,
 };
 function paletteFor(blocks: string[]): PrimKey[] {
@@ -146,6 +152,9 @@ export function CodeTurtleSession({
   // Efficiency levels (L7): config.optimalBlocks is a soft target — the child can
   // solve any way, but earns full stars only for solutions within the optimal.
   const [lastEfficient, setLastEfficient] = useState<boolean | null>(null);
+  // First-encounter intro for a new block (loop/if/pen); a queue per question.
+  const [introTool, setIntroTool] = useState<IntroTool | null>(null);
+  const introQueueRef = useRef<IntroTool[]>([]);
   const efficientRef = useRef(0);   // # questions solved within optimalBlocks this lesson
   const hasOptimalRef = useRef(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -239,6 +248,10 @@ export function CodeTurtleSession({
     setRunning(false);
     setResult(null);
     setLastEfficient(null);
+    // First-encounter intro for a new block (skip during the L1 guided walkthrough).
+    const introable = isFirstExercise ? [] : newTools(profileId, ((q.config as { blocks?: string[] }) ?? {}).blocks ?? []);
+    introQueueRef.current = introable;
+    setIntroTool(introable[0] ?? null);
     attemptsRef.current = 0;
     void enqueueEvent(
       { name: 'question_shown', module: 'code', sub_mode: undefined, level, lesson, question_id: q.id, type: q.type, attempt_num: 1 },
@@ -379,11 +392,23 @@ export function CodeTurtleSession({
   const editLocked = running || result === 'ok';
   const gated = (anchorKey: string) => guide.active && !(guide.step?.allow.includes(anchorKey) ?? false);
   const atBudget = puzzle?.maxBlocks !== undefined && blockCount(program) >= puzzle.maxBlocks;
+  // Dismiss the current new-block intro (OK tapped, or the child placed that block).
+  function dismissIntro(tool?: IntroTool) {
+    setIntroTool((cur) => {
+      const done = tool ?? cur;
+      if (!done) return cur;
+      markToolSeen(profileId, done);
+      const rest = introQueueRef.current.filter((x) => x !== done);
+      introQueueRef.current = rest;
+      return rest[0] ?? null;
+    });
+  }
   function addPrim(k: PrimKey) {
     if (editLocked || atBudget) return;
     if (result === 'fail') setResult(null);
     setProg((s) => progAddPrim(s, k));
     setFrame(0);
+    if (k === 'pen_up' || k === 'pen_down') dismissIntro(k);
     if (guide.active) guide.report(k === 'pick' ? 'pick-placed' : k === 'drop' ? 'drop-placed' : 'block-placed');
   }
   function addLoop() {
@@ -391,6 +416,7 @@ export function CodeTurtleSession({
     if (result === 'fail') setResult(null);
     setProg((s) => progAddLoop(s));
     setFrame(0);
+    dismissIntro('repeat');
   }
   function setLoopCount(index: number, n: number) {
     if (editLocked) return;
@@ -405,6 +431,7 @@ export function CodeTurtleSession({
     if (result === 'fail') setResult(null);
     setProg((s) => progAddIf(s));
     setFrame(0);
+    dismissIntro('if');
   }
   function chooseSlot(index: number, slot: 'then' | 'else') {
     if (!editLocked) setProg((s) => progSetActive(s, index, slot));
@@ -541,9 +568,11 @@ export function CodeTurtleSession({
   const coach =
     guide.active && guide.step
       ? guide.step.coach[lang]
-      : result === 'ok' ? (lastEfficient === false ? t('code.shorter') : t('code.nice'))
-        : result === 'fail' ? (q?.hint ? `💡 ${displayHint(q.hint, lang)}` : t('code.tryAgain'))
-          : WORLD_COACH[world][lang];
+      : introTool && !result
+        ? INTRO_COPY[introTool][lang]
+        : result === 'ok' ? (lastEfficient === false ? t('code.shorter') : t('code.nice'))
+          : result === 'fail' ? (q?.hint ? `💡 ${displayHint(q.hint, lang)}` : t('code.tryAgain'))
+            : WORLD_COACH[world][lang];
 
   const shell = { module: m.id, title: m.label[lang], lang, setLang, onBack, onHome, profile };
   if (bundleLoadFailed({ isLoading, isError, hasBundle: !!bundle, offline: isOffline() })) {
@@ -635,7 +664,7 @@ export function CodeTurtleSession({
                         <span className="tag">{t(slot === 'then' ? 'code.then' : 'code.else')}</span>
                         {((slot === 'then' ? op.then : op.else) ?? []).map((b, j) => {
                           const bp = b as Prim;
-                          const bk = bp.op === 'move' ? bp.dir : bp.op;
+                          const bk = primKey(bp);
                           return (
                             <span key={j} className="code-mini" onClick={(e) => { e.stopPropagation(); removeBranchBlock(i, slot, j); }} aria-label={`remove ${slot} ${bk}`}>
                               <Icon name={PRIM_ICON[bk]} size={18} />
@@ -659,7 +688,7 @@ export function CodeTurtleSession({
                       ) : (
                         op.body.map((b, j) => {
                           const bp = b as Prim;
-                          const bk = bp.op === 'move' ? bp.dir : bp.op;
+                          const bk = primKey(bp);
                           return (
                             <button key={j} className="code-mini" onClick={() => removeBodyBlock(i, j)} disabled={editLocked || guide.active} aria-label={`remove ${bk}`}>
                               <Icon name={PRIM_ICON[bk]} size={18} />
@@ -674,7 +703,7 @@ export function CodeTurtleSession({
                   </div>
                 ) : (() => {
                   const p = op as Prim;
-                  const k = p.op === 'move' ? p.dir : p.op;
+                  const k = primKey(p);
                   return (
                     <button key={i} className="code-step" onClick={() => removeTopBlock(i)} disabled={editLocked || guide.active} aria-label={`remove ${k}`}>
                       <Icon name={PRIM_ICON[k]} size={18} />
@@ -702,13 +731,13 @@ export function CodeTurtleSession({
               </button>
             ))}
             {puzzle.blocks.includes('repeat') && (
-              <button aria-label="repeat" onClick={addLoop} disabled={editLocked || atBudget} className="code-chip loop">
+              <button ref={setAnchor('palette:repeat')} aria-label="repeat" onClick={addLoop} disabled={editLocked || atBudget} className="code-chip loop">
                 <Icon name="loop" size={24} />
                 <span className="lbl">{t('code.loop')}</span>
               </button>
             )}
             {puzzle.blocks.includes('if') && (
-              <button aria-label="if" onClick={addIf} disabled={editLocked || atBudget} className="code-chip iff">
+              <button ref={setAnchor('palette:if')} aria-label="if" onClick={addIf} disabled={editLocked || atBudget} className="code-chip iff">
                 <Icon name="branch" size={24} />
                 <span className="lbl">{t('code.condition')}</span>
               </button>
@@ -736,6 +765,10 @@ export function CodeTurtleSession({
             <button className="btn ghost" onClick={guide.skip} style={{ marginTop: 8 }}>
               {t('code.guideSkip')}
             </button>
+          ) : introTool ? (
+            <button className="btn" onClick={() => dismissIntro()} style={{ marginTop: 8 }}>
+              {t('code.gotIt')}
+            </button>
           ) : (
             <button
               className="btn ghost"
@@ -750,7 +783,9 @@ export function CodeTurtleSession({
         </div>
       </div>
 
-      {guide.active && <GuidePointer anchorsRef={anchors} targetKey={guide.step?.target} />}
+      {(guide.active || (introTool && !result)) && (
+        <GuidePointer anchorsRef={anchors} targetKey={guide.active ? guide.step?.target : `palette:${introTool}`} />
+      )}
     </div>
   );
 }

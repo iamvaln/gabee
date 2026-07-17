@@ -1,6 +1,6 @@
 import type { Op, Prim, MoveDir } from './turtle';
 
-export type PrimKey = 'up' | 'down' | 'left' | 'right' | 'pick' | 'drop';
+export type PrimKey = 'up' | 'down' | 'left' | 'right' | 'pick' | 'drop' | 'pen_up' | 'pen_down';
 export type Slot = 'body' | 'then' | 'else';
 export type Cond = 'wall_up' | 'wall_down' | 'wall_left' | 'wall_right';
 
@@ -14,6 +14,8 @@ export type ProgramState = { program: Op[]; active: number | null; slot: Slot };
 
 export function makePrim(k: PrimKey): Prim {
   if (k === 'pick' || k === 'drop') return { op: k };
+  if (k === 'pen_up') return { op: 'pen', state: 'up' };
+  if (k === 'pen_down') return { op: 'pen', state: 'down' };
   return { op: 'move', dir: k as MoveDir };
 }
 

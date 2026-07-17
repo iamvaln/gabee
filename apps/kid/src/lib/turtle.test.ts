@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { parsePuzzle, flattenProgram, type Op } from './turtle';
+import { parsePuzzle, flattenProgram, runProgram, type Op } from './turtle';
 
 describe('flattenProgram', () => {
   it('returns a flat move answer unchanged', () => {
@@ -90,5 +90,32 @@ describe('runBoards', () => {
     assert.equal(runBoards(bs, prog).success, true);
     const elseOnly: Op[] = [{ op: 'move', dir: 'right' }, { op: 'move', dir: 'right' }];
     assert.equal(runBoards(bs, elseOnly).success, false);
+  });
+});
+
+describe('pen (draw world)', () => {
+  it('pen up moves without drawing; two strokes with a gap match a two-path target', () => {
+    const puzzle = parsePuzzle('draw', {
+      grid: { w: 5, h: 1 }, start: [0, 0],
+      target: { paths: [[[0, 0], [1, 0]], [[2, 0], [3, 0]]] },
+    });
+    const prog: Op[] = [
+      { op: 'move', dir: 'right' },      // draw 0→1
+      { op: 'pen', state: 'up' },
+      { op: 'move', dir: 'right' },      // move 1→2, no draw
+      { op: 'pen', state: 'down' },
+      { op: 'move', dir: 'right' },      // draw 2→3
+    ];
+    assert.equal(runProgram(puzzle, prog).success, true);
+  });
+  it('without lifting the pen, the connecting segment is drawn → fails the two-path target', () => {
+    const puzzle = parsePuzzle('draw', {
+      grid: { w: 5, h: 1 }, start: [0, 0],
+      target: { paths: [[[0, 0], [1, 0]], [[2, 0], [3, 0]]] },
+    });
+    const prog: Op[] = [
+      { op: 'move', dir: 'right' }, { op: 'move', dir: 'right' }, { op: 'move', dir: 'right' },
+    ];
+    assert.equal(runProgram(puzzle, prog).success, false); // draws the middle gap too
   });
 });
