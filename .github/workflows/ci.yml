@@ -84,6 +84,12 @@ jobs:
       - name: Integration tests
         run: pnpm run test:integration
 
+      # c8 --check-coverage gates (per-package ratcheted thresholds). Re-runs the
+      # unit suites under coverage; fails the job if any package drops below its
+      # threshold. No app build needed — coverage is unit-level.
+      - name: Coverage thresholds
+        run: pnpm run test:coverage
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -133,6 +139,10 @@ jobs:
       - name: Build apps
         run: pnpm run build
 
+      # Bundle-size budgets (gzip, measured +10%). Reuses the build above; hard-fails on breach.
+      - name: Bundle size budgets
+        run: pnpm run size
+
       - name: Run e2e tests
         run: pnpm --filter @gabee/e2e run test
 
@@ -144,4 +154,33 @@ jobs:
           path: |
             e2e/test-results/
             e2e/playwright-report/
+          retention-days: 7
+
+      # Lighthouse CI — WARN-ONLY this phase (spec: warn → error after variance is
+      # observed). continue-on-error keeps a flaky collect from redding the required
+      # job while budgets are advisory. Reuses the build above; starts both servers.
+      - name: Setup Chrome for Lighthouse
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Lighthouse CI (warn-only)
+        continue-on-error: true
+        env:
+          KID_APP_ORIGIN: http://localhost:5173
+        run: |
+          pnpm --filter @gabee/web run start &
+          pnpm --filter @gabee/kid run preview --port 5173 --strictPort &
+          for i in $(seq 1 60); do
+            w=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health || true)
+            k=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/ || true)
+            [ "$w" = "200" ] && [ "$k" = "200" ] && break
+            sleep 2
+          done
+          pnpm run lhci
+
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: lhci-report/
           retention-days: 7

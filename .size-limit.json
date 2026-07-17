@@ -1,0 +1,20 @@
+[
+  {
+    "name": "kid: total app JS (gzip)",
+    "path": "apps/kid/dist/assets/*.js",
+    "limit": "240 kB",
+    "gzip": true
+  },
+  {
+    "name": "kid: vendor chunk (gzip)",
+    "path": "apps/kid/dist/assets/vendor-*.js",
+    "limit": "165 kB",
+    "gzip": true
+  },
+  {
+    "name": "web: total client JS (gzip)",
+    "path": "apps/web/.next/static/chunks/*.js",
+    "limit": "530 kB",
+    "gzip": true
+  }
+]
