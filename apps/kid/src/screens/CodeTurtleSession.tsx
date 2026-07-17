@@ -30,7 +30,7 @@ import {
 import { readLocalTrack, writeLocalTrack } from '../lib/codeTrack';
 import {
   type ProgramState, type Cond,
-  empty as emptyProgram, addPrim as progAddPrim, addLoop as progAddLoop, addIf as progAddIf,
+  empty as emptyProgram, load as loadProgram, addPrim as progAddPrim, addLoop as progAddLoop, addIf as progAddIf,
   setActive as progSetActive, setCount as progSetCount, setCond as progSetCond,
   removeTop as progRemoveTop, removeInside as progRemoveInside, blockCount,
 } from '../lib/program';
@@ -141,6 +141,11 @@ export function CodeTurtleSession({
   const [frame, setFrame] = useState(0);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<'ok' | 'fail' | null>(null);
+  // Efficiency levels (L7): config.optimalBlocks is a soft target — the child can
+  // solve any way, but earns full stars only for solutions within the optimal.
+  const [lastEfficient, setLastEfficient] = useState<boolean | null>(null);
+  const efficientRef = useRef(0);   // # questions solved within optimalBlocks this lesson
+  const hasOptimalRef = useRef(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const startedRef = useRef(false);
   const shownRef = useRef<string | null>(null);
@@ -203,6 +208,8 @@ export function CodeTurtleSession({
     if (!session || !q || startedRef.current || !profile) return;
     startedRef.current = true;
     lessonStartRef.current = Date.now();
+    efficientRef.current = 0;
+    hasOptimalRef.current = false;
     const position = nextLessonPosition();
     void enqueueEvent(
       { name: 'lesson_started', module: 'code', sub_mode: undefined, level, lesson, trigger, position_in_session: position },
@@ -216,10 +223,13 @@ export function CodeTurtleSession({
     if (shownRef.current === q.id) return;
     shownRef.current = q.id;
     stopTimer();
-    setProg(emptyProgram());
+    // Debugging levels pre-load a broken program the child fixes; others start empty.
+    const given = (q.config as { given_program?: Op[] } | null)?.given_program;
+    setProg(Array.isArray(given) ? loadProgram(given) : emptyProgram());
     setFrame(0);
     setRunning(false);
     setResult(null);
+    setLastEfficient(null);
     attemptsRef.current = 0;
     void enqueueEvent(
       { name: 'question_shown', module: 'code', sub_mode: undefined, level, lesson, question_id: q.id, type: q.type, attempt_num: 1 },
@@ -338,7 +348,10 @@ export function CodeTurtleSession({
   async function finishLesson(finalScore: number) {
     if (!session) return;
     const total = session.questions.length;
-    const stars = Math.max(1, Math.min(3, Math.round((finalScore / total) * 3)));
+    // Efficiency levels grade on how many were solved within the optimal block
+    // count; other levels grade on correctness (finalScore).
+    const base = hasOptimalRef.current ? efficientRef.current : finalScore;
+    const stars = Math.max(1, Math.min(3, Math.round((base / total) * 3)));
     void enqueueEvent(
       { name: 'lesson_completed', module: 'code', level, lesson, stars, duration_s: Math.round((Date.now() - lessonStartRef.current) / 1000) },
       ctx,
@@ -484,6 +497,11 @@ export function CodeTurtleSession({
             ctx,
           );
           if (guide.active) guide.report('success');
+          // Efficiency: within the optimal block count? (Soft — always a win.)
+          const eff = puzzle.optimalBlocks === undefined || blockCount(program) <= puzzle.optimalBlocks;
+          if (puzzle.optimalBlocks !== undefined) hasOptimalRef.current = true;
+          if (eff) efficientRef.current += 1;
+          setLastEfficient(puzzle.optimalBlocks === undefined ? null : eff);
           const newScore = score + 1;
           setTimeout(() => {
             const isLast = qIdx >= (session!.questions.length - 1);
@@ -513,7 +531,7 @@ export function CodeTurtleSession({
   const coach =
     guide.active && guide.step
       ? guide.step.coach[lang]
-      : result === 'ok' ? t('code.nice')
+      : result === 'ok' ? (lastEfficient === false ? t('code.shorter') : t('code.nice'))
         : result === 'fail' ? (q?.hint ? `💡 ${displayHint(q.hint, lang)}` : t('code.tryAgain'))
           : WORLD_COACH[world][lang];
 

@@ -10,6 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import type { QuestionBundleResponse } from '@gabee/types';
 import { api } from '../lib/api';
+import { sync } from '../lib/sync';
 import { useStore } from '../store';
 import { CodeTurtleSession } from './CodeTurtleSession';
 
@@ -30,7 +31,12 @@ function ifBundle(): QuestionBundleResponse {
 }
 
 function seedStore() {
-  useStore.setState({ lang: 'fr', profile: { id: PROFILE_ID, name: 'T', birth_date: null } as never, play: { id: 'p1' } as never });
+  useStore.setState({
+    lang: 'fr',
+    // persistProgress reads profile.progress_by_module.code — provide a valid track.
+    profile: { id: PROFILE_ID, name: 'T', birth_date: null, progress_by_module: { code: { highest_level: 0, levels: [], bySubMode: {} } } } as never,
+    play: { id: 'p1' } as never,
+  });
 }
 function renderSession() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -40,7 +46,14 @@ function renderSession() {
 }
 const coach = () => document.querySelector('.bee-coach-text')?.textContent ?? '';
 
-beforeEach(() => { localStorage.clear(); api.getBundle = async () => ifBundle(); seedStore(); });
+beforeEach(() => {
+  localStorage.clear();
+  api.getBundle = async () => ifBundle();
+  // Post-success finishLesson fires flushEvents→sync.flush() ~900ms later; in the
+  // DOM env that async throws and leaks past the test. Stub it (not under test here).
+  sync.flush = (async () => {}) as typeof sync.flush;
+  seedStore();
+});
 afterEach(() => cleanup());
 
 describe('CodeTurtleSession conditions — if block', () => {
