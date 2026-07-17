@@ -1,17 +1,29 @@
 import '../../../test/setup-integration';
 import { randomUUID } from 'node:crypto';
-import test, { after, beforeEach } from 'node:test';
+import test, { after, afterEach, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   createTestClient,
   resetDb,
   createCurriculum,
   createContentPlan,
+  createModuleDef,
   createQuestion,
 } from '@gabee/db/testing';
-import { getPlan, savePlan, acceptPlan, getPool, confirmPool, reviewQuestion, bulkSetQuestionStatus } from './admin-content';
+import {
+  getPlan,
+  savePlan,
+  acceptPlan,
+  getPool,
+  confirmPool,
+  reviewQuestion,
+  bulkSetQuestionStatus,
+  generateQuestions,
+} from './admin-content';
 import { HttpError } from '../http';
 import { POOL_TARGET } from '../admin';
+import { setAiProvider, resetAiProvider } from '../ai';
+import { FakeAiProvider, fakeDraftedQuestion } from '../ai/fake';
 import type { Prisma } from '@gabee/db';
 
 const prisma = createTestClient();
@@ -33,6 +45,9 @@ beforeEach(async () => {
   await createCurriculum(prisma, { id: DEFAULT_CURRICULUM_ID, isDefault: true });
 });
 after(async () => prisma.$disconnect());
+// generateQuestions tests inject a fake provider; always restore the real one so
+// no other test (or suite) sees the fake, even when a test throws mid-way.
+afterEach(() => resetAiProvider());
 
 const FULL_PLAN_OVERRIDES = {
   curriculumId: DEFAULT_CURRICULUM_ID,
@@ -331,4 +346,99 @@ test('bulkSetQuestionStatus: sets all given ids to confirmed/rejected/demoted an
   for (const id of confirmedIds) assert.equal(byId.get(id), 'confirmed');
   for (const id of rejectedIds) assert.equal(byId.get(id), 'rejected');
   for (const id of demotedIds) assert.equal(byId.get(id), 'demoted');
+});
+
+// ─── C4 · generateQuestions (AI seam) ───────────────────────────────────────
+// generateQuestions pins the batch to a sub-mode via normalizeSubModeForPersist:
+// passing sub_mode 'default' persists subMode 'default' (numbers' registry default
+// key is 'counting', so we pass 'default' explicitly to line up with our plan slot
+// and the id prefix below). POOL_LESSON = 1, so candidate ids are
+// `numbers-default-l1-l1-ai-NNN`.
+const GEN_SUBMODE = 'default';
+const GEN_ID_PREFIX = 'numbers-default-l1-l1-ai-';
+
+async function seedAcceptedPlanAndModule() {
+  await createModuleDef(prisma, { id: 'numbers' });
+  await createContentPlan(prisma, {
+    ...FULL_PLAN_OVERRIDES,
+    subMode: GEN_SUBMODE,
+    status: 'accepted',
+    acceptedBy: 'admin-actor-1',
+    acceptedAt: new Date(),
+  });
+}
+
+async function candidateIds(): Promise<string[]> {
+  const rows = await prisma.question.findMany({
+    where: { curriculumId: DEFAULT_CURRICULUM_ID, module: 'numbers', subMode: GEN_SUBMODE, status: 'candidate' },
+    select: { id: true },
+    orderBy: { id: 'asc' },
+  });
+  return rows.map((r) => r.id);
+}
+
+test('generateQuestions: a not-yet-accepted plan 409s plan_not_accepted and inserts nothing', async () => {
+  await createModuleDef(prisma, { id: 'numbers' });
+  // A plan exists but is still pending (not accepted).
+  await createContentPlan(prisma, { ...FULL_PLAN_OVERRIDES, subMode: GEN_SUBMODE, status: 'pending' });
+  setAiProvider(new FakeAiProvider([fakeDraftedQuestion()]));
+
+  await assert.rejects(
+    () =>
+      generateQuestions(
+        { module: 'numbers', level: 1, sub_mode: GEN_SUBMODE, batch_size: 1, difficulty_hint: 'as_planned' },
+        'admin-actor-1',
+      ),
+    (e: unknown) => e instanceof HttpError && e.status === 409 && e.code === 'plan_not_accepted',
+  );
+
+  assert.deepEqual(await candidateIds(), [], 'no candidate rows are inserted when the plan is not accepted');
+});
+
+test('generateQuestions: with an accepted plan, inserts the drafted batch as candidates and returns the refreshed pool', async () => {
+  await seedAcceptedPlanAndModule();
+  setAiProvider(
+    new FakeAiProvider([fakeDraftedQuestion(), fakeDraftedQuestion(), fakeDraftedQuestion()]),
+  );
+
+  const pool = await generateQuestions(
+    { module: 'numbers', level: 1, sub_mode: GEN_SUBMODE, batch_size: 3, difficulty_hint: 'as_planned' },
+    'admin-actor-1',
+  );
+
+  assert.equal(pool.candidates.length, 3, 'the 3 drafted questions are now candidates in the pool');
+  assert.deepEqual(await candidateIds(), [
+    `${GEN_ID_PREFIX}001`,
+    `${GEN_ID_PREFIX}002`,
+    `${GEN_ID_PREFIX}003`,
+  ]);
+});
+
+test('generateQuestions: id sequencing survives deletions — new ids go strictly above the max, no collisions or dropped rows', async () => {
+  await seedAcceptedPlanAndModule();
+
+  // First batch of 3 -> ai-001..003.
+  setAiProvider(
+    new FakeAiProvider([fakeDraftedQuestion(), fakeDraftedQuestion(), fakeDraftedQuestion()]),
+  );
+  await generateQuestions(
+    { module: 'numbers', level: 1, sub_mode: GEN_SUBMODE, batch_size: 3, difficulty_hint: 'as_planned' },
+    'admin-actor-1',
+  );
+
+  // Delete the middle row (ai-002); the surviving max suffix is 003.
+  await prisma.question.delete({ where: { id: `${GEN_ID_PREFIX}002` } });
+
+  // Second batch of 2 -> must be ai-004, ai-005 (strictly above 003), NOT reuse 002.
+  setAiProvider(new FakeAiProvider([fakeDraftedQuestion(), fakeDraftedQuestion()]));
+  await generateQuestions(
+    { module: 'numbers', level: 1, sub_mode: GEN_SUBMODE, batch_size: 2, difficulty_hint: 'as_planned' },
+    'admin-actor-1',
+  );
+
+  assert.deepEqual(
+    await candidateIds(),
+    [`${GEN_ID_PREFIX}001`, `${GEN_ID_PREFIX}003`, `${GEN_ID_PREFIX}004`, `${GEN_ID_PREFIX}005`],
+    'ids sequence off the surviving max (003), so the batch is not silently dropped by skipDuplicates',
+  );
 });

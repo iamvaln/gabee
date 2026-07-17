@@ -9,4 +9,19 @@ export function getAiProvider(): AiProvider {
   return cached;
 }
 
+/**
+ * Override the provider — for tests only, so `generateQuestions` / plan streaming
+ * can run against a deterministic fake instead of a live model. Production code
+ * never calls this. Pair every `setAiProvider` with `resetAiProvider()` in test
+ * teardown so the real provider is restored for other suites.
+ */
+export function setAiProvider(provider: AiProvider): void {
+  cached = provider;
+}
+
+/** Clear any override (and the lazy cache), restoring the default Anthropic provider. */
+export function resetAiProvider(): void {
+  cached = null;
+}
+
 export type { AiProvider } from './provider';
