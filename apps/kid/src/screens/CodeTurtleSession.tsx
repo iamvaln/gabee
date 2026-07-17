@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { LessonProgress, LevelProgress } from '@gabee/types';
 import { Bee, type BeeExpression } from '../components/Bee';
+import { Icon, type IconName } from '../components/Icon';
 import { Chrome } from '../components/Chrome';
 import { SessionHeader } from '../components/SessionHeader';
 import { MODULES } from '../content/modules';
@@ -52,12 +53,13 @@ const TOTAL = 5;
 // the actions world. Loops/conditions live in the seed reference answer only —
 // the kid builds a FLAT arrow program (always solvable for these levels).
 type PrimKey = 'up' | 'down' | 'left' | 'right' | 'pick' | 'drop';
-const GLYPH: Record<PrimKey, string> = {
-  up: '⬆️', down: '⬇️', left: '⬅️', right: '➡️', pick: '✋', drop: '📥',
+// Drawn line icons (Icon.tsx), not emoji — arrows/loop already exist; branch/pick/drop added.
+const PRIM_ICON: Record<PrimKey, IconName> = {
+  up: 'arrow-up', down: 'arrow-down', left: 'arrow-left-i', right: 'arrow-right-i', pick: 'pick', drop: 'drop',
 };
-const LOOP_GLYPH = '🔁';
-const IF_GLYPH = '❓';
-const COND_ARROW: Record<Cond, string> = { wall_up: '⬆️', wall_down: '⬇️', wall_left: '⬅️', wall_right: '➡️' };
+const COND_ICON: Record<Cond, IconName> = {
+  wall_up: 'arrow-up', wall_down: 'arrow-down', wall_left: 'arrow-left-i', wall_right: 'arrow-right-i',
+};
 const CONDS: Cond[] = ['wall_up', 'wall_down', 'wall_left', 'wall_right'];
 // Prims that show a text label under the glyph (the arrows are self-evident).
 const LABELLED: Record<string, { fr: string; en: string }> = {
@@ -568,18 +570,23 @@ export function CodeTurtleSession({
 
       <div className="session-body">
         <div className="session-stage">
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div className="code-boards">
             {puzzles.map((pz, bi) => {
               const r = boardsRun.perBoard[bi]!;
               const bcur = r.frames[Math.min(frame, r.frames.length - 1)]!;
+              const won = !running && frame > 0 && r.success;
               // A board shows its win state when the whole run finished and this board solved.
-              const boardResult = !running && frame > 0 && r.success ? 'ok' : result === 'fail' && !running ? 'fail' : result;
+              const boardResult = won ? 'ok' : result === 'fail' && !running ? 'fail' : result;
+              const multi = puzzles.length > 1;
               return (
                 <div
                   key={bi}
                   data-board-grid
-                  style={{ outline: puzzles.length > 1 && running ? '3px solid #F5A623' : 'none', borderRadius: 12, padding: 2 }}
+                  className={`code-bwrap${multi && running ? ' is-active' : ''}${won ? ' is-win' : ''}`}
                 >
+                  {multi && (
+                    <span className="code-bcap"><span className="st" />{t('code.board')} {String.fromCharCode(65 + bi)}</span>
+                  )}
                   {world === 'draw'
                     ? <DrawGrid puzzle={pz} cur={bcur} cell={CELL} running={running} expr={beeExpr} />
                     : <CellGrid puzzle={pz} cur={bcur} cell={CELL} running={running} expr={beeExpr} result={boardResult} />}
@@ -588,71 +595,50 @@ export function CodeTurtleSession({
             })}
           </div>
 
-          {/* Block budget (loops levels) */}
+          {/* Block budget (loops/combine levels) — chunky pips + count */}
           {puzzle.maxBlocks !== undefined && (
-            <div style={{ textAlign: 'center', marginTop: 8, fontWeight: 700, color: atBudget ? '#dc2626' : '#0f172a' }}>
-              {t('code.blocks')} {blockCount(program)}/{puzzle.maxBlocks}
+            <div className={`code-budget${atBudget ? ' over' : ''}`}>
+              {t('code.blocks')}
+              <span className="code-pips" aria-hidden="true">
+                {Array.from({ length: puzzle.maxBlocks }).map((_, k) => (
+                  <i key={k} className={k < blockCount(program) ? 'on' : ''} />
+                ))}
+              </span>
+              {blockCount(program)}/{puzzle.maxBlocks}
             </div>
           )}
 
           {/* Program strip */}
-          <div
-            style={{ marginTop: 16, minHeight: 56, padding: 8, borderRadius: 12, background: '#F1F5F9', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}
-            aria-label={t('code.yourProgram')}
-          >
+          <div className="code-strip" aria-label={t('code.yourProgram')}>
             {program.length === 0 ? (
-              <span style={{ color: '#94a3b8', fontSize: 14 }}>{t('code.addBlocks')}</span>
+              <span className="empty">{t('code.addBlocks')}</span>
             ) : (
               program.map((op, i) =>
                 op.op === 'if' ? (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6, padding: 6, borderRadius: 10,
-                      border: prog.active === i ? '3px solid #F5A623' : '2px solid #94a3b8', background: '#fff',
-                    }}
-                  >
-                    <span style={{ fontSize: 18 }}>{IF_GLYPH}</span>
-                    <span style={{ fontSize: 12, fontWeight: 700 }}>{t('code.ifWall')}</span>
-                    {CONDS.map((cnd) => (
-                      <button
-                        key={cnd}
-                        aria-label={cnd}
-                        onClick={() => chooseCond(i, cnd)}
-                        disabled={editLocked}
-                        style={{
-                          width: 26, height: 26, padding: 0, borderRadius: 6,
-                          border: op.cond === cnd ? '2px solid #0f172a' : '1px solid #cbd5e1',
-                          background: op.cond === cnd ? '#FDE9C8' : '#fff', cursor: editLocked ? 'default' : 'pointer',
-                        }}
-                      >
-                        {COND_ARROW[cnd]}
-                      </button>
-                    ))}
+                  <div key={i} className={`code-cont${prog.active === i ? ' is-active' : ''}`}>
+                    <span className="cap"><Icon name="branch" size={18} />{t('code.ifWall')}</span>
+                    <span className="code-seg">
+                      {CONDS.map((cnd) => (
+                        <button key={cnd} aria-label={cnd} onClick={() => chooseCond(i, cnd)} disabled={editLocked} className={op.cond === cnd ? 'on' : ''}>
+                          <Icon name={COND_ICON[cnd]} size={16} />
+                        </button>
+                      ))}
+                    </span>
                     {(['then', 'else'] as const).map((slot) => (
                       <button
                         key={slot}
                         aria-label={`slot-${slot}`}
                         onClick={() => chooseSlot(i, slot)}
                         disabled={editLocked}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 8,
-                          border: prog.active === i && prog.slot === slot ? '2px solid #F5A623' : '1px dashed #cbd5e1',
-                          background: '#F8FAFC', cursor: editLocked ? 'default' : 'pointer',
-                        }}
+                        className={`code-slot${prog.active === i && prog.slot === slot ? ' is-active' : ''}`}
                       >
-                        <span style={{ fontSize: 11, fontWeight: 700 }}>{t(slot === 'then' ? 'code.then' : 'code.else')}</span>
+                        <span className="tag">{t(slot === 'then' ? 'code.then' : 'code.else')}</span>
                         {((slot === 'then' ? op.then : op.else) ?? []).map((b, j) => {
                           const bp = b as Prim;
                           const bk = bp.op === 'move' ? bp.dir : bp.op;
                           return (
-                            <span
-                              key={j}
-                              onClick={(e) => { e.stopPropagation(); removeBranchBlock(i, slot, j); }}
-                              style={{ fontSize: 15 }}
-                              aria-label={`remove ${slot} ${bk}`}
-                            >
-                              {GLYPH[bk as PrimKey]}
+                            <span key={j} className="code-mini" onClick={(e) => { e.stopPropagation(); removeBranchBlock(i, slot, j); }} aria-label={`remove ${slot} ${bk}`}>
+                              <Icon name={PRIM_ICON[bk]} size={18} />
                             </span>
                           );
                         })}
@@ -660,33 +646,23 @@ export function CodeTurtleSession({
                     ))}
                   </div>
                 ) : op.op === 'repeat' ? (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6, padding: 6, borderRadius: 10,
-                      border: prog.active === i ? '3px solid #F5A623' : '2px solid #94a3b8', background: '#fff',
-                    }}
-                  >
-                    <span style={{ fontSize: 18 }}>{LOOP_GLYPH}</span>
-                    <button aria-label="count-down" onClick={() => setLoopCount(i, op.n - 1)} disabled={editLocked || guide.active} className="btn ghost" style={{ minWidth: 28, height: 28, padding: 0 }}>−</button>
-                    <span style={{ fontWeight: 800, minWidth: 18, textAlign: 'center' }}>×{op.n}</span>
-                    <button aria-label="count-up" onClick={() => setLoopCount(i, op.n + 1)} disabled={editLocked || guide.active} className="btn ghost" style={{ minWidth: 28, height: 28, padding: 0 }}>+</button>
-                    <div style={{ display: 'flex', gap: 4, padding: '2px 6px', borderLeft: '2px dashed #cbd5e1' }}>
+                  <div key={i} className={`code-cont${prog.active === i ? ' is-active' : ''}`}>
+                    <span className="cap"><Icon name="loop" size={18} />{t('code.loop')}</span>
+                    <span className="code-count">
+                      <button aria-label="count-down" onClick={() => setLoopCount(i, op.n - 1)} disabled={editLocked || guide.active}>−</button>
+                      ×{op.n}
+                      <button aria-label="count-up" onClick={() => setLoopCount(i, op.n + 1)} disabled={editLocked || guide.active}>+</button>
+                    </span>
+                    <div className="code-body">
                       {op.body.length === 0 ? (
-                        <span style={{ color: '#94a3b8', fontSize: 12 }}>{t('code.loopEmpty')}</span>
+                        <span className="empty">{t('code.loopEmpty')}</span>
                       ) : (
                         op.body.map((b, j) => {
                           const bp = b as Prim;
                           const bk = bp.op === 'move' ? bp.dir : bp.op;
                           return (
-                            <button
-                              key={j}
-                              onClick={() => removeBodyBlock(i, j)}
-                              disabled={editLocked || guide.active}
-                              style={{ height: 34, padding: '0 8px', borderRadius: 8, background: '#34d399', color: '#0f172a', border: 'none', fontSize: 15, fontWeight: 700 }}
-                              aria-label={`remove ${bk}`}
-                            >
-                              {GLYPH[bk]}
+                            <button key={j} className="code-mini" onClick={() => removeBodyBlock(i, j)} disabled={editLocked || guide.active} aria-label={`remove ${bk}`}>
+                              <Icon name={PRIM_ICON[bk]} size={18} />
                             </button>
                           );
                         })
@@ -700,19 +676,8 @@ export function CodeTurtleSession({
                   const p = op as Prim;
                   const k = p.op === 'move' ? p.dir : p.op;
                   return (
-                    <button
-                      key={i}
-                      onClick={() => removeTopBlock(i)}
-                      disabled={editLocked || guide.active}
-                      style={{
-                        height: 40, padding: '0 10px', borderRadius: 8,
-                        background: '#34d399', color: '#0f172a', border: 'none', fontSize: 16, fontWeight: 700,
-                        display: 'flex', alignItems: 'center', gap: 4,
-                        cursor: editLocked ? 'default' : 'pointer',
-                      }}
-                      aria-label={`remove ${k}`}
-                    >
-                      <span style={{ fontSize: 18 }}>{GLYPH[k]}</span>
+                    <button key={i} className="code-step" onClick={() => removeTopBlock(i)} disabled={editLocked || guide.active} aria-label={`remove ${k}`}>
+                      <Icon name={PRIM_ICON[k]} size={18} />
                       {LABELLED[k] ? LABELLED[k]![lang] : ''}
                     </button>
                   );
@@ -722,56 +687,30 @@ export function CodeTurtleSession({
           </div>
 
           {/* Block bank — derived from this puzzle's config.blocks */}
-          <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div className="code-bank">
             {paletteFor(puzzle.blocks).map((k) => (
               <button
                 key={k}
                 ref={setAnchor(`palette:${k}`)}
                 onClick={() => addPrim(k)}
                 disabled={editLocked || atBudget || gated(`palette:${k}`)}
-                style={{
-                  minWidth: 56, height: 60, padding: '0 10px', borderRadius: 12,
-                  background: LABELLED[k] ? '#FDE9C8' : '#BBEAF2',
-                  color: '#0f172a', border: '2px solid #0f172a',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
-                  fontWeight: 700, cursor: running || result ? 'default' : 'pointer',
-                }}
+                className="code-chip"
                 aria-label={k}
               >
-                <span style={{ fontSize: 24, lineHeight: 1 }}>{GLYPH[k]}</span>
-                {LABELLED[k] && <span style={{ fontSize: 11 }}>{LABELLED[k]![lang]}</span>}
+                <Icon name={PRIM_ICON[k]} size={24} />
+                {LABELLED[k] && <span className="lbl">{LABELLED[k]![lang]}</span>}
               </button>
             ))}
             {puzzle.blocks.includes('repeat') && (
-              <button
-                aria-label="repeat"
-                onClick={addLoop}
-                disabled={editLocked || atBudget}
-                style={{
-                  minWidth: 56, height: 60, padding: '0 10px', borderRadius: 12,
-                  background: '#FDE9C8', color: '#0f172a', border: '2px solid #0f172a',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
-                  fontWeight: 700, cursor: editLocked || atBudget ? 'default' : 'pointer',
-                }}
-              >
-                <span style={{ fontSize: 24, lineHeight: 1 }}>{LOOP_GLYPH}</span>
-                <span style={{ fontSize: 11 }}>{t('code.loop')}</span>
+              <button aria-label="repeat" onClick={addLoop} disabled={editLocked || atBudget} className="code-chip loop">
+                <Icon name="loop" size={24} />
+                <span className="lbl">{t('code.loop')}</span>
               </button>
             )}
             {puzzle.blocks.includes('if') && (
-              <button
-                aria-label="if"
-                onClick={addIf}
-                disabled={editLocked || atBudget}
-                style={{
-                  minWidth: 56, height: 60, padding: '0 10px', borderRadius: 12,
-                  background: '#E9D5FF', color: '#0f172a', border: '2px solid #0f172a',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
-                  fontWeight: 700, cursor: editLocked || atBudget ? 'default' : 'pointer',
-                }}
-              >
-                <span style={{ fontSize: 24, lineHeight: 1 }}>{IF_GLYPH}</span>
-                <span style={{ fontSize: 11 }}>{t('code.condition')}</span>
+              <button aria-label="if" onClick={addIf} disabled={editLocked || atBudget} className="code-chip iff">
+                <Icon name="branch" size={24} />
+                <span className="lbl">{t('code.condition')}</span>
               </button>
             )}
           </div>
@@ -779,7 +718,7 @@ export function CodeTurtleSession({
           {/* Actions */}
           <div style={{ marginTop: 16, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button ref={setAnchor('run')} className="btn" onClick={() => void startRun()} disabled={editLocked || program.length === 0 || gated('run')}>
-              {t('code.run')}
+              <Icon name="play" size={18} /> {t('code.run')}
             </button>
             <button className="btn ghost" onClick={clearProgram} disabled={editLocked || program.length === 0 || guide.active}>
               {t('code.clear')}
@@ -867,10 +806,18 @@ function CellGrid({
             <div key={`${x},${y}`} style={{
               borderRight: x < puzzle.w - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
               borderBottom: y < puzzle.h - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: Math.round(cell * 0.5),
-              color: goalHit ? '#22c55e' : '#FCD34D',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: goalHit ? 'var(--feedback-correct)' : 'var(--color-brand)',
             }}>
-              {isGoal ? (goalHit ? '✓' : '★') : isWall || isObstacle ? '⬛' : isTarget ? '🧺' : itemHere ? '🍎' : ''}
+              {isGoal ? (
+                <Icon name={goalHit ? 'check' : 'star'} size={Math.round(cell * 0.56)} />
+              ) : isWall || isObstacle ? (
+                <span style={{ width: cell * 0.6, height: cell * 0.6, borderRadius: 5, background: 'var(--color-ink)', opacity: 0.85 }} />
+              ) : isTarget ? (
+                <span style={{ width: cell * 0.5, height: cell * 0.5, borderRadius: 6, border: '2px dashed var(--feedback-correct)' }} />
+              ) : itemHere ? (
+                <span style={{ width: cell * 0.42, height: cell * 0.42, borderRadius: '50%', background: 'var(--feedback-retry)' }} />
+              ) : null}
             </div>
           );
         }),
@@ -882,7 +829,7 @@ function CellGrid({
       }}>
         <div style={{ position: 'relative' }}>
           <HeadingBee size={Math.max(22, cell - 12)} heading={cur.heading} expr={expr} running={running} />
-          {cur.carrying !== null && <span style={{ position: 'absolute', top: -8, right: -8, fontSize: 16 }}>🍎</span>}
+          {cur.carrying !== null && <span style={{ position: 'absolute', top: -8, right: -8, width: 12, height: 12, borderRadius: '50%', background: 'var(--feedback-retry)', border: '2px solid #fff' }} />}
         </div>
       </div>
       {result === 'ok' && <span style={{ display: 'none' }} />}
