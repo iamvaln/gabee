@@ -192,6 +192,64 @@ export async function createQuestion(
   });
 }
 
+export async function createModuleDef(
+  prisma: PrismaClient,
+  overrides: Partial<Prisma.ModuleDefUncheckedCreateInput> = {},
+) {
+  return prisma.moduleDef.create({
+    data: {
+      id: 'numbers',
+      slug: 'numbers',
+      name: { fr: 'Nombres', en: 'Numbers' } as Prisma.InputJsonValue,
+      description: { fr: '', en: '' } as Prisma.InputJsonValue,
+      colorToken: 'blue',
+      icon: 'star',
+      characteristics: {} as Prisma.InputJsonValue,
+      status: 'active',
+      ...overrides,
+    },
+  });
+}
+
+export async function createSubMode(
+  prisma: PrismaClient,
+  overrides: Partial<Prisma.SubModeUncheckedCreateInput> = {},
+) {
+  return prisma.subMode.create({
+    data: {
+      id: 'numbers.default',
+      module: 'numbers',
+      key: 'default',
+      name: { fr: 'Défaut', en: 'Default' } as Prisma.InputJsonValue,
+      languageDependent: false,
+      displayOrder: 0,
+      mechanicHint: 'mcq',
+      ...overrides,
+    },
+  });
+}
+
+export async function createContentPlan(
+  prisma: PrismaClient,
+  overrides: Partial<Prisma.ContentPlanUncheckedCreateInput> = {},
+) {
+  const curriculumId =
+    overrides.curriculumId ?? (await createCurriculum(prisma, { isDefault: true })).id;
+  return prisma.contentPlan.create({
+    data: {
+      moduleId: 'numbers',
+      subMode: 'default',
+      level: 1,
+      scope: { fr: '', en: '' } as Prisma.InputJsonValue,
+      pedagogicalObjectives: [] as Prisma.InputJsonValue,
+      validationCriteria: { fr: '', en: '' } as Prisma.InputJsonValue,
+      status: 'pending',
+      ...overrides,
+      curriculumId,
+    },
+  });
+}
+
 export async function createDevice(
   prisma: PrismaClient,
   overrides: Partial<Prisma.DeviceUncheckedCreateInput> = {},
