@@ -55,3 +55,40 @@ describe('parsePuzzle maxBlocks', () => {
     assert.equal(p.maxBlocks, undefined);
   });
 });
+
+import { boardsFor, runBoards } from './turtle';
+
+describe('boardsFor', () => {
+  it('returns a single board when config.boards is absent', () => {
+    const bs = boardsFor('maze', { grid: { w: 3, h: 1 }, start: [0, 0], goal: [2, 0], walls: [] });
+    assert.equal(bs.length, 1);
+    assert.deepEqual(bs[0]!.goal, { x: 2, y: 0 });
+  });
+  it('returns one puzzle per board, each merged over shared config', () => {
+    const bs = boardsFor('maze', {
+      grid: { w: 3, h: 1 }, blocks: ['right', 'if'],
+      boards: [{ start: [0, 0], goal: [2, 0], walls: [[1, 0]] }, { start: [0, 0], goal: [2, 0], walls: [] }],
+    });
+    assert.equal(bs.length, 2);
+    assert.equal(bs[0]!.walls!.length, 1);
+    assert.equal(bs[1]!.walls!.length, 0);
+    assert.equal(bs[0]!.w, 3);
+  });
+});
+
+describe('runBoards', () => {
+  it('succeeds only when the program solves every board', () => {
+    const bs = boardsFor('maze', {
+      grid: { w: 3, h: 2 }, boards: [
+        { start: [0, 0], goal: [2, 0], walls: [[1, 0]] }, // straight blocked -> detour down
+        { start: [0, 0], goal: [2, 0], walls: [[0, 1]] }, // detour blocked -> straight
+      ],
+    });
+    const prog: Op[] = [{ op: 'if', cond: 'wall_right',
+      then: [{ op: 'move', dir: 'down' }, { op: 'move', dir: 'right' }, { op: 'move', dir: 'right' }, { op: 'move', dir: 'up' }],
+      else: [{ op: 'move', dir: 'right' }, { op: 'move', dir: 'right' }] }];
+    assert.equal(runBoards(bs, prog).success, true);
+    const elseOnly: Op[] = [{ op: 'move', dir: 'right' }, { op: 'move', dir: 'right' }];
+    assert.equal(runBoards(bs, elseOnly).success, false);
+  });
+});
