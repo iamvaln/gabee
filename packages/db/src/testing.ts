@@ -204,7 +204,9 @@ export async function createModuleDef(
       description: { fr: '', en: '' } as Prisma.InputJsonValue,
       colorToken: 'blue',
       icon: 'star',
-      characteristics: {} as Prisma.InputJsonValue,
+      // Must satisfy ModuleCharacteristicsSchema (input_methods/voiceover/event_types)
+      // — the admin services Zod-parse this column on read.
+      characteristics: { input_methods: [], voiceover: false, event_types: [] } as Prisma.InputJsonValue,
       status: 'active',
       ...overrides,
     },
@@ -222,7 +224,8 @@ export async function createSubMode(
       key: 'default',
       name: { fr: 'Défaut', en: 'Default' } as Prisma.InputJsonValue,
       languageDependent: false,
-      displayOrder: 0,
+      // SubModeDefSchema requires display_order >= 1.
+      displayOrder: 1,
       mechanicHint: 'mcq',
       ...overrides,
     },
