@@ -19,12 +19,14 @@
     "test:coverage": "turbo run test:coverage",
     "test:integration": "turbo run test:integration",
     "size": "size-limit",
+    "lhci": "lhci autorun",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "security:scan": "bash ops/security/scan.sh"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.61.1",
     "@size-limit/file": "^12.1.0",
     "eslint": "^10.4.0",
