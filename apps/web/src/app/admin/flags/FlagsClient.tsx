@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AdminFlagRow, FlagOverrideRow, Language } from '@gabee/types';
+
+type ParentOption = { email: string; children_count: number };
 
 /** Accessible on/off toggle switch (admin.css `.switch`). */
 function Switch({
@@ -43,6 +45,26 @@ export function FlagsClient({
   const [flags, setFlags] = useState<AdminFlagRow[]>(initial);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Parent accounts to pick from when adding an override — admins select, never type.
+  const [parents, setParents] = useState<ParentOption[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    void fetch('/api/admin/users/parents')
+      .then((r) => (r.ok ? r.json() : { parents: [] }))
+      .then((body) => {
+        if (cancelled) return;
+        setParents(
+          (body.parents ?? []).map((p: { email: string; children_count?: number }) => ({
+            email: p.email,
+            children_count: p.children_count ?? 0,
+          })),
+        );
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function toggleDefault(row: AdminFlagRow, next: boolean) {
     if (!canEdit) return;
@@ -73,6 +95,7 @@ export function FlagsClient({
           canEdit={canEdit}
           busy={busy === f.key}
           lang={lang}
+          parents={parents}
           onToggle={(next) => toggleDefault(f, next)}
           onOverrideCountChange={(n) =>
             setFlags((fs) => fs.map((x) => (x.key === f.key ? { ...x, override_count: n } : x)))
@@ -88,6 +111,7 @@ function FlagCard({
   canEdit,
   busy,
   lang,
+  parents,
   onToggle,
   onOverrideCountChange,
 }: {
@@ -95,6 +119,7 @@ function FlagCard({
   canEdit: boolean;
   busy: boolean;
   lang: Language;
+  parents: ParentOption[];
   onToggle: (next: boolean) => void;
   onOverrideCountChange: (n: number) => void;
 }) {
@@ -231,21 +256,37 @@ function FlagCard({
               ))}
             </ul>
           )}
-          {canEdit && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
-              <input
-                type="email"
-                placeholder={L ? 'e-mail du parent' : 'parent email'}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{ flex: 1, minWidth: 0 }}
-              />
-              <Switch checked={enabled} onChange={setEnabled} ariaLabel={L ? 'activé pour ce parent' : 'enabled for this parent'} />
-              <button type="button" className="btn sm" onClick={addOverride} disabled={rowBusy || !email.trim()}>
-                {L ? 'Ajouter' : 'Add'}
-              </button>
-            </div>
-          )}
+          {canEdit && (() => {
+            const already = new Set((overrides ?? []).map((o) => o.email));
+            const available = parents.filter((p) => !already.has(p.email));
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
+                <select
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={available.length === 0}
+                  style={{ flex: 1, minWidth: 0 }}
+                  aria-label={L ? 'compte parent' : 'parent account'}
+                >
+                  <option value="">
+                    {available.length === 0
+                      ? (L ? '— tous les parents ont déjà une exception —' : '— all parents already overridden —')
+                      : (L ? '— choisir un parent —' : '— choose a parent —')}
+                  </option>
+                  {available.map((p) => (
+                    <option key={p.email} value={p.email}>
+                      {p.email}
+                      {p.children_count ? ` (${p.children_count} ${L ? 'enfant(s)' : 'kid(s)'})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <Switch checked={enabled} onChange={setEnabled} ariaLabel={L ? 'activé pour ce parent' : 'enabled for this parent'} />
+                <button type="button" className="btn sm" onClick={addOverride} disabled={rowBusy || !email}>
+                  {L ? 'Ajouter' : 'Add'}
+                </button>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>
