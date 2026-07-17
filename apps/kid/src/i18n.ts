@@ -134,6 +134,10 @@ const resources = {
         guideSkip: 'Je sais, passer',
         guideReplay: '？',
         guideReplayAria: 'Revoir le guide',
+        blocks: 'Blocs',
+        loop: 'Boucle',
+        loopDone: 'OK',
+        loopEmpty: '(vide)',
       },
       session: {
         errorTitle: 'Oups !',
@@ -349,6 +353,10 @@ const resources = {
         guideSkip: 'I know, skip',
         guideReplay: '？',
         guideReplayAria: 'Replay the guide',
+        blocks: 'Blocks',
+        loop: 'Loop',
+        loopDone: 'OK',
+        loopEmpty: '(empty)',
       },
       session: {
         errorTitle: 'Oops!',
