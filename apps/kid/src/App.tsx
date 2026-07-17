@@ -10,6 +10,7 @@ import { armSessionEnd, endSession, noteBackground, noteForeground, setLastScree
 import { deviceTz, deviceTzOffsetMin } from './lib/device';
 import { useIdle, installIdleListeners } from './lib/idle';
 import { setMusicZone, reevaluateMusic } from './lib/audio';
+import { refreshFlags } from './lib/flags';
 import { LockScreen } from './components/LockScreen';
 import { SyncIndicator } from './components/SyncIndicator';
 import { Login } from './screens/Login';
@@ -395,6 +396,9 @@ export function App() {
     // The new kid's music_enabled pref just seeded — settle playback
     // immediately instead of waiting for the zoning effect's next render.
     reevaluateMusic();
+    // Keep flags fresh on a long-lived session; re-settle music once the
+    // ambient-music flag may have changed (voiceover re-reads live on next speak).
+    void refreshFlags().then(() => reevaluateMusic());
     armSessionEnd();
     const sessionId = startPlay();
     void enqueueEvent(

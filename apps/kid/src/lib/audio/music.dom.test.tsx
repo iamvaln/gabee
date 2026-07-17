@@ -5,6 +5,7 @@ import '../../test/setup-dom';
 
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { useStore } from '../../store';
 
 interface FakeSource {
   buffer: unknown; loop: boolean; started: boolean; stopped: boolean;
@@ -51,6 +52,9 @@ describe('music engine (fake AudioContext)', () => {
 
   beforeEach(async () => {
     state = installFakeAudio();
+    // Ambient music is gated on the admin flag (design 2026-07-16); these
+    // engine tests predate it, so enable it (fallback is OFF).
+    useStore.setState({ featureFlags: { kid_ambient_music: true } });
     audio = await import('./index');
     audio.setEnabled(true);
     audio.setMusicEnabled(true);

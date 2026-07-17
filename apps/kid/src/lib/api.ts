@@ -17,6 +17,8 @@ import {
   type UpdateProfileRequest,
   KidEffectiveLimitsSchema,
   KidStreakStateSchema,
+  EffectiveFlagsResponseSchema,
+  type EffectiveFlagsResponse,
   type AuthSessionResponse,
   type BundleManifestEntry,
   type ClaimDevicePairRequest,
@@ -244,6 +246,11 @@ export const api = {
     return KidEffectiveLimitsSchema.parse(
       await request(`/api/profiles/${encodeURIComponent(profileId)}/effective-limits`),
     );
+  },
+  /** Admin feature flags for the paired parent (design 2026-07-16). Best-effort;
+   *  the caller (lib/flags.refreshFlags) swallows all errors. */
+  async getEffectiveFlags(): Promise<EffectiveFlagsResponse> {
+    return EffectiveFlagsResponseSchema.parse(await request('/api/flags/effective'));
   },
   /**
    * Server-authoritative streak bump on lesson_completed (product §6.3). Called

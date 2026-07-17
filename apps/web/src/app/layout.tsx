@@ -14,10 +14,10 @@ const DEFAULT_DESCRIPTION =
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: {
-    default: 'Gabee — Apprendre les chiffres, mots, code et plus (FR/EN)',
-    template: '%s · Gabee',
-  },
+  // Plain string (no template) at the root: each surface sets its own title
+  // (+ template), so a nested layout's default isn't suffixed with '· Gabee'.
+  // Landing branding ('%s · Gabee' on sub-pages) lives in the [locale] layout.
+  title: 'Gabee',
   description: DEFAULT_DESCRIPTION,
   applicationName: 'Gabee',
   alternates: {

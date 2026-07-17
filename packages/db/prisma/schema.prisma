@@ -187,6 +187,7 @@ model ParentAccount {
   emailConfirmations EmailConfirmation[]
   authEvents         AuthEventLog[]
   devices            Device[]
+  featureFlagOverrides FeatureFlagOverride[]
   consents           ConsentRecord[]
   /// Timestamp set when the email confirmation link is opened. While null,
   /// the account exists but the email is "unverified" — some flows (e.g.
@@ -593,6 +594,32 @@ model AuditLog {
   @@index([actorId])
   @@index([kind, createdAt])
   @@map("audit_logs")
+}
+
+// Admin feature flags (design 2026-07-16). `FeatureFlag` holds the global
+// default per registry key; `FeatureFlagOverride` targets a specific parent
+// account (whole family). Read precedence: override > enabledDefault > code
+// fallback. Keys must be `@gabee/types` FLAG_KEYS members (app-enforced).
+model FeatureFlag {
+  key            String               @id
+  enabledDefault Boolean              @map("enabled_default")
+  description    String               @default("")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  overrides      FeatureFlagOverride[]
+
+  @@map("feature_flags")
+}
+
+model FeatureFlagOverride {
+  flagKey   String        @map("flag_key")
+  parentId  String        @map("parent_id") @db.Uuid
+  enabled   Boolean
+  createdAt DateTime      @default(now()) @map("created_at")
+  flag      FeatureFlag   @relation(fields: [flagKey], references: [key], onDelete: Cascade)
+  parent    ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@id([flagKey, parentId])
+  @@map("feature_flag_overrides")
 }
 
 // Landing contact-form submissions (admin spec §8).

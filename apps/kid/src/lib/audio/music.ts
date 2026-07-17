@@ -5,6 +5,7 @@
 // fire-and-forget, error-swallowing, nothing at module scope touches window.
 import { getAudioContext } from './context';
 import { isEnabled, isMusicEnabled } from './prefs';
+import { isFeatureEnabled } from '../flags';
 
 export type MusicZone = 'ambient' | 'silent';
 
@@ -112,10 +113,11 @@ function stop(): void {
   }
 }
 
-/** Idempotent: reads zone × prefs and settles playback to match. */
+/** Idempotent: reads flag × zone × prefs and settles playback to match. */
 export function reevaluateMusic(): void {
   try {
-    if (shouldPlayMusic(zone, isEnabled(), isMusicEnabled())) start();
+    const flagOn = isFeatureEnabled('kid_ambient_music');
+    if (flagOn && shouldPlayMusic(zone, isEnabled(), isMusicEnabled())) start();
     else stop();
   } catch {
     /* music must never break a render */

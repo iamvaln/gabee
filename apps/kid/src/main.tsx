@@ -7,6 +7,7 @@ import { App } from './App';
 import { consumePairToken, hasPairTokenInUrl } from './lib/pair';
 import * as bundles from './lib/bundles';
 import { refreshIfNewer, startBackgroundRefresh } from './lib/bundles';
+import { refreshFlags } from './lib/flags';
 import { bindBundlesModule } from './lib/api';
 import { initSentry, Sentry } from './lib/sentry';
 
@@ -91,3 +92,6 @@ if (hasPairTokenInUrl()) {
 // vite.config.ts — no manual call needed here.
 void refreshIfNewer();
 startBackgroundRefresh();
+
+// Feature flags (design 2026-07-16) — best-effort, gated to the next evaluation.
+void refreshFlags();

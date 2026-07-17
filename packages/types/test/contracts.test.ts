@@ -17,6 +17,12 @@ import {
   FACE_PATHS,
   defaultProgressByModule,
   defaultProgressByModulePerLanguage,
+  FLAG_KEYS,
+  FLAG_FALLBACKS,
+  FLAG_DEFAULTS,
+  EffectiveFlagsResponseSchema,
+  UpdateFlagRequestSchema,
+  SetFlagOverrideRequestSchema,
   type EventEnvelope,
 } from '../src/index';
 
@@ -426,6 +432,40 @@ describe('ParentKidMessageRow', () => {
   it('still accepts a legacy avatar string', () => {
     const parsed = ParentKidMessageRowSchema.parse({ ...row, to_child_avatar: 'avatar_3' });
     assert.equal(parsed.to_child_avatar, 'avatar_3');
+  });
+});
+
+describe('feature flags registry', () => {
+  it('every key has a fallback, a default, and a description', () => {
+    for (const key of FLAG_KEYS) {
+      assert.equal(typeof FLAG_FALLBACKS[key], 'boolean');
+      assert.equal(typeof FLAG_DEFAULTS[key], 'boolean');
+    }
+  });
+
+  it('initial values match the design decisions', () => {
+    assert.equal(FLAG_FALLBACKS.kid_voiceover, true);
+    assert.equal(FLAG_FALLBACKS.kid_ambient_music, false);
+    assert.equal(FLAG_FALLBACKS.kid_game_sounds, true);
+    assert.equal(FLAG_DEFAULTS.kid_voiceover, true);
+    assert.equal(FLAG_DEFAULTS.kid_ambient_music, false);
+    assert.equal(FLAG_DEFAULTS.kid_game_sounds, true);
+  });
+
+  it('EffectiveFlagsResponseSchema accepts a boolean map', () => {
+    const parsed = EffectiveFlagsResponseSchema.parse({ flags: { kid_voiceover: false, unknown_future: true } });
+    assert.equal(parsed.flags.kid_voiceover, false);
+  });
+
+  it('UpdateFlagRequestSchema allows partial updates', () => {
+    assert.deepEqual(UpdateFlagRequestSchema.parse({ enabled_default: true }), { enabled_default: true });
+    assert.deepEqual(UpdateFlagRequestSchema.parse({}), {});
+  });
+
+  it('SetFlagOverrideRequestSchema requires a valid email + enabled', () => {
+    assert.throws(() => SetFlagOverrideRequestSchema.parse({ email: 'nope', enabled: true }));
+    const ok = SetFlagOverrideRequestSchema.parse({ email: 'a@b.com', enabled: false });
+    assert.equal(ok.enabled, false);
   });
 });
 
