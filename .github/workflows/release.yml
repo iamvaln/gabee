@@ -159,7 +159,9 @@ jobs:
         env:
           GITLEAKS_CONFIG: .gitleaks.toml
       - name: osv-scanner (dependency CVEs)
-        uses: google/osv-scanner-action@v1.9.2
+        # The step-action lives in a subdirectory; the repo root at v1.9.x has no
+        # top-level `runs:` (it's a reusable-workflow repo). The `@v1` tag never existed.
+        uses: google/osv-scanner-action/osv-scanner-action@v1.9.2
         with:
           scan-args: "--lockfile=pnpm-lock.yaml"
       - name: Semgrep (SAST — ERROR blocks)
