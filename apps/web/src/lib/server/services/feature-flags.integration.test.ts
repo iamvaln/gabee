@@ -19,7 +19,7 @@ after(async () => prisma.$disconnect());
 test('never-fetched with no DB rows → code fallbacks', async () => {
   const { parent } = await createLoginableParent(prisma);
   const flags = await getEffectiveFlagsForParent(parent.id);
-  assert.equal(flags.kid_voiceover, true); // FLAG_FALLBACKS
+  assert.equal(flags.kid_voiceover, false); // FLAG_FALLBACKS — audio ships dark
   assert.equal(flags.kid_ambient_music, false);
 });
 

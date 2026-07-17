@@ -4,8 +4,9 @@
 // and setEnabled(false) must silence in-flight narration (Fix 2).
 import '../../test/setup-dom'; // jsdom + localStorage so the store import inside prefs works.
 
-import { describe, it } from 'node:test';
+import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { useStore } from '../../store';
 
 interface FakeUtterance {
   text: string;
@@ -47,6 +48,10 @@ function installFakeSynth(): { spoken: string[]; cancelCalls: number } {
 }
 
 describe('audio index — provider lifecycle regressions', () => {
+  // Voiceover ships dark by default now; these tests exercise the narration
+  // lifecycle, so enable the gating flag explicitly.
+  beforeEach(() => useStore.setState({ featureFlags: { kid_voiceover: true } }));
+
   it('a new speak() abandons a pending speakSuccess chain', async () => {
     const state = installFakeSynth();
     const { speak, speakSuccess } = await import('./index');
