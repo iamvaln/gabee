@@ -16,7 +16,8 @@ import { ageFromBirthDate } from '../lib/age';
 import { sfx } from '../lib/audio';
 import {
   parsePuzzle,
-  runProgram,
+  boardsFor,
+  runBoards,
   flattenProgram,
   HEADING_DEG,
   type CodeWorld,
@@ -150,11 +151,16 @@ export function CodeTurtleSession({
   const subKey = `code:${world}`;
 
   const q = session?.questions[qIdx];
-  const puzzle = useMemo(() => (q ? parsePuzzle(world, q.config) : null), [q, world]);
+  // A conditions question (config.boards) yields several boards a single program
+  // must all solve; every other question yields exactly one board. `puzzle` is the
+  // representative board (all boards share grid/blocks) — used for palette/guide/budget.
+  const puzzles = useMemo(() => (q ? boardsFor(world, q.config) : null), [q, world]);
+  const puzzle = puzzles ? puzzles[0]! : null;
   const ctx = { profileId: profile?.id ?? null, sessionId: play?.id ?? null };
 
-  // Precompute the run (frames + success) for the current program.
-  const run = useMemo(() => (puzzle ? runProgram(puzzle, program) : null), [puzzle, program]);
+  // Precompute per-board runs (frames + success) for the current program.
+  const boardsRun = useMemo(() => (puzzles ? runBoards(puzzles, program) : null), [puzzles, program]);
+  const maxFrames = boardsRun ? Math.max(...boardsRun.perBoard.map((r) => r.frames.length)) : 0;
 
   const guideScript = useMemo(() => {
     if (!puzzle || !q) return [];
@@ -336,7 +342,7 @@ export function CodeTurtleSession({
     setFrame(0);
   }
   function startRun() {
-    if (!q || !puzzle || !run || program.length === 0 || running) return;
+    if (!q || !puzzle || !boardsRun || program.length === 0 || running) return;
     if (guide.active) guide.report('run-pressed');
     attemptsRef.current += 1;
     setResult(null);
@@ -346,10 +352,10 @@ export function CodeTurtleSession({
     timer.current = setInterval(() => {
       i += 1;
       setFrame(i);
-      if (i >= run.frames.length - 1) {
+      if (i >= maxFrames - 1) {
         stopTimer();
         setRunning(false);
-        const ok = run.success;
+        const ok = boardsRun.success;
         setResult(ok ? 'ok' : 'fail');
         sfx(ok ? 'correct' : 'wrong');
         void enqueueEvent(
@@ -390,7 +396,6 @@ export function CodeTurtleSession({
   }
 
   const m = MODULES.find((x) => x.id === 'code')!;
-  const cur: Frame | null = run ? run.frames[Math.min(frame, run.frames.length - 1)]! : null;
   const beeExpr: BeeExpression = result === 'ok' ? 'celebrate' : result === 'fail' ? 'encourage' : 'focus';
   const coach =
     guide.active && guide.step
@@ -403,7 +408,7 @@ export function CodeTurtleSession({
   if (bundleLoadFailed({ isLoading, isError, hasBundle: !!bundle, offline: isOffline() })) {
     return <SessionError {...shell} onRetry={() => void refetch()} level={level} lesson={lesson} />;
   }
-  if (isLoading || !session || !q || !puzzle || !cur) {
+  if (isLoading || !session || !q || !puzzle || !puzzles || !boardsRun) {
     return <SessionLoader {...shell} />;
   }
 
@@ -424,9 +429,25 @@ export function CodeTurtleSession({
 
       <div className="session-body">
         <div className="session-stage">
-          {world === 'draw'
-            ? <DrawGrid puzzle={puzzle} cur={cur} cell={CELL} running={running} expr={beeExpr} />
-            : <CellGrid puzzle={puzzle} cur={cur} cell={CELL} running={running} expr={beeExpr} result={result} />}
+          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {puzzles.map((pz, bi) => {
+              const r = boardsRun.perBoard[bi]!;
+              const bcur = r.frames[Math.min(frame, r.frames.length - 1)]!;
+              // A board shows its win state when the whole run finished and this board solved.
+              const boardResult = !running && frame > 0 && r.success ? 'ok' : result === 'fail' && !running ? 'fail' : result;
+              return (
+                <div
+                  key={bi}
+                  data-board-grid
+                  style={{ outline: puzzles.length > 1 && running ? '3px solid #F5A623' : 'none', borderRadius: 12, padding: 2 }}
+                >
+                  {world === 'draw'
+                    ? <DrawGrid puzzle={pz} cur={bcur} cell={CELL} running={running} expr={beeExpr} />
+                    : <CellGrid puzzle={pz} cur={bcur} cell={CELL} running={running} expr={beeExpr} result={boardResult} />}
+                </div>
+              );
+            })}
+          </div>
 
           {/* Block budget (loops levels) */}
           {puzzle.maxBlocks !== undefined && (

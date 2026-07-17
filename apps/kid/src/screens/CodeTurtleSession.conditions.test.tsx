@@ -54,4 +54,38 @@ describe('CodeTurtleSession conditions — if block', () => {
     fireEvent.click(screen.getByRole('button', { name: /Lancer|Run/ }));
     await waitFor(() => assert.match(coach(), /Bravo|Nice/), { timeout: 5000 });
   });
+
+  it('renders 2 boards and wins only when one if/else program solves both', async () => {
+    api.getBundle = async () => forcingBundle();
+    renderSession();
+    await screen.findByLabelText('if');
+    assert.equal(document.querySelectorAll('[data-board-grid]').length, 2);
+    fireEvent.click(screen.getByLabelText('if'));
+    ['down', 'right', 'right', 'up'].forEach((k) => fireEvent.click(screen.getByLabelText(k))); // then
+    fireEvent.click(screen.getByLabelText('slot-else'));
+    ['right', 'right'].forEach((k) => fireEvent.click(screen.getByLabelText(k)));                 // else
+    fireEvent.click(screen.getByRole('button', { name: /Lancer|Run/ }));
+    await waitFor(() => assert.match(coach(), /Bravo|Nice/), { timeout: 6000 });
+  });
 });
+
+// Two boards forcing the branch: A walls the straight (-> detour down),
+// B walls the detour (-> straight). One if/else program solves both.
+function forcingBundle(): QuestionBundleResponse {
+  return {
+    module: 'code', version: 1, published_at: '2026-07-10T00:00:00.000Z',
+    questions: [{
+      id: 'code-maze-cond-forcing', sub_mode: 'maze', level: 4, lesson: 1, theme: 'conditions',
+      type: 'code-grid', prompt: { fr: 'x', en: 'x' },
+      answer: [{ op: 'if', cond: 'wall_right',
+        then: [{ op: 'move', dir: 'down' }, { op: 'move', dir: 'right' }, { op: 'move', dir: 'right' }, { op: 'move', dir: 'up' }],
+        else: [{ op: 'move', dir: 'right' }, { op: 'move', dir: 'right' }] }],
+      distractors: [], hint: { fr: '', en: '' }, difficulty: 3, concept_tags: [], lang: 'both',
+      config: { grid: { w: 3, h: 2 }, concept: 'conditions', blocks: ['up', 'down', 'left', 'right', 'if'],
+        boards: [
+          { start: [0, 0], goal: [2, 0], walls: [[1, 0]] },
+          { start: [0, 0], goal: [2, 0], walls: [[0, 1]] },
+        ] },
+    }] as unknown as QuestionBundleResponse['questions'],
+  };
+}
