@@ -1,6 +1,17 @@
 import type { ChildProfile, LevelProgress, Module, QuestionBundleResponse } from '@gabee/types';
 import { findLevelProgress, lessonsForLevel, sortedUnique, unitsForLevel } from './progression';
 import { readLocalTrack } from './codeTrack';
+import { isLevelVisible } from './flags';
+
+/** Drop questions for levels gated off (content rollout) so auto-pick never
+ *  advances into a hidden level. Identity for unflagged modules. */
+function visibleBundle(
+  bundle: QuestionBundleResponse | undefined | null,
+  module: Module,
+): QuestionBundleResponse | undefined | null {
+  if (!bundle) return bundle;
+  return { ...bundle, questions: bundle.questions.filter((q) => isLevelVisible(module, q.level)) };
+}
 
 // Auto-pick the next lesson to play for a (module, subMode) pair. Same
 // algorithm everywhere: walk configured levels in order, return the first
@@ -134,7 +145,7 @@ export function subModeHint(
   const hasProgress = levels.some((lvl) =>
     lvl.lessons.some((l) => l.stars >= 1),
   );
-  const next = pickNextLesson(bundle, levels, subMode);
+  const next = pickNextLesson(visibleBundle(bundle, module), levels, subMode);
   if (!next) {
     return hasProgress ? { kind: 'done' } : { kind: 'start' };
   }
@@ -156,5 +167,5 @@ export function nextLessonFor(
   lang: Lang,
 ): NextLesson | null {
   const levels = getProgressLevels(profile, module, subMode, lang);
-  return pickNextLesson(bundle, levels, subMode);
+  return pickNextLesson(visibleBundle(bundle, module), levels, subMode);
 }

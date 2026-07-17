@@ -1,4 +1,5 @@
 import { useLayoutEffect, useState, type RefObject } from 'react';
+import { Icon } from './Icon';
 
 /**
  * A bouncing 👇 anchored just above the current guide target. Reads the target
@@ -40,13 +41,14 @@ export function GuidePointer({
         left: rect.left + rect.width / 2,
         top: rect.top,
         zIndex: 60,
-        fontSize: 34,
+        color: 'var(--color-brand)',
         pointerEvents: 'none',
         animation: 'guide-bounce 0.9s ease-in-out infinite',
         filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.25))',
+        transform: 'translateX(-50%)',
       }}
     >
-      👇
+      <Icon name="arrow-down" size={30} />
     </div>
   );
 }

@@ -48,7 +48,11 @@ export async function classifySessions(
   if (ids.length === 0) return results;
   for (const item of items) {
     const res = await prisma.sessionClassification.updateMany({
-      where: { sessionId: item.session_id, profileId: { in: ids } },
+      // `label: null` makes this idempotent: a racing double-submit of the
+      // same session_id (client re-enable window, see classify-flow.tsx
+      // `choose`) matches zero rows on the 2nd call instead of overwriting
+      // the first label with last-write-wins.
+      where: { sessionId: item.session_id, profileId: { in: ids }, label: null },
       data: {
         label: item.label,
         classifiedAt,

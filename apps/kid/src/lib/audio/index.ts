@@ -5,6 +5,7 @@ import { playCue, type CueName } from './sfx';
 import { isEnabled, isMusicEnabled, setEnabled as setEnabledPref, setMusicEnabled as setMusicEnabledPref } from './prefs';
 import { WebSpeechVoiceProvider, type VoiceProvider } from './voice';
 import { setMusicZone as musicSetZone, reevaluateMusic as reevaluateMusicImpl, type MusicZone } from './music';
+import { isFeatureEnabled } from '../flags';
 
 export type { CueName, VoiceProvider, MusicZone };
 export { isEnabled, isMusicEnabled };
@@ -12,13 +13,18 @@ export { isEnabled, isMusicEnabled };
 // v0.1 provider — the one line to change for the recorded-voices upgrade (Phase D).
 const provider = new WebSpeechVoiceProvider();
 
+/** Voiceover is on only when the master switch AND the admin flag both allow it. */
+function voiceEnabled(): boolean {
+  return isEnabled() && isFeatureEnabled('kid_voiceover');
+}
+
 /**
  * Fire a procedural cue. No-ops when audio is off, and while narration is
  * speaking (spec: no ducking in v0.1 — suppression instead). Never throws.
  */
 export function sfx(name: CueName): void {
   try {
-    if (!isEnabled() || provider.speaking) return;
+    if (!isEnabled() || !isFeatureEnabled('kid_game_sounds') || provider.speaking) return;
     playCue(name);
   } catch {
     /* never break a render over audio */
@@ -27,7 +33,7 @@ export function sfx(name: CueName): void {
 
 /** Narrate a prompt. Fire-and-forget; replaces any current narration. */
 export function speak(text: string, lang: 'fr' | 'en'): void {
-  if (!isEnabled()) return;
+  if (!voiceEnabled()) return;
   // A new prompt narration must abandon any pending speakSuccess chain —
   // stop() bumps the generation — otherwise stale praise cancels the new prompt.
   provider.stop();
@@ -45,14 +51,14 @@ export function speakSuccess(
   praise: string,
   praiseLang: 'fr' | 'en',
 ): void {
-  if (!isEnabled()) return;
+  if (!voiceEnabled()) return;
   const gen = provider.generation;
   window.setTimeout(() => {
-    if (provider.generation !== gen || !isEnabled()) return;
+    if (provider.generation !== gen || !voiceEnabled()) return;
     void provider
       .speak(word, wordLang)
       .then(() => {
-        if (provider.generation === gen && isEnabled()) return provider.speak(praise, praiseLang);
+        if (provider.generation === gen && voiceEnabled()) return provider.speak(praise, praiseLang);
       })
       .catch(() => {});
   }, 400);

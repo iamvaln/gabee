@@ -34,7 +34,9 @@ export async function generateMetadata({
   const ogLocale = locale === 'en' ? 'en_US' : 'fr_FR';
   const alternateLocale = locale === 'en' ? ['fr_FR'] : ['en_US'];
   return {
-    title: messages.meta.title,
+    // Landing index is exactly meta.title ('Gabee'); sub-pages (privacy, terms)
+    // get the '· Gabee' brand suffix. The root layout no longer templates.
+    title: { default: messages.meta.title, template: '%s · Gabee' },
     description: messages.meta.description,
     alternates: {
       canonical: `/${locale}`,

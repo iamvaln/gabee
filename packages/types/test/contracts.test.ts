@@ -17,6 +17,12 @@ import {
   FACE_PATHS,
   defaultProgressByModule,
   defaultProgressByModulePerLanguage,
+  FLAG_KEYS,
+  FLAG_FALLBACKS,
+  FLAG_DEFAULTS,
+  EffectiveFlagsResponseSchema,
+  UpdateFlagRequestSchema,
+  SetFlagOverrideRequestSchema,
   type EventEnvelope,
 } from '../src/index';
 
@@ -429,6 +435,40 @@ describe('ParentKidMessageRow', () => {
   });
 });
 
+describe('feature flags registry', () => {
+  it('every key has a fallback, a default, and a description', () => {
+    for (const key of FLAG_KEYS) {
+      assert.equal(typeof FLAG_FALLBACKS[key], 'boolean');
+      assert.equal(typeof FLAG_DEFAULTS[key], 'boolean');
+    }
+  });
+
+  it('initial values match the design decisions', () => {
+    assert.equal(FLAG_FALLBACKS.kid_voiceover, true);
+    assert.equal(FLAG_FALLBACKS.kid_ambient_music, false);
+    assert.equal(FLAG_FALLBACKS.kid_game_sounds, true);
+    assert.equal(FLAG_DEFAULTS.kid_voiceover, true);
+    assert.equal(FLAG_DEFAULTS.kid_ambient_music, false);
+    assert.equal(FLAG_DEFAULTS.kid_game_sounds, true);
+  });
+
+  it('EffectiveFlagsResponseSchema accepts a boolean map', () => {
+    const parsed = EffectiveFlagsResponseSchema.parse({ flags: { kid_voiceover: false, unknown_future: true } });
+    assert.equal(parsed.flags.kid_voiceover, false);
+  });
+
+  it('UpdateFlagRequestSchema allows partial updates', () => {
+    assert.deepEqual(UpdateFlagRequestSchema.parse({ enabled_default: true }), { enabled_default: true });
+    assert.deepEqual(UpdateFlagRequestSchema.parse({}), {});
+  });
+
+  it('SetFlagOverrideRequestSchema requires a valid email + enabled', () => {
+    assert.throws(() => SetFlagOverrideRequestSchema.parse({ email: 'nope', enabled: true }));
+    const ok = SetFlagOverrideRequestSchema.parse({ email: 'a@b.com', enabled: false });
+    assert.equal(ok.enabled, false);
+  });
+});
+
 describe('SignupRequestSchema — provable-consent gate', () => {
   const valid = { email: 'p@example.com', password: 'a-good-password', terms_accepted: true as const };
 
@@ -452,5 +492,35 @@ describe('SignupRequestSchema — provable-consent gate', () => {
     // z.object strips unknown keys, so a client-sent `version` cannot reach the DB.
     const parsed = SignupRequestSchema.parse({ ...valid, version: 'attacker-chosen' } as never);
     assert.equal('version' in parsed, false);
+  });
+});
+
+import { FLAG_KEYS, FLAG_FALLBACKS, FLAG_DEFAULTS, moduleFlag, levelFlag, worldLevelFlag } from '../src/flags';
+
+describe('content rollout flags', () => {
+  it('registers code_l6 as a dark content flag', () => {
+    assert.ok((FLAG_KEYS as readonly string[]).includes('code_l6'));
+    assert.equal((FLAG_FALLBACKS as Record<string, boolean>)['code_l6'], false);
+    assert.equal((FLAG_DEFAULTS as Record<string, boolean>)['code_l6'], false);
+  });
+  it('registers code_draw_l4 as a dark content flag', () => {
+    assert.ok((FLAG_KEYS as readonly string[]).includes('code_draw_l4'));
+    assert.equal((FLAG_FALLBACKS as Record<string, boolean>)['code_draw_l4'], false);
+    assert.equal((FLAG_DEFAULTS as Record<string, boolean>)['code_draw_l4'], false);
+  });
+  it('levelFlag maps code:6 to code_l6 and returns undefined for unflagged units', () => {
+    assert.equal(levelFlag('code', 6), 'code_l6');
+    assert.equal(levelFlag('code', 3), undefined);
+    assert.equal(levelFlag('numbers', 1), undefined);
+  });
+  it('worldLevelFlag gates the draw pen ladder (L4+L5) under one flag, nothing else', () => {
+    assert.equal(worldLevelFlag('code', 'draw', 4), 'code_draw_l4');
+    assert.equal(worldLevelFlag('code', 'draw', 5), 'code_draw_l4'); // combine rides the same gate
+    assert.equal(worldLevelFlag('code', 'maze', 4), undefined); // maze L4/L5 stay live
+    assert.equal(worldLevelFlag('code', 'maze', 5), undefined);
+    assert.equal(worldLevelFlag('code', 'draw', 2), undefined);
+  });
+  it('moduleFlag returns undefined for unflagged modules', () => {
+    assert.equal(moduleFlag('code'), undefined);
   });
 });

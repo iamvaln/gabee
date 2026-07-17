@@ -1,7 +1,16 @@
 import '../../../test/setup-integration';
 import test, { after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { createTestClient, resetDb, createParent, createChild, seedCorrectAnswers } from '@gabee/db/testing';
+import { randomUUID } from 'node:crypto';
+import {
+  createTestClient,
+  resetDb,
+  createParent,
+  createChild,
+  seedCorrectAnswers,
+  seedTypedWords,
+  seedCodeSolved,
+} from '@gabee/db/testing';
 import { defaultProgressByModule } from '@gabee/types';
 import { syncProgress } from './progress';
 import { HttpError } from '../http';
@@ -104,6 +113,42 @@ test('a manual/legacy star grant is grandfathered, not frozen by the evidence ca
   await seedCorrectAnswers(prisma, child.id, 2);
   const earned = await syncProgress(parent.id, { profile_id: child.id, total_stars: 502 } as never);
   assert.equal(earned.total_stars, 502);
+});
+
+test('keyboard typing evidence (typing_word_completed) counts toward the star cap', async () => {
+  const parent = await createParent(prisma);
+  const child = await createChild(prisma, { parentId: parent.id });
+  await seedTypedWords(prisma, child.id, 7); // 7 correct static words, zero question_answered
+
+  const res = await syncProgress(parent.id, { profile_id: child.id, total_stars: 7 } as never);
+  assert.equal(res.total_stars, 7, 'keyboard evidence must not be clamped to 0');
+});
+
+test('a scrolling miss (completed_before_timeout:false) is not star evidence', async () => {
+  const parent = await createParent(prisma);
+  const child = await createChild(prisma, { parentId: parent.id });
+  await seedTypedWords(prisma, child.id, 5, 'scrolling'); // 5 successes
+  await prisma.event.createMany({
+    data: Array.from({ length: 2 }, () => ({
+      eventId: randomUUID(),
+      profileId: child.id,
+      name: 'typing_word_completed',
+      clientTs: new Date(),
+      payload: { mode: 'scrolling', completed_before_timeout: false } as never,
+    })),
+  });
+
+  const res = await syncProgress(parent.id, { profile_id: child.id, total_stars: 7 } as never);
+  assert.equal(res.total_stars, 5, 'scrolling misses must be excluded from the cap');
+});
+
+test('code_level_solved events count toward the star cap', async () => {
+  const parent = await createParent(prisma);
+  const child = await createChild(prisma, { parentId: parent.id });
+  await seedCodeSolved(prisma, child.id, 4);
+
+  const res = await syncProgress(parent.id, { profile_id: child.id, total_stars: 4 } as never);
+  assert.equal(res.total_stars, 4, 'code evidence must not be clamped to 0');
 });
 
 test("syncing another parent's child 404s", async () => {

@@ -6,6 +6,7 @@ import { Bee } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
 import { MODULES } from '../content/modules';
+import { visibleLevels } from '../lib/flags';
 import { api } from '../lib/api';
 import { useStore } from '../store';
 import { getProgressLevels } from '../lib/nextLesson';
@@ -68,11 +69,12 @@ function buildStops(
   questions: { level: number; sub_mode?: string }[],
   levelsProgress: LevelProgress[],
   subModeKey: string | null,
+  module: Module,
 ): Stop[] {
   const pool = subModeKey
     ? questions.filter((q) => q.sub_mode === subModeKey)
     : questions;
-  const levels = sortedUnique(pool.map((q) => q.level));
+  const levels = visibleLevels(module, sortedUnique(pool.map((q) => q.level)));
   const stops: Stop[] = [];
   let prevDone = true; // first stop is always open
   for (const level of levels) {
@@ -138,7 +140,7 @@ export function CarteRoad({
   );
 
   const stops = useMemo(
-    () => (bundle ? buildStops(bundle.questions, levels, activeSub) : []),
+    () => (bundle ? buildStops(bundle.questions, levels, activeSub, module) : []),
     [bundle, levels, activeSub],
   );
 

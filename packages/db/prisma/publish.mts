@@ -4,6 +4,7 @@
 // boundary. `any` is the natural type for the function params below; the
 // alternative is a wall of `unknown` casts that adds no real safety.
 import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
 import { createPrismaClient } from '../src/client';
 
 /**
@@ -43,7 +44,7 @@ function solves(world: string, config: any, program: any[]): boolean {
   const c = config ?? {};
   const w = c.grid?.w ?? 5, h = c.grid?.h ?? 5;
   let pos: Cell = c.start ? cell(c.start) : { x: 0, y: 0 };
-  let carrying: number | null = null, wasted = 0;
+  let carrying: number | null = null, wasted = 0, penDown = true;
   const items: Cell[] = (c.items ?? []).map(cell);
   // Absolute content stores blockers under `walls` (older content used `obstacles`).
   const walls: Cell[] = [...(c.walls ?? []), ...(c.obstacles ?? [])].map(cell);
@@ -55,8 +56,9 @@ function solves(world: string, config: any, program: any[]): boolean {
       if (op.op === 'move') {
         const d = MOVE[op.dir]!; const n = { x: pos.x + d.x, y: pos.y + d.y };
         if (blocked(n)) wasted++;
-        else { if (world === 'draw') drawn.push(segKey(pos, n)); pos = n; if (carrying !== null) items[carrying] = { ...pos }; }
-      } else if (op.op === 'pick') {
+        else { if (world === 'draw' && penDown) drawn.push(segKey(pos, n)); pos = n; if (carrying !== null) items[carrying] = { ...pos }; }
+      } else if (op.op === 'pen') { penDown = op.state === 'down'; }
+      else if (op.op === 'pick') {
         const i = items.findIndex((it, j) => j !== carrying && eq(it, pos));
         if (carrying !== null || i < 0) wasted++; else carrying = i;
       } else if (op.op === 'drop') { if (carrying === null) wasted++; else carrying = null; }
@@ -76,6 +78,19 @@ function solves(world: string, config: any, program: any[]): boolean {
   const targets: Cell[] = (c.targets ?? []).map(cell);
   return carrying === null && targets.length === items.length &&
     items.map((p) => `${p.x},${p.y}`).sort().join('|') === targets.map((p) => `${p.x},${p.y}`).sort().join('|');
+}
+
+// Conditions questions carry `config.boards`: a single program must solve every
+// board. Absent → one board from the base config (all existing questions). Mirror
+// of apps/kid/src/lib/turtle.ts boardsFor — keep the two in sync.
+function boardsFor(config: any): any[] {
+  const c = config ?? {};
+  if (!Array.isArray(c.boards) || c.boards.length === 0) return [c];
+  return c.boards.map((b: any) => ({ ...c, ...b, boards: undefined }));
+}
+export function solvesAllBoards(world: string, config: any, program: any[]): boolean {
+  const boards = boardsFor(config);
+  return boards.length > 0 && boards.every((b) => solves(world, b, program));
 }
 
 // ─── Numbers arithmetic verifier ────────────────────────────────────────────
@@ -127,7 +142,7 @@ async function main(): Promise<void> {
     const solvable: string[] = [];
     const dropped: Record<string, number> = {};
     for (const r of codeRows) {
-      if (solves(r.subMode, r.config as unknown, r.answer as unknown[])) solvable.push(r.id);
+      if (solvesAllBoards(r.subMode, r.config as unknown, r.answer as unknown[])) solvable.push(r.id);
       else dropped[`${r.subMode} L${r.level}`] = (dropped[`${r.subMode} L${r.level}`] ?? 0) + 1;
     }
     await prisma.question.updateMany({ where: { id: { in: solvable } }, data: { status: 'confirmed' } });
@@ -171,7 +186,12 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err: unknown) => {
-  console.error('Publish failed:', err);
-  process.exit(1);
-});
+// Run only when invoked directly (e.g. `tsx prisma/publish.mts`), NOT when
+// imported for its exports (e.g. solvesAllBoards in publish-boards.test.mts) —
+// importing must not trigger a real publish / require DATABASE_URL.
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main().catch((err: unknown) => {
+    console.error('Publish failed:', err);
+    process.exit(1);
+  });
+}

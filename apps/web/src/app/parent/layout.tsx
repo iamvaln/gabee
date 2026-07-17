@@ -13,6 +13,13 @@ import { ParentShell } from './_components/parent-shell';
 // the whole subtree out of search engines. Also blocked in robots.ts as a
 // belt-and-braces signal for crawlers that ignore meta robots.
 export const metadata: Metadata = {
+  // Distinct browser-tab title for the parent app (mirrors the admin layout) so
+  // parent/admin/landing tabs are tellable apart; page titles read e.g.
+  // "Réglages · Gabee Parents".
+  title: {
+    default: 'Gabee Parents',
+    template: '%s · Gabee Parents',
+  },
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 

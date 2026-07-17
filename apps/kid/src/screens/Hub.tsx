@@ -6,6 +6,7 @@ import { Icon } from '../components/Icon';
 import { MODULES, MODULE_ICONS } from '../content/modules';
 import { useStore } from '../store';
 import { useHealthyUse } from '../lib/healthy-use';
+import { isModuleVisible } from '../lib/flags';
 import { StreakPill } from '../components/StreakPill';
 
 // Module hub. Phase 1 activated 3 modules (Numbers, Words, Translation); Phase 2
@@ -75,7 +76,7 @@ export function Hub({
         </div>
       </div>
       <div className="module-grid">
-        {MODULES.map((m) => {
+        {MODULES.filter((m) => isModuleVisible(m.id)).map((m) => {
           const playable = PLAYABLE_MODULES.has(m.id);
           const soon = t('common.soon');
           return (

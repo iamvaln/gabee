@@ -43,3 +43,8 @@ coverage/
 test-results/
 e2e/test-results/
 e2e/playwright-report/
+e2e/screenshots/
+
+# Lighthouse CI artifacts
+lhci-report/
+.lighthouseci/

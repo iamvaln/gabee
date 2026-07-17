@@ -9,6 +9,7 @@ import { Icon } from '../components/Icon';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
+import { visibleLevels } from '../lib/flags';
 import { lessonsForLevel, unitsForLevel, levelComplete } from '../lib/progression';
 
 // Curriculum concept per Keyboard/Static level (product §4.3). Only the levels actually
@@ -61,7 +62,7 @@ export function KeyboardStaticLevelMap({
     [bundle],
   );
   const configuredLevels = useMemo(
-    () => [...new Set(staticQs.map((q) => q.level))].sort((a, b) => a - b),
+    () => visibleLevels('keyboard', [...new Set(staticQs.map((q) => q.level))].sort((a, b) => a - b)),
     [staticQs],
   );
 

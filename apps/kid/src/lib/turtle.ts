@@ -23,7 +23,8 @@ export type CodeWorld = 'maze' | 'draw' | 'actions';
 export type Prim =
   | { op: 'move'; dir: MoveDir }
   | { op: 'pick' }
-  | { op: 'drop' };
+  | { op: 'drop' }
+  | { op: 'pen'; state: 'up' | 'down' };
 
 /** Full op set, including the control structures the seed `answer` may use. */
 export type Op =
@@ -58,6 +59,8 @@ export interface Puzzle {
   start: Cell;
   facing: Heading;
   blocks: string[];
+  maxBlocks?: number;
+  optimalBlocks?: number;
   goal?: Cell;
   walls?: Cell[];
   targetSegs?: Set<string>;
@@ -97,6 +100,8 @@ export function parsePuzzle(world: CodeWorld, config: unknown): Puzzle {
     start: c.start ? toCell(c.start) : { x: 0, y: 0 },
     facing: 'S',
     blocks: (c.blocks as string[]) ?? [],
+    maxBlocks: typeof c.maxBlocks === 'number' ? c.maxBlocks : undefined,
+    optimalBlocks: typeof c.optimalBlocks === 'number' ? c.optimalBlocks : undefined,
   };
   if (world === 'maze') {
     base.goal = c.goal ? toCell(c.goal) : { x: 0, y: 0 };
@@ -112,6 +117,9 @@ export function parsePuzzle(world: CodeWorld, config: unknown): Puzzle {
     for (const p of paths) vertexPathToSegs(p, segs);
     base.targetSegs = segs;
     base.targetVertices = paths;
+    // Draw L4 pen-conditions place walls beside the path purely as `if wall_<dir>`
+    // sensors (never on the drawn line). Older draw content has none → walls: [].
+    base.walls = ((c.walls as unknown[]) ?? []).map(toCell);
   } else {
     base.items = ((c.items as unknown[]) ?? []).map(toCell);
     base.targets = ((c.targets as unknown[]) ?? []).map(toCell);
@@ -150,7 +158,7 @@ export function runProgram(puzzle: Puzzle, program: Op[]): RunResult {
   let pos = { ...puzzle.start };
   let heading = puzzle.facing;
   let carrying: number | null = null;
-  const penDown = true;
+  let penDown = true; // draw world: a move records a segment only while down
   const items = (puzzle.items ?? []).map((c) => ({ ...c }));
   const walls = puzzle.walls ?? [];
   const obstacles = puzzle.obstacles ?? [];
@@ -175,13 +183,17 @@ export function runProgram(puzzle: Puzzle, program: Op[]): RunResult {
           heading = DIR_TO_HEADING[op.dir];
           if (blocked(nxt)) { wasted += 1; }
           else {
-            if (puzzle.world === 'draw') { drawn.push({ a: { ...pos }, b: { ...nxt } }); drawnKeys.push(segKey(pos, nxt)); }
+            if (puzzle.world === 'draw' && penDown) { drawn.push({ a: { ...pos }, b: { ...nxt } }); drawnKeys.push(segKey(pos, nxt)); }
             pos = nxt;
             if (carrying !== null) items[carrying] = { ...pos };
           }
           snapshot();
           break;
         }
+        case 'pen':
+          penDown = op.state === 'down';
+          snapshot();
+          break;
         case 'pick': {
           const idx = items.findIndex((it, i) => i !== carrying && eq(it, pos));
           if (carrying !== null || idx < 0) wasted += 1;
@@ -232,6 +244,29 @@ export function runProgram(puzzle: Puzzle, program: Op[]): RunResult {
 }
 
 /**
+ * Board variants a single program must all solve (Slice 2 conditions). When
+ * `config.boards` is absent, this is one board built from the base config — so
+ * every existing single-board question keeps working unchanged.
+ */
+export function boardsFor(world: CodeWorld, config: unknown): Puzzle[] {
+  const c = (config ?? {}) as Record<string, unknown>;
+  const boards = c.boards as Record<string, unknown>[] | undefined;
+  if (!Array.isArray(boards) || boards.length === 0) return [parsePuzzle(world, config)];
+  return boards.map((b) => parsePuzzle(world, { ...c, ...b, boards: undefined }));
+}
+
+export interface BoardsResult {
+  perBoard: RunResult[];
+  success: boolean;
+}
+
+/** Run one program across every board; success = all boards solved. */
+export function runBoards(puzzles: Puzzle[], program: Op[]): BoardsResult {
+  const perBoard = puzzles.map((p) => runProgram(p, program));
+  return { perBoard, success: perBoard.length > 0 && perBoard.every((r) => r.success) };
+}
+
+/**
  * Flatten a reference `answer` program into the flat prim sequence a kid would
  * actually place, by simulating it against the puzzle. `repeat` is expanded and
  * `if wall_<dir>` is resolved against the live wall/edge state. Used by the
@@ -274,6 +309,9 @@ export function flattenProgram(puzzle: Puzzle, program: Op[]): Prim[] {
         case 'drop':
           out.push({ op: 'drop' });
           if (carrying !== null) carrying = null;
+          break;
+        case 'pen':
+          out.push({ op: 'pen', state: op.state });
           break;
         case 'repeat':
           for (let i = 0; i < op.n; i++) exec(op.body);

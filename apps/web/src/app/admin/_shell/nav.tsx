@@ -22,6 +22,7 @@ const NAV: NavEntry[] = [
   { id: 'modules', icon: 'modules', href: '/admin/modules', label: { fr: 'Modules', en: 'Modules' } },
   { id: 'content', icon: 'content', href: '/admin/content', label: { fr: 'Contenu', en: 'Content' } },
   { id: 'healthy-use', icon: 'shield', href: '/admin/healthy-use', label: { fr: 'Usage sain', en: 'Healthy use' } },
+  { id: 'flags', icon: 'tag', href: '/admin/flags', label: { fr: 'Fonctionnalités', en: 'Feature flags' } },
   {
     id: 'users', icon: 'users', href: '/admin/users/parents', label: { fr: 'Utilisateurs', en: 'Users' },
     sub: [
@@ -206,6 +207,7 @@ const CRUMB_LABELS: Record<string, Bi> = {
   logs: { fr: 'Journaux', en: 'System logs' },
   audit: { fr: "Journal d'audit", en: 'Audit log' },
   settings: { fr: 'Réglages', en: 'Settings' },
+  flags: { fr: 'Fonctionnalités', en: 'Feature flags' },
   messages: { fr: 'Messages', en: 'Messages' },
   login: { fr: 'Connexion', en: 'Sign in' },
 };

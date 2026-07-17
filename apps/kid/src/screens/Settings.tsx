@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import type { Module } from '@gabee/types';
+import { FLAG_FALLBACKS } from '@gabee/types';
 import { Bee } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
@@ -45,6 +46,7 @@ export function Settings({
   const profile = useStore((s) => s.profile);
   const audioEnabled = useStore((s) => s.audioEnabled);
   const musicEnabled = useStore((s) => s.musicEnabled);
+  const musicFlag = useStore((s) => s.featureFlags.kid_ambient_music ?? FLAG_FALLBACKS.kid_ambient_music);
 
   const [bundles, setBundles] = useState<BundleRow[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -166,18 +168,20 @@ export function Settings({
                 {audioEnabled ? t('settings.audioOn') : t('settings.audioOff')}
               </button>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 10, paddingTop: 10, borderTop: '1px solid #FDE68A', opacity: audioEnabled ? 1 : 0.45 }}>
-              <div style={{ fontSize: 13 }}>{t('settings.musicTitle')}</div>
-              <button
-                className="btn ghost"
-                onClick={toggleMusic}
-                disabled={!audioEnabled}
-                aria-pressed={musicEnabled}
-              >
-                <Icon name={musicEnabled ? 'sound' : 'sound-off'} size={16} />{' '}
-                {musicEnabled ? t('settings.musicOn') : t('settings.musicOff')}
-              </button>
-            </div>
+            {musicFlag && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 10, paddingTop: 10, borderTop: '1px solid #FDE68A', opacity: audioEnabled ? 1 : 0.45 }}>
+                <div style={{ fontSize: 13 }}>{t('settings.musicTitle')}</div>
+                <button
+                  className="btn ghost"
+                  onClick={toggleMusic}
+                  disabled={!audioEnabled}
+                  aria-pressed={musicEnabled}
+                >
+                  <Icon name={musicEnabled ? 'sound' : 'sound-off'} size={16} />{' '}
+                  {musicEnabled ? t('settings.musicOn') : t('settings.musicOff')}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Manual sync — pushes this device's queued progress + events to the

@@ -103,6 +103,60 @@ export async function seedCorrectAnswers(
   return count;
 }
 
+/**
+ * Seed `count` `typing_word_completed` events (keyboard star evidence) — mirrors
+ * `seedCorrectAnswers` but for the keyboard module, which never emits
+ * `question_answered`. `mode: 'static'` words are always correct (no
+ * `completed_before_timeout` key); `mode: 'scrolling'` words also fire on
+ * misses, so this factory always seeds a completed-in-time success
+ * (`completed_before_timeout: true`) for that mode.
+ */
+export async function seedTypedWords(
+  prisma: PrismaClient,
+  profileId: string,
+  count: number,
+  mode: 'static' | 'scrolling' = 'static',
+): Promise<number> {
+  if (count <= 0) return 0;
+  const now = new Date();
+  await prisma.event.createMany({
+    data: Array.from({ length: count }, () => ({
+      eventId: randomUUID(),
+      profileId,
+      name: 'typing_word_completed',
+      clientTs: now,
+      payload: (mode === 'static'
+        ? { mode: 'static' }
+        : { mode: 'scrolling', completed_before_timeout: true }) as Prisma.InputJsonValue,
+    })),
+  });
+  return count;
+}
+
+/**
+ * Seed `count` `code_level_solved` events (code star evidence) — mirrors
+ * `seedCorrectAnswers` but for the code module, which never emits
+ * `question_answered`.
+ */
+export async function seedCodeSolved(
+  prisma: PrismaClient,
+  profileId: string,
+  count: number,
+): Promise<number> {
+  if (count <= 0) return 0;
+  const now = new Date();
+  await prisma.event.createMany({
+    data: Array.from({ length: count }, () => ({
+      eventId: randomUUID(),
+      profileId,
+      name: 'code_level_solved',
+      clientTs: now,
+      payload: {} as Prisma.InputJsonValue,
+    })),
+  });
+  return count;
+}
+
 export async function createCurriculum(
   prisma: PrismaClient,
   overrides: Partial<Prisma.CurriculumUncheckedCreateInput> = {},
@@ -125,11 +179,74 @@ export async function createQuestion(
       lesson: 1,
       theme: 'test',
       type: 'mcq-number',
-      prompt: { text: '2 + 2 ?' },
+      // A bare string is a valid QuestionValueSchema value; `{ text: … }` is NOT,
+      // and would blow up mapQuestion once the question is served through getBundle.
+      prompt: '2 + 2 ?',
       answer: 4,
       distractors: [3, 5],
       difficulty: 1,
       createdBy: 'factory',
+      ...overrides,
+      curriculumId,
+    },
+  });
+}
+
+export async function createModuleDef(
+  prisma: PrismaClient,
+  overrides: Partial<Prisma.ModuleDefUncheckedCreateInput> = {},
+) {
+  return prisma.moduleDef.create({
+    data: {
+      id: 'numbers',
+      slug: 'numbers',
+      name: { fr: 'Nombres', en: 'Numbers' } as Prisma.InputJsonValue,
+      description: { fr: '', en: '' } as Prisma.InputJsonValue,
+      colorToken: 'blue',
+      icon: 'star',
+      // Must satisfy ModuleCharacteristicsSchema (input_methods/voiceover/event_types)
+      // — the admin services Zod-parse this column on read.
+      characteristics: { input_methods: [], voiceover: false, event_types: [] } as Prisma.InputJsonValue,
+      status: 'active',
+      ...overrides,
+    },
+  });
+}
+
+export async function createSubMode(
+  prisma: PrismaClient,
+  overrides: Partial<Prisma.SubModeUncheckedCreateInput> = {},
+) {
+  return prisma.subMode.create({
+    data: {
+      id: 'numbers.default',
+      module: 'numbers',
+      key: 'default',
+      name: { fr: 'Défaut', en: 'Default' } as Prisma.InputJsonValue,
+      languageDependent: false,
+      // SubModeDefSchema requires display_order >= 1.
+      displayOrder: 1,
+      mechanicHint: 'mcq',
+      ...overrides,
+    },
+  });
+}
+
+export async function createContentPlan(
+  prisma: PrismaClient,
+  overrides: Partial<Prisma.ContentPlanUncheckedCreateInput> = {},
+) {
+  const curriculumId =
+    overrides.curriculumId ?? (await createCurriculum(prisma, { isDefault: true })).id;
+  return prisma.contentPlan.create({
+    data: {
+      moduleId: 'numbers',
+      subMode: 'default',
+      level: 1,
+      scope: { fr: '', en: '' } as Prisma.InputJsonValue,
+      pedagogicalObjectives: [] as Prisma.InputJsonValue,
+      validationCriteria: { fr: '', en: '' } as Prisma.InputJsonValue,
+      status: 'pending',
       ...overrides,
       curriculumId,
     },

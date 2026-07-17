@@ -69,7 +69,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
       },
       manifest: {
-        name: 'Gabee',
+        name: 'Gabee, learning',
         short_name: 'Gabee',
         description: 'Gabee — a bilingual learning bee for kids.',
         start_url: '/',

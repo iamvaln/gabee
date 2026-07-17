@@ -33,10 +33,16 @@ export default async function globalSetup(): Promise<void> {
   run('pnpm --filter @gabee/db exec tsx prisma/seed-fixtures.ts', { STAGING_FIXTURES: '1' });
 
   // tester2 is a plain parent fixture; promote it so the admin project has a super_admin session.
+  // tester3 is promoted to a plain `admin` (NOT super) so specs can prove the
+  // admin-vs-super_admin browser authz boundary (e.g. admin cannot publish).
   const promote = createTestClient();
   await promote.parentAccount.update({
     where: { email: 'tester2@staging.gabee.app' },
     data: { role: 'super_admin' },
+  });
+  await promote.parentAccount.update({
+    where: { email: 'tester3@staging.gabee.app' },
+    data: { role: 'admin' },
   });
   await promote.$disconnect();
 }

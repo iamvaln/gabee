@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Language, ChildProfile } from '@gabee/types';
+import type { Language, ChildProfile, FlagKey } from '@gabee/types';
 import { setApiToken, setUnauthorizedHandler } from './lib/api';
 
 interface ParentRef {
@@ -45,6 +45,9 @@ interface AppState {
   audioEnabled: boolean;
   /** Ambient music switch (audio phase E) — plays only when audioEnabled is also true. Same "last selected kid's pref" semantics. */
   musicEnabled: boolean;
+  /** Admin feature flags (design 2026-07-16). Device-level (per parent account,
+   *  one device = one paired parent). Empty until first fetched → code fallback. */
+  featureFlags: Partial<Record<FlagKey, boolean>>;
   /** Selected child profile (re-picked each launch; not persisted). */
   profile: ChildProfile | null;
   /** Current play sitting (a session = one or more lessons). */
@@ -57,6 +60,7 @@ interface AppState {
   setProfile: (profile: ChildProfile | null) => void;
   setAudioEnabled: (v: boolean) => void;
   setMusicEnabled: (v: boolean) => void;
+  setFeatureFlags: (flags: Partial<Record<FlagKey, boolean>>) => void;
   /** Start (or reuse) the current play session; returns its id. */
   startPlay: () => string;
   /** Advance and return the lesson's position_in_session. */
@@ -74,6 +78,7 @@ export const useStore = create<AppState>()(
       deviceLinkSkipped: false,
       audioEnabled: true,
       musicEnabled: true,
+      featureFlags: {},
       profile: null,
       play: null,
 
@@ -86,7 +91,7 @@ export const useStore = create<AppState>()(
       },
       clearAuth: () => {
         setApiToken(null);
-        set({ token: null, parent: null, needsDeviceLink: false, deviceLinkSkipped: false, profile: null, play: null });
+        set({ token: null, parent: null, needsDeviceLink: false, deviceLinkSkipped: false, profile: null, play: null, featureFlags: {} });
       },
       skipDeviceLink: () => set({ deviceLinkSkipped: true }),
       // Selecting a kid seeds the device pref from their saved setting; the
@@ -106,6 +111,7 @@ export const useStore = create<AppState>()(
           musicEnabled: v,
           profile: s.profile ? { ...s.profile, music_enabled: v } : s.profile,
         })),
+      setFeatureFlags: (featureFlags) => set({ featureFlags }),
       startPlay: () => {
         const existing = get().play;
         if (existing) return existing.id;
@@ -125,7 +131,7 @@ export const useStore = create<AppState>()(
     {
       name: 'gabee-kid-store',
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ lang: s.lang, token: s.token, parent: s.parent, needsDeviceLink: s.needsDeviceLink, deviceLinkSkipped: s.deviceLinkSkipped, audioEnabled: s.audioEnabled, musicEnabled: s.musicEnabled }),
+      partialize: (s) => ({ lang: s.lang, token: s.token, parent: s.parent, needsDeviceLink: s.needsDeviceLink, deviceLinkSkipped: s.deviceLinkSkipped, audioEnabled: s.audioEnabled, musicEnabled: s.musicEnabled, featureFlags: s.featureFlags }),
       onRehydrateStorage: () => (state) => {
         if (state?.token) setApiToken(state.token);
       },
