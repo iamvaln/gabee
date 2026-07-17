@@ -58,6 +58,7 @@ export interface Puzzle {
   start: Cell;
   facing: Heading;
   blocks: string[];
+  maxBlocks?: number;
   goal?: Cell;
   walls?: Cell[];
   targetSegs?: Set<string>;
@@ -97,6 +98,7 @@ export function parsePuzzle(world: CodeWorld, config: unknown): Puzzle {
     start: c.start ? toCell(c.start) : { x: 0, y: 0 },
     facing: 'S',
     blocks: (c.blocks as string[]) ?? [],
+    maxBlocks: typeof c.maxBlocks === 'number' ? c.maxBlocks : undefined,
   };
   if (world === 'maze') {
     base.goal = c.goal ? toCell(c.goal) : { x: 0, y: 0 };
@@ -229,6 +231,29 @@ export function runProgram(puzzle: Puzzle, program: Op[]): RunResult {
         [...targets].map((c) => `${c.x},${c.y}`).sort().join('|');
   }
   return { frames, success };
+}
+
+/**
+ * Board variants a single program must all solve (Slice 2 conditions). When
+ * `config.boards` is absent, this is one board built from the base config — so
+ * every existing single-board question keeps working unchanged.
+ */
+export function boardsFor(world: CodeWorld, config: unknown): Puzzle[] {
+  const c = (config ?? {}) as Record<string, unknown>;
+  const boards = c.boards as Record<string, unknown>[] | undefined;
+  if (!Array.isArray(boards) || boards.length === 0) return [parsePuzzle(world, config)];
+  return boards.map((b) => parsePuzzle(world, { ...c, ...b, boards: undefined }));
+}
+
+export interface BoardsResult {
+  perBoard: RunResult[];
+  success: boolean;
+}
+
+/** Run one program across every board; success = all boards solved. */
+export function runBoards(puzzles: Puzzle[], program: Op[]): BoardsResult {
+  const perBoard = puzzles.map((p) => runProgram(p, program));
+  return { perBoard, success: perBoard.length > 0 && perBoard.every((r) => r.success) };
 }
 
 /**

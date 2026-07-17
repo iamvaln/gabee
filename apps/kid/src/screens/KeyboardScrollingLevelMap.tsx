@@ -9,6 +9,7 @@ import { Icon } from '../components/Icon';
 import { MODULES } from '../content/modules';
 import { api } from '../lib/api';
 import { useStore } from '../store';
+import { visibleLevels } from '../lib/flags';
 import { lessonsForLevel, unitsForLevel, levelComplete } from '../lib/progression';
 
 // Scrolling sub-mode levels — typing under timing pressure (product §4.3, L8-10).
@@ -47,7 +48,7 @@ export function KeyboardScrollingLevelMap({
     [bundle],
   );
   const configuredLevels = useMemo(
-    () => [...new Set(scrollingQs.map((q) => q.level))].sort((a, b) => a - b),
+    () => visibleLevels('keyboard', [...new Set(scrollingQs.map((q) => q.level))].sort((a, b) => a - b)),
     [scrollingQs],
   );
 

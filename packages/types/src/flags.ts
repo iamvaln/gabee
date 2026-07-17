@@ -1,11 +1,12 @@
 import { z } from 'zod';
+import type { Module } from './enums';
 
 /**
  * Admin feature flags (design 2026-07-16). The set of known flags is CODE, not
  * data — a typo'd key is a compile error. Precedence at read time:
  * parent override > DB enabledDefault > code fallback (never-fetched only).
  */
-export const FLAG_KEYS = ['kid_voiceover', 'kid_ambient_music', 'kid_game_sounds'] as const;
+export const FLAG_KEYS = ['kid_voiceover', 'kid_ambient_music', 'kid_game_sounds', 'code_l6'] as const;
 export type FlagKey = (typeof FLAG_KEYS)[number];
 
 /** Code fallback when the device has NEVER fetched flags (offline-first). */
@@ -13,6 +14,7 @@ export const FLAG_FALLBACKS: Record<FlagKey, boolean> = {
   kid_voiceover: true, // live before flags existed — dark-launch OFF would regress
   kid_ambient_music: false, // ships dark; admin releases
   kid_game_sounds: true, // SFX cues are live — dark-launch OFF would regress
+  code_l6: false, // content flag — ships dark
 };
 
 /** Initial DB `enabledDefault`, seeded ONCE (create-only; admin edits thereafter). */
@@ -20,6 +22,7 @@ export const FLAG_DEFAULTS: Record<FlagKey, boolean> = {
   kid_voiceover: true,
   kid_ambient_music: false,
   kid_game_sounds: true,
+  code_l6: false,
 };
 
 /** Seeded description; the admin UI can edit the stored copy. */
@@ -28,6 +31,7 @@ export const FLAG_DESCRIPTIONS: Record<FlagKey, string> = {
     "Voiceover / narration across the whole voice surface (kid app now; parent-app voice UI when it lands).",
   kid_ambient_music: 'Ambient background music on non-session kid screens.',
   kid_game_sounds: 'Game sound effects — correct/wrong cues, navigation blips, celebration.',
+  code_l6: 'Coding level 6 (Debugging) — rollout gate. Dark until released per parent.',
 };
 
 export const FlagKeySchema = z.enum(FLAG_KEYS);
@@ -77,3 +81,19 @@ export const DeleteFlagOverrideRequestSchema = z.object({
   email: z.string().email(),
 });
 export type DeleteFlagOverrideRequest = z.infer<typeof DeleteFlagOverrideRequestSchema>;
+
+// ── Content rollout maps ─────────────────────────────────────────────────────
+// A module/level absent here has NO flag → always visible. Gate only the newest
+// trailing levels of a module (never a middle level).
+export const MODULE_FLAG: Partial<Record<Module, FlagKey>> = {
+  // e.g. later: a new module → its `module_<id>` flag
+};
+export const LEVEL_FLAG: Record<string, FlagKey> = {
+  'code:6': 'code_l6',
+};
+export function moduleFlag(m: Module): FlagKey | undefined {
+  return MODULE_FLAG[m];
+}
+export function levelFlag(m: Module, level: number): FlagKey | undefined {
+  return LEVEL_FLAG[`${m}:${level}`];
+}
