@@ -179,7 +179,9 @@ export async function createQuestion(
       lesson: 1,
       theme: 'test',
       type: 'mcq-number',
-      prompt: { text: '2 + 2 ?' },
+      // A bare string is a valid QuestionValueSchema value; `{ text: … }` is NOT,
+      // and would blow up mapQuestion once the question is served through getBundle.
+      prompt: '2 + 2 ?',
       answer: 4,
       distractors: [3, 5],
       difficulty: 1,

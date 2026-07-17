@@ -1,7 +1,7 @@
 import '../../../test/setup-integration';
 import test, { after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { createTestClient, resetDb, createParent, createChild } from '@gabee/db/testing';
+import { createTestClient, resetDb, createParent, createChild, seedCorrectAnswers } from '@gabee/db/testing';
 import { grantGift, listPendingGifts, claimGift } from './gifts';
 import { syncProgress } from './progress';
 import { HttpError } from '../http';
@@ -107,14 +107,32 @@ test('claiming an unknown gift id 404s', async () => {
   );
 });
 
-test('a claimed gift of amount N raises the star-evidence cap by N (ties gifts to the syncProgress evidence cap)', async () => {
+test('a claimed gift widens the evidence cap ON TOP OF earned stars (isolates gifts in countEvidencedStars, above the grandfathered floor)', async () => {
+  // This test must fail if `gifted` is dropped from countEvidencedStars. The
+  // naive setup (claim a gift, then sync total_stars == gift amount) does NOT
+  // prove that: claimGift bumps the row to the gift amount, so syncProgress's
+  // grandfather branch (cur.total_stars > cap) absorbs it and returns that total
+  // whether or not the gift is counted. To isolate the gift's contribution we
+  // keep the synced claim ABOVE the row's current total, backed by BOTH earned
+  // events and the gift — so only counting the gift lets the cap reach the claim.
   const parent = await createParent(prisma);
   const child = await createChild(prisma, { parentId: parent.id });
-  const gift = await grantGift({ childId: child.id, amount: 15, label: 'Cadeau' });
 
-  // No event evidence at all — only the claimed gift backs the stars.
+  // Claim a gift of 5 -> the child row is bumped to 5 (the grandfathered floor).
+  const gift = await grantGift({ childId: child.id, amount: 5, label: 'Cadeau' });
   await claimGift(parent.id, gift.id);
 
-  const res = await syncProgress(parent.id, { profile_id: child.id, total_stars: 15 } as never);
-  assert.equal(res.total_stars, 15, 'a claimed gift of amount N must count as N stars of evidence, not be clamped');
+  // Independently earn 5 stars of real event evidence, not yet reflected in the row.
+  await seedCorrectAnswers(prisma, child.id, 5);
+
+  // Client syncs 10 (= 5 earned + 5 gifted), above the grandfathered floor of 5.
+  // WITH the gift counted:    cap = 5 earned + 5 gifted = 10 -> allowed to 10.
+  // WITHOUT the gift counted: cap = 5 earned; cur(5) is not > 5 so no grandfather
+  //                           top-up, and the claim clamps back to 5.
+  const res = await syncProgress(parent.id, { profile_id: child.id, total_stars: 10 } as never);
+  assert.equal(
+    res.total_stars,
+    10,
+    'the gift amount must widen the evidence cap on top of earned stars, not be masked by the grandfathered floor',
+  );
 });

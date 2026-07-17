@@ -212,14 +212,11 @@ export interface MarkReadResult {
  * Idempotent: a second call returns the already-read row, time_to_read_ms = 0.
  */
 export async function markAsRead(parentId: string, messageId: string): Promise<MarkReadResult> {
-  const row = await prisma.kidMessage.findUnique({
-    where: { id: messageId },
-    include: { toChild: { select: { parentId: true } } },
-  });
+  const row = await prisma.kidMessage.findUnique({ where: { id: messageId } });
   if (!row) throw new HttpError(404, 'message_not_found', 'Message not found');
-  if (row.toChild.parentId !== parentId) {
-    throw new HttpError(403, 'forbidden', 'Message does not belong to this household');
-  }
+  // Co-parent-aware access check, consistent with createMessage / listPendingForChild:
+  // a linked co-parent may mark the kid's messages read; a stranger gets 404.
+  await assertParentCanAccessKid(parentId, row.toChildId);
   if (row.status === 'read') {
     return { message: rowToKidMessage(row), childId: row.toChildId, timeToReadMs: 0 };
   }

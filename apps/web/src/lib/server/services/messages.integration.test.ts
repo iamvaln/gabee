@@ -108,20 +108,37 @@ test('markAsRead is idempotent — a second call returns the already-read row wi
   assert.equal(second.timeToReadMs, 0);
 });
 
-test("markAsRead by a parent outside the child's household is forbidden", async () => {
+test("markAsRead by a parent outside the child's household is rejected (404)", async () => {
   const parent = await createParent(prisma);
   const stranger = await createParent(prisma);
   const child = await createChild(prisma, { parentId: parent.id });
   const message = await createMessage(parent.id, { to_child_id: child.id, text: 'Coucou' });
 
+  // markAsRead uses the same co-parent-aware access check as createMessage /
+  // listPendingForChild, which 404s (profile_not_found) rather than leaking a 403.
   await assert.rejects(
     () => markAsRead(stranger.id, message.id),
-    (e: unknown) => e instanceof HttpError && e.status === 403 && e.code === 'forbidden',
+    (e: unknown) => e instanceof HttpError && e.status === 404 && e.code === 'profile_not_found',
   );
 
   // No side effect: the message is still unread.
   const row = await prisma.kidMessage.findUniqueOrThrow({ where: { id: message.id } });
   assert.equal(row.status, 'unread');
+});
+
+test('markAsRead by a linked co-parent succeeds (access is co-parent-aware, like createMessage)', async () => {
+  const parent = await createParent(prisma);
+  const coparent = await createParent(prisma);
+  const child = await createChild(prisma, { parentId: parent.id });
+  // Primary parent sends; a linked co-parent should be able to mark it read.
+  const message = await createMessage(parent.id, { to_child_id: child.id, text: 'Coucou' });
+  await prisma.parentChildLink.create({ data: { parentId: coparent.id, childId: child.id } });
+
+  const result = await markAsRead(coparent.id, message.id);
+
+  assert.equal(result.message.status, 'read');
+  const row = await prisma.kidMessage.findUniqueOrThrow({ where: { id: message.id } });
+  assert.equal(row.status, 'read');
 });
 
 test('markAsRead 404s on an unknown message id', async () => {
