@@ -2,9 +2,17 @@ import '../../../test/setup-integration';
 import { randomUUID } from 'node:crypto';
 import test, { after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { createTestClient, resetDb, createCurriculum, createContentPlan } from '@gabee/db/testing';
-import { getPlan, savePlan, acceptPlan } from './admin-content';
+import {
+  createTestClient,
+  resetDb,
+  createCurriculum,
+  createContentPlan,
+  createQuestion,
+} from '@gabee/db/testing';
+import { getPlan, savePlan, acceptPlan, getPool, confirmPool, reviewQuestion, bulkSetQuestionStatus } from './admin-content';
 import { HttpError } from '../http';
+import { POOL_TARGET } from '../admin';
+import type { Prisma } from '@gabee/db';
 
 const prisma = createTestClient();
 
@@ -158,4 +166,169 @@ test('acceptPlan: parity gate — an objective missing its en text 422s parity_r
     (e: unknown) => e instanceof HttpError && e.status === 422 && e.code === 'parity_required',
   );
   await assertNoMutation();
+});
+
+// ─── C3/C4 · Pool (getPool / confirmPool) + review + bulk status ────────────
+
+/**
+ * `ratingRollup` (admin-content.ts) averages `{ score, lang }` entries per
+ * language — it ignores any other keys, so a bare `{ score, lang }` array is
+ * the full shape needed for a rating to count. "Rated ≥4 both languages"
+ * means one `fr` entry and one `en` entry each with `score >= 4`.
+ */
+const HIGH_RATINGS = [
+  { score: 5, lang: 'fr' },
+  { score: 5, lang: 'en' },
+];
+const LOW_RATINGS = [
+  { score: 2, lang: 'fr' },
+  { score: 2, lang: 'en' },
+];
+
+const POOL_SLOT = { module: 'numbers' as const, subMode: 'default', level: 1 as const };
+
+function highRatedCandidate(curriculumId: string, i: number) {
+  return createQuestion(prisma, {
+    id: `q-hi-${i}`,
+    curriculumId,
+    module: POOL_SLOT.module,
+    subMode: POOL_SLOT.subMode,
+    level: POOL_SLOT.level,
+    status: 'candidate',
+    ratings: HIGH_RATINGS as unknown as Prisma.InputJsonValue,
+  });
+}
+
+function lowRatedCandidate(curriculumId: string, i: number) {
+  return createQuestion(prisma, {
+    id: `q-lo-${i}`,
+    curriculumId,
+    module: POOL_SLOT.module,
+    subMode: POOL_SLOT.subMode,
+    level: POOL_SLOT.level,
+    status: 'candidate',
+    ratings: LOW_RATINGS as unknown as Prisma.InputJsonValue,
+  });
+}
+
+test('getPool: splits candidates/confirmed, reports pool_target, plan_accepted and rated_high', async () => {
+  await createContentPlan(prisma, { ...FULL_PLAN_OVERRIDES, status: 'accepted' });
+  for (let i = 0; i < 3; i++) await highRatedCandidate(DEFAULT_CURRICULUM_ID, i);
+  for (let i = 0; i < 2; i++) await lowRatedCandidate(DEFAULT_CURRICULUM_ID, i);
+  await createQuestion(prisma, {
+    id: 'q-confirmed-1',
+    curriculumId: DEFAULT_CURRICULUM_ID,
+    module: POOL_SLOT.module,
+    subMode: POOL_SLOT.subMode,
+    level: POOL_SLOT.level,
+    status: 'confirmed',
+    ratings: HIGH_RATINGS as unknown as Prisma.InputJsonValue,
+  });
+
+  const pool = await getPool(POOL_SLOT.module, POOL_SLOT.subMode, POOL_SLOT.level);
+
+  assert.equal(pool.pool_target, 20);
+  assert.equal(pool.plan_accepted, true);
+  assert.equal(pool.candidates.length, 5, '3 high + 2 low candidates, confirmed excluded');
+  assert.equal(pool.confirmed.length, 1);
+  assert.equal(pool.rated_high, 3, 'only the 3 high-rated CANDIDATES count, not the confirmed row');
+});
+
+test('getPool: plan_accepted is false when no plan (or a non-accepted plan) exists for the slot', async () => {
+  const pool = await getPool(POOL_SLOT.module, POOL_SLOT.subMode, POOL_SLOT.level);
+  assert.equal(pool.plan_accepted, false);
+  assert.deepEqual(pool.candidates, []);
+  assert.deepEqual(pool.confirmed, []);
+  assert.equal(pool.rated_high, 0);
+});
+
+test('confirmPool: exactly POOL_TARGET high-rated candidates promotes all of them to confirmed', async () => {
+  assert.equal(POOL_TARGET, 20, 'sanity check the constant this test seeds against');
+  for (let i = 0; i < POOL_TARGET; i++) await highRatedCandidate(DEFAULT_CURRICULUM_ID, i);
+
+  const result = await confirmPool(POOL_SLOT.module, POOL_SLOT.subMode, POOL_SLOT.level);
+
+  assert.deepEqual(result, { confirmed: 20 });
+  const confirmedCount = await prisma.question.count({
+    where: { curriculumId: DEFAULT_CURRICULUM_ID, status: 'confirmed' },
+  });
+  assert.equal(confirmedCount, 20, 'all 20 seeded rows are now confirmed in the DB');
+  const stillCandidate = await prisma.question.count({
+    where: { curriculumId: DEFAULT_CURRICULUM_ID, status: 'candidate' },
+  });
+  assert.equal(stillCandidate, 0);
+});
+
+test('confirmPool: under target (19 high-rated) 409s pool_under_target and promotes nothing', async () => {
+  for (let i = 0; i < POOL_TARGET - 1; i++) await highRatedCandidate(DEFAULT_CURRICULUM_ID, i);
+  for (let i = 0; i < 3; i++) await lowRatedCandidate(DEFAULT_CURRICULUM_ID, i);
+
+  await assert.rejects(
+    () => confirmPool(POOL_SLOT.module, POOL_SLOT.subMode, POOL_SLOT.level),
+    (e: unknown) => e instanceof HttpError && e.status === 409 && e.code === 'pool_under_target',
+  );
+
+  const confirmedCount = await prisma.question.count({
+    where: { curriculumId: DEFAULT_CURRICULUM_ID, status: 'confirmed' },
+  });
+  assert.equal(confirmedCount, 0, 'no candidate is promoted when the pool is under target');
+});
+
+test('reviewQuestion: applies a per-language rating, recomputes avgRating, and can flip status', async () => {
+  const row = await createQuestion(prisma, {
+    curriculumId: DEFAULT_CURRICULUM_ID,
+    module: POOL_SLOT.module,
+    subMode: POOL_SLOT.subMode,
+    level: POOL_SLOT.level,
+    status: 'candidate',
+    ratings: [] as unknown as Prisma.InputJsonValue,
+  });
+
+  const rated = await reviewQuestion(row.id, { rating: { fr: 4, en: 5 } }, 'admin-actor-1');
+
+  assert.equal(rated.ratings.fr.score, 4);
+  assert.equal(rated.ratings.fr.count, 1);
+  assert.equal(rated.ratings.en.score, 5);
+  assert.equal(rated.ratings.en.count, 1);
+  const afterRating = await prisma.question.findUniqueOrThrow({ where: { id: row.id } });
+  assert.equal(afterRating.avgRating, 4.5, 'avgRating is recomputed over all recorded ratings');
+  assert.equal(afterRating.status, 'candidate', 'no status change requested yet');
+
+  const flipped = await reviewQuestion(row.id, { status: 'rejected' }, 'admin-actor-1');
+  assert.equal(flipped.status, 'rejected');
+});
+
+test('reviewQuestion: an unknown question id 404s question_not_found', async () => {
+  await assert.rejects(
+    () => reviewQuestion('does-not-exist', { rating: { fr: 5 } }, 'admin-actor-1'),
+    (e: unknown) => e instanceof HttpError && e.status === 404 && e.code === 'question_not_found',
+  );
+});
+
+test('bulkSetQuestionStatus: sets all given ids to confirmed/rejected/demoted and returns the count', async () => {
+  const confirmedIds = await Promise.all(
+    [0, 1, 2].map(async () => (await createQuestion(prisma, { curriculumId: DEFAULT_CURRICULUM_ID })).id),
+  );
+  const rejectedIds = await Promise.all(
+    [0, 1].map(async () => (await createQuestion(prisma, { curriculumId: DEFAULT_CURRICULUM_ID })).id),
+  );
+  const demotedIds = [
+    (await createQuestion(prisma, { curriculumId: DEFAULT_CURRICULUM_ID, status: 'confirmed' })).id,
+  ];
+
+  const confirmedResult = await bulkSetQuestionStatus(confirmedIds, 'confirmed');
+  assert.equal(confirmedResult, 3);
+  const rejectedResult = await bulkSetQuestionStatus(rejectedIds, 'rejected');
+  assert.equal(rejectedResult, 2);
+  const demotedResult = await bulkSetQuestionStatus(demotedIds, 'demoted');
+  assert.equal(demotedResult, 1);
+
+  const rows = await prisma.question.findMany({
+    where: { id: { in: [...confirmedIds, ...rejectedIds, ...demotedIds] } },
+    select: { id: true, status: true },
+  });
+  const byId = new Map(rows.map((r) => [r.id, r.status]));
+  for (const id of confirmedIds) assert.equal(byId.get(id), 'confirmed');
+  for (const id of rejectedIds) assert.equal(byId.get(id), 'rejected');
+  for (const id of demotedIds) assert.equal(byId.get(id), 'demoted');
 });
