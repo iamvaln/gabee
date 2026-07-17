@@ -513,9 +513,11 @@ describe('content rollout flags', () => {
     assert.equal(levelFlag('code', 3), undefined);
     assert.equal(levelFlag('numbers', 1), undefined);
   });
-  it('worldLevelFlag maps code:draw:4 to code_draw_l4 and undefined otherwise', () => {
+  it('worldLevelFlag gates the draw pen ladder (L4+L5) under one flag, nothing else', () => {
     assert.equal(worldLevelFlag('code', 'draw', 4), 'code_draw_l4');
-    assert.equal(worldLevelFlag('code', 'maze', 4), undefined); // maze L4 stays live
+    assert.equal(worldLevelFlag('code', 'draw', 5), 'code_draw_l4'); // combine rides the same gate
+    assert.equal(worldLevelFlag('code', 'maze', 4), undefined); // maze L4/L5 stay live
+    assert.equal(worldLevelFlag('code', 'maze', 5), undefined);
     assert.equal(worldLevelFlag('code', 'draw', 2), undefined);
   });
   it('moduleFlag returns undefined for unflagged modules', () => {
