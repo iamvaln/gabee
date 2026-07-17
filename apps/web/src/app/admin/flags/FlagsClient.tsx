@@ -32,6 +32,74 @@ function Switch({
   );
 }
 
+/** Searchable single-select of parent accounts — type to filter, click/Enter to pick. */
+function ParentPicker({
+  options,
+  value,
+  onChange,
+  disabled,
+  lang,
+}: {
+  options: ParentOption[];
+  value: string;
+  onChange: (email: string) => void;
+  disabled?: boolean;
+  lang: Language;
+}) {
+  const L = lang === 'fr';
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const exact = options.some((p) => p.email === value);
+  const q = value.trim().toLowerCase();
+  // Once an exact parent is chosen, show the full list again (so it's easy to re-pick).
+  const filtered = (exact ? options : options.filter((p) => p.email.toLowerCase().includes(q))).slice(0, 12);
+
+  return (
+    <div className="combo">
+      <input
+        type="text"
+        value={value}
+        placeholder={L ? 'rechercher un parent…' : 'search a parent…'}
+        disabled={disabled}
+        autoComplete="off"
+        role="combobox"
+        aria-expanded={open}
+        aria-label={L ? 'compte parent' : 'parent account'}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); setActive(0); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onKeyDown={(e) => {
+          if (!open) return;
+          if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(a + 1, filtered.length - 1)); }
+          else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
+          else if (e.key === 'Enter') { const pick = filtered[active]; if (pick) { e.preventDefault(); onChange(pick.email); setOpen(false); } }
+          else if (e.key === 'Escape') setOpen(false);
+        }}
+      />
+      {open && filtered.length > 0 && !(exact && filtered.length === 1 && filtered[0]?.email === value) && (
+        <ul className="combo-menu">
+          {filtered.map((p, i) => (
+            <li key={p.email}>
+              <button
+                type="button"
+                className={'combo-opt' + (i === active ? ' active' : '')}
+                onMouseEnter={() => setActive(i)}
+                onMouseDown={(e) => { e.preventDefault(); onChange(p.email); setOpen(false); }}
+              >
+                {p.email}
+                {p.children_count ? <span className="muted"> · {p.children_count} {L ? 'enfant(s)' : 'kid(s)'}</span> : null}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {open && q && filtered.length === 0 && (
+        <ul className="combo-menu"><li className="combo-empty">{L ? 'Aucun parent' : 'No match'}</li></ul>
+      )}
+    </div>
+  );
+}
+
 export function FlagsClient({
   initial,
   canEdit,
@@ -261,27 +329,20 @@ function FlagCard({
             const available = parents.filter((p) => !already.has(p.email));
             return (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
-                <select
+                <ParentPicker
+                  options={available}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={setEmail}
                   disabled={available.length === 0}
-                  style={{ flex: 1, minWidth: 0 }}
-                  aria-label={L ? 'compte parent' : 'parent account'}
-                >
-                  <option value="">
-                    {available.length === 0
-                      ? (L ? '— tous les parents ont déjà une exception —' : '— all parents already overridden —')
-                      : (L ? '— choisir un parent —' : '— choose a parent —')}
-                  </option>
-                  {available.map((p) => (
-                    <option key={p.email} value={p.email}>
-                      {p.email}
-                      {p.children_count ? ` (${p.children_count} ${L ? 'enfant(s)' : 'kid(s)'})` : ''}
-                    </option>
-                  ))}
-                </select>
+                  lang={lang}
+                />
                 <Switch checked={enabled} onChange={setEnabled} ariaLabel={L ? 'activé pour ce parent' : 'enabled for this parent'} />
-                <button type="button" className="btn sm" onClick={addOverride} disabled={rowBusy || !email}>
+                <button
+                  type="button"
+                  className="btn sm"
+                  onClick={addOverride}
+                  disabled={rowBusy || !available.some((p) => p.email === email)}
+                >
                   {L ? 'Ajouter' : 'Add'}
                 </button>
               </div>
