@@ -34,7 +34,7 @@ export const FLAG_DESCRIPTIONS: Record<FlagKey, string> = {
   kid_ambient_music: 'Ambient background music on non-session kid screens.',
   kid_game_sounds: 'Game sound effects — correct/wrong cues, navigation blips, celebration.',
   code_l6: 'Coding level 6 (Debugging) — rollout gate. Dark until released per parent.',
-  code_draw_l4: 'Coding Draw world, level 4 (Pen conditions) — rollout gate. Dark until released per parent.',
+  code_draw_l4: 'Coding Draw world pen ladder (L4 Pen conditions + L5 Combine) — rollout gate. Dark until released per parent.',
 };
 
 export const FlagKeySchema = z.enum(FLAG_KEYS);
@@ -103,11 +103,13 @@ export function levelFlag(m: Module, level: number): FlagKey | undefined {
 
 // World-scoped level gate — for modules (only `code`) whose levels split into
 // parallel worlds that ship on their own schedule. `code:6` (debug) gates every
-// world's L6 via LEVEL_FLAG; `code:draw:4` gates ONLY the draw world's L4 (pen
-// conditions), leaving the already-live maze/actions L4 untouched. Keyed
+// world's L6 via LEVEL_FLAG; the draw world's pen ladder (L4 conditions + L5
+// combine) is gated by ONE flag so it reveals as a unit — no mid-level gap — and
+// leaves the already-live maze/actions L4/L5 untouched. Keyed
 // `${module}:${world}:${level}`; absent → no world gate (module gate still applies).
 export const WORLD_LEVEL_FLAG: Record<string, FlagKey> = {
   'code:draw:4': 'code_draw_l4',
+  'code:draw:5': 'code_draw_l4',
 };
 export function worldLevelFlag(m: Module, world: string, level: number): FlagKey | undefined {
   return WORLD_LEVEL_FLAG[`${m}:${world}:${level}`];

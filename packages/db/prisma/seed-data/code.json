@@ -65680,6 +65680,4806 @@
       "ratings": [],
       "avg_rating": null,
       "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-000",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                3,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    3,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    5,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    5,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-001",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 7,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                3,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    3,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    4,
+                    0
+                  ],
+                  [
+                    6,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    6,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-002",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 7,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                4,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    4,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    5,
+                    0
+                  ],
+                  [
+                    6,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    6,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-003",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 8,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                4,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    4,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    5,
+                    0
+                  ],
+                  [
+                    7,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    7,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-004",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 8,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                5,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    5,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    6,
+                    0
+                  ],
+                  [
+                    7,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    7,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-005",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 9,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                5,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    5,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    6,
+                    0
+                  ],
+                  [
+                    8,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    8,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-006",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 9,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                6,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    6,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    7,
+                    0
+                  ],
+                  [
+                    8,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    8,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-007",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_down",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 10,
+          "h": 2
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                6,
+                1
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    6,
+                    0
+                  ]
+                ],
+                [
+                  [
+                    7,
+                    0
+                  ],
+                  [
+                    9,
+                    0
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    9,
+                    0
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-008",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 6,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                3,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    3,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    4,
+                    1
+                  ],
+                  [
+                    5,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    5,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-009",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 7,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                3,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    3,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    4,
+                    1
+                  ],
+                  [
+                    6,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    6,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-010",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 7,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                4,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    4,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    5,
+                    1
+                  ],
+                  [
+                    6,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    6,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-011",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 8,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                4,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    4,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    5,
+                    1
+                  ],
+                  [
+                    7,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    7,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-012",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 8,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                5,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    5,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    6,
+                    1
+                  ],
+                  [
+                    7,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    7,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-013",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 9,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                5,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    5,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    6,
+                    1
+                  ],
+                  [
+                    8,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    8,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-014",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 9,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                6,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    6,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    7,
+                    1
+                  ],
+                  [
+                    8,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    8,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-015",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_up",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "right"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "right"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        },
+        {
+          "op": "move",
+          "dir": "right"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 10,
+          "h": 2
+        },
+        "start": [
+          0,
+          1
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                6,
+                0
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    6,
+                    1
+                  ]
+                ],
+                [
+                  [
+                    7,
+                    1
+                  ],
+                  [
+                    9,
+                    1
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    1
+                  ],
+                  [
+                    9,
+                    1
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-016",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 6
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                3
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    3
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    0,
+                    5
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-017",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 7
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                3
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    3
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    4
+                  ],
+                  [
+                    0,
+                    6
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    6
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-018",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 7
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                4
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    5
+                  ],
+                  [
+                    0,
+                    6
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    6
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-019",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 8
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                4
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    4
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    5
+                  ],
+                  [
+                    0,
+                    7
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    7
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-020",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 8
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                5
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    6
+                  ],
+                  [
+                    0,
+                    7
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    7
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-021",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 9
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                5
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    5
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    6
+                  ],
+                  [
+                    0,
+                    8
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    8
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-022",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 9
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                6
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    6
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    7
+                  ],
+                  [
+                    0,
+                    8
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    8
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-023",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_right",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 10
+        },
+        "start": [
+          0,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                1,
+                6
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    6
+                  ]
+                ],
+                [
+                  [
+                    0,
+                    7
+                  ],
+                  [
+                    0,
+                    9
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    9
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-024",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 6
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                3
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    3
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    4
+                  ],
+                  [
+                    1,
+                    5
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    5
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-025",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 3,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 7
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                3
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    3
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    4
+                  ],
+                  [
+                    1,
+                    6
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    6
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-026",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 7
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                4
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    4
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    5
+                  ],
+                  [
+                    1,
+                    6
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    6
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-027",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 4,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 8
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                4
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    4
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    5
+                  ],
+                  [
+                    1,
+                    7
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    7
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-028",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 8
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                5
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    5
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    6
+                  ],
+                  [
+                    1,
+                    7
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    7
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-029",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 5,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 9
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                5
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    5
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    6
+                  ],
+                  [
+                    1,
+                    8
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    8
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-030",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 9
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 8,
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                6
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    6
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    7
+                  ],
+                  [
+                    1,
+                    8
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    8
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
+    },
+    {
+      "id": "code-draw-combo-gen-031",
+      "curriculum_id": "00000000-0000-4000-8000-0000000000c0",
+      "module": "code",
+      "sub_mode": "draw",
+      "level": 5,
+      "lesson": 1,
+      "theme": "combo",
+      "type": "code-grid",
+      "objective_ref": "5",
+      "prompt": {
+        "fr": "Une boucle ET le crayon — un seul programme pour les deux dessins !",
+        "en": "A loop AND the pen — one program for both drawings!"
+      },
+      "answer": [
+        {
+          "op": "repeat",
+          "n": 6,
+          "body": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "if",
+          "cond": "wall_left",
+          "then": [
+            {
+              "op": "pen",
+              "state": "up"
+            },
+            {
+              "op": "move",
+              "dir": "down"
+            },
+            {
+              "op": "pen",
+              "state": "down"
+            }
+          ],
+          "else": [
+            {
+              "op": "move",
+              "dir": "down"
+            }
+          ]
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        },
+        {
+          "op": "move",
+          "dir": "down"
+        }
+      ],
+      "distractors": [],
+      "hint": {
+        "fr": "Répète pour tracer, puis « si mur » lève le crayon.",
+        "en": "Loop to draw, then \"if wall\" lift the pen."
+      },
+      "lang": "both",
+      "difficulty": 4,
+      "age_min": 7,
+      "age_max": 9,
+      "concept_tags": [
+        "combo",
+        "loops",
+        "conditions",
+        "pen",
+        "draw"
+      ],
+      "config": {
+        "grid": {
+          "w": 2,
+          "h": 10
+        },
+        "start": [
+          1,
+          0
+        ],
+        "concept": "combo",
+        "blocks": [
+          "up",
+          "down",
+          "left",
+          "right",
+          "pen_up",
+          "pen_down",
+          "repeat",
+          "if"
+        ],
+        "maxBlocks": 9,
+        "boards": [
+          {
+            "walls": [
+              [
+                0,
+                6
+              ]
+            ],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    6
+                  ]
+                ],
+                [
+                  [
+                    1,
+                    7
+                  ],
+                  [
+                    1,
+                    9
+                  ]
+                ]
+              ]
+            }
+          },
+          {
+            "walls": [],
+            "target": {
+              "paths": [
+                [
+                  [
+                    1,
+                    0
+                  ],
+                  [
+                    1,
+                    9
+                  ]
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "created_by": "ai",
+      "ratings": [],
+      "avg_rating": null,
+      "status": "candidate"
     }
   ]
 }

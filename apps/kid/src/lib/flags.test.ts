@@ -47,8 +47,9 @@ describe('world-scoped visibility (code_draw_l4)', () => {
   const only = (key: FlagKey) => (k: FlagKey) => k === key;
   const allOff = (_k: FlagKey) => false;
   const drawOff = (k: FlagKey) => k !== 'code_draw_l4'; // everything on except the draw gate
-  it('gates draw L4 without touching maze/actions L4', () => {
+  it('gates the draw pen ladder (L4+L5) without touching maze/actions', () => {
     assert.equal(isWorldLevelVisibleWith('code', 'draw', 4, drawOff), false);
+    assert.equal(isWorldLevelVisibleWith('code', 'draw', 5, drawOff), false); // combine rides the gate
     assert.equal(isWorldLevelVisibleWith('code', 'maze', 4, drawOff), true);
     assert.equal(isWorldLevelVisibleWith('code', 'actions', 4, drawOff), true);
   });
@@ -60,8 +61,8 @@ describe('world-scoped visibility (code_draw_l4)', () => {
     assert.equal(isWorldLevelVisibleWith('code', 'maze', 6, allOff), false);
     assert.equal(isWorldLevelVisibleWith('code', 'draw', 6, only('code_l6')), true); // L6 on; draw:6 has no world flag
   });
-  it('visibleWorldLevels filters draw but not maze', () => {
-    assert.deepEqual(visibleWorldLevels('code', 'draw', [1, 2, 3, 4], drawOff), [1, 2, 3]);
-    assert.deepEqual(visibleWorldLevels('code', 'maze', [1, 2, 3, 4], drawOff), [1, 2, 3, 4]);
+  it('visibleWorldLevels hides the draw pen ladder (no L4/L5 gap) but not maze', () => {
+    assert.deepEqual(visibleWorldLevels('code', 'draw', [1, 2, 3, 4, 5], drawOff), [1, 2, 3]);
+    assert.deepEqual(visibleWorldLevels('code', 'maze', [1, 2, 3, 4, 5], drawOff), [1, 2, 3, 4, 5]);
   });
 });
