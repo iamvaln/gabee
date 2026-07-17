@@ -27,9 +27,9 @@ import {
 } from '../lib/turtle';
 import { readLocalTrack, writeLocalTrack } from '../lib/codeTrack';
 import {
-  type ProgramState,
-  empty as emptyProgram, addPrim as progAddPrim, addLoop as progAddLoop,
-  setActive as progSetActive, setCount as progSetCount,
+  type ProgramState, type Cond,
+  empty as emptyProgram, addPrim as progAddPrim, addLoop as progAddLoop, addIf as progAddIf,
+  setActive as progSetActive, setCount as progSetCount, setCond as progSetCond,
   removeTop as progRemoveTop, removeInside as progRemoveInside, blockCount,
 } from '../lib/program';
 import { buildGuideScript } from '../lib/guideScripts';
@@ -54,6 +54,9 @@ const GLYPH: Record<PrimKey, string> = {
   up: '⬆️', down: '⬇️', left: '⬅️', right: '➡️', pick: '✋', drop: '📥',
 };
 const LOOP_GLYPH = '🔁';
+const IF_GLYPH = '❓';
+const COND_ARROW: Record<Cond, string> = { wall_up: '⬆️', wall_down: '⬇️', wall_left: '⬅️', wall_right: '➡️' };
+const CONDS: Cond[] = ['wall_up', 'wall_down', 'wall_left', 'wall_right'];
 // Prims that show a text label under the glyph (the arrows are self-evident).
 const LABELLED: Record<string, { fr: string; en: string }> = {
   pick: { fr: 'Ramasse', en: 'Pick' },
@@ -293,6 +296,27 @@ export function CodeTurtleSession({
   function stopFilling() {
     setProg((s) => progSetActive(s, null));
   }
+  function addIf() {
+    if (editLocked || atBudget) return;
+    if (result === 'fail') setResult(null);
+    setProg((s) => progAddIf(s));
+    setFrame(0);
+  }
+  function chooseSlot(index: number, slot: 'then' | 'else') {
+    if (!editLocked) setProg((s) => progSetActive(s, index, slot));
+  }
+  function chooseCond(index: number, cond: Cond) {
+    if (editLocked) return;
+    if (result === 'fail') setResult(null);
+    setProg((s) => progSetCond(s, index, cond));
+    setFrame(0);
+  }
+  function removeBranchBlock(ifIdx: number, slot: 'then' | 'else', j: number) {
+    if (editLocked) return;
+    if (result === 'fail') setResult(null);
+    setProg((s) => progRemoveInside(s, ifIdx, slot, j));
+    setFrame(0);
+  }
   function removeTopBlock(i: number) {
     if (editLocked) return;
     if (result === 'fail') setResult(null);
@@ -420,7 +444,62 @@ export function CodeTurtleSession({
               <span style={{ color: '#94a3b8', fontSize: 14 }}>{t('code.addBlocks')}</span>
             ) : (
               program.map((op, i) =>
-                op.op === 'repeat' ? (
+                op.op === 'if' ? (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6, padding: 6, borderRadius: 10,
+                      border: prog.active === i ? '3px solid #F5A623' : '2px solid #94a3b8', background: '#fff',
+                    }}
+                  >
+                    <span style={{ fontSize: 18 }}>{IF_GLYPH}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700 }}>{t('code.ifWall')}</span>
+                    {CONDS.map((cnd) => (
+                      <button
+                        key={cnd}
+                        aria-label={cnd}
+                        onClick={() => chooseCond(i, cnd)}
+                        disabled={editLocked}
+                        style={{
+                          width: 26, height: 26, padding: 0, borderRadius: 6,
+                          border: op.cond === cnd ? '2px solid #0f172a' : '1px solid #cbd5e1',
+                          background: op.cond === cnd ? '#FDE9C8' : '#fff', cursor: editLocked ? 'default' : 'pointer',
+                        }}
+                      >
+                        {COND_ARROW[cnd]}
+                      </button>
+                    ))}
+                    {(['then', 'else'] as const).map((slot) => (
+                      <button
+                        key={slot}
+                        aria-label={`slot-${slot}`}
+                        onClick={() => chooseSlot(i, slot)}
+                        disabled={editLocked}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 8,
+                          border: prog.active === i && prog.slot === slot ? '2px solid #F5A623' : '1px dashed #cbd5e1',
+                          background: '#F8FAFC', cursor: editLocked ? 'default' : 'pointer',
+                        }}
+                      >
+                        <span style={{ fontSize: 11, fontWeight: 700 }}>{t(slot === 'then' ? 'code.then' : 'code.else')}</span>
+                        {((slot === 'then' ? op.then : op.else) ?? []).map((b, j) => {
+                          const bp = b as Prim;
+                          const bk = bp.op === 'move' ? bp.dir : bp.op;
+                          return (
+                            <span
+                              key={j}
+                              onClick={(e) => { e.stopPropagation(); removeBranchBlock(i, slot, j); }}
+                              style={{ fontSize: 15 }}
+                              aria-label={`remove ${slot} ${bk}`}
+                            >
+                              {GLYPH[bk as PrimKey]}
+                            </span>
+                          );
+                        })}
+                      </button>
+                    ))}
+                  </div>
+                ) : op.op === 'repeat' ? (
                   <div
                     key={i}
                     style={{
@@ -517,6 +596,22 @@ export function CodeTurtleSession({
               >
                 <span style={{ fontSize: 24, lineHeight: 1 }}>{LOOP_GLYPH}</span>
                 <span style={{ fontSize: 11 }}>{t('code.loop')}</span>
+              </button>
+            )}
+            {puzzle.blocks.includes('if') && (
+              <button
+                aria-label="if"
+                onClick={addIf}
+                disabled={editLocked || atBudget}
+                style={{
+                  minWidth: 56, height: 60, padding: '0 10px', borderRadius: 12,
+                  background: '#E9D5FF', color: '#0f172a', border: '2px solid #0f172a',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+                  fontWeight: 700, cursor: editLocked || atBudget ? 'default' : 'pointer',
+                }}
+              >
+                <span style={{ fontSize: 24, lineHeight: 1 }}>{IF_GLYPH}</span>
+                <span style={{ fontSize: 11 }}>{t('code.condition')}</span>
               </button>
             )}
           </div>

@@ -138,6 +138,10 @@ const resources = {
         loop: 'Boucle',
         loopDone: 'OK',
         loopEmpty: '(vide)',
+        condition: 'Si',
+        ifWall: 'Si mur',
+        then: 'Alors',
+        else: 'Sinon',
       },
       session: {
         errorTitle: 'Oups !',
@@ -357,6 +361,10 @@ const resources = {
         loop: 'Loop',
         loopDone: 'OK',
         loopEmpty: '(empty)',
+        condition: 'If',
+        ifWall: 'If wall',
+        then: 'Then',
+        else: 'Else',
       },
       session: {
         errorTitle: 'Oops!',
