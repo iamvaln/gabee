@@ -78,6 +78,19 @@ function solves(world: string, config: any, program: any[]): boolean {
     items.map((p) => `${p.x},${p.y}`).sort().join('|') === targets.map((p) => `${p.x},${p.y}`).sort().join('|');
 }
 
+// Conditions questions carry `config.boards`: a single program must solve every
+// board. Absent → one board from the base config (all existing questions). Mirror
+// of apps/kid/src/lib/turtle.ts boardsFor — keep the two in sync.
+function boardsFor(config: any): any[] {
+  const c = config ?? {};
+  if (!Array.isArray(c.boards) || c.boards.length === 0) return [c];
+  return c.boards.map((b: any) => ({ ...c, ...b, boards: undefined }));
+}
+export function solvesAllBoards(world: string, config: any, program: any[]): boolean {
+  const boards = boardsFor(config);
+  return boards.length > 0 && boards.every((b) => solves(world, b, program));
+}
+
 // ─── Numbers arithmetic verifier ────────────────────────────────────────────
 // Recompute the expected answer from `config` where possible. Returns 'wrong'
 // only when we CAN compute it and it disagrees; 'ok'/'unknown' both pass (we
@@ -127,7 +140,7 @@ async function main(): Promise<void> {
     const solvable: string[] = [];
     const dropped: Record<string, number> = {};
     for (const r of codeRows) {
-      if (solves(r.subMode, r.config as unknown, r.answer as unknown[])) solvable.push(r.id);
+      if (solvesAllBoards(r.subMode, r.config as unknown, r.answer as unknown[])) solvable.push(r.id);
       else dropped[`${r.subMode} L${r.level}`] = (dropped[`${r.subMode} L${r.level}`] ?? 0) + 1;
     }
     await prisma.question.updateMany({ where: { id: { in: solvable } }, data: { status: 'confirmed' } });
