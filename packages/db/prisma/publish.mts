@@ -4,6 +4,7 @@
 // boundary. `any` is the natural type for the function params below; the
 // alternative is a wall of `unknown` casts that adds no real safety.
 import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
 import { createPrismaClient } from '../src/client';
 
 /**
@@ -184,7 +185,12 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err: unknown) => {
-  console.error('Publish failed:', err);
-  process.exit(1);
-});
+// Run only when invoked directly (e.g. `tsx prisma/publish.mts`), NOT when
+// imported for its exports (e.g. solvesAllBoards in publish-boards.test.mts) —
+// importing must not trigger a real publish / require DATABASE_URL.
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main().catch((err: unknown) => {
+    console.error('Publish failed:', err);
+    process.exit(1);
+  });
+}
