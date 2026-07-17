@@ -64,6 +64,13 @@ const liveMusic = async (page: Page) =>
 const oscCount = (page: Page) => page.evaluate(() => window.__audioLog.oscillators);
 
 test.beforeEach(async ({ page }) => {
+  // This spec's test 2 turns the master switch OFF, which persists
+  // audio_enabled=false to Ava's row; reset to a known-on baseline so a rerun
+  // (or the feature-flags spec) doesn't inherit that.
+  await prisma.childProfile.updateMany({
+    where: { name: FIXTURES.childName },
+    data: { audioEnabled: true, musicEnabled: true },
+  });
   await setAmbientMusicFlag(true);
   await page.addInitScript(INSTRUMENT);
 });

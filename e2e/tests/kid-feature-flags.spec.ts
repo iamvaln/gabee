@@ -60,6 +60,15 @@ async function clearAmbientMusicOverride() {
 }
 
 test.beforeEach(async ({ page }) => {
+  // Ava's master audio/music prefs are device-persisted AND written back to her
+  // DB row on toggle (Settings → updateProfile). The ambient-music spec turns the
+  // master switch OFF, which persists audio_enabled=false to Ava — and setProfile
+  // re-seeds the store from that on pick. Reset to a known-on baseline so these
+  // specs don't inherit that cross-spec pollution.
+  await prisma.childProfile.updateMany({
+    where: { name: FIXTURES.childName },
+    data: { audioEnabled: true, musicEnabled: true },
+  });
   await page.addInitScript(INSTRUMENT);
 });
 
@@ -67,30 +76,11 @@ test.afterEach(async () => {
   await clearAmbientMusicOverride();
 });
 
-async function dumpDiag(page: Page, label: string) {
-  const diag = await page.evaluate(() => ({
-    store: JSON.parse(localStorage.getItem('gabee-kid-store') || '{}').state ?? null,
-    audioLog: (window as unknown as { __audioLog?: unknown }).__audioLog,
-    acState: (window as unknown as { __gabeeAudio?: { state?: string } }).__gabeeAudio?.state ?? 'no-ctx',
-  }));
-  // eslint-disable-next-line no-console
-  console.log(`DIAG[${label}]`, JSON.stringify(diag));
-}
-
 test('kid_ambient_music override ON → music plays and the Settings row is shown', async ({ page }) => {
   await setAmbientMusicOverride(true);
   await seedKidAuthAndPickAva(page);
-  await page.mouse.click(1, 1);
-  await page.waitForTimeout(3000);
-  await dumpDiag(page, 'ON');
-  // Seeded auth boots instantly, so the /api/flags/effective fetch can still be
-  // in flight when the AudioContext first unlocks — and the unlock gesture is a
-  // one-shot (music.ts armUnlockRetry). Re-issue the gesture each poll so that
-  // once the flag lands, the next tap starts the loop. (UI login was slow enough
-  // to hide this; seeded auth is not.)
-  await expect
-    .poll(async () => { await page.mouse.click(1, 1); return liveMusic(page); }, { timeout: 20_000 })
-    .toBeGreaterThan(0);
+  await page.mouse.click(1, 1); // autoplay-unlock gesture (see ambient-music spec)
+  await expect.poll(() => liveMusic(page), { timeout: 15_000 }).toBeGreaterThan(0);
 
   // The Settings "Musique d'ambiance" sub-switch is present (flag ON).
   await page.getByRole('button', { name: `${FIXTURES.childName} settings` }).click();
@@ -111,15 +101,8 @@ test('kid_ambient_music override OFF → no music, Settings row hidden, cues sti
   await expect(page.getByRole('button', { name: /Activée|Coupée/ })).toHaveCount(0); // music sub-row gone
 
   // Cues still fire: back to the hub, tap a BottomNav item → an oscillator.
-  // Self-healing tap (like the ON test): a BottomNav blip fires a cue on every
-  // tap, so re-tapping until the counter moves absorbs any settle/timing races.
   await page.getByRole('button', { name: 'Retour' }).click();
-  await dumpDiag(page, 'OFF');
   const before = await page.evaluate(() => window.__audioLog.oscillators);
-  await expect
-    .poll(async () => {
-      await page.getByRole('button', { name: 'Apprendre' }).click();
-      return page.evaluate(() => window.__audioLog.oscillators);
-    }, { timeout: 15_000 })
-    .toBeGreaterThan(before);
+  await page.getByRole('button', { name: 'Apprendre' }).click();
+  await expect.poll(() => page.evaluate(() => window.__audioLog.oscillators), { timeout: 10_000 }).toBeGreaterThan(before);
 });
