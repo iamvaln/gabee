@@ -89,10 +89,40 @@ export async function listFlagOverrides(key: string): Promise<FlagOverridesRespo
   assertKnownFlag(key);
   const rows = await prisma.featureFlagOverride.findMany({
     where: { flagKey: key },
-    select: { parentId: true, enabled: true, parent: { select: { email: true } } },
+    select: { parentId: true, enabled: true, notifiedAt: true, parent: { select: { email: true } } },
     orderBy: { createdAt: 'asc' },
   });
-  return { overrides: rows.map((r) => ({ parent_id: r.parentId, email: r.parent.email, enabled: r.enabled })) };
+  return {
+    overrides: rows.map((r) => ({
+      parent_id: r.parentId,
+      email: r.parent.email,
+      enabled: r.enabled,
+      notified_at: r.notifiedAt ? r.notifiedAt.toISOString() : null,
+    })),
+  };
+}
+
+/** Resolve a parent id from email (null if unknown) — non-throwing, for batch loops. */
+export async function getParentIdByEmail(email: string): Promise<string | null> {
+  const p = await prisma.parentAccount.findUnique({ where: { email }, select: { id: true } });
+  return p?.id ?? null;
+}
+
+/** True if a per-parent override row exists for this flag. */
+export async function hasOverride(key: FlagKey, parentId: string): Promise<boolean> {
+  const row = await prisma.featureFlagOverride.findUnique({
+    where: { flagKey_parentId: { flagKey: key, parentId } },
+    select: { flagKey: true },
+  });
+  return row !== null;
+}
+
+/** Stamp the notification time on an existing override (no-op if the row is missing). */
+export async function markOverrideNotified(key: FlagKey, parentId: string, when: Date): Promise<void> {
+  await prisma.featureFlagOverride.updateMany({
+    where: { flagKey: key, parentId },
+    data: { notifiedAt: when },
+  });
 }
 
 /** Add/update an override by parent email. 404 if the email is unknown. */
