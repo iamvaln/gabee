@@ -25,6 +25,9 @@ In scope:
   admin `description`.
 - A **bulk rollout** admin flow: pick features → pick parents → preview/edit the
   assembled bilingual email → one submit enables the overrides and (optionally) sends.
+- **Per-parent notification tracking** (`notifiedAt` on the override), surfaced in the
+  admin so an "enabled but not yet notified" cohort is visible and actionable, and so
+  prompted-vs-self-discovery can be analysed later.
 - Reuse of existing email + flag-override infrastructure.
 
 Out of scope (YAGNI): per-child name personalization (overrides are per-family, so
@@ -78,9 +81,9 @@ function assembleRolloutEmail(flags: FlagKey[]): Assembled;
 - Deterministic order = `FLAG_KEYS` order, filtered to the selected + announceable set.
 - Produces both `text` and a simple inline-styled `html`. `replyTo` is set by the
   endpoint to the support address (`EMAIL_REPLY_TO` env, fallback `EMAIL_FROM`).
-- `{ParentName}` is best-effort: if the parent account has no display name, the greeting
-  falls back to a plain "Bonjour," / "Hi," (no dangling token). Confirm the
-  `ParentAccount` name field during planning; absent it, drop the token entirely.
+- `{ParentName}` always resolves — parent accounts carry a name (confirmed 2026-07-18).
+  The greeting uses it directly; keep a plain "Bonjour," / "Hi," fallback only for the
+  defensive empty-string case.
 - Pure and dependency-free → unit-testable without a DB or network.
 
 ### 3. Backend endpoint + admin UI
@@ -101,15 +104,26 @@ Request (Zod, added to `flags.ts`):
 
 Behavior, per parent × flag:
 1. If `enable`: `setFlagOverride({ key, email, enabled: true })` via the existing
-   service (upsert → idempotent; already audited as `flag.override_set`).
+   service (upsert → idempotent; already audited as `flag.override_set`). Does **not**
+   touch `notifiedAt` — silent activation leaves the parent "not yet notified."
 2. If `send`: `sendEmail({ to: email, subject, text, html, replyTo })` via the existing
    `lib/server/email.ts` — **one message per parent** (never a shared To/BCC list, so
    no recipient addresses leak between families).
-3. Collect a per-parent result `{ email, enabled, emailSent, error? }`.
+3. On a **successful** send, stamp `notifiedAt = now` on each `(flag, parent)` override
+   included in that email. This is the durable "was this parent notified?" signal.
+4. Collect a per-parent result `{ email, enabled, emailSent, notifiedAt, error? }`.
 
-- Overrides are written **before** send; a send failure does not roll back the enable
-  (enabling succeeded — the email is a best-effort notification). Failures are reported,
-  not thrown.
+- **Enable and notify are decoupled** (both toggles independent, both default on):
+  `enable=true, send=false` → override ON, `notifiedAt` stays null (silent rollout).
+  `enable=false, send=true` → stamp `notifiedAt` on existing overrides (notify a cohort
+  activated earlier); a selected parent with **no** override for that flag is reported as
+  an error (`no_override_to_notify`) rather than silently emailed — notification status
+  only means something relative to a rollout.
+- Overrides are written **before** send; a send failure does not roll back the enable and
+  does not set `notifiedAt` (enabling succeeded — the email is a best-effort
+  notification). Failures are reported, not thrown.
+- **Re-send** overwrites `notifiedAt` with the latest send time (re-notifies are rare;
+  last-sent is sufficient for the analysis).
 - Emit one audit event `flag.rollout_notify` summarizing `{ flags, parentCount, sent,
   failed }` alongside the per-override audits.
 - Sends run with small bounded concurrency (respect provider limits — Resend free tier
@@ -122,8 +136,10 @@ Response: `{ results: PerParentResult[], summary: { enabled, sent, failed } }`.
 linked from the Flags page and admin nav. Steps on one screen:
 1. **Features** — checkboxes over `announceableFlags()`, each showing the parent-facing
    FR/EN title (not the technical description).
-2. **Cohort** — searchable multi-select over the parents roster
-   (`GET /api/admin/users/parents`, already consumed by the Flags picker).
+2. **Cohort** — multi-select over the parents roster, **annotated per parent with their
+   status for the selected feature(s)**: `not rolled out` · `enabled · not notified` ·
+   `notified {date}`. A quick filter **"enabled but not yet notified"** pre-selects
+   exactly the catch-up cohort (the primary "enable now, email later" workflow).
 3. **Preview & edit** — the bilingual subject + body auto-assemble from the selected
    features and are editable. Live summary: "Enable N feature(s) for M parent(s)."
 4. **Options** — "Enable overrides" (default on) and "Also send invite email" (default
@@ -131,19 +147,44 @@ linked from the Flags page and admin nav. Steps on one screen:
 5. **Submit** → calls the endpoint → **result summary**: "M enabled · X sent · Y
    failed", failures listed with their error.
 
+**Flags page (existing overrides list):** the per-parent overrides list under each flag
+card gains a **Notified** indicator per row — `notified {date}` or `not notified` — so
+the "was this parent told?" answer is visible exactly where the rollout is managed, not
+only on the rollout screen.
+
+**Schema / contract change:** add `notifiedAt DateTime?` to the flag-override model
+(Prisma migration — a nullable column, no backfill; existing overrides read as "not
+notified"). Extend `FlagOverrideRowSchema` in `flags.ts` with `notified_at: string |
+null`, surfaced by `GET /api/admin/flags/[key]/overrides` and the parents endpoint used
+by the rollout picker.
+
 ## Data flow
 
 ```
 Admin UI (RolloutClient)
   → POST /api/admin/flags/rollout { flags, emails, enable, send, [edited copy] }
       → for each email:
-          setFlagOverride(flag, email, true)   [existing service, audited]
-          sendEmail(assembled | edited copy)   [existing email.ts]
+          setFlagOverride(flag, email, true)          [existing service, audited]
+          sendEmail(assembled | edited copy)          [existing email.ts]
+          on send OK: stamp override.notifiedAt = now  [new]
       → writeAudit('flag.rollout_notify', summary)
       → { results, summary }
   → render per-parent summary
 Kid app: next flags fetch returns the override → level/world tile appears.
 ```
+
+### Notification status & analysis
+
+`notifiedAt` on the override turns "rolled out to" into two observable cohorts for any
+feature:
+- **Prompted** — override ON **and** `notifiedAt` set (we emailed them).
+- **Self-discovery** — override ON **and** `notifiedAt` null (they got the feature
+  silently; any engagement is unprompted).
+
+Comparing engagement (existing session/progress data) against `notifiedAt` — did the kid
+play the new level, and before or after the email — is the behavioural question this
+enables. That analysis query is **out of scope** for this build; the deliverable is the
+durable `notifiedAt` signal that makes it answerable.
 
 ## Error handling
 
@@ -153,7 +194,9 @@ Kid app: next flags fetch returns the override → level/world tile appears.
 - **Unknown / malformed email** → skipped, reported in `results[].error`; the rest
   proceed.
 - **Email provider failure for one parent** → that parent's `emailSent=false` +
-  `error`; enable already stands; others continue.
+  `error`; enable already stands; `notifiedAt` is **not** stamped; others continue.
+- **`send=true` for a parent with no override for that flag** → reported as
+  `no_override_to_notify` (notification status is only meaningful relative to a rollout).
 - **Partial failure overall** → HTTP 200 with a mixed `results` array (this is a batch;
   the summary carries the failure count). Total failure of the whole request (auth,
   validation) → non-200.
@@ -167,8 +210,11 @@ Following the established layer conventions (`project_test_strategy`):
   present, deterministic order, edited-copy override path.
 - **Integration** (web): `POST /api/admin/flags/rollout` — super_admin gate (403 for
   plain admin), enable path writes overrides + `flag.rollout_notify` audit, send path
-  invokes the email seam, partial-failure reporting. Use the **noop email provider**
-  seam (set `EMAIL_PROVIDER=noop`) so no network — mirrors the AI-provider seam pattern.
+  invokes the email seam, partial-failure reporting. Assert the notify semantics:
+  `enable`-only leaves `notifiedAt` **null**; a successful send **stamps** it; a send
+  failure leaves it null; `send` to a parent with no override → `no_override_to_notify`.
+  Use the **noop email provider** seam (set `EMAIL_PROVIDER=noop`) so no network —
+  mirrors the AI-provider seam pattern.
 - **E2E** (optional, admin French per `admin-e2e-french`): select a feature + a parent,
   submit, assert the summary. Defer if it strains the CI budget.
 
