@@ -37,6 +37,50 @@ export const FLAG_DESCRIPTIONS: Record<FlagKey, string> = {
   code_draw_l4: 'Coding Draw world pen ladder (L4 Pen conditions + L5 Combine) — rollout gate. Dark until released per parent.',
 };
 
+export type FlagAnnouncement = {
+  fr: { title: string; body: string };
+  en: { title: string; body: string };
+};
+
+/** Parent-facing rollout copy (separate from the technical admin `description`).
+ *  Only flags present here are "announceable" in the Rollout & Invite tool. */
+export const FLAG_ANNOUNCEMENTS: Partial<Record<FlagKey, FlagAnnouncement>> = {
+  code_draw_l4: {
+    fr: {
+      title: `🎨 Dessiner avec le code`,
+      body: `Votre enfant peut désormais dessiner des images en programmant : en combinant des boucles et des conditions, il guide un crayon pour tracer des motifs. À retrouver dans le monde « Dessin » du module Code.`,
+    },
+    en: {
+      title: `🎨 Drawing with code`,
+      body: `Your child can now draw pictures by coding: by combining loops and conditions, they guide a pen to trace patterns. Find it in the "Draw" world of the Code module.`,
+    },
+  },
+  code_l6: {
+    fr: {
+      title: `🐞 Chasser les bugs (Débogage)`,
+      body: `Le débogage n'est pas un monde à part : c'est une nouvelle sorte d'exercice au niveau 6 des mondes Parcours et Actions. Votre enfant reçoit un programme déjà écrit mais qui bug, et doit trouver et corriger l'erreur. Pour l'essayer : Code → Parcours (ou Actions) → niveau 6 · Débogage. Les niveaux se débloquent dans l'ordre.`,
+    },
+    en: {
+      title: `🐞 Bug hunting (Debugging)`,
+      body: `Debugging isn't a separate world — it's a new type of exercise at level 6 of the Maze and Actions worlds. Your child gets a program that's already written but broken, and has to find and fix the mistake. To try it: Code → Maze (or Actions) → level 6 · Debugging. Levels unlock in order.`,
+    },
+  },
+  kid_ambient_music: {
+    fr: {
+      title: `🎵 Une petite musique d'ambiance`,
+      body: `Gabee se fait plus douillet : une musique de fond apaisante accompagne désormais les écrans d'accueil et de navigation. Elle se désactive à tout moment dans les Réglages.`,
+    },
+    en: {
+      title: `🎵 A little background music`,
+      body: `Gabee just got cozier: a gentle background soundtrack now plays on the home and menu screens. You can turn it off anytime in Settings.`,
+    },
+  },
+};
+
+export function announceableFlags(): FlagKey[] {
+  return FLAG_KEYS.filter((k) => FLAG_ANNOUNCEMENTS[k] !== undefined);
+}
+
 export const FlagKeySchema = z.enum(FLAG_KEYS);
 
 /** Kid-facing effective flags. `record` (not the enum) so the server can send
@@ -68,6 +112,7 @@ export const FlagOverrideRowSchema = z.object({
   parent_id: z.string().uuid(),
   email: z.string(),
   enabled: z.boolean(),
+  notified_at: z.string().nullable(),
 });
 export type FlagOverrideRow = z.infer<typeof FlagOverrideRowSchema>;
 
@@ -84,6 +129,38 @@ export const DeleteFlagOverrideRequestSchema = z.object({
   email: z.string().email(),
 });
 export type DeleteFlagOverrideRequest = z.infer<typeof DeleteFlagOverrideRequestSchema>;
+
+// ── Rollout & Invite contracts ───────────────────────────────────────────────
+export const RolloutRequestSchema = z
+  .object({
+    flags: z.array(FlagKeySchema).min(1),
+    emails: z.array(z.string().email()).min(1),
+    enable: z.boolean().default(true),
+    send: z.boolean().default(true),
+    subject: z.string().optional(),
+    text: z.string().optional(),
+    html: z.string().optional(),
+  })
+  .refine((v) => v.flags.every((f) => FLAG_ANNOUNCEMENTS[f] !== undefined), {
+    message: 'flags must all be announceable',
+    path: ['flags'],
+  });
+export type RolloutRequest = z.infer<typeof RolloutRequestSchema>;
+
+export const RolloutResultSchema = z.object({
+  email: z.string(),
+  enabled: z.boolean(),
+  email_sent: z.boolean(),
+  notified_at: z.string().nullable(),
+  error: z.string().optional(),
+});
+export type RolloutResult = z.infer<typeof RolloutResultSchema>;
+
+export const RolloutResponseSchema = z.object({
+  results: z.array(RolloutResultSchema),
+  summary: z.object({ enabled: z.number(), sent: z.number(), failed: z.number() }),
+});
+export type RolloutResponse = z.infer<typeof RolloutResponseSchema>;
 
 // ── Content rollout maps ─────────────────────────────────────────────────────
 // A module/level absent here has NO flag → always visible. Gate only the newest

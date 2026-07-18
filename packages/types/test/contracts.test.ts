@@ -23,6 +23,10 @@ import {
   EffectiveFlagsResponseSchema,
   UpdateFlagRequestSchema,
   SetFlagOverrideRequestSchema,
+  FlagOverrideRowSchema,
+  FLAG_ANNOUNCEMENTS,
+  announceableFlags,
+  RolloutRequestSchema,
   type EventEnvelope,
 } from '../src/index';
 
@@ -522,5 +526,41 @@ describe('content rollout flags', () => {
   });
   it('moduleFlag returns undefined for unflagged modules', () => {
     assert.equal(moduleFlag('code'), undefined);
+  });
+});
+
+describe('rollout & invite contracts', () => {
+  it('every announceable flag has FR+EN title and body', () => {
+    for (const key of announceableFlags()) {
+      const a = FLAG_ANNOUNCEMENTS[key]!;
+      assert.ok(a.fr.title && a.fr.body, `${key} missing fr`);
+      assert.ok(a.en.title && a.en.body, `${key} missing en`);
+    }
+  });
+
+  it('the three dark flags are announceable', () => {
+    const keys = announceableFlags();
+    for (const k of ['code_draw_l4', 'code_l6', 'kid_ambient_music'] as const) {
+      assert.ok(keys.includes(k), `${k} should be announceable`);
+    }
+  });
+
+  it('RolloutRequestSchema defaults enable/send to true and rejects non-announceable flags', () => {
+    const ok = RolloutRequestSchema.parse({ flags: ['code_l6'], emails: ['a@b.co'] });
+    assert.equal(ok.enable, true);
+    assert.equal(ok.send, true);
+    // kid_voiceover is a real flag but has no announcement copy
+    const bad = RolloutRequestSchema.safeParse({ flags: ['kid_voiceover'], emails: ['a@b.co'] });
+    assert.equal(bad.success, false);
+  });
+
+  it('FlagOverrideRow carries notified_at', () => {
+    const row = FlagOverrideRowSchema.parse({
+      parent_id: UUID2,
+      email: 'a@b.co',
+      enabled: true,
+      notified_at: null,
+    });
+    assert.equal(row.notified_at, null);
   });
 });

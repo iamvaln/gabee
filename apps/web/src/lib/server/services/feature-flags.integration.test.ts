@@ -10,6 +10,9 @@ import {
   listFlagOverrides,
   setFlagOverride,
   deleteFlagOverride,
+  getParentIdByEmail,
+  hasOverride,
+  markOverrideNotified,
 } from './feature-flags';
 
 const prisma = createTestClient();
@@ -65,6 +68,24 @@ test('setFlagOverride is idempotent; listFlagOverrides carries the email; delete
   assert.equal(overrides[0]!.enabled, true);
   await deleteFlagOverride('kid_voiceover', parent.email);
   assert.equal((await listFlagOverrides('kid_voiceover')).overrides.length, 0);
+});
+
+test('override rows expose notified_at; markOverrideNotified stamps it', async () => {
+  const { parent } = await createLoginableParent(prisma);
+  await setFlagOverride('code_l6', { email: parent.email, enabled: true });
+
+  let listed = await listFlagOverrides('code_l6');
+  assert.equal(listed.overrides[0]!.notified_at, null);
+
+  const pid = await getParentIdByEmail(parent.email);
+  assert.equal(pid, parent.id);
+  assert.equal(await hasOverride('code_l6', parent.id), true);
+  assert.equal(await hasOverride('code_draw_l4', parent.id), false);
+
+  const when = new Date('2026-07-18T10:00:00.000Z');
+  await markOverrideNotified('code_l6', parent.id, when);
+  listed = await listFlagOverrides('code_l6');
+  assert.equal(listed.overrides[0]!.notified_at, when.toISOString());
 });
 
 test('unknown email → 404; unknown flag key → 404', async () => {
