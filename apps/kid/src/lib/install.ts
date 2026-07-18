@@ -17,9 +17,28 @@ interface BeforeInstallPromptEvent extends Event {
 
 let deferredPrompt: BeforeInstallPromptEvent | null = null;
 
+// Deep-link install intent: the landing / parent-app CTAs link here with
+// `?install=1` (they can't fire the PWA prompt themselves — wrong origin), so
+// the kid app force-opens the install banner on arrival. Captured at module
+// eval — BEFORE the router's URL-sync effect strips the query string — then the
+// param is removed so a refresh doesn't re-open a dismissed banner. Mirrors the
+// `?pair=` capture pattern in lib/pair.ts.
+let installIntent = false;
+
 // Capture early — the event fires before the React tree mounts on some
 // browsers. The state then flows through `useInstall` once that mounts.
 if (typeof window !== 'undefined') {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('install')) {
+    installIntent = true;
+    params.delete('install');
+    const qs = params.toString();
+    window.history.replaceState(
+      null,
+      '',
+      window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash,
+    );
+  }
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e as BeforeInstallPromptEvent;
@@ -30,6 +49,14 @@ if (typeof window !== 'undefined') {
     deferredPrompt = null;
     window.dispatchEvent(new CustomEvent('gabee:install-done'));
   });
+}
+
+// Read-once: was the app opened via an `?install=1` deep link? Consuming it
+// resets the flag so only the first banner mount treats it as a forced open.
+export function consumeInstallIntent(): boolean {
+  const v = installIntent;
+  installIntent = false;
+  return v;
 }
 
 export type InstallState =

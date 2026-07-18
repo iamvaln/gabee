@@ -119,9 +119,12 @@ const resources = {
       },
       install: {
         onThisDevice: 'Installer Gabee sur cet appareil',
+        banner: 'Installe Gabee sur cet appareil pour jouer hors-ligne.',
         why: 'Pour que ton enfant ouvre Gabee comme une vraie app, sans la barre du navigateur.',
         now: 'Installer maintenant',
+        dismiss: 'Plus tard',
         iosHint: '<b>Sur iPhone/iPad :</b> touche <s>Partager</s> dans Safari, puis <s>« Sur l’écran d’accueil »</s>.',
+        browserHint: 'Dans ton navigateur : ouvre le menu (⋮) puis « Installer Gabee ».',
       },
       code: {
         nice: 'Bravo ! ✨',
@@ -345,9 +348,12 @@ const resources = {
       },
       install: {
         onThisDevice: 'Install Gabee on this device',
+        banner: 'Install Gabee on this device to play offline.',
         why: 'So your kid opens Gabee like a real app, with no browser bar.',
         now: 'Install now',
+        dismiss: 'Later',
         iosHint: '<b>On iPhone/iPad:</b> tap <s>Share</s> in Safari, then <s>"Add to Home Screen"</s>.',
+        browserHint: 'In your browser: open the menu (⋮), then “Install Gabee”.',
       },
       code: {
         nice: 'Nice! ✨',

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Bee } from '../components/Bee';
 import { Chrome } from '../components/Chrome';
 import { Icon } from '../components/Icon';
+import { InstallBanner } from '../components/InstallBanner';
 import { api, ApiError } from '../lib/api';
 import { useStore } from '../store';
 
@@ -56,6 +57,10 @@ export function Login() {
   return (
     <div className="welcome-screen">
       <Chrome lang={lang} setLang={setLang} showWordmark />
+      {/* Install banner also here (not just the Hub): a parent following the
+          landing / parent-app "Installer l'app enfant" deep link lands on THIS
+          login screen, so the install affordance must be reachable before auth. */}
+      <InstallBanner />
       <div className="welcome-body">
         <div className="welcome-hero">
           <Bee size={120} expression="idle" wings bob />

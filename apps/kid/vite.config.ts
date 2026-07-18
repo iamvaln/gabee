@@ -76,6 +76,13 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'landscape',
+        // When the PWA is already installed, prefer focusing/reusing the
+        // installed window over spawning a new one. Combined with the browser's
+        // link-capturing (which the user enables per-app: "open supported links
+        // in Gabee"), an in-scope link opens the installed app instead of a tab.
+        // Note: this is a nudge — browsers still gate actual link-capture on
+        // that user setting; we can't force it from a cross-origin link.
+        launch_handler: { client_mode: 'focus-existing' },
         background_color: '#FFFBEC',
         // Mint surface from the design system (rounded, calm — design-spec §15.6).
         theme_color: '#BBEAF2',
