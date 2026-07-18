@@ -309,6 +309,11 @@ function FlagCard({
               {overrides.map((o) => (
                 <li key={o.parent_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                   <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{o.email}</span>
+                  <span className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                    {o.notified_at
+                      ? (L ? 'Averti le ' : 'Notified ') + new Date(o.notified_at).toLocaleDateString(L ? 'fr-FR' : 'en-GB')
+                      : (L ? 'non averti' : 'not notified')}
+                  </span>
                   <Switch
                     checked={o.enabled}
                     disabled={!canEdit || rowBusy}
