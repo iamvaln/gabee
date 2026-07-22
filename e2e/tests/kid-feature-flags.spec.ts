@@ -52,10 +52,31 @@ async function setAmbientMusicOverride(enabled: boolean) {
   });
 }
 
+// Cues (SFX) are gated by kid_game_sounds, which now ships dark (OFF) by default
+// (PR #45 — audio dark by product decision). The "cues still fire" assertion
+// below needs it enabled for the fixture parent, so the test exercises the
+// music/cue separation rather than the new dark default.
+async function setGameSoundsOverride(enabled: boolean) {
+  await prisma.featureFlag.upsert({
+    where: { key: 'kid_game_sounds' },
+    update: {},
+    create: { key: 'kid_game_sounds', enabledDefault: false, description: '' },
+  });
+  const parent = await prisma.parentAccount.findUnique({ where: { email: FIXTURES.parentEmail }, select: { id: true } });
+  if (!parent) throw new Error('fixture parent missing');
+  await prisma.featureFlagOverride.upsert({
+    where: { flagKey_parentId: { flagKey: 'kid_game_sounds', parentId: parent.id } },
+    update: { enabled },
+    create: { flagKey: 'kid_game_sounds', parentId: parent.id, enabled },
+  });
+}
+
 async function clearAmbientMusicOverride() {
   const parent = await prisma.parentAccount.findUnique({ where: { email: FIXTURES.parentEmail }, select: { id: true } });
   if (parent) {
-    await prisma.featureFlagOverride.deleteMany({ where: { flagKey: 'kid_ambient_music', parentId: parent.id } });
+    await prisma.featureFlagOverride.deleteMany({
+      where: { flagKey: { in: ['kid_ambient_music', 'kid_game_sounds'] }, parentId: parent.id },
+    });
   }
 }
 
@@ -89,6 +110,7 @@ test('kid_ambient_music override ON → music plays and the Settings row is show
 
 test('kid_ambient_music override OFF → no music, Settings row hidden, cues still fire', async ({ page }) => {
   await setAmbientMusicOverride(false);
+  await setGameSoundsOverride(true); // cues are dark by default now — enable so they fire
   await seedKidAuthAndPickAva(page);
   await page.mouse.click(1, 1);
   // Music must never start.

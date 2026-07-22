@@ -24,9 +24,31 @@ async function setAmbientMusicFlag(enabled: boolean) {
   });
 }
 
+// Nav/tap cues are SFX gated by kid_game_sounds, which now ships dark (OFF) by
+// default (PR #45 — audio dark by product decision). These engine tests assert
+// cues fire, so enable it for the fixture parent via a per-account override,
+// exactly like ambient music above.
+async function setGameSoundsFlag(enabled: boolean) {
+  await prisma.featureFlag.upsert({
+    where: { key: 'kid_game_sounds' },
+    update: {},
+    create: { key: 'kid_game_sounds', enabledDefault: false, description: '' },
+  });
+  const parent = await prisma.parentAccount.findUnique({ where: { email: FIXTURES.parentEmail }, select: { id: true } });
+  if (!parent) throw new Error('fixture parent missing');
+  await prisma.featureFlagOverride.upsert({
+    where: { flagKey_parentId: { flagKey: 'kid_game_sounds', parentId: parent.id } },
+    update: { enabled },
+    create: { flagKey: 'kid_game_sounds', parentId: parent.id, enabled },
+  });
+}
+
 async function clearAmbientMusicFlag() {
   const parent = await prisma.parentAccount.findUnique({ where: { email: FIXTURES.parentEmail }, select: { id: true } });
-  if (parent) await prisma.featureFlagOverride.deleteMany({ where: { flagKey: 'kid_ambient_music', parentId: parent.id } });
+  if (parent)
+    await prisma.featureFlagOverride.deleteMany({
+      where: { flagKey: { in: ['kid_ambient_music', 'kid_game_sounds'] }, parentId: parent.id },
+    });
 }
 
 declare global {
@@ -72,6 +94,7 @@ test.beforeEach(async ({ page }) => {
     data: { audioEnabled: true, musicEnabled: true },
   });
   await setAmbientMusicFlag(true);
+  await setGameSoundsFlag(true); // cues are dark by default now — enable so they fire
   await page.addInitScript(INSTRUMENT);
 });
 
