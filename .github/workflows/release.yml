@@ -216,6 +216,17 @@ jobs:
               docker pull "ghcr.io/iamvaln/${image}:latest" || true
             done
             docker logout ghcr.io
+            # Prune old release images so tagged :vX.Y.Z versions don't pile up
+            # on the VPS — `docker image prune -f` only removes DANGLING images,
+            # never old tags, so every release used to accumulate (hit ~200
+            # images / ~100GB before the 2026-07-22 cleanup). Keep the 2 most
+            # recent versions per image (current + previous, for rollback);
+            # :latest and any running image are untouched.
+            for image in gabee-web gabee-kid gabee-backup gabee-cron-digest; do
+              docker images "ghcr.io/iamvaln/${image}" --format '{{.Tag}}' \
+                | grep -E '^v[0-9]' | sort -V | head -n -2 \
+                | while read -r tag; do docker rmi "ghcr.io/iamvaln/${image}:${tag}" 2>/dev/null || true; done
+            done
             docker image prune -f
         env:
           IMAGE_TAG: ${{ github.ref_name }}
