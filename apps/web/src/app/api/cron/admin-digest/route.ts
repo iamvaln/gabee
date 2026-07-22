@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 
 // POST /api/cron/admin-digest — poked DAILY by the cron-digest sidecar
 // (alongside the classification digest). The service self-gates so it only
-// actually emails once a week, on ADMIN_DIGEST_DOW (default Monday), or any
+// actually emails once a week, on ADMIN_DIGEST_DOW (default Sunday), or any
 // later day that week if the target day was missed. Idempotent across restarts
 // via the AdminDigestState marker — never two sends in one week.
 //

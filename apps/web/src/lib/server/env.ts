@@ -67,7 +67,7 @@ const envSchema = z.object({
   // Base URL of the admin app, used to build deep links in the digest email
   // (e.g. <ADMIN_APP_URL>/admin/content). Defaults to https://admin.gabee.app.
   ADMIN_APP_URL: z.url().optional(),
-  // UTC weekday the digest goes out (0=Sun … 6=Sat). Defaults to Monday (1).
+  // UTC weekday the digest goes out (0=Sun … 6=Sat). Defaults to Sunday (0).
   // The cron sidecar pokes daily; the endpoint only sends on this day.
   ADMIN_DIGEST_DOW: z.coerce.number().int().min(0).max(6).optional(),
 
@@ -135,7 +135,7 @@ export const PARENT_APP_URL = env.PARENT_APP_URL;
 export const CRON_SECRET = env.CRON_SECRET;
 export const ADMIN_DIGEST_TO = env.ADMIN_DIGEST_TO || 'nguemnev@gmail.com';
 export const ADMIN_APP_URL = env.ADMIN_APP_URL || 'https://admin.gabee.app';
-export const ADMIN_DIGEST_DOW = env.ADMIN_DIGEST_DOW ?? 1;
+export const ADMIN_DIGEST_DOW = env.ADMIN_DIGEST_DOW ?? 0;
 /**
  * Two distinct cookie names so an admin session and a parent session can
  * coexist in the same browser without one accidentally authenticating the

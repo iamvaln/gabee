@@ -9,7 +9,7 @@
  * Scheduling: the cron-digest sidecar pokes `/api/cron/admin-digest` DAILY
  * (same loop as the classification digest). This service self-gates so it only
  * actually sends once a week — on the target weekday (ADMIN_DIGEST_DOW, default
- * Monday), or any later day that same week if the target day was missed
+ * Sunday), or any later day that same week if the target day was missed
  * (outage / send failure). The `AdminDigestState` singleton marker keeps it
  * idempotent across restarts + startup pokes (never two sends in one week).
  */
@@ -228,7 +228,7 @@ export async function runAdminWeeklyDigest(
     // Already mailed this week → no-op (covers daily re-pokes + restarts).
     if (sinceLast < 6 * DAY_MS) return { sent: false, skipped: 'already_sent_this_week' };
     // Send on the target weekday, or any later day that week if it was missed
-    // (an outage on Monday shouldn't cost the whole week's report).
+    // (an outage on Sunday shouldn't cost the whole week's report).
     const dueByDay = now.getUTCDay() === ADMIN_DIGEST_DOW;
     const overdue = sinceLast >= 8 * DAY_MS; // > a week since last → catch up
     if (!dueByDay && !overdue) return { sent: false, skipped: 'not_due_day' };
@@ -250,7 +250,16 @@ export async function runAdminWeeklyDigest(
 
   const recipients = ADMIN_DIGEST_TO.split(',').map((s) => s.trim()).filter(Boolean);
   const result = await sendEmail({ to: recipients, subject, text, html });
-  if (!result.ok) return { sent: false, skipped: 'send_failed', error: result.error };
+  if (!result.ok) {
+    // Surface the failure server-side. Without this the only trace is the
+    // cron sidecar's best-effort stdout echo, so a genuinely failed weekly
+    // digest would be invisible (no web log, no Sentry). Matches the parent
+    // classification digest's per-send logging in services/classifications.ts.
+    console.error(
+      `[admin-digest] send failed to ${recipients.join(',')}: ${result.error ?? 'unknown_error'}`,
+    );
+    return { sent: false, skipped: 'send_failed', error: result.error };
+  }
 
   await prisma.adminDigestState.upsert({
     where: { id: 'default' },
