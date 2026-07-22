@@ -729,6 +729,71 @@ a:focus-visible,
   overflow-x: hidden;
   min-height: 0;
 }
+/* PWA install banner — promotes the install action out of Settings onto the
+   Hub. Mint surface (the app's theme colour), dismissible, and self-hiding once
+   installed (see InstallBanner.tsx). Sits between the Chrome bar and the
+   greeting; the .home-screen gap handles its spacing. */
+.install-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--color-wing);
+  border: 1px solid rgba(32, 36, 46, 0.08);
+  box-shadow: 0 2px 8px rgba(32, 36, 46, 0.08);
+  flex-shrink: 0;
+}
+.install-banner-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.install-banner-copy strong {
+  font-size: 15px;
+  color: var(--color-ink);
+}
+.install-banner-copy span {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--color-ink);
+  opacity: 0.8;
+}
+.install-banner-ios {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-ink);
+}
+.install-banner-ios .ios-chip {
+  font-weight: 700;
+}
+.install-banner-close {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--color-ink);
+  opacity: 0.5;
+  padding: 6px;
+  border-radius: 8px;
+  align-self: flex-start;
+}
+.install-banner-close:hover {
+  opacity: 1;
+}
+@media (max-width: 640px) {
+  .install-banner {
+    flex-wrap: wrap;
+  }
+  .install-banner .btn {
+    flex: 1;
+  }
+}
 /* Home greeting — h1 fluid type, subtitle muted. On phones the greet
    wraps so the stat strip drops below the title instead of squeezing it. */
 .home-greeting {

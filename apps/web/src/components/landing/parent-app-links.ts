@@ -33,3 +33,13 @@ export function parentSignupHref(): string {
 export function kidAppHref(): string {
   return (process.env.NEXT_PUBLIC_KID_APP_URL ?? 'http://localhost:5173').replace(/\/$/, '');
 }
+
+/**
+ * Kid PWA URL with the `?install=1` deep link. The landing / parent-app CTAs
+ * can't fire the PWA install prompt themselves (it only fires on the kid
+ * origin), so they link here — the kid app reads the param and force-opens its
+ * install banner on arrival (see kid `lib/install.ts` → `consumeInstallIntent`).
+ */
+export function kidInstallHref(): string {
+  return `${kidAppHref()}?install=1`;
+}

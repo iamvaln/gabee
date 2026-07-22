@@ -7,6 +7,7 @@ import { AddChildForm } from './add-child-form';
 import { HomeClassificationCard } from './_components/home-classification-card';
 import { HomeKidsPulse, type KidPulse } from './_components/home-kids-pulse';
 import { HomeAggregates, type AggregatesData } from './_components/home-aggregates';
+import { InstallKidBanner } from './_components/install-kid-banner';
 import { ageFromBirthDate } from '@/lib/age';
 
 export const dynamic = 'force-dynamic';
@@ -142,6 +143,11 @@ export default async function ParentHome() {
           </p>
         </div>
       </div>
+
+      {/* Install nudge — shown until a device is linked (the parent usually
+          installs the kid PWA on the child's device as part of setup). Hidden
+          once at least one device is paired. */}
+      {!hasDevice && !offline && <InstallKidBanner lang={lang} />}
 
       {/* §5.1 + §5.3 — side-by-side on wide widths, stack on narrow. */}
       <div className="home-grid">

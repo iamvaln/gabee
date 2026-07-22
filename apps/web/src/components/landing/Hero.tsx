@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { parentSignupHref } from './parent-app-links';
+import { parentSignupHref, kidInstallHref } from './parent-app-links';
 import { getTranslations } from 'next-intl/server';
 import { LandingBee } from './LandingBee';
-import { Arrow, Check } from './icons';
+import { Check, Download } from './icons';
 
 // Hero (LP1). Two-line headline (second line tinted teal via CSS),
 // reassurance line, two CTAs, big animated bee on the side.
@@ -22,9 +22,17 @@ export async function Hero() {
             <Link href={parentSignupHref()} className="lbtn lbtn-primary lbtn-lg">
               {t('cta')}
             </Link>
-            <a href="#how" className="lbtn lbtn-ghost lbtn-lg">
-              {t('cta2')}
-              <Arrow />
+            {/* Install CTA — links to the kid PWA with ?install=1 (the prompt
+                can only fire on the kid origin, so we deep-link there). "How it
+                works" isn't repeated here — it already lives in the top nav. */}
+            <a
+              href={kidInstallHref()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="lbtn lbtn-ghost lbtn-lg"
+            >
+              <Download />
+              {t('installKid')}
             </a>
           </div>
           <p className="hero-reassure">

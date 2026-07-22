@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import type { Module } from '@gabee/types';
 import { Bee } from '../components/Bee';
 import { Chrome, ProgressRing } from '../components/Chrome';
+import { InstallBanner } from '../components/InstallBanner';
 import { Icon } from '../components/Icon';
 import { MODULES, MODULE_ICONS } from '../content/modules';
 import { useStore } from '../store';
@@ -38,6 +39,7 @@ export function Hub({
   return (
     <div className="home-screen">
       <Chrome lang={lang} setLang={setLang} showWordmark profile={profile} hideHome onSettings={onSettings} />
+      <InstallBanner />
       <div className="home-greeting">
         <Bee size={72} expression="idle" wings bob />
         <div>

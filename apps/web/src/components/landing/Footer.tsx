@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { parentSignupHref, kidAppHref } from './parent-app-links';
+import { parentSignupHref, kidAppHref, kidInstallHref } from './parent-app-links';
 import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
 import { getTranslations, getLocale } from 'next-intl/server';
 import { Wordmark } from './LandingBee';
@@ -32,8 +32,18 @@ export async function Footer() {
             </li>
             <li>
               {/* Discreet entry point for an already-installed kid PWA — not a
-                  primary CTA (the real onboarding is device pairing). */}
-              <a href={kidAppHref()}>{locale === 'fr' ? 'Espace enfant' : 'Kids app'}</a>
+                  primary CTA (the real onboarding is device pairing). Opens the
+                  kid app (separate origin) in a new tab. */}
+              <a href={kidAppHref()} target="_blank" rel="noopener noreferrer">
+                {locale === 'fr' ? 'Espace enfant' : 'Kids app'}
+              </a>
+            </li>
+            <li>
+              {/* Install reminder — deep-links to the kid app with ?install=1
+                  so the PWA banner force-opens there. New tab (separate app). */}
+              <a href={kidInstallHref()} target="_blank" rel="noopener noreferrer">
+                {locale === 'fr' ? "Installer l'app enfant" : 'Install the kids app'}
+              </a>
             </li>
           </ul>
         </nav>
