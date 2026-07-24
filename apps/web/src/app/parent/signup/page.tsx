@@ -406,10 +406,14 @@ function SignupInner() {
               </span>
               <span style={{ fontWeight: 700, fontSize: 13.5 }}>
                 {L ? "J'accepte les " : 'I accept the '}
-                <Link href="/fr/terms" target="_blank" onClick={(e) => e.stopPropagation()}>
+                <Link href={`/${lang}/terms`} target="_blank" onClick={(e) => e.stopPropagation()}>
                   {L ? "conditions d'utilisation" : 'terms of service'}
                 </Link>
-                {L ? ' et la politique de confidentialité.' : ' and privacy policy.'}
+                {L ? ' et la ' : ' and '}
+                <Link href={`/${lang}/privacy`} target="_blank" onClick={(e) => e.stopPropagation()}>
+                  {L ? 'politique de confidentialité' : 'privacy policy'}
+                </Link>
+                {'.'}
               </span>
             </button>
 
