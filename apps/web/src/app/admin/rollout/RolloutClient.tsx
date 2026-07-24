@@ -97,7 +97,13 @@ export function RolloutClient({
       });
       if (!res.ok) throw new Error(`${res.status}`);
       setResult(await res.json());
-      // refresh status for the touched flags
+      // Clear the parent selection so the button disables after a successful
+      // deploy — otherwise it stays clickable and a second click would re-enable
+      // + re-email the same parents (overwriting their notified_at). The feature
+      // selection (picked) is kept so a fresh cohort can be sent right away.
+      setChosen(new Set());
+      // refresh status for the touched flags (the just-notified parents now read
+      // "notified" and drop out of the "enabled but not notified" filter)
       setOvByFlag({});
     } catch {
       setError(L ? "Échec de l'envoi." : 'Submit failed.');
