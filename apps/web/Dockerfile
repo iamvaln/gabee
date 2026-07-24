@@ -19,10 +19,21 @@ FROM base AS build
 COPY . .
 # Be resilient to slow/flaky networks: more retries, longer timeout, fewer
 # parallel sockets (avoids ERR_SOCKET_TIMEOUT on constrained links).
+#
+# package-import-method=copy: pnpm defaults to hardlinking node_modules files
+# into the /pnpm store. This runtime stage is `FROM build`, so those hardlinks
+# ship in the image — and the file/target can land in different image layers.
+# On `docker pull`, containerd's overlayfs extraction then intermittently fails
+# with `link … no such file or directory` (a cross-layer-hardlink race, not a
+# disk-space issue). It stayed masked until the 2026-07-22 release prune stopped
+# keeping old images warm in the layer cache. `copy` makes every node_modules
+# file a real copy — no cross-layer hardlinks — so cold re-extraction is always
+# safe. Larger/slower build, but the deploy stops needing a rerun each release.
 ENV npm_config_fetch_retries=5 \
     npm_config_fetch_retry_maxtimeout=120000 \
     npm_config_fetch_timeout=600000 \
-    npm_config_network_concurrency=4
+    npm_config_network_concurrency=4 \
+    npm_config_package_import_method=copy
 RUN pnpm install --frozen-lockfile
 # Prisma 7 client → packages/db/src/generated/prisma (consumed via transpilePackages).
 # prisma.config.ts resolves env('DIRECT_URL') at load time, even though `generate`
