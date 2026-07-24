@@ -90,7 +90,15 @@ jobs:
             git reset --hard origin/main
             COMPOSE="docker compose -p gabee-staging --env-file .env.staging -f docker-compose.yml -f docker-compose.staging.yml"
             # Only staging services exist as :staging images (no backup/cron-digest builds).
-            $COMPOSE pull web kid
+            # Retry the pull — same transient containerd overlayfs extract race as
+            # prod (daemon.json max-concurrent-downloads=1 + this retry = self-heal).
+            n=0
+            until $COMPOSE pull web kid; do
+              n=$((n+1))
+              if [ "$n" -ge 3 ]; then echo "compose pull failed after $n attempts"; exit 1; fi
+              echo "pull attempt $n hit a transient containerd extract error — retrying in 10s…"
+              sleep 10
+            done
             $COMPOSE up -d db migrate web kid
             docker logout ghcr.io
             docker image prune -f

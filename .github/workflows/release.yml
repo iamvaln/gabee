@@ -203,7 +203,18 @@ jobs:
             export IMAGE_TAG
             git fetch --tags origin
             git checkout "$IMAGE_TAG"   # sync docker-compose.yml to the released tag
-            docker compose --env-file .env.production pull
+            # Retry the pull: containerd's overlayfs snapshotter intermittently
+            # fails cold layer extraction ('link'/'Lchown … no such file or
+            # directory') — a parallel-unpack race, not a real error. daemon.json
+            # sets max-concurrent-downloads=1 to reduce it; this retry absorbs any
+            # residual flake so the deploy self-heals instead of needing a rerun.
+            n=0
+            until docker compose --env-file .env.production pull; do
+              n=$((n+1))
+              if [ "$n" -ge 3 ]; then echo "compose pull failed after $n attempts"; exit 1; fi
+              echo "pull attempt $n hit a transient containerd extract error — retrying in 10s…"
+              sleep 10
+            done
             docker compose --env-file .env.production up -d
             # Refresh the LOCAL `:latest` tags too. CI tags every release as
             # both :vX.Y.Z and :latest in GHCR, but the compose pull above
