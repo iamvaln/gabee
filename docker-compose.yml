@@ -4,6 +4,21 @@
 #   docker compose --env-file .env.production up -d --build
 name: gabee
 
+# CERT_RESOLVER — which ACME resolver requests the certificates.
+#
+# Defaults to `le-dns` (DNS-01 via Cloudflare) because THESE HOSTNAMES SIT
+# BEHIND CLOUDFLARE'S PROXY. Cloudflare terminates TLS itself, so the TLS-ALPN
+# challenge never reaches Traefik:
+#
+#   Cannot negotiate ALPN protocol "acme-tls/1" for tls-alpn-01 challenge
+#
+# Renewal has been failing on every attempt, silently — the certificates kept
+# serving, so nothing looked wrong. The origin certificate expires 26 Oct 2026;
+# with SSL mode "Full (strict)" the site goes down that day.
+#
+# Set to `le` to go back to TLS-ALPN — only correct if the hostnames leave the
+# proxy (grey cloud).
+
 services:
   # ── PostgreSQL ──────────────────────────────────────────────────────────────
   db:
@@ -73,7 +88,7 @@ services:
       # gates each path by host so cross-surface URLs 404 cleanly.
       - traefik.http.routers.${STACK:-gabee}-web.rule=Host(`${WEB_DOMAIN}`) || Host(`www.${WEB_DOMAIN}`) || Host(`parents.${WEB_DOMAIN}`) || Host(`admin.${WEB_DOMAIN}`) || Host(`api.${WEB_DOMAIN}`)
       - traefik.http.routers.${STACK:-gabee}-web.entrypoints=websecure
-      - traefik.http.routers.${STACK:-gabee}-web.tls.certresolver=le
+      - traefik.http.routers.${STACK:-gabee}-web.tls.certresolver=${CERT_RESOLVER:-le-dns}
       - traefik.http.services.${STACK:-gabee}-web.loadbalancer.server.port=3000
 
   # ── DB backup sidecar: nightly pg_dump → Cloudflare R2 ──────────────────────
@@ -147,7 +162,7 @@ services:
       - traefik.docker.network=web
       - traefik.http.routers.${STACK:-gabee}-kid.rule=Host(`${KID_DOMAIN}`)
       - traefik.http.routers.${STACK:-gabee}-kid.entrypoints=websecure
-      - traefik.http.routers.${STACK:-gabee}-kid.tls.certresolver=le
+      - traefik.http.routers.${STACK:-gabee}-kid.tls.certresolver=${CERT_RESOLVER:-le-dns}
       - traefik.http.services.${STACK:-gabee}-kid.loadbalancer.server.port=80
 
 volumes:
