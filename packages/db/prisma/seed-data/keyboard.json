@@ -8334,8 +8334,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le camion marche.",
-        "en": "The truck walks."
+        "fr": "Le chat boit du lait.",
+        "en": "The cat drinks milk."
       },
       "distractors": [],
       "hint": {
@@ -8352,8 +8352,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le camion marche.",
-          "en": "The truck walks."
+          "fr": "Le chat boit du lait.",
+          "en": "The cat drinks milk."
         },
         "tolerance": {
           "case": true,
@@ -8380,8 +8380,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le lion nage.",
-        "en": "The lion swims."
+        "fr": "Le chien court dans le jardin.",
+        "en": "The dog runs in the garden."
       },
       "distractors": [],
       "hint": {
@@ -8398,8 +8398,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le lion nage.",
-          "en": "The lion swims."
+          "fr": "Le chien court dans le jardin.",
+          "en": "The dog runs in the garden."
         },
         "tolerance": {
           "case": true,
@@ -8426,8 +8426,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La balle danse.",
-        "en": "The ball dances."
+        "fr": "Je mange une pomme.",
+        "en": "I eat an apple."
       },
       "distractors": [],
       "hint": {
@@ -8444,8 +8444,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La balle danse.",
-          "en": "The ball dances."
+          "fr": "Je mange une pomme.",
+          "en": "I eat an apple."
         },
         "tolerance": {
           "case": true,
@@ -8472,8 +8472,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le canard court.",
-        "en": "The duck runs."
+        "fr": "Le soleil brille.",
+        "en": "The sun is shining."
       },
       "distractors": [],
       "hint": {
@@ -8490,8 +8490,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le canard court.",
-          "en": "The duck runs."
+          "fr": "Le soleil brille.",
+          "en": "The sun is shining."
         },
         "tolerance": {
           "case": true,
@@ -8518,8 +8518,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La table court.",
-        "en": "The table runs."
+        "fr": "La poule mange du grain.",
+        "en": "The hen eats grain."
       },
       "distractors": [],
       "hint": {
@@ -8536,8 +8536,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La table court.",
-          "en": "The table runs."
+          "fr": "La poule mange du grain.",
+          "en": "The hen eats grain."
         },
         "tolerance": {
           "case": true,
@@ -8564,8 +8564,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le chien saute.",
-        "en": "The dog jumps."
+        "fr": "Le bateau est sur la mer.",
+        "en": "The boat is on the sea."
       },
       "distractors": [],
       "hint": {
@@ -8582,8 +8582,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le chien saute.",
-          "en": "The dog jumps."
+          "fr": "Le bateau est sur la mer.",
+          "en": "The boat is on the sea."
         },
         "tolerance": {
           "case": true,
@@ -8610,8 +8610,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La tortue danse.",
-        "en": "The turtle dances."
+        "fr": "Mon ami joue au ballon.",
+        "en": "My friend plays ball."
       },
       "distractors": [],
       "hint": {
@@ -8628,8 +8628,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La tortue danse.",
-          "en": "The turtle dances."
+          "fr": "Mon ami joue au ballon.",
+          "en": "My friend plays ball."
         },
         "tolerance": {
           "case": true,
@@ -8656,8 +8656,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La maison chante.",
-        "en": "The house sings."
+        "fr": "Le lapin mange une carotte.",
+        "en": "The rabbit eats a carrot."
       },
       "distractors": [],
       "hint": {
@@ -8674,8 +8674,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La maison chante.",
-          "en": "The house sings."
+          "fr": "Le lapin mange une carotte.",
+          "en": "The rabbit eats a carrot."
         },
         "tolerance": {
           "case": true,
@@ -8702,8 +8702,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le lion pleure.",
-        "en": "The lion cries."
+        "fr": "Il pleut dans la rue.",
+        "en": "It is raining in the street."
       },
       "distractors": [],
       "hint": {
@@ -8720,8 +8720,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le lion pleure.",
-          "en": "The lion cries."
+          "fr": "Il pleut dans la rue.",
+          "en": "It is raining in the street."
         },
         "tolerance": {
           "case": true,
@@ -8748,8 +8748,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le bateau pleure.",
-        "en": "The boat cries."
+        "fr": "La lune brille la nuit.",
+        "en": "The moon shines at night."
       },
       "distractors": [],
       "hint": {
@@ -8766,8 +8766,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le bateau pleure.",
-          "en": "The boat cries."
+          "fr": "La lune brille la nuit.",
+          "en": "The moon shines at night."
         },
         "tolerance": {
           "case": true,
@@ -8794,8 +8794,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La voiture rit.",
-        "en": "The car laughs."
+        "fr": "Le bébé dort.",
+        "en": "The baby is sleeping."
       },
       "distractors": [],
       "hint": {
@@ -8812,8 +8812,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La voiture rit.",
-          "en": "The car laughs."
+          "fr": "Le bébé dort.",
+          "en": "The baby is sleeping."
         },
         "tolerance": {
           "case": true,
@@ -8840,8 +8840,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le poisson tombe.",
-        "en": "The fish falls."
+        "fr": "Papa lit un livre.",
+        "en": "Dad reads a book."
       },
       "distractors": [],
       "hint": {
@@ -8858,8 +8858,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le poisson tombe.",
-          "en": "The fish falls."
+          "fr": "Papa lit un livre.",
+          "en": "Dad reads a book."
         },
         "tolerance": {
           "case": true,
@@ -8886,8 +8886,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le camion chante.",
-        "en": "The truck sings."
+        "fr": "Maman fait une tarte.",
+        "en": "Mum makes a pie."
       },
       "distractors": [],
       "hint": {
@@ -8904,8 +8904,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le camion chante.",
-          "en": "The truck sings."
+          "fr": "Maman fait une tarte.",
+          "en": "Mum makes a pie."
         },
         "tolerance": {
           "case": true,
@@ -8932,8 +8932,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le cheval joue.",
-        "en": "The horse plays."
+        "fr": "Les oiseaux chantent.",
+        "en": "The birds sing."
       },
       "distractors": [],
       "hint": {
@@ -8950,8 +8950,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le cheval joue.",
-          "en": "The horse plays."
+          "fr": "Les oiseaux chantent.",
+          "en": "The birds sing."
         },
         "tolerance": {
           "case": true,
@@ -8978,8 +8978,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La girafe dort.",
-        "en": "The giraffe sleeps."
+        "fr": "Le poisson nage vite.",
+        "en": "The fish swims fast."
       },
       "distractors": [],
       "hint": {
@@ -8996,8 +8996,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La girafe dort.",
-          "en": "The giraffe sleeps."
+          "fr": "Le poisson nage vite.",
+          "en": "The fish swims fast."
         },
         "tolerance": {
           "case": true,
@@ -9024,8 +9024,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le dauphin mange.",
-        "en": "The dolphin eats."
+        "fr": "Je bois du jus.",
+        "en": "I drink juice."
       },
       "distractors": [],
       "hint": {
@@ -9042,8 +9042,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le dauphin mange.",
-          "en": "The dolphin eats."
+          "fr": "Je bois du jus.",
+          "en": "I drink juice."
         },
         "tolerance": {
           "case": true,
@@ -9070,8 +9070,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le bonbon vole.",
-        "en": "The sweet flies."
+        "fr": "La vache donne du lait.",
+        "en": "The cow gives milk."
       },
       "distractors": [],
       "hint": {
@@ -9088,8 +9088,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le bonbon vole.",
-          "en": "The sweet flies."
+          "fr": "La vache donne du lait.",
+          "en": "The cow gives milk."
         },
         "tolerance": {
           "case": true,
@@ -9116,8 +9116,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le singe court.",
-        "en": "The monkey runs."
+        "fr": "Le train part ce matin.",
+        "en": "The train leaves this morning."
       },
       "distractors": [],
       "hint": {
@@ -9134,8 +9134,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le singe court.",
-          "en": "The monkey runs."
+          "fr": "Le train part ce matin.",
+          "en": "The train leaves this morning."
         },
         "tolerance": {
           "case": true,
@@ -9162,8 +9162,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La souris tombe.",
-        "en": "The mouse falls."
+        "fr": "Je vais au parc.",
+        "en": "I go to the park."
       },
       "distractors": [],
       "hint": {
@@ -9180,8 +9180,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La souris tombe.",
-          "en": "The mouse falls."
+          "fr": "Je vais au parc.",
+          "en": "I go to the park."
         },
         "tolerance": {
           "case": true,
@@ -9208,8 +9208,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La voiture marche.",
-        "en": "The car walks."
+        "fr": "Le singe mange une banane.",
+        "en": "The monkey eats a banana."
       },
       "distractors": [],
       "hint": {
@@ -9226,8 +9226,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La voiture marche.",
-          "en": "The car walks."
+          "fr": "Le singe mange une banane.",
+          "en": "The monkey eats a banana."
         },
         "tolerance": {
           "case": true,
@@ -9254,8 +9254,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le cochon joue.",
-        "en": "The pig plays."
+        "fr": "La fleur est rouge.",
+        "en": "The flower is red."
       },
       "distractors": [],
       "hint": {
@@ -9272,8 +9272,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le cochon joue.",
-          "en": "The pig plays."
+          "fr": "La fleur est rouge.",
+          "en": "The flower is red."
         },
         "tolerance": {
           "case": true,
@@ -9300,8 +9300,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La fleur danse.",
-        "en": "The flower dances."
+        "fr": "Le ciel est bleu.",
+        "en": "The sky is blue."
       },
       "distractors": [],
       "hint": {
@@ -9318,8 +9318,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La fleur danse.",
-          "en": "The flower dances."
+          "fr": "Le ciel est bleu.",
+          "en": "The sky is blue."
         },
         "tolerance": {
           "case": true,
@@ -9346,8 +9346,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le poisson mange.",
-        "en": "The fish eats."
+        "fr": "Le chat dort sur le lit.",
+        "en": "The cat sleeps on the bed."
       },
       "distractors": [],
       "hint": {
@@ -9364,8 +9364,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le poisson mange.",
-          "en": "The fish eats."
+          "fr": "Le chat dort sur le lit.",
+          "en": "The cat sleeps on the bed."
         },
         "tolerance": {
           "case": true,
@@ -9392,8 +9392,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La maison nage.",
-        "en": "The house swims."
+        "fr": "Tom lave ses mains.",
+        "en": "Tom washes his hands."
       },
       "distractors": [],
       "hint": {
@@ -9410,8 +9410,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La maison nage.",
-          "en": "The house swims."
+          "fr": "Tom lave ses mains.",
+          "en": "Tom washes his hands."
         },
         "tolerance": {
           "case": true,
@@ -9438,8 +9438,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le gâteau danse.",
-        "en": "The cake dances."
+        "fr": "Lina dessine une maison.",
+        "en": "Lina draws a house."
       },
       "distractors": [],
       "hint": {
@@ -9456,8 +9456,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le gâteau danse.",
-          "en": "The cake dances."
+          "fr": "Lina dessine une maison.",
+          "en": "Lina draws a house."
         },
         "tolerance": {
           "case": true,
@@ -9484,8 +9484,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le vélo rit.",
-        "en": "The bike laughs."
+        "fr": "Le cheval court vite.",
+        "en": "The horse runs fast."
       },
       "distractors": [],
       "hint": {
@@ -9502,8 +9502,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le vélo rit.",
-          "en": "The bike laughs."
+          "fr": "Le cheval court vite.",
+          "en": "The horse runs fast."
         },
         "tolerance": {
           "case": true,
@@ -9530,8 +9530,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le lion rit.",
-        "en": "The lion laughs."
+        "fr": "La grenouille saute haut.",
+        "en": "The frog jumps high."
       },
       "distractors": [],
       "hint": {
@@ -9548,8 +9548,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le lion rit.",
-          "en": "The lion laughs."
+          "fr": "La grenouille saute haut.",
+          "en": "The frog jumps high."
         },
         "tolerance": {
           "case": true,
@@ -9576,8 +9576,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La voiture mange.",
-        "en": "The car eats."
+        "fr": "Le canard nage sur le lac.",
+        "en": "The duck swims on the lake."
       },
       "distractors": [],
       "hint": {
@@ -9594,8 +9594,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La voiture mange.",
-          "en": "The car eats."
+          "fr": "Le canard nage sur le lac.",
+          "en": "The duck swims on the lake."
         },
         "tolerance": {
           "case": true,
@@ -9622,8 +9622,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le renard joue.",
-        "en": "The fox plays."
+        "fr": "Je mets mon manteau.",
+        "en": "I put on my coat."
       },
       "distractors": [],
       "hint": {
@@ -9640,8 +9640,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le renard joue.",
-          "en": "The fox plays."
+          "fr": "Je mets mon manteau.",
+          "en": "I put on my coat."
         },
         "tolerance": {
           "case": true,
@@ -9668,8 +9668,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le renard marche.",
-        "en": "The fox walks."
+        "fr": "Il fait chaud ce matin.",
+        "en": "It is hot this morning."
       },
       "distractors": [],
       "hint": {
@@ -9686,8 +9686,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le renard marche.",
-          "en": "The fox walks."
+          "fr": "Il fait chaud ce matin.",
+          "en": "It is hot this morning."
         },
         "tolerance": {
           "case": true,
@@ -9714,8 +9714,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le bateau mange.",
-        "en": "The boat eats."
+        "fr": "Le lion dort au soleil.",
+        "en": "The lion sleeps in the sun."
       },
       "distractors": [],
       "hint": {
@@ -9732,8 +9732,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le bateau mange.",
-          "en": "The boat eats."
+          "fr": "Le lion dort au soleil.",
+          "en": "The lion sleeps in the sun."
         },
         "tolerance": {
           "case": true,
@@ -9760,8 +9760,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La poule vole.",
-        "en": "The hen flies."
+        "fr": "La souris mange du fromage.",
+        "en": "The mouse eats cheese."
       },
       "distractors": [],
       "hint": {
@@ -9778,8 +9778,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La poule vole.",
-          "en": "The hen flies."
+          "fr": "La souris mange du fromage.",
+          "en": "The mouse eats cheese."
         },
         "tolerance": {
           "case": true,
@@ -9806,8 +9806,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La banane mange.",
-        "en": "The banana eats."
+        "fr": "Je range ma chambre.",
+        "en": "I tidy my room."
       },
       "distractors": [],
       "hint": {
@@ -9824,8 +9824,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La banane mange.",
-          "en": "The banana eats."
+          "fr": "Je range ma chambre.",
+          "en": "I tidy my room."
         },
         "tolerance": {
           "case": true,
@@ -9852,8 +9852,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La fleur saute.",
-        "en": "The flower jumps."
+        "fr": "Le bus est jaune.",
+        "en": "The bus is yellow."
       },
       "distractors": [],
       "hint": {
@@ -9870,8 +9870,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La fleur saute.",
-          "en": "The flower jumps."
+          "fr": "Le bus est jaune.",
+          "en": "The bus is yellow."
         },
         "tolerance": {
           "case": true,
@@ -9898,8 +9898,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La tortue marche.",
-        "en": "The turtle walks."
+        "fr": "Le chien aime son os.",
+        "en": "The dog loves its bone."
       },
       "distractors": [],
       "hint": {
@@ -9916,8 +9916,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La tortue marche.",
-          "en": "The turtle walks."
+          "fr": "Le chien aime son os.",
+          "en": "The dog loves its bone."
         },
         "tolerance": {
           "case": true,
@@ -9944,8 +9944,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le renard pleure.",
-        "en": "The fox cries."
+        "fr": "Nous jouons dans la cour.",
+        "en": "We play in the yard."
       },
       "distractors": [],
       "hint": {
@@ -9962,8 +9962,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le renard pleure.",
-          "en": "The fox cries."
+          "fr": "Nous jouons dans la cour.",
+          "en": "We play in the yard."
         },
         "tolerance": {
           "case": true,
@@ -9990,8 +9990,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le chat tombe.",
-        "en": "The cat falls."
+        "fr": "La girafe mange des feuilles.",
+        "en": "The giraffe eats leaves."
       },
       "distractors": [],
       "hint": {
@@ -10008,8 +10008,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le chat tombe.",
-          "en": "The cat falls."
+          "fr": "La girafe mange des feuilles.",
+          "en": "The giraffe eats leaves."
         },
         "tolerance": {
           "case": true,
@@ -10036,8 +10036,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La banane court.",
-        "en": "The banana runs."
+        "fr": "Le livre est sur la table.",
+        "en": "The book is on the table."
       },
       "distractors": [],
       "hint": {
@@ -10054,8 +10054,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La banane court.",
-          "en": "The banana runs."
+          "fr": "Le livre est sur la table.",
+          "en": "The book is on the table."
         },
         "tolerance": {
           "case": true,
@@ -10082,8 +10082,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le perroquet grimpe.",
-        "en": "The parrot climbs."
+        "fr": "Papa conduit la voiture.",
+        "en": "Dad drives the car."
       },
       "distractors": [],
       "hint": {
@@ -10100,8 +10100,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le perroquet grimpe.",
-          "en": "The parrot climbs."
+          "fr": "Papa conduit la voiture.",
+          "en": "Dad drives the car."
         },
         "tolerance": {
           "case": true,
@@ -10128,8 +10128,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le lion mange.",
-        "en": "The lion eats."
+        "fr": "Je brosse mes dents.",
+        "en": "I brush my teeth."
       },
       "distractors": [],
       "hint": {
@@ -10146,8 +10146,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le lion mange.",
-          "en": "The lion eats."
+          "fr": "Je brosse mes dents.",
+          "en": "I brush my teeth."
         },
         "tolerance": {
           "case": true,
@@ -10174,8 +10174,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le ballon chante.",
-        "en": "The ball sings."
+        "fr": "La tortue marche lentement.",
+        "en": "The turtle walks slowly."
       },
       "distractors": [],
       "hint": {
@@ -10192,8 +10192,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le ballon chante.",
-          "en": "The ball sings."
+          "fr": "La tortue marche lentement.",
+          "en": "The turtle walks slowly."
         },
         "tolerance": {
           "case": true,
@@ -10220,8 +10220,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La table joue.",
-        "en": "The table plays."
+        "fr": "Le vent souffle fort.",
+        "en": "The wind blows hard."
       },
       "distractors": [],
       "hint": {
@@ -10238,8 +10238,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La table joue.",
-          "en": "The table plays."
+          "fr": "Le vent souffle fort.",
+          "en": "The wind blows hard."
         },
         "tolerance": {
           "case": true,
@@ -10266,8 +10266,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La lune mange.",
-        "en": "The moon eats."
+        "fr": "Les enfants rient.",
+        "en": "The children laugh."
       },
       "distractors": [],
       "hint": {
@@ -10284,8 +10284,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La lune mange.",
-          "en": "The moon eats."
+          "fr": "Les enfants rient.",
+          "en": "The children laugh."
         },
         "tolerance": {
           "case": true,
@@ -10312,8 +10312,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le cochon grimpe.",
-        "en": "The pig climbs."
+        "fr": "Le chat attrape la balle.",
+        "en": "The cat catches the ball."
       },
       "distractors": [],
       "hint": {
@@ -10330,8 +10330,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le cochon grimpe.",
-          "en": "The pig climbs."
+          "fr": "Le chat attrape la balle.",
+          "en": "The cat catches the ball."
         },
         "tolerance": {
           "case": true,
@@ -10358,8 +10358,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le renard saute.",
-        "en": "The fox jumps."
+        "fr": "Mamie fait de la soupe.",
+        "en": "Granny makes soup."
       },
       "distractors": [],
       "hint": {
@@ -10376,8 +10376,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le renard saute.",
-          "en": "The fox jumps."
+          "fr": "Mamie fait de la soupe.",
+          "en": "Granny makes soup."
         },
         "tolerance": {
           "case": true,
@@ -10404,8 +10404,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le dauphin joue.",
-        "en": "The dolphin plays."
+        "fr": "Le dauphin saute dans la mer.",
+        "en": "The dolphin jumps in the sea."
       },
       "distractors": [],
       "hint": {
@@ -10422,8 +10422,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le dauphin joue.",
-          "en": "The dolphin plays."
+          "fr": "Le dauphin saute dans la mer.",
+          "en": "The dolphin jumps in the sea."
         },
         "tolerance": {
           "case": true,
@@ -10450,8 +10450,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le ballon pleure.",
-        "en": "The ball cries."
+        "fr": "Je lis une histoire.",
+        "en": "I read a story."
       },
       "distractors": [],
       "hint": {
@@ -10468,8 +10468,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le ballon pleure.",
-          "en": "The ball cries."
+          "fr": "Je lis une histoire.",
+          "en": "I read a story."
         },
         "tolerance": {
           "case": true,
@@ -10496,8 +10496,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le cochon tombe.",
-        "en": "The pig falls."
+        "fr": "La pluie tombe sur le toit.",
+        "en": "The rain falls on the roof."
       },
       "distractors": [],
       "hint": {
@@ -10514,8 +10514,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le cochon tombe.",
-          "en": "The pig falls."
+          "fr": "La pluie tombe sur le toit.",
+          "en": "The rain falls on the roof."
         },
         "tolerance": {
           "case": true,
@@ -10542,8 +10542,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La table pleure.",
-        "en": "The table cries."
+        "fr": "Le petit chien aboie.",
+        "en": "The little dog barks."
       },
       "distractors": [],
       "hint": {
@@ -10560,8 +10560,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La table pleure.",
-          "en": "The table cries."
+          "fr": "Le petit chien aboie.",
+          "en": "The little dog barks."
         },
         "tolerance": {
           "case": true,
@@ -10588,8 +10588,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le cochon marche.",
-        "en": "The pig walks."
+        "fr": "Le soleil se couche.",
+        "en": "The sun is setting."
       },
       "distractors": [],
       "hint": {
@@ -10606,8 +10606,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le cochon marche.",
-          "en": "The pig walks."
+          "fr": "Le soleil se couche.",
+          "en": "The sun is setting."
         },
         "tolerance": {
           "case": true,
@@ -10634,8 +10634,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La tortue dort.",
-        "en": "The turtle sleeps."
+        "fr": "Le renard court la nuit.",
+        "en": "The fox runs at night."
       },
       "distractors": [],
       "hint": {
@@ -10652,8 +10652,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La tortue dort.",
-          "en": "The turtle sleeps."
+          "fr": "Le renard court la nuit.",
+          "en": "The fox runs at night."
         },
         "tolerance": {
           "case": true,
@@ -10680,8 +10680,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La lune vole.",
-        "en": "The moon flies."
+        "fr": "Ma cousine chante bien.",
+        "en": "My cousin sings well."
       },
       "distractors": [],
       "hint": {
@@ -10698,8 +10698,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La lune vole.",
-          "en": "The moon flies."
+          "fr": "Ma cousine chante bien.",
+          "en": "My cousin sings well."
         },
         "tolerance": {
           "case": true,
@@ -10726,8 +10726,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le cheval mange.",
-        "en": "The horse eats."
+        "fr": "Le pain est chaud.",
+        "en": "The bread is warm."
       },
       "distractors": [],
       "hint": {
@@ -10744,8 +10744,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le cheval mange.",
-          "en": "The horse eats."
+          "fr": "Le pain est chaud.",
+          "en": "The bread is warm."
         },
         "tolerance": {
           "case": true,
@@ -10772,8 +10772,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La lune chante.",
-        "en": "The moon sings."
+        "fr": "Je porte un chapeau.",
+        "en": "I wear a hat."
       },
       "distractors": [],
       "hint": {
@@ -10790,8 +10790,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La lune chante.",
-          "en": "The moon sings."
+          "fr": "Je porte un chapeau.",
+          "en": "I wear a hat."
         },
         "tolerance": {
           "case": true,
@@ -10818,8 +10818,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le lapin mange.",
-        "en": "The rabbit eats."
+        "fr": "Le bateau a une voile.",
+        "en": "The boat has a sail."
       },
       "distractors": [],
       "hint": {
@@ -10836,8 +10836,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le lapin mange.",
-          "en": "The rabbit eats."
+          "fr": "Le bateau a une voile.",
+          "en": "The boat has a sail."
         },
         "tolerance": {
           "case": true,
@@ -10864,8 +10864,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le livre vole.",
-        "en": "The book flies."
+        "fr": "Le panda mange du bambou.",
+        "en": "The panda eats bamboo."
       },
       "distractors": [],
       "hint": {
@@ -10882,8 +10882,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le livre vole.",
-          "en": "The book flies."
+          "fr": "Le panda mange du bambou.",
+          "en": "The panda eats bamboo."
         },
         "tolerance": {
           "case": true,
@@ -10910,8 +10910,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le bateau danse.",
-        "en": "The boat dances."
+        "fr": "Les abeilles font du miel.",
+        "en": "Bees make honey."
       },
       "distractors": [],
       "hint": {
@@ -10928,8 +10928,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le bateau danse.",
-          "en": "The boat dances."
+          "fr": "Les abeilles font du miel.",
+          "en": "Bees make honey."
         },
         "tolerance": {
           "case": true,
@@ -10956,8 +10956,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La grenouille marche.",
-        "en": "The frog walks."
+        "fr": "Le chat joue avec la laine.",
+        "en": "The cat plays with yarn."
       },
       "distractors": [],
       "hint": {
@@ -10974,8 +10974,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La grenouille marche.",
-          "en": "The frog walks."
+          "fr": "Le chat joue avec la laine.",
+          "en": "The cat plays with yarn."
         },
         "tolerance": {
           "case": true,
@@ -11002,8 +11002,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "Le poisson rit.",
-        "en": "The fish laughs."
+        "fr": "Nous mangeons une pizza.",
+        "en": "We eat a pizza."
       },
       "distractors": [],
       "hint": {
@@ -11020,8 +11020,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le poisson rit.",
-          "en": "The fish laughs."
+          "fr": "Nous mangeons une pizza.",
+          "en": "We eat a pizza."
         },
         "tolerance": {
           "case": true,
@@ -11048,8 +11048,8 @@
         "en": "Type what you see."
       },
       "answer": {
-        "fr": "La voiture danse.",
-        "en": "The car dances."
+        "fr": "La neige tombe doucement.",
+        "en": "The snow falls gently."
       },
       "distractors": [],
       "hint": {
@@ -11066,8 +11066,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La voiture danse.",
-          "en": "The car dances."
+          "fr": "La neige tombe doucement.",
+          "en": "The snow falls gently."
         },
         "tolerance": {
           "case": true,
@@ -20304,8 +20304,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le vélo saute.",
-        "en": "The bike jumps."
+        "fr": "Le chat dort.",
+        "en": "The cat sleeps."
       },
       "distractors": [],
       "hint": {
@@ -20322,8 +20322,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le vélo saute.",
-          "en": "The bike jumps."
+          "fr": "Le chat dort.",
+          "en": "The cat sleeps."
         },
         "tolerance": {
           "case": false,
@@ -20351,8 +20351,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le bateau marche.",
-        "en": "The boat walks."
+        "fr": "Le chien aboie.",
+        "en": "The dog barks."
       },
       "distractors": [],
       "hint": {
@@ -20369,8 +20369,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le bateau marche.",
-          "en": "The boat walks."
+          "fr": "Le chien aboie.",
+          "en": "The dog barks."
         },
         "tolerance": {
           "case": false,
@@ -20398,8 +20398,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La tortue grimpe.",
-        "en": "The turtle climbs."
+        "fr": "Je saute haut.",
+        "en": "I jump high."
       },
       "distractors": [],
       "hint": {
@@ -20416,8 +20416,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La tortue grimpe.",
-          "en": "The turtle climbs."
+          "fr": "Je saute haut.",
+          "en": "I jump high."
         },
         "tolerance": {
           "case": false,
@@ -20445,8 +20445,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La maison dort.",
-        "en": "The house sleeps."
+        "fr": "Le bus arrive.",
+        "en": "The bus arrives."
       },
       "distractors": [],
       "hint": {
@@ -20463,8 +20463,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La maison dort.",
-          "en": "The house sleeps."
+          "fr": "Le bus arrive.",
+          "en": "The bus arrives."
         },
         "tolerance": {
           "case": false,
@@ -20492,8 +20492,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le canard tombe.",
-        "en": "The duck falls."
+        "fr": "La porte est ouverte.",
+        "en": "The door is open."
       },
       "distractors": [],
       "hint": {
@@ -20510,8 +20510,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le canard tombe.",
-          "en": "The duck falls."
+          "fr": "La porte est ouverte.",
+          "en": "The door is open."
         },
         "tolerance": {
           "case": false,
@@ -20539,8 +20539,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le bateau nage.",
-        "en": "The boat swims."
+        "fr": "Le lait est froid.",
+        "en": "The milk is cold."
       },
       "distractors": [],
       "hint": {
@@ -20557,8 +20557,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le bateau nage.",
-          "en": "The boat swims."
+          "fr": "Le lait est froid.",
+          "en": "The milk is cold."
         },
         "tolerance": {
           "case": false,
@@ -20586,8 +20586,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La girafe vole.",
-        "en": "The giraffe flies."
+        "fr": "Il fait beau.",
+        "en": "It is sunny."
       },
       "distractors": [],
       "hint": {
@@ -20604,8 +20604,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La girafe vole.",
-          "en": "The giraffe flies."
+          "fr": "Il fait beau.",
+          "en": "It is sunny."
         },
         "tolerance": {
           "case": false,
@@ -20633,8 +20633,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La tortue chante.",
-        "en": "The turtle sings."
+        "fr": "Le lapin saute.",
+        "en": "The rabbit hops."
       },
       "distractors": [],
       "hint": {
@@ -20651,8 +20651,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La tortue chante.",
-          "en": "The turtle sings."
+          "fr": "Le lapin saute.",
+          "en": "The rabbit hops."
         },
         "tolerance": {
           "case": false,
@@ -20680,8 +20680,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le chat court.",
-        "en": "The cat runs."
+        "fr": "Je cours vite.",
+        "en": "I run fast."
       },
       "distractors": [],
       "hint": {
@@ -20698,8 +20698,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le chat court.",
-          "en": "The cat runs."
+          "fr": "Je cours vite.",
+          "en": "I run fast."
         },
         "tolerance": {
           "case": false,
@@ -20727,8 +20727,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La vache danse.",
-        "en": "The cow dances."
+        "fr": "La balle roule.",
+        "en": "The ball rolls."
       },
       "distractors": [],
       "hint": {
@@ -20745,8 +20745,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La vache danse.",
-          "en": "The cow dances."
+          "fr": "La balle roule.",
+          "en": "The ball rolls."
         },
         "tolerance": {
           "case": false,
@@ -20774,8 +20774,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le vélo vole.",
-        "en": "The bike flies."
+        "fr": "Le coq chante.",
+        "en": "The rooster crows."
       },
       "distractors": [],
       "hint": {
@@ -20792,8 +20792,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le vélo vole.",
-          "en": "The bike flies."
+          "fr": "Le coq chante.",
+          "en": "The rooster crows."
         },
         "tolerance": {
           "case": false,
@@ -20821,8 +20821,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le livre saute.",
-        "en": "The book jumps."
+        "fr": "Les poissons nagent.",
+        "en": "The fish swim."
       },
       "distractors": [],
       "hint": {
@@ -20839,8 +20839,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le livre saute.",
-          "en": "The book jumps."
+          "fr": "Les poissons nagent.",
+          "en": "The fish swim."
         },
         "tolerance": {
           "case": false,
@@ -20868,8 +20868,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le camion court.",
-        "en": "The truck runs."
+        "fr": "Le feu est rouge.",
+        "en": "The light is red."
       },
       "distractors": [],
       "hint": {
@@ -20886,8 +20886,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le camion court.",
-          "en": "The truck runs."
+          "fr": "Le feu est rouge.",
+          "en": "The light is red."
         },
         "tolerance": {
           "case": false,
@@ -20915,8 +20915,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le ballon nage.",
-        "en": "The ball swims."
+        "fr": "Je dis bonjour.",
+        "en": "I say hello."
       },
       "distractors": [],
       "hint": {
@@ -20933,8 +20933,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le ballon nage.",
-          "en": "The ball swims."
+          "fr": "Je dis bonjour.",
+          "en": "I say hello."
         },
         "tolerance": {
           "case": false,
@@ -20962,8 +20962,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La tortue pleure.",
-        "en": "The turtle cries."
+        "fr": "Le chat a faim.",
+        "en": "The cat is hungry."
       },
       "distractors": [],
       "hint": {
@@ -20980,8 +20980,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La tortue pleure.",
-          "en": "The turtle cries."
+          "fr": "Le chat a faim.",
+          "en": "The cat is hungry."
         },
         "tolerance": {
           "case": false,
@@ -21009,8 +21009,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La balle dort.",
-        "en": "The ball sleeps."
+        "fr": "La cloche sonne.",
+        "en": "The bell rings."
       },
       "distractors": [],
       "hint": {
@@ -21027,8 +21027,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La balle dort.",
-          "en": "The ball sleeps."
+          "fr": "La cloche sonne.",
+          "en": "The bell rings."
         },
         "tolerance": {
           "case": false,
@@ -21056,8 +21056,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le gâteau pleure.",
-        "en": "The cake cries."
+        "fr": "Le loup hurle.",
+        "en": "The wolf howls."
       },
       "distractors": [],
       "hint": {
@@ -21074,8 +21074,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le gâteau pleure.",
-          "en": "The cake cries."
+          "fr": "Le loup hurle.",
+          "en": "The wolf howls."
         },
         "tolerance": {
           "case": false,
@@ -21103,8 +21103,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le chat grimpe.",
-        "en": "The cat climbs."
+        "fr": "La soupe est chaude.",
+        "en": "The soup is hot."
       },
       "distractors": [],
       "hint": {
@@ -21121,8 +21121,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le chat grimpe.",
-          "en": "The cat climbs."
+          "fr": "La soupe est chaude.",
+          "en": "The soup is hot."
         },
         "tolerance": {
           "case": false,
@@ -21150,8 +21150,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le lapin pleure.",
-        "en": "The rabbit cries."
+        "fr": "Le ciel est gris.",
+        "en": "The sky is grey."
       },
       "distractors": [],
       "hint": {
@@ -21168,8 +21168,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le lapin pleure.",
-          "en": "The rabbit cries."
+          "fr": "Le ciel est gris.",
+          "en": "The sky is grey."
         },
         "tolerance": {
           "case": false,
@@ -21197,8 +21197,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La souris mange.",
-        "en": "The mouse eats."
+        "fr": "Je fais un dessin.",
+        "en": "I draw a picture."
       },
       "distractors": [],
       "hint": {
@@ -21215,8 +21215,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La souris mange.",
-          "en": "The mouse eats."
+          "fr": "Je fais un dessin.",
+          "en": "I draw a picture."
         },
         "tolerance": {
           "case": false,
@@ -21244,8 +21244,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La chaise dort.",
-        "en": "The chair sleeps."
+        "fr": "Le bateau avance.",
+        "en": "The boat sails."
       },
       "distractors": [],
       "hint": {
@@ -21262,8 +21262,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La chaise dort.",
-          "en": "The chair sleeps."
+          "fr": "Le bateau avance.",
+          "en": "The boat sails."
         },
         "tolerance": {
           "case": false,
@@ -21291,8 +21291,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le lapin marche.",
-        "en": "The rabbit walks."
+        "fr": "La vache mange.",
+        "en": "The cow eats."
       },
       "distractors": [],
       "hint": {
@@ -21309,8 +21309,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le lapin marche.",
-          "en": "The rabbit walks."
+          "fr": "La vache mange.",
+          "en": "The cow eats."
         },
         "tolerance": {
           "case": false,
@@ -21338,8 +21338,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le cheval vole.",
-        "en": "The horse flies."
+        "fr": "Le vent souffle.",
+        "en": "The wind blows."
       },
       "distractors": [],
       "hint": {
@@ -21356,8 +21356,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le cheval vole.",
-          "en": "The horse flies."
+          "fr": "Le vent souffle.",
+          "en": "The wind blows."
         },
         "tolerance": {
           "case": false,
@@ -21385,8 +21385,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le chien dort.",
-        "en": "The dog sleeps."
+        "fr": "Mon chat ronronne.",
+        "en": "My cat purrs."
       },
       "distractors": [],
       "hint": {
@@ -21403,8 +21403,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le chien dort.",
-          "en": "The dog sleeps."
+          "fr": "Mon chat ronronne.",
+          "en": "My cat purrs."
         },
         "tolerance": {
           "case": false,
@@ -21432,8 +21432,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le vélo pleure.",
-        "en": "The bike cries."
+        "fr": "Le train siffle.",
+        "en": "The train whistles."
       },
       "distractors": [],
       "hint": {
@@ -21450,8 +21450,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le vélo pleure.",
-          "en": "The bike cries."
+          "fr": "Le train siffle.",
+          "en": "The train whistles."
         },
         "tolerance": {
           "case": false,
@@ -21479,8 +21479,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La maison rit.",
-        "en": "The house laughs."
+        "fr": "Le bébé rit.",
+        "en": "The baby laughs."
       },
       "distractors": [],
       "hint": {
@@ -21497,8 +21497,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La maison rit.",
-          "en": "The house laughs."
+          "fr": "Le bébé rit.",
+          "en": "The baby laughs."
         },
         "tolerance": {
           "case": false,
@@ -21526,8 +21526,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La lune marche.",
-        "en": "The moon walks."
+        "fr": "La pomme est verte.",
+        "en": "The apple is green."
       },
       "distractors": [],
       "hint": {
@@ -21544,8 +21544,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La lune marche.",
-          "en": "The moon walks."
+          "fr": "La pomme est verte.",
+          "en": "The apple is green."
         },
         "tolerance": {
           "case": false,
@@ -21573,8 +21573,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le dauphin grimpe.",
-        "en": "The dolphin climbs."
+        "fr": "Le singe grimpe.",
+        "en": "The monkey climbs."
       },
       "distractors": [],
       "hint": {
@@ -21591,8 +21591,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le dauphin grimpe.",
-          "en": "The dolphin climbs."
+          "fr": "Le singe grimpe.",
+          "en": "The monkey climbs."
         },
         "tolerance": {
           "case": false,
@@ -21620,8 +21620,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La chaise mange.",
-        "en": "The chair eats."
+        "fr": "Je lave le bol.",
+        "en": "I wash the bowl."
       },
       "distractors": [],
       "hint": {
@@ -21638,8 +21638,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La chaise mange.",
-          "en": "The chair eats."
+          "fr": "Je lave le bol.",
+          "en": "I wash the bowl."
         },
         "tolerance": {
           "case": false,
@@ -21667,8 +21667,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La souris court.",
-        "en": "The mouse runs."
+        "fr": "Le canard nage.",
+        "en": "The duck swims."
       },
       "distractors": [],
       "hint": {
@@ -21685,8 +21685,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La souris court.",
-          "en": "The mouse runs."
+          "fr": "Le canard nage.",
+          "en": "The duck swims."
         },
         "tolerance": {
           "case": false,
@@ -21714,8 +21714,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La banane chante.",
-        "en": "The banana sings."
+        "fr": "La nuit tombe.",
+        "en": "Night is falling."
       },
       "distractors": [],
       "hint": {
@@ -21732,8 +21732,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La banane chante.",
-          "en": "The banana sings."
+          "fr": "La nuit tombe.",
+          "en": "Night is falling."
         },
         "tolerance": {
           "case": false,
@@ -21761,8 +21761,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le mouton grimpe.",
-        "en": "The sheep climbs."
+        "fr": "Le poisson saute.",
+        "en": "The fish jumps."
       },
       "distractors": [],
       "hint": {
@@ -21779,8 +21779,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le mouton grimpe.",
-          "en": "The sheep climbs."
+          "fr": "Le poisson saute.",
+          "en": "The fish jumps."
         },
         "tolerance": {
           "case": false,
@@ -21808,8 +21808,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le dauphin pleure.",
-        "en": "The dolphin cries."
+        "fr": "Papa rit fort.",
+        "en": "Dad laughs loudly."
       },
       "distractors": [],
       "hint": {
@@ -21826,8 +21826,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le dauphin pleure.",
-          "en": "The dolphin cries."
+          "fr": "Papa rit fort.",
+          "en": "Dad laughs loudly."
         },
         "tolerance": {
           "case": false,
@@ -21855,8 +21855,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La vache rit.",
-        "en": "The cow laughs."
+        "fr": "Je ferme la porte.",
+        "en": "I close the door."
       },
       "distractors": [],
       "hint": {
@@ -21873,8 +21873,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La vache rit.",
-          "en": "The cow laughs."
+          "fr": "Je ferme la porte.",
+          "en": "I close the door."
         },
         "tolerance": {
           "case": false,
@@ -21902,8 +21902,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le canard nage.",
-        "en": "The duck swims."
+        "fr": "La fleur pousse.",
+        "en": "The flower grows."
       },
       "distractors": [],
       "hint": {
@@ -21920,8 +21920,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le canard nage.",
-          "en": "The duck swims."
+          "fr": "La fleur pousse.",
+          "en": "The flower grows."
         },
         "tolerance": {
           "case": false,
@@ -21949,8 +21949,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La balle grimpe.",
-        "en": "The ball climbs."
+        "fr": "Le lion rugit.",
+        "en": "The lion roars."
       },
       "distractors": [],
       "hint": {
@@ -21967,8 +21967,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La balle grimpe.",
-          "en": "The ball climbs."
+          "fr": "Le lion rugit.",
+          "en": "The lion roars."
         },
         "tolerance": {
           "case": false,
@@ -21996,8 +21996,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La girafe grimpe.",
-        "en": "The giraffe climbs."
+        "fr": "Le chien dort.",
+        "en": "The dog sleeps."
       },
       "distractors": [],
       "hint": {
@@ -22014,8 +22014,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La girafe grimpe.",
-          "en": "The giraffe climbs."
+          "fr": "Le chien dort.",
+          "en": "The dog sleeps."
         },
         "tolerance": {
           "case": false,
@@ -22043,8 +22043,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La chaise marche.",
-        "en": "The chair walks."
+        "fr": "Nous chantons.",
+        "en": "We sing."
       },
       "distractors": [],
       "hint": {
@@ -22061,8 +22061,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La chaise marche.",
-          "en": "The chair walks."
+          "fr": "Nous chantons.",
+          "en": "We sing."
         },
         "tolerance": {
           "case": false,
@@ -22090,8 +22090,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le livre pleure.",
-        "en": "The book cries."
+        "fr": "La mer est calme.",
+        "en": "The sea is calm."
       },
       "distractors": [],
       "hint": {
@@ -22108,8 +22108,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le livre pleure.",
-          "en": "The book cries."
+          "fr": "La mer est calme.",
+          "en": "The sea is calm."
         },
         "tolerance": {
           "case": false,
@@ -22137,8 +22137,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La souris rit.",
-        "en": "The mouse laughs."
+        "fr": "Le cheval mange.",
+        "en": "The horse eats."
       },
       "distractors": [],
       "hint": {
@@ -22155,8 +22155,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La souris rit.",
-          "en": "The mouse laughs."
+          "fr": "Le cheval mange.",
+          "en": "The horse eats."
         },
         "tolerance": {
           "case": false,
@@ -22184,8 +22184,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La fleur nage.",
-        "en": "The flower swims."
+        "fr": "Je mange du riz.",
+        "en": "I eat rice."
       },
       "distractors": [],
       "hint": {
@@ -22202,8 +22202,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La fleur nage.",
-          "en": "The flower swims."
+          "fr": "Je mange du riz.",
+          "en": "I eat rice."
         },
         "tolerance": {
           "case": false,
@@ -22231,8 +22231,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La table dort.",
-        "en": "The table sleeps."
+        "fr": "Le hibou voit la nuit.",
+        "en": "The owl sees at night."
       },
       "distractors": [],
       "hint": {
@@ -22249,8 +22249,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La table dort.",
-          "en": "The table sleeps."
+          "fr": "Le hibou voit la nuit.",
+          "en": "The owl sees at night."
         },
         "tolerance": {
           "case": false,
@@ -22278,8 +22278,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La balle joue.",
-        "en": "The ball plays."
+        "fr": "La souris court.",
+        "en": "The mouse runs."
       },
       "distractors": [],
       "hint": {
@@ -22296,8 +22296,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La balle joue.",
-          "en": "The ball plays."
+          "fr": "La souris court.",
+          "en": "The mouse runs."
         },
         "tolerance": {
           "case": false,
@@ -22325,8 +22325,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le singe mange.",
-        "en": "The monkey eats."
+        "fr": "Le soleil chauffe.",
+        "en": "The sun is warm."
       },
       "distractors": [],
       "hint": {
@@ -22343,8 +22343,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le singe mange.",
-          "en": "The monkey eats."
+          "fr": "Le soleil chauffe.",
+          "en": "The sun is warm."
         },
         "tolerance": {
           "case": false,
@@ -22372,8 +22372,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La poule dort.",
-        "en": "The hen sleeps."
+        "fr": "Mon ami arrive.",
+        "en": "My friend arrives."
       },
       "distractors": [],
       "hint": {
@@ -22390,8 +22390,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La poule dort.",
-          "en": "The hen sleeps."
+          "fr": "Mon ami arrive.",
+          "en": "My friend arrives."
         },
         "tolerance": {
           "case": false,
@@ -22419,8 +22419,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La balle rit.",
-        "en": "The ball laughs."
+        "fr": "Le panda dort.",
+        "en": "The panda sleeps."
       },
       "distractors": [],
       "hint": {
@@ -22437,8 +22437,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La balle rit.",
-          "en": "The ball laughs."
+          "fr": "Le panda dort.",
+          "en": "The panda sleeps."
         },
         "tolerance": {
           "case": false,
@@ -22466,8 +22466,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le dauphin vole.",
-        "en": "The dolphin flies."
+        "fr": "La pluie tombe.",
+        "en": "The rain falls."
       },
       "distractors": [],
       "hint": {
@@ -22484,8 +22484,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le dauphin vole.",
-          "en": "The dolphin flies."
+          "fr": "La pluie tombe.",
+          "en": "The rain falls."
         },
         "tolerance": {
           "case": false,
@@ -22513,8 +22513,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le mouton pleure.",
-        "en": "The sheep cries."
+        "fr": "Je tape vite.",
+        "en": "I type fast."
       },
       "distractors": [],
       "hint": {
@@ -22531,8 +22531,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le mouton pleure.",
-          "en": "The sheep cries."
+          "fr": "Je tape vite.",
+          "en": "I type fast."
         },
         "tolerance": {
           "case": false,
@@ -22560,8 +22560,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le cheval tombe.",
-        "en": "The horse falls."
+        "fr": "Le chat boit.",
+        "en": "The cat drinks."
       },
       "distractors": [],
       "hint": {
@@ -22578,8 +22578,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le cheval tombe.",
-          "en": "The horse falls."
+          "fr": "Le chat boit.",
+          "en": "The cat drinks."
         },
         "tolerance": {
           "case": false,
@@ -22607,8 +22607,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le lapin dort.",
-        "en": "The rabbit sleeps."
+        "fr": "Le pain est bon.",
+        "en": "The bread is good."
       },
       "distractors": [],
       "hint": {
@@ -22625,8 +22625,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le lapin dort.",
-          "en": "The rabbit sleeps."
+          "fr": "Le pain est bon.",
+          "en": "The bread is good."
         },
         "tolerance": {
           "case": false,
@@ -22654,8 +22654,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La balle marche.",
-        "en": "The ball walks."
+        "fr": "La tortue marche.",
+        "en": "The turtle walks."
       },
       "distractors": [],
       "hint": {
@@ -22672,8 +22672,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La balle marche.",
-          "en": "The ball walks."
+          "fr": "La tortue marche.",
+          "en": "The turtle walks."
         },
         "tolerance": {
           "case": false,
@@ -22701,8 +22701,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La vache saute.",
-        "en": "The cow jumps."
+        "fr": "Je lis un livre.",
+        "en": "I read a book."
       },
       "distractors": [],
       "hint": {
@@ -22719,8 +22719,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La vache saute.",
-          "en": "The cow jumps."
+          "fr": "Je lis un livre.",
+          "en": "I read a book."
         },
         "tolerance": {
           "case": false,
@@ -22748,8 +22748,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le mouton nage.",
-        "en": "The sheep swims."
+        "fr": "Le chiot joue.",
+        "en": "The puppy plays."
       },
       "distractors": [],
       "hint": {
@@ -22766,8 +22766,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le mouton nage.",
-          "en": "The sheep swims."
+          "fr": "Le chiot joue.",
+          "en": "The puppy plays."
         },
         "tolerance": {
           "case": false,
@@ -22795,8 +22795,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La lune tombe.",
-        "en": "The moon falls."
+        "fr": "La lune est ronde.",
+        "en": "The moon is round."
       },
       "distractors": [],
       "hint": {
@@ -22813,8 +22813,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La lune tombe.",
-          "en": "The moon falls."
+          "fr": "La lune est ronde.",
+          "en": "The moon is round."
         },
         "tolerance": {
           "case": false,
@@ -22842,8 +22842,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le poisson joue.",
-        "en": "The fish plays."
+        "fr": "Le bus est plein.",
+        "en": "The bus is full."
       },
       "distractors": [],
       "hint": {
@@ -22860,8 +22860,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le poisson joue.",
-          "en": "The fish plays."
+          "fr": "Le bus est plein.",
+          "en": "The bus is full."
         },
         "tolerance": {
           "case": false,
@@ -22889,8 +22889,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le dauphin nage.",
-        "en": "The dolphin swims."
+        "fr": "Les oiseaux volent.",
+        "en": "The birds fly."
       },
       "distractors": [],
       "hint": {
@@ -22907,8 +22907,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le dauphin nage.",
-          "en": "The dolphin swims."
+          "fr": "Les oiseaux volent.",
+          "en": "The birds fly."
         },
         "tolerance": {
           "case": false,
@@ -22936,8 +22936,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "La table tombe.",
-        "en": "The table falls."
+        "fr": "Je bois du lait.",
+        "en": "I drink milk."
       },
       "distractors": [],
       "hint": {
@@ -22954,8 +22954,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "La table tombe.",
-          "en": "The table falls."
+          "fr": "Je bois du lait.",
+          "en": "I drink milk."
         },
         "tolerance": {
           "case": false,
@@ -22983,8 +22983,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le camion nage.",
-        "en": "The truck swims."
+        "fr": "Le renard dort.",
+        "en": "The fox sleeps."
       },
       "distractors": [],
       "hint": {
@@ -23001,8 +23001,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le camion nage.",
-          "en": "The truck swims."
+          "fr": "Le renard dort.",
+          "en": "The fox sleeps."
         },
         "tolerance": {
           "case": false,
@@ -23030,8 +23030,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le cheval marche.",
-        "en": "The horse walks."
+        "fr": "Mamie sourit.",
+        "en": "Granny smiles."
       },
       "distractors": [],
       "hint": {
@@ -23048,8 +23048,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le cheval marche.",
-          "en": "The horse walks."
+          "fr": "Mamie sourit.",
+          "en": "Granny smiles."
         },
         "tolerance": {
           "case": false,
@@ -23077,8 +23077,8 @@
         "en": "Type it before it disappears!"
       },
       "answer": {
-        "fr": "Le lion court.",
-        "en": "The lion runs."
+        "fr": "La porte grince.",
+        "en": "The door creaks."
       },
       "distractors": [],
       "hint": {
@@ -23095,8 +23095,8 @@
       "lang": "both",
       "config": {
         "target": {
-          "fr": "Le lion court.",
-          "en": "The lion runs."
+          "fr": "La porte grince.",
+          "en": "The door creaks."
         },
         "tolerance": {
           "case": false,
