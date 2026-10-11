@@ -1,3 +1,4 @@
+import { CODE_LOOP_MIN, CODE_LOOP_MAX } from '@gabee/types';
 import type { Op, Prim, MoveDir } from './turtle';
 
 export type PrimKey = 'up' | 'down' | 'left' | 'right' | 'pick' | 'drop' | 'pen_up' | 'pen_down';
@@ -64,7 +65,7 @@ export function setSlot(s: ProgramState, slot: Slot): ProgramState {
 }
 
 export function setCount(s: ProgramState, index: number, n: number): ProgramState {
-  const clamped = Math.max(2, Math.min(5, n));
+  const clamped = Math.max(CODE_LOOP_MIN, Math.min(CODE_LOOP_MAX, n));
   return { ...s, program: s.program.map((op, i) => (i === index && op.op === 'repeat' ? { ...op, n: clamped } : op)) };
 }
 
