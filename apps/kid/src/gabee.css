@@ -2248,12 +2248,12 @@ a:focus-visible,
 .code-step { height: 40px; padding: 0 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 6px; font-weight: 700; box-shadow: var(--shadow-sm); color: var(--feedback-correct); cursor: pointer; }
 .code-step:disabled { cursor: default; }
 
-.code-cont { border: 1px solid var(--border); border-left: 4px solid var(--module-code); background: var(--surface); border-radius: var(--radius-sm); padding: 8px 10px 8px 12px; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-sm); }
+.code-cont { border: 1px solid var(--border); border-left: 4px solid var(--module-code); background: var(--surface); border-radius: var(--radius-sm); padding: 8px 10px 8px 12px; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-sm); flex-wrap: wrap; max-width: 100%; }
 .code-cont.is-active { border-left-color: var(--color-brand); box-shadow: 0 0 0 2px var(--color-brand); }
 .code-cont .cap { font-weight: 800; color: var(--module-code); font-size: 13px; display: flex; align-items: center; gap: 6px; }
 .code-count { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; }
 .code-count button { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-weight: 900; cursor: pointer; font-size: 15px; line-height: 1; }
-.code-body { display: flex; gap: 6px; padding-left: 8px; border-left: 1px dashed var(--border); }
+.code-body { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 8px; border-left: 1px dashed var(--border); }
 .code-body .empty { color: var(--text-muted); font-size: 12px; }
 .code-mini { width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; justify-content: center; color: var(--feedback-correct); box-shadow: var(--shadow-sm); cursor: pointer; }
 
@@ -2261,7 +2261,7 @@ a:focus-visible,
 .code-seg button { width: 30px; height: 28px; display: flex; align-items: center; justify-content: center; border: 0; border-right: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; }
 .code-seg button:last-child { border-right: 0; }
 .code-seg button.on { background: var(--module-code); color: #fff; }
-.code-slot { border: 1px dashed rgba(123, 47, 247, .5); border-radius: 8px; padding: 4px 8px; display: flex; align-items: center; gap: 6px; cursor: pointer; background: transparent; }
+.code-slot { border: 1px dashed rgba(123, 47, 247, .5); border-radius: 8px; padding: 4px 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; cursor: pointer; background: transparent; }
 .code-slot.is-active { border-style: solid; border-color: var(--color-brand); }
 .code-slot .tag { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
 

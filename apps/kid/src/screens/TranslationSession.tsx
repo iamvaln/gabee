@@ -361,7 +361,9 @@ export function TranslationSession({
       />
       <div className="session-body">
         <div className="session-stage">
-          <div className="session-prompt">
+          {/* Column, like the Words prompts: badge, then the source word, then the instruction —
+              the default .session-prompt row crammed all three on one line. */}
+          <div className="session-prompt" style={{ flexDirection: 'column' }}>
             {/* Direction badge — themed via data-module="translation". */}
             <span
               aria-label={badgeLabel(dir)}

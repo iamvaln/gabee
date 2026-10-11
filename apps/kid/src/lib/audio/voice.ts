@@ -10,20 +10,28 @@ export interface VoiceProvider {
   warm?(): void;
 }
 
+const BCP47: Record<'fr' | 'en', string> = { fr: 'fr-FR', en: 'en-US' };
+
 /**
- * Choose a voice for `lang`: default-flagged match first, then first match,
- * else null — the caller SKIPS narration rather than using a wrong-language
- * voice (spec §5).
+ * Choose a voice for `lang`: default-flagged match first, then the main region
+ * (BCP47: fr-FR / en-US), then first match, else null — the caller SKIPS
+ * narration rather than using a wrong-language voice (spec §5). The region step
+ * matters on macOS, which lists "Amélie" (fr-CA) first and flags no French voice
+ * as default — without it French kids got a Québécois voice.
  */
 export function pickVoice(
   voices: SpeechSynthesisVoice[],
   lang: 'fr' | 'en',
 ): SpeechSynthesisVoice | null {
   const matches = voices.filter((v) => v.lang.toLowerCase().startsWith(lang));
-  return matches.find((v) => v.default) ?? matches[0] ?? null;
+  const region = BCP47[lang].toLowerCase();
+  return (
+    matches.find((v) => v.default) ??
+    matches.find((v) => v.lang.toLowerCase().replace('_', '-') === region) ??
+    matches[0] ??
+    null
+  );
 }
-
-const BCP47: Record<'fr' | 'en', string> = { fr: 'fr-FR', en: 'en-US' };
 
 export class WebSpeechVoiceProvider implements VoiceProvider {
   private warmed = false;
