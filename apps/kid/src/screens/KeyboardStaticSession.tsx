@@ -21,6 +21,7 @@ import { HintLine } from '../components/HintLine';
 import { SessionLoader } from '../components/SessionLoader';
 import { SessionError } from '../components/SessionError';
 import { bundleLoadFailed, isOffline } from '../lib/bundleLoad';
+import { wordRuns } from '../lib/wordRuns';
 
 const TOTAL = 7;
 
@@ -441,31 +442,40 @@ export function KeyboardStaticSession({
                 justifyContent: 'center',
               }}
             >
-              {target.split('').map((ch, i) => {
-                const isTyped = i < typedLen;
-                const isCurrent = i === typedLen;
-                const bg = isCurrent
-                  ? flash === 'ok'
-                    ? 'rgba(110, 231, 183, 0.55)'
-                    : flash === 'err'
-                      ? 'rgba(252, 165, 165, 0.6)'
-                      : 'transparent'
-                  : 'transparent';
+              {wordRuns(target).map((run) => {
+                const cell = (ch: string, i: number) => {
+                  const isTyped = i < typedLen;
+                  const isCurrent = i === typedLen;
+                  const bg = isCurrent
+                    ? flash === 'ok'
+                      ? 'rgba(110, 231, 183, 0.55)'
+                      : flash === 'err'
+                        ? 'rgba(252, 165, 165, 0.6)'
+                        : 'transparent'
+                    : 'transparent';
+                  return (
+                    <span
+                      key={i}
+                      style={{
+                        display: 'inline-block',
+                        minWidth: ch === ' ' ? 22 : undefined,
+                        padding: '2px 6px',
+                        borderRadius: 6,
+                        background: bg,
+                        color: isTyped ? '#94a3b8' : isCurrent ? '#0f172a' : '#0f172a',
+                        borderBottom: isCurrent ? '4px solid #34d399' : '4px solid transparent',
+                      }}
+                    >
+                      {ch === ' ' ? ' ' : ch}
+                    </span>
+                  );
+                };
+                // A word's cells share a no-wrap box so lines break between words, never mid-word.
+                if (run.space) return cell(' ', run.start);
                 return (
-                  <span
-                    key={i}
-                    style={{
-                      display: 'inline-block',
-                      minWidth: ch === ' ' ? 22 : undefined,
-                      padding: '2px 6px',
-                      borderRadius: 6,
-                      background: bg,
-                      color: isTyped ? '#94a3b8' : isCurrent ? '#0f172a' : '#0f172a',
-                      borderBottom: isCurrent ? '4px solid #34d399' : '4px solid transparent',
-                    }}
-                  >
-                    {ch === ' ' ? ' ' : ch}
-                  </span>
+                  <div key={run.start} className="kb-word" style={{ display: 'inline-flex', gap: 4, whiteSpace: 'nowrap' }}>
+                    {run.text.split('').map((ch, j) => cell(ch, run.start + j))}
+                  </div>
                 );
               })}
             </div>

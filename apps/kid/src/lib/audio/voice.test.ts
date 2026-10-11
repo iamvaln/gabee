@@ -20,6 +20,12 @@ describe('pickVoice', () => {
     assert.equal(pickVoice([v('en-US'), fr1, v('fr-CA')], 'fr'), fr1);
   });
 
+  it('without a default, prefers the main region (fr-FR) over the first listed (fr-CA on macOS)', () => {
+    // macOS lists "Amélie" (fr-CA) before "Thomas" (fr-FR) and flags neither as default.
+    const ca = v('fr-CA'), fr = v('fr-FR');
+    assert.equal(pickVoice([v('en-GB', true), ca, fr], 'fr'), fr);
+  });
+
   it('matches case-insensitively on the primary subtag', () => {
     const en = v('EN-GB');
     assert.equal(pickVoice([en], 'en'), en);
