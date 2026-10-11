@@ -30,6 +30,17 @@ function ifBundle(): QuestionBundleResponse {
   };
 }
 
+// From [0,0]: wall_right at [1,0] → if → down to [0,1], then right to the goal [1,1].
+function afterIfBundle(): QuestionBundleResponse {
+  const b = ifBundle();
+  Object.assign(b.questions[0]!, {
+    id: 'code-maze-cond-after-if',
+    answer: [{ op: 'if', cond: 'wall_right', then: [{ op: 'move', dir: 'down' }], else: [{ op: 'move', dir: 'right' }] }, { op: 'move', dir: 'right' }],
+    config: { grid: { w: 2, h: 2 }, start: [0, 0], goal: [1, 1], walls: [[1, 0]], concept: 'conditions', blocks: ['up', 'down', 'left', 'right', 'if'] },
+  });
+  return b;
+}
+
 function seedStore() {
   useStore.setState({
     lang: 'fr',
@@ -64,6 +75,24 @@ describe('CodeTurtleSession conditions — if block', () => {
     fireEvent.click(screen.getByLabelText('down'));      // into then
     fireEvent.click(screen.getByLabelText('slot-else')); // switch fill target to else
     fireEvent.click(screen.getByLabelText('right'));     // into else
+    fireEvent.click(screen.getByRole('button', { name: /Lancer|Run/ }));
+    await waitFor(() => assert.match(coach(), /Bravo|Nice/), { timeout: 5000 });
+  });
+
+  it('an OK button closes the if, so blocks can follow it (pick → if → drop shapes)', async () => {
+    // Goal [1,1]: wall_right at [1,0] → then: down; THEN a top-level right after the if.
+    api.getBundle = async () => afterIfBundle();
+    renderSession();
+    await screen.findByLabelText('if');
+    fireEvent.click(screen.getByLabelText('if'));
+    fireEvent.click(screen.getByLabelText('down'));          // into then
+    fireEvent.click(screen.getByLabelText('slot-else'));
+    fireEvent.click(screen.getByLabelText('right'));         // into else
+    fireEvent.click(screen.getByLabelText('if-done'));       // leave the if
+    fireEvent.click(screen.getByLabelText('right'));         // top level, after the if
+    const strip = document.querySelector('.code-strip')!;
+    assert.equal(strip.querySelectorAll(':scope > .code-cont').length, 1, 'one if container');
+    assert.ok(strip.querySelector(':scope > .code-step'), 'the right arrow sits after the if, not inside it');
     fireEvent.click(screen.getByRole('button', { name: /Lancer|Run/ }));
     await waitFor(() => assert.match(coach(), /Bravo|Nice/), { timeout: 5000 });
   });

@@ -1,3 +1,4 @@
+import { CODE_LOOP_MAX } from '@gabee/types';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -35,9 +36,10 @@ describe('program model', () => {
     assert.deepEqual(s.program[1], { op: 'move', dir: 'down' });
   });
 
-  it('setCount clamps to 2..5', () => {
+  it('setCount clamps to CODE_LOOP_MIN..CODE_LOOP_MAX (2..9) — content needs up to ×7', () => {
     const s = addLoop(empty());
-    assert.equal((setCount(s, 0, 9).program[0] as { n: number }).n, 5);
+    assert.equal((setCount(s, 0, 12).program[0] as { n: number }).n, CODE_LOOP_MAX);
+    assert.equal((setCount(s, 0, 7).program[0] as { n: number }).n, 7);
     assert.equal((setCount(s, 0, 1).program[0] as { n: number }).n, 2);
     assert.equal((setCount(s, 0, 4).program[0] as { n: number }).n, 4);
   });

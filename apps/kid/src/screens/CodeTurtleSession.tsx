@@ -704,6 +704,10 @@ export function CodeTurtleSession({
                         })}
                       </button>
                     ))}
+                    {prog.active === i && (
+                      // Leave the if so the next blocks go AFTER it (pick → if → drop).
+                      <button aria-label="if-done" onClick={stopFilling} disabled={editLocked} className="btn ghost" style={{ height: 28 }}>{t('code.loopDone')}</button>
+                    )}
                   </div>
                 ) : op.op === 'repeat' ? (
                   <div key={i} className={`code-cont${prog.active === i ? ' is-active' : ''}`}>

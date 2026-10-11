@@ -30,6 +30,10 @@ export const BilingualWordsSchema = z.object({
   en: z.array(z.string()),
 });
 export const CodeProgramSchema = z.array(z.record(z.string(), z.unknown()));
+/** Loop-count range the kid Code editor lets a child set (− / + on a "Répète" block).
+ *  Content must stay inside it — guarded by packages/db/prisma/code-editor-fit.test.mts. */
+export const CODE_LOOP_MIN = 2;
+export const CODE_LOOP_MAX = 9;
 export const AnswerSchema = z.union([QuestionValueSchema, BilingualWordsSchema, CodeProgramSchema]);
 export type Answer = z.infer<typeof AnswerSchema>;
 
