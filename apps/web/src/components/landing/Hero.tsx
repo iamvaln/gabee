@@ -25,7 +25,7 @@ export async function Hero() {
             {/* Install CTA — links to the kid PWA with ?install=1 (the prompt
                 can only fire on the kid origin, so we deep-link there). "How it
                 works" isn't repeated here — it already lives in the top nav. */}
-            <a
+            <AttributedLink
               href={kidInstallHref()}
               target="_blank"
               rel="noopener noreferrer"
@@ -33,7 +33,7 @@ export async function Hero() {
             >
               <Download />
               {t('installKid')}
-            </a>
+            </AttributedLink>
           </div>
           <p className="hero-reassure">
             <Check /> {t('reassure')}

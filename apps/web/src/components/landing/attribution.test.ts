@@ -34,3 +34,24 @@ test('withAttribution does not override an explicit utm already on the href', ()
 test('utmFromSearch reads utm_* into the Utm shape', () => {
   assert.deepEqual(utmFromSearch('?utm_source=a&utm_content=b&x=1'), { source: 'a', content: 'b' });
 });
+
+test('withAttribution keeps install=1 on an absolute kid-app href and adds utm params', () => {
+  const out = withAttribution(
+    'https://kids.gabee.app?install=1',
+    { search: '?utm_source=tiktok&utm_medium=social&utm_content=bio' },
+    '',
+  );
+  const u = new URL(out);
+  assert.equal(u.origin, 'https://kids.gabee.app');
+  assert.equal(u.searchParams.get('install'), '1');
+  assert.equal(u.searchParams.get('utm_source'), 'tiktok');
+  assert.equal(u.searchParams.get('utm_content'), 'bio');
+});
+
+test('withAttribution adds ref to an absolute kid-app href, keeping install=1', () => {
+  const u = new URL(
+    withAttribution('https://kids.gabee.app?install=1', { search: '' }, 'https://www.linkedin.com/'),
+  );
+  assert.equal(u.searchParams.get('install'), '1');
+  assert.equal(u.searchParams.get('ref'), 'www.linkedin.com');
+});
