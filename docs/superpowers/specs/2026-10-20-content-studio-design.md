@@ -40,6 +40,29 @@ Phases 2–4 get their own specs. Phase 1 must not paint them into a corner: dat
 shapes for media, stats and agents are designed so they plug in without migration
 pain (see "Forward hooks").
 
+## Prerequisite: measuring visits and where they come from (in Phase 1a)
+
+Gabee records no website visits today. Posting without it would make every early
+post unmeasurable forever, so a **minimal, privacy-respecting measurement** ships
+**before the first post**, as part of Phase 1a:
+
+1. **Visits on gabee.app** (landing site): one record per page view — page, language,
+   device class, and the **source**: the campaign parameters carried by the post's
+   link (`utm_*`), otherwise the referring site (LinkedIn, Facebook, Google…), else
+   "direct". **No tracking cookie, no stored IP address, no cross-site identifier**
+   (Plausible/Umami-style counting: visits, not people).
+2. **Sign-up attribution**: the source is carried in the links from the landing site
+   to parents.gabee.app (sign-up) and kids.gabee.app (install), and stored on the
+   parent account at sign-up (first source, plus the source of the sign-up visit).
+3. **Admin view**: visits per day and per source, sign-ups per source, and per post
+   (via `utm_content` = draft id) — the raw numbers the Phase 2 report builds on.
+
+The privacy policy must mention this audience measurement and the sign-up source;
+the owner has the new wording reviewed by their lawyer before go-live.
+
+Bot traffic is filtered (user-agent rules); the endpoint is rate-limited and accepts
+only first-party origins.
+
 ## Goals (Phase 1)
 
 1. The weekly loop runs unattended in production: proposals generated, emails sent,
@@ -50,20 +73,24 @@ pain (see "Forward hooks").
    topic — never the topic itself.
 3. One **topic per day**, turned into a **distinct post per platform** — each written
    for that platform's objective and tone, never a copy-paste.
-4. **Language per day**: each day's posts are in one language. **French by default,
-   at least 2 days a week in English.** The Strategist assigns languages when it
-   proposes titles; the owner can switch any day.
+4. **Language per post**: French by default; **each platform gets at least 2 posts in
+   English per week**, on days that may differ between platforms (e.g. LinkedIn in
+   English on Thursday and Saturday, X on Tuesday and Friday). The Strategist assigns
+   a language to every (day, platform) when it proposes titles; the owner can switch
+   any of them.
 5. Each creative role is an **agent** with a stable, versioned behaviour and a memory
    of the editorial line, past posts, the owner's feedback and past performance.
 6. The AI layer handles **text now and media later**, with per-task model chains,
    a backup provider slot, prices and model ids stored as data, and every call metered.
-7. Every post carries a **tracked link**, so Phase 2 measures from day one of posting.
+7. Every post carries a **tracked link**, and visits and sign-ups are attributed to it
+   from the first post (see the prerequisite above).
 
 ## Non-goals (Phase 1)
 
 - Automatic publishing to any platform (manual posting only; APIs are a later phase).
-- Platform stats input and the progress report (Phase 2). The Sunday email in Phase 1
-  reports Gabee's internal metrics and the publication log only.
+- Platform stats input and the full progress report (Phase 2). The Sunday email in
+  Phase 1 reports Gabee's internal metrics, visits and sign-ups by source, and the
+  publication log.
 - Generating images or videos (Phase 3). Phase 1 attaches media from a library.
 - The Gabee story universe (Phase 4).
 - TikTok and Instagram content (the owner named X, LinkedIn and Facebook; the
@@ -79,6 +106,10 @@ These come from the owner and are acceptance criteria, not nice-to-haves:
   its text, download its media, mark it published) is reachable in one click from the
   screen the notification lands on. No hunting through menus. One obvious primary
   action per screen.
+- **Not usable on a phone.** Review happens on a phone as well as a computer. The
+  Aujourd'hui and Semaine screens, and the emails, are fully usable on a phone:
+  read the preview, edit, approve, copy the text, download the media, mark
+  published — without zooming or horizontal scrolling.
 - **Unclear or clumsy text.** All admin copy is plain French (English toggle as the
   rest of the admin), short, specific. Error messages say what happened and what to do.
 - **Sloppy implementation.** Follows the repo's existing patterns (services under
@@ -100,7 +131,7 @@ All times are in the **studio timezone** (a setting; default `Africa/Douala`, UT
 
 | When | What happens | Who |
 |---|---|---|
-| Sunday 06:00 | Strategist proposes **3 directions** for next week, using the month's objective, last week's publication log + internal metrics, the owner's feedback, and the calendar (observances, events) | system |
+| Sunday 06:00 | Strategist proposes **3 directions** for next week, using the month's objective, the past week (previous Sunday → Saturday): publication log, the owner's ratings and comments, visits and sign-ups by source, internal metrics; and the calendar (observances, events). In Phase 1 there are no platform stats (views, reactions) — "what performed" means these signals only | system |
 | Sunday 07:00 | **Sunday email**: last week's report + the 3 proposed directions, with a link to the Week screen | system |
 | Sunday, any time | Owner picks a direction, edits it in free text, confirms → Strategist generates the **week's titles** (one topic per day, with format and target platforms) → owner validates, edits or regenerates each line, then validates the week | owner |
 | Sunday 15:00 & 20:00 | **Reminder** if the week is not validated | system |
@@ -116,6 +147,12 @@ Edge cases that must be handled:
 - **A day's title edited after its drafts exist**: drafts are marked stale and the
   owner chooses to regenerate or keep them.
 - **A day skipped**: the owner can mark a day "skipped" (with a reason); no reminders.
+- **First week (launch)**: started with "Lancer la semaine maintenant" mid-week, the
+  week is **partial** — slots only from the next day to Sunday; the per-platform
+  English minimum scales down (at least 1 English post per platform on a partial
+  week of 4 days or fewer).
+- **No cleared media**: a post is valid as text only; the card says so plainly and
+  offers to upload a file.
 - **Week never validated**: no drafts are generated; reminders stop at the last
   reminder of Monday; the next Sunday report mentions it.
 
@@ -147,14 +184,13 @@ sample angles), the **chosen direction** (proposal reference + owner's edited te
 optional **per-platform angle overrides** (free text handed to that platform's
 writer; the daily topics stay shared), and the link to the objective.
 
-**Slot** — one per day of a validated week: topic title, angle, **language**
-(`fr` | `en`; the week must hold at least 2 `en` slots unless the owner overrides),
-format intent (`text`, `visual`, `gameplay_video`, `presentation_video`, `story`),
-target platforms,
-optional source references (for news / observances), status
+**Slot** — one per day of a validated week: topic title, angle, format intent (`text`, `visual`, `gameplay_video`, `presentation_video`, `story`),
+target platforms with a **language per platform** (`fr` | `en`; over the week each
+platform must have at least 2 `en` posts — fewer only if the owner explicitly
+overrides, which the UI flags), optional source references (for news / observances), status
 `proposed → validated → drafting → drafted → done | skipped`.
 
-**Draft** — one per (slot, platform), written in the slot's language: body text, hashtags, tracked link, media
+**Draft** — one per (slot, platform), written in that platform's language for the day: body text, hashtags, tracked link, media
 attachments, status `generating → ready → approved → published` (+ `failed`,
 `stale`). Every regeneration or human edit creates a **draft version** (who/what
 produced it, which agent version, the owner's edit diff). Approval pins a version.
@@ -229,6 +265,9 @@ stable because everything that defines it is persisted and versioned.
   model used, tokens, cost, latency, outcome, error code.
 - **A feedback loop**: the owner's edits (diff between generated and approved text)
   and published-post feedback are fed back into the agent's memory on later runs.
+
+**Third-party content**: a post relaying news or an article summarises it in its own
+words and links to the source; it never copies the article's text or images.
 
 **Untrusted input**: web-search results, news content and pasted text are data.
 They are passed to the model in clearly delimited blocks, never as instructions; any
@@ -309,7 +348,8 @@ studio; reusing the name would confuse). Screens:
    optional rating + comment). Yesterday's unfinished items appear on top.
 2. **Semaine**: step 1 — the 3 direction cards + a free-text refinement box + optional
    per-platform angle → "Arrêter cette direction". Step 2 — the 7 day lines (topic,
-   language FR/EN, format, platforms) with **Valider · Modifier · Régénérer** per line
+   format, and one FR/EN chip per platform, with a per-platform count of English
+   posts for the week) with **Valider · Modifier · Régénérer** per line
    → "Valider la semaine". A **"Lancer la semaine maintenant"** action starts the loop
    outside the Sunday schedule (first week, or after a missed Sunday).
 3. **Historique**: past weeks, posts and their publication records, filterable by
@@ -321,7 +361,8 @@ studio; reusing the name would confuse). Screens:
 The mockup reviewed with the owner (Semaine / Aujourd'hui / Stats) is the reference
 for screens 1–2; the Stats screen belongs to Phase 2.
 
-Design rules: reuse the admin shell and components; one primary action per screen;
+Design rules: reuse the admin shell and components; **phone and computer** layouts for
+Aujourd'hui and Semaine (cards stack on a phone; actions stay within thumb reach); one primary action per screen;
 designed empty, loading and error states for every list and generation; long AI
 operations show progress and never block the page; every destructive action
 (regenerate over a human edit, skip a day) asks for confirmation.
@@ -375,7 +416,8 @@ Match the repo's established layers (see `project_test_strategy`):
 
 - Tracked links are plain URLs to Gabee domains with UTM parameters (no short-link
   redirect service in Phase 1). They carry `utm_source` (platform), `utm_medium=social`,
-  `utm_campaign` (week slug), `utm_content` (draft id). Phase 2 captures them.
+  `utm_campaign` (week slug), `utm_content` (draft id), captured from day one by the
+  measurement prerequisite.
 - `Publication` has room for platform stats (Phase 2 adds the rows).
 - `Media asset.origin` already lists `generated` and `captured`; the Art director's
   visual brief is stored so Phase 3 can generate from it.
@@ -393,7 +435,8 @@ Match the repo's established layers (see `project_test_strategy`):
   - **1a — by Oct 27, the loop end to end**: data model; task router with the
     Anthropic adapter and model catalogue + prices **stored in the DB** (seeded, read
     by the router and metering); the six agents with their instructions stored and
-    versioned in the DB (seeded); scheduler tick + jobs; emails, reminders, badge;
+    versioned in the DB (seeded); **visit + source measurement and sign-up
+    attribution**; scheduler tick + jobs; emails, reminders, badge;
     Aujourd'hui and Semaine screens; mark-published + feedback; media library with
     upload and clearance; tracked links; budget alert email.
   - **1b — right after**: Réglages screens (objective, editorial line, platform
@@ -404,7 +447,10 @@ Match the repo's established layers (see `project_test_strategy`):
     changed by a super-admin through a minimal form or a seed update — never by
     editing code.
 - Risk: 1a is about a week of work for a large surface. If something has to slip, it
-  is 1b, not quality inside 1a.
+  is 1b (then the in-admin badge — email alone is enough at first), never quality
+  inside 1a and never measurement.
+- Owner actions before go-live: create the R2 bucket + scoped token; have the
+  privacy-policy wording reviewed; upload and clear a few media in the library.
 - Staging: the `cron-digest` sidecar does not run on staging; the tick endpoint and
   "Lancer la semaine maintenant" let the loop be exercised there by hand.
 
@@ -419,7 +465,8 @@ Match the repo's established layers (see `project_test_strategy`):
 - Platforms now: X, LinkedIn, Facebook.
 - Media (uploaded, and later generated) are stored on **Cloudflare R2**; the owner gets
   download links, checks files locally, then uploads them to each platform.
-- Language: French by default, at least 2 posts a week in English.
+- Language: French by default; each platform gets at least 2 English posts per week,
+  on days that may differ between platforms.
 - A per-platform override changes the angle only, not the daily topic.
 - In production by 2026-10-27, first post from the loop on 2026-10-29.
 - Media mixes real gameplay videos, generated communication images, presentation
