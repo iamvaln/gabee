@@ -36,12 +36,13 @@ const CSP = [
     : "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://*.r2.cloudflarestorage.com",
+  "media-src 'self' blob: https://*.r2.cloudflarestorage.com",
   // Dev needs the HMR websocket + the Next /_next/* fetch endpoints (same-origin
   // so 'self' covers them); add `ws:` and `wss:` explicitly so Safari behaves.
   isDev
-    ? "connect-src 'self' ws: wss:"
-    : "connect-src 'self'",
+    ? "connect-src 'self' ws: wss: https://*.r2.cloudflarestorage.com"
+    : "connect-src 'self' https://*.r2.cloudflarestorage.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
