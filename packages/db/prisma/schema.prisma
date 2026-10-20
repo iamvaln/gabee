@@ -162,39 +162,39 @@ enum FeedbackStatus {
 // (changes-v1 §4.1, parent spec §8.2 / §10.1). Defaults to first part of email; the
 // parent can customise it in Settings → Profile.
 model ParentAccount {
-  id                 String              @id @default(uuid()) @db.Uuid
-  email              String              @unique
+  id                   String                @id @default(uuid()) @db.Uuid
+  email                String                @unique
   /// E.164 phone number (e.g. +33612345678). Optional today; collected at
   /// signup behind a country picker, validated client- and server-side via
   /// libphonenumber-js. Reserved for SMS recovery + future account-recovery
   /// flows where email alone isn't safe (compromised mailbox).
-  phone              String?
+  phone                String?
   // Single auth system: admins are accounts with an elevated role (admin spec D1).
-  role               AccountRole         @default(parent)
-  displayNameForKids String              @default("") @map("display_name_for_kids") @db.VarChar(50)
-  createdAt          DateTime            @default(now()) @map("created_at")
-  lastLoginAt        DateTime?           @map("last_login_at")
-  children           ChildProfile[]
-  credentials        ParentCredential[]
-  feedback           Feedback[]
-  sentMessages       KidMessage[]
-  childLinks         ParentChildLink[]   @relation("ParentChildLinkParent")
-  sentInvites        CoparentInvite[]    @relation("CoparentInviteInviter")
-  deviceLinks        DeviceLink[]
-  notificationPrefs  NotificationPrefs?
-  familyActions      FamilyActivityLog[]
-  passwordResets     PasswordReset[]
-  emailConfirmations EmailConfirmation[]
-  authEvents         AuthEventLog[]
-  devices            Device[]
+  role                 AccountRole           @default(parent)
+  displayNameForKids   String                @default("") @map("display_name_for_kids") @db.VarChar(50)
+  createdAt            DateTime              @default(now()) @map("created_at")
+  lastLoginAt          DateTime?             @map("last_login_at")
+  children             ChildProfile[]
+  credentials          ParentCredential[]
+  feedback             Feedback[]
+  sentMessages         KidMessage[]
+  childLinks           ParentChildLink[]     @relation("ParentChildLinkParent")
+  sentInvites          CoparentInvite[]      @relation("CoparentInviteInviter")
+  deviceLinks          DeviceLink[]
+  notificationPrefs    NotificationPrefs?
+  familyActions        FamilyActivityLog[]
+  passwordResets       PasswordReset[]
+  emailConfirmations   EmailConfirmation[]
+  authEvents           AuthEventLog[]
+  devices              Device[]
   featureFlagOverrides FeatureFlagOverride[]
-  consents           ConsentRecord[]
+  consents             ConsentRecord[]
   /// Timestamp set when the email confirmation link is opened. While null,
   /// the account exists but the email is "unverified" — some flows (e.g.
   /// sending kid messages) will gate on this in a future iteration. Today
   /// everything works pre-confirmation; the field exists to enable the gate
   /// without another migration.
-  emailConfirmedAt   DateTime?           @map("email_confirmed_at")
+  emailConfirmedAt     DateTime?             @map("email_confirmed_at")
 
   /// Activation funnel milestones (admin analytics §funnels). Each column
   /// is set ONCE — the first time the parent performs the action — so a
@@ -237,13 +237,14 @@ model EmailConfirmation {
 /// Append-only proof of consent: who accepted which version, when. History is
 /// kept (never overwritten) so we can show what a parent agreed to at any point.
 model ConsentRecord {
-  id         String      @id @default(uuid()) @db.Uuid
-  parentId   String      @map("parent_id") @db.Uuid
-  type       ConsentType @default(terms)
+  id         String        @id @default(uuid()) @db.Uuid
+  parentId   String        @map("parent_id") @db.Uuid
+  type       ConsentType   @default(terms)
   /// The version string that was in force when accepted (server-authoritative).
   version    String
-  acceptedAt DateTime    @default(now()) @map("accepted_at")
-  parent ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  acceptedAt DateTime      @default(now()) @map("accepted_at")
+  parent     ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
   @@index([parentId, type, acceptedAt])
   @@map("consent_records")
 }
@@ -607,10 +608,10 @@ model AuditLog {
 // account (whole family). Read precedence: override > enabledDefault > code
 // fallback. Keys must be `@gabee/types` FLAG_KEYS members (app-enforced).
 model FeatureFlag {
-  key            String               @id
-  enabledDefault Boolean              @map("enabled_default")
-  description    String               @default("")
-  updatedAt      DateTime             @updatedAt @map("updated_at")
+  key            String                @id
+  enabledDefault Boolean               @map("enabled_default")
+  description    String                @default("")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
   overrides      FeatureFlagOverride[]
 
   @@map("feature_flags")
@@ -622,8 +623,8 @@ model FeatureFlagOverride {
   enabled    Boolean
   notifiedAt DateTime?     @map("notified_at")
   createdAt  DateTime      @default(now()) @map("created_at")
-  flag      FeatureFlag   @relation(fields: [flagKey], references: [key], onDelete: Cascade)
-  parent    ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  flag       FeatureFlag   @relation(fields: [flagKey], references: [key], onDelete: Cascade)
+  parent     ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
   @@id([flagKey, parentId])
   @@map("feature_flag_overrides")

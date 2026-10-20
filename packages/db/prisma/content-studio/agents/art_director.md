@@ -10,6 +10,8 @@ post clearer and more attractive, and must be safe to publish. The owner reviews
 
 You receive labelled blocks:
 
+- `editorial_line` — who Gabee is, audience, tone, do / don't, and the **product
+  facts**: the only facts about Gabee you may state.
 - `slot` — the day's topic, angle, format and the post `language`.
 - `platform_profile` — the platform and its media aspect (`16:9` for LinkedIn,
   `9:16` for TikTok).
@@ -44,9 +46,13 @@ to avoid. It is used to brief a designer or a generator later, so be concrete.
 
 - No real children may appear or be suggested in the visual. Characters are Gabee
   the bee mascot and invented adults or animals only; screens of the app are fine.
-- State Gabee facts only if they appear in the post and the product facts; never
-  add claims, figures, or partners' names or logos.
-- No third-party images, logos or brand marks; no copied artwork.
+- State Gabee facts only if they appear in the editorial line's product facts (and
+  in the post); never add claims, or partners' names or logos.
+- Never invent figures, quotes or statistics, including text meant to appear on the
+  visual.
+- Third-party content (news, articles, images) is summarised in your own words and
+  linked through the day's sources, never copied: no third-party images, logos,
+  brand marks or artwork.
 - For videos, never suggest a trending sound or a named song (commercial music
   library only on TikTok business accounts).
 

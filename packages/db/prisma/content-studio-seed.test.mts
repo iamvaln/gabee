@@ -1,7 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { AGENT_KEYS, AI_TASKS, AI_TASK_CAPABILITY, AI_CAPABILITIES } from '@gabee/types';
+import {
+  AGENT_KEYS,
+  AI_TASKS,
+  AI_TASK_CAPABILITY,
+  AI_CAPABILITIES,
+  DirectionProposalsSchema,
+  WeekTitlesSchema,
+  LinkedInPostSchema,
+  TikTokPostSchema,
+  ArtDirectionSchema,
+  ReportNarrativeSchema,
+  type AgentKey,
+} from '@gabee/types';
 import {
   AI_MODEL_SEED,
   AI_ROUTE_SEED,
@@ -62,3 +74,54 @@ test('platform profiles and editorial line hold only the agreed facts', () => {
   assert.equal(EDITORIAL_LINE_V1.productFacts.paid_offer, null);
   assert.deepEqual(EDITORIAL_LINE_V1.productFacts.ages, { min: 6, max: 10 });
 });
+
+// Duck-typed walk of a zod v4 schema: every object key (any depth) and every
+// enum value the model must emit. @gabee/db has no direct zod dependency.
+type ZodLike = { _zod: { def: object } };
+type ZodDef = { type: string; shape?: object; element?: ZodLike; innerType?: ZodLike; entries?: object };
+function outputTokens(schema: ZodLike, acc = new Set<string>()): Set<string> {
+  const def = schema._zod.def as ZodDef;
+  switch (def.type) {
+    case 'object':
+      for (const [key, child] of Object.entries((def.shape ?? {}) as Record<string, ZodLike>)) {
+        acc.add(key);
+        outputTokens(child, acc);
+      }
+      break;
+    case 'array':
+      if (def.element) outputTokens(def.element, acc);
+      break;
+    case 'optional':
+    case 'nullable':
+      if (def.innerType) outputTokens(def.innerType, acc);
+      break;
+    case 'enum':
+      for (const v of Object.values((def.entries ?? {}) as Record<string, string>)) acc.add(v);
+      break;
+    default:
+      break;
+  }
+  return acc;
+}
+
+const AGENT_OUTPUT_SCHEMAS: Record<AgentKey, ZodLike[]> = {
+  strategist: [DirectionProposalsSchema, WeekTitlesSchema],
+  writer_linkedin: [LinkedInPostSchema],
+  writer_tiktok: [TikTokPostSchema],
+  art_director: [ArtDirectionSchema],
+  analyst: [ReportNarrativeSchema],
+};
+
+test('every agent file names every field and enum value of its output schema', () => {
+  for (const key of AGENT_KEYS) {
+    const body = loadAgentInstructions(key);
+    for (const schema of AGENT_OUTPUT_SCHEMAS[key]) {
+      const tokens = outputTokens(schema);
+      assert.ok(tokens.size > 0, `no fields found for ${key}`);
+      for (const token of tokens) {
+        assert.ok(body.includes(`"${token}"`) || body.includes(`\`${token}\``), `${key}.md never names "${token}"`);
+      }
+    }
+  }
+});
+

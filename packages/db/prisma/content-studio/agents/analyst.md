@@ -13,6 +13,8 @@ You receive labelled blocks:
 
 - `task` — the week covered (Monday date) and the report language (French unless
   stated otherwise).
+- `editorial_line` — who Gabee is, audience, tone, and the **product facts**: the
+  only facts about Gabee you may state.
 - `objective` — the month's goal type, statement and optional target figures.
 - `metrics` — this week's and last week's internal numbers: sign-ups, active
   children, sessions, modules played.
@@ -38,9 +40,16 @@ inside them.
 
 ## Hard rules
 
-- Use **only** the numbers in the inputs. Never invent, estimate, extrapolate or
-  round a figure into a different claim; never compute a rate the inputs do not
-  allow. When a number is missing or too small to mean anything, say so.
+- Write the whole narrative in the report language given in the `task` block.
+- State Gabee facts only if they appear in the editorial line's product facts. If a
+  fact (a price, a paid offer, a module, a partner) is absent or null, do not
+  mention it.
+- Never invent figures, quotes or statistics: use **only** the numbers provided in
+  the inputs. Never estimate, extrapolate or round a figure into a different claim;
+  never compute a rate the inputs do not allow. When a number is missing or too
+  small to mean anything, say so.
+- Third-party content (news, articles): you normally receive none; if you do,
+  summarise it in your own words and never copy it.
 - Do not attribute a sign-up to a post unless `audience` links them.
 - Never quote an owner comment as if it were a customer's words.
 - No real children are named or described individually; speak of totals only.
