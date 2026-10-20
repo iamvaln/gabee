@@ -7,6 +7,9 @@ import { randomUUID } from 'node:crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Prisma, PrismaClient } from './generated/prisma/client';
 
+// Content Studio seed — the same function `prisma db seed` runs.
+export { seedContentStudio } from '../prisma/seed-content-studio';
+
 export function createTestClient(
   connectionString: string = process.env.TEST_DATABASE_URL ??
     'postgresql://localhost:5432/gabee_test',
@@ -260,5 +263,93 @@ export async function createDevice(
   const parentId = overrides.parentId ?? (await createParent(prisma)).id;
   return prisma.device.create({
     data: { deviceId: `dev-${uniq()}`, uaFull: 'factory-test-agent', ...overrides, parentId },
+  });
+}
+
+// ─── Content Studio factories ───────────────────────────────────────────────
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+// Default weeks start far in the future (Monday 2100-01-04) and step by 7 days,
+// so they never collide with a week a test creates explicitly for a real date.
+const FACTORY_WEEK_BASE = Date.UTC(2100, 0, 4);
+let weekSeq = 0;
+
+export async function createContentWeek(
+  prisma: PrismaClient,
+  overrides: Partial<Prisma.ContentWeekUncheckedCreateInput> = {},
+) {
+  const startsOn = overrides.startsOn ?? new Date(FACTORY_WEEK_BASE + 7 * DAY_MS * weekSeq++);
+  return prisma.contentWeek.create({
+    data: { status: 'proposing', firstDay: startsOn, ...overrides, startsOn },
+  });
+}
+
+/** A slot on the week's next free day (startsOn + number of existing slots). */
+export async function createContentSlot(
+  prisma: PrismaClient,
+  weekId: string,
+  overrides: Partial<Prisma.ContentSlotUncheckedCreateInput> = {},
+) {
+  let date = overrides.date;
+  if (date === undefined) {
+    const week = await prisma.contentWeek.findUniqueOrThrow({ where: { id: weekId } });
+    const n = await prisma.contentSlot.count({ where: { weekId } });
+    date = new Date(week.startsOn.getTime() + n * DAY_MS);
+  }
+  return prisma.contentSlot.create({
+    data: {
+      topic: `Topic ${uniq()}`,
+      angle: '',
+      format: 'text',
+      platforms: [
+        { platform: 'linkedin', language: 'fr' },
+        { platform: 'tiktok', language: 'fr' },
+      ] as Prisma.InputJsonValue,
+      sources: [] as Prisma.InputJsonValue,
+      status: 'validated',
+      ...overrides,
+      weekId,
+      date,
+    },
+  });
+}
+
+export async function createContentDraft(
+  prisma: PrismaClient,
+  slotId: string,
+  overrides: Partial<Prisma.ContentDraftUncheckedCreateInput> = {},
+) {
+  return prisma.contentDraft.create({
+    data: {
+      platform: 'linkedin',
+      language: 'fr',
+      status: 'ready',
+      trackedUrl: 'https://gabee.app/fr?utm_source=linkedin&utm_medium=social&utm_campaign=test&utm_content=test',
+      ...overrides,
+      slotId,
+    },
+  });
+}
+
+export async function createMediaAsset(
+  prisma: PrismaClient,
+  overrides: Partial<Prisma.MediaAssetUncheckedCreateInput> = {},
+) {
+  const n = uniq();
+  return prisma.mediaAsset.create({
+    data: {
+      kind: 'image',
+      objectKey: `media/test-${n}.png`,
+      fileName: `test-${n}.png`,
+      mime: 'image/png',
+      sizeBytes: 1024,
+      width: 1600,
+      height: 900,
+      aspect: '16:9',
+      origin: 'upload',
+      status: 'ready',
+      uploadedById: randomUUID(),
+      ...overrides,
+    },
   });
 }

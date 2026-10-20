@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 import { QuestionRecordSchema, FLAG_KEYS, FLAG_DEFAULTS, FLAG_DESCRIPTIONS, type QuestionRecord } from '@gabee/types';
 import { Prisma } from '../src/generated/prisma/client';
 import { createPrismaClient } from '../src/client';
+import { seedContentStudio } from './seed-content-studio';
 
 /**
  * Curriculum v0.1 seed. Question pools live in `prisma/seed-data/<module>.json`
@@ -260,6 +261,11 @@ async function main(): Promise<void> {
       });
     }
     console.log(`✓ Ensured ${FLAG_KEYS.length} feature-flag rows.`);
+
+    // Content Studio (spec 2026-10-20): settings, model catalogue + routes,
+    // platform profiles, editorial line v1, agents v1. Create-only.
+    await seedContentStudio(prisma);
+    console.log('✓ Ensured Content Studio defaults (settings, models, routes, profiles, editorial line, agents).');
   } finally {
     await prisma.$disconnect();
   }
