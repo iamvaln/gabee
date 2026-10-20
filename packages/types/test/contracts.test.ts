@@ -1,5 +1,7 @@
 import { describe, it } from 'node:test';
 import {
+  MEDIA_MAX_IMAGE_BYTES,
+  MEDIA_MAX_VIDEO_BYTES,
   DirectionProposalsSchema,
   TikTokPostSchema,
   WeekTitlesSchema,
@@ -678,5 +680,18 @@ describe('content studio', () => {
     assert.equal(ArtDirectionSchema.safeParse({ media_asset_id: null, visual_brief: 'v' }).success, true);
     assert.equal(ArtDirectionSchema.safeParse({ media_asset_id: 'nope', visual_brief: 'v' }).success, false);
     assert.equal(ReportNarrativeSchema.safeParse({ headline: 'h', highlights: [], watch_outs: [] }).success, true);
+  });
+
+  it('MediaUploadInitSchema enforces size caps per kind at the boundary', () => {
+    assert.equal(MEDIA_MAX_IMAGE_BYTES, 15 * 1024 * 1024);
+    assert.equal(MEDIA_MAX_VIDEO_BYTES, 300 * 1024 * 1024);
+    const f = (mime: string, size_bytes: number) => MediaUploadInitSchema.safeParse({ file_name: 'a', mime, size_bytes }).success;
+    for (const m of ['image/png', 'image/jpeg', 'image/webp']) {
+      assert.equal(f(m, MEDIA_MAX_IMAGE_BYTES), true);
+      assert.equal(f(m, MEDIA_MAX_IMAGE_BYTES + 1), false);
+    }
+    assert.equal(f('video/mp4', MEDIA_MAX_VIDEO_BYTES), true);
+    assert.equal(f('video/mp4', MEDIA_MAX_VIDEO_BYTES + 1), false);
+    assert.equal(f('video/mp4', MEDIA_MAX_IMAGE_BYTES + 1), true);
   });
 });

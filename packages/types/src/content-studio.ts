@@ -189,11 +189,21 @@ export const EditorialLineUpdateSchema = z.object({
 });
 export type EditorialLineUpdate = z.infer<typeof EditorialLineUpdateSchema>;
 
-export const MediaUploadInitSchema = z.object({
-  file_name: z.string().min(1).max(200),
-  mime: z.enum(['image/png', 'image/jpeg', 'image/webp', 'video/mp4']),
-  size_bytes: z.number().int().positive(),
-});
+export const MEDIA_MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+export const MEDIA_MAX_VIDEO_BYTES = 300 * 1024 * 1024;
+
+export const MediaUploadInitSchema = z
+  .object({
+    file_name: z.string().min(1).max(200),
+    mime: z.enum(['image/png', 'image/jpeg', 'image/webp', 'video/mp4']),
+    size_bytes: z.number().int().positive(),
+  })
+  .superRefine((v, ctx) => {
+    const cap = v.mime === 'video/mp4' ? MEDIA_MAX_VIDEO_BYTES : MEDIA_MAX_IMAGE_BYTES;
+    if (v.size_bytes > cap) {
+      ctx.addIssue({ code: 'custom', path: ['size_bytes'], message: `File too large for ${v.mime} (max ${cap} bytes)` });
+    }
+  });
 export type MediaUploadInit = z.infer<typeof MediaUploadInitSchema>;
 
 export const MediaClearanceSchema = z.object({ cleared: z.boolean(), note: z.string().max(500).optional() });
