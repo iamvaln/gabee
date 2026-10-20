@@ -141,3 +141,34 @@ test('completeUpload keeps the given aspect when the size matches no ratio', asy
   const dto = await completeUpload(assetId, actor);
   assert.deepEqual([dto.width, dto.height, dto.aspect], [1500, 1000, '1:1']);
 });
+
+test('completeUpload rejects when the stored content-type differs from the declared one', async () => {
+  const { assetId } = await initUpload({ file_name: 'p.png', mime: 'image/png', size_bytes: PNG.length }, actor);
+  const row = await prisma.mediaAsset.findUniqueOrThrow({ where: { id: assetId } });
+  store.putObject(row.objectKey, PNG, 'text/html');
+  const dto = await completeUpload(assetId, actor);
+  assert.equal(dto.status, 'rejected');
+  assert.ok(dto.rejectReason);
+  assert.equal(await store.head(row.objectKey), null);
+});
+
+test('two concurrent completeUpload calls: exactly one wins, the other gets 409, object kept', async () => {
+  const { assetId } = await initUpload({ file_name: 'p.png', mime: 'image/png', size_bytes: PNG.length }, actor);
+  const row = await prisma.mediaAsset.findUniqueOrThrow({ where: { id: assetId } });
+  store.putObject(row.objectKey, PNG, 'image/png');
+  const results = await Promise.allSettled([completeUpload(assetId, actor), completeUpload(assetId, actor)]);
+  const ok = results.filter((r) => r.status === 'fulfilled');
+  const lost = results.filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
+  assert.equal(ok.length, 1);
+  assert.equal(lost.length, 1);
+  assert.ok(lost[0]!.reason instanceof HttpError && lost[0]!.reason.status === 409);
+  const after = await prisma.mediaAsset.findUniqueOrThrow({ where: { id: assetId } });
+  assert.equal(after.status, 'ready');
+  assert.notEqual(await store.head(row.objectKey), null, 'ready asset keeps its object');
+});
+
+test('verifying assets are neither listed nor downloadable', async () => {
+  const a = await createMediaAsset(prisma, { status: 'verifying' });
+  assert.equal((await listMedia({})).length, 0);
+  await rejects(downloadUrl(a.id, 'x.png'), 409);
+});

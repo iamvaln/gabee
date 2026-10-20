@@ -140,15 +140,35 @@ async function reject(row: Row, reason: string): Promise<MediaAssetDto> {
 }
 
 export async function completeUpload(assetId: string, _actorId: string): Promise<MediaAssetDto> {
-  const row = await loadAsset(assetId);
-  if (row.status !== 'pending') {
+  await loadAsset(assetId);
+  // Claim atomically: only one concurrent caller moves pending -> verifying; the
+  // loser must not touch the object or the row.
+  const claim = await prisma.mediaAsset.updateMany({
+    where: { id: assetId, status: 'pending' },
+    data: { status: 'verifying' },
+  });
+  if (claim.count === 0) {
     throw new HttpError(409, 'not_pending', 'Ce fichier a déjà été traité.');
   }
+  const row = await loadAsset(assetId);
+  try {
+    return await verify(row);
+  } catch (err) {
+    // Storage/DB failure mid-verification: release the claim so the owner can retry.
+    await prisma.mediaAsset.updateMany({ where: { id: assetId, status: 'verifying' }, data: { status: 'pending' } });
+    throw err;
+  }
+}
+
+async function verify(row: Row): Promise<MediaAssetDto> {
   const storage = getStorage();
   const head = await storage.head(row.objectKey);
   if (!head) return reject(row, "Le fichier n'a pas été reçu. Réessayez l'envoi.");
   if (head.sizeBytes !== row.sizeBytes) {
     return reject(row, 'La taille du fichier ne correspond pas à celle annoncée. Réessayez l’envoi.');
+  }
+  if (head.mime && head.mime !== row.mime) {
+    return reject(row, BAD_FILE[row.mime] ?? "Le format du fichier n'est pas valide.");
   }
   const isImage = row.kind === 'image';
   const headBytes = await storage.readRange(row.objectKey, isImage ? IMAGE_HEADER_BYTES : 16);

@@ -38,7 +38,9 @@ export class R2Storage implements StoragePort {
     return getSignedUrl(
       this.client,
       new PutObjectCommand({ Bucket: this.bucket, Key: key, ContentType: mime, ContentLength: sizeBytes }),
-      { expiresIn: ttlSec },
+      // The presigner leaves content-type unsigned by default; sign it so the PUT
+      // is bound to the declared type.
+      { expiresIn: ttlSec, signableHeaders: new Set(['content-type']) },
     );
   }
 

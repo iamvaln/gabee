@@ -1234,7 +1234,8 @@ model ContentPublication {
 /// A file of the media library, stored in the private R2 bucket under the
 /// random `objectKey`. `kind` = `image` | `video`; `origin` = `upload` |
 /// `imported` | `generated` | `captured`; `status` = `pending` (presigned PUT
-/// issued, not verified yet) | `ready` | `rejected`. Only `cleared` assets may
+/// issued, not verified yet) | `verifying` (claimed by one in-flight completion;
+/// never listed or downloadable) | `ready` | `rejected`. Only `cleared` assets may
 /// be attached by the Art director or approved on a draft.
 model MediaAsset {
   id            String         @id @default(uuid()) @db.Uuid
