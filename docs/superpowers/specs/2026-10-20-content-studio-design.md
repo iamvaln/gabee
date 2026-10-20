@@ -33,7 +33,7 @@ The programme is four phases, each usable on its own. **This spec is Phase 1.**
 |---|---|
 | **1. Editorial core** (this spec) | Multi-task AI layer with per-role agents · objectives & editorial line · weekly direction → titles → daily drafts per platform · Sunday email, 05:00 notification, reminders · "mark as published" + feedback · media library (upload / reuse existing assets) · tracked links (UTM) on every post |
 | 2. Measurement | First-party visit + UTM capture on the landing site · per-post platform stats input (manual or from a screenshot) · progress report tying posts to visits, sign-ups, activity, problems |
-| 3. Media factory | Production render service: on-demand gameplay captures, template videos (like the launch announcement), AI-generated images, generated template visuals |
+| 3. Media factory | Production render service: on-demand gameplay captures, template videos (like the launch announcement), AI-generated images, generated template visuals. **Template videos + gameplay captures for TikTok are pulled forward to right after launch** |
 | 4. Gabee universe | Recurring cast (Gabee the mascot + secondary characters), sets, and a story engine: an AI scriptwriter writes a structured script, an animation engine renders it (SheSpeaks-style) |
 
 Phases 2–4 get their own specs. Phase 1 must not paint them into a corner: data
@@ -48,7 +48,7 @@ post unmeasurable forever, so a **minimal, privacy-respecting measurement** ship
 
 1. **Visits on gabee.app** (landing site): one record per page view — page, language,
    device class, and the **source**: the campaign parameters carried by the post's
-   link (`utm_*`), otherwise the referring site (LinkedIn, Facebook, Google…), else
+   link (`utm_*`), otherwise the referring site (LinkedIn, TikTok, Google…), else
    "direct". **No tracking cookie, no stored IP address, no cross-site identifier**
    (Plausible/Umami-style counting: visits, not people).
 2. **Sign-up attribution**: the source is carried in the links from the landing site
@@ -75,7 +75,7 @@ only first-party origins.
    for that platform's objective and tone, never a copy-paste.
 4. **Language per post**: French by default; **each platform gets at least 2 posts in
    English per week**, on days that may differ between platforms (e.g. LinkedIn in
-   English on Thursday and Saturday, X on Tuesday and Friday). The Strategist assigns
+   English on Thursday and Saturday, TikTok on Tuesday and Friday). The Strategist assigns
    a language to every (day, platform) when it proposes titles; the owner can switch
    any of them.
 5. Each creative role is an **agent** with a stable, versioned behaviour and a memory
@@ -93,8 +93,9 @@ only first-party origins.
   publication log.
 - Generating images or videos (Phase 3). Phase 1 attaches media from a library.
 - The Gabee story universe (Phase 4).
-- TikTok and Instagram content (the owner named X, LinkedIn and Facebook; the
-  platform list is data, so adding one later is configuration plus a writer agent).
+- X, Facebook and Instagram. **Launch platforms are LinkedIn and TikTok** (the only
+  accounts that exist today). The platform list is data: adding X or Facebook later
+  is configuration plus a writer agent, no rebuild.
 - Migrating the existing question-authoring AI (`apps/web/src/lib/server/ai/`) onto
   the new layer. It keeps working as is; migration is a follow-up.
 
@@ -173,7 +174,7 @@ agents may state (modules, ages, languages, free tier, paid offer once it exists
 a structured "product facts" block the owner keeps current). Agents may only state
 product facts from this block.
 
-**Platform profile** — per platform (LinkedIn, X, Facebook): objective on that
+**Platform profile** — per platform (LinkedIn, TikTok at launch): objective on that
 platform, tone notes, format rules (length limits, hashtag policy, link placement,
 emoji policy), default media format (16:9, 1:1, 9:16).
 
@@ -236,6 +237,28 @@ Unique on (job key, period key) → idempotent.
 **Notification** — every email/in-app notification sent: kind, period key,
 recipients, provider message id, status. Unique on (kind, period key, recipient).
 
+## TikTok
+
+Every TikTok post is a **vertical video** (9:16); text alone is not a post. Phase 1
+generates no video, so TikTok works in two steps (owner's choice):
+
+1. **From the first post** — the TikTok writer picks a **cleared vertical video** from
+   the library. When none fits the day's topic, it delivers a **filming plan** instead:
+   the hook for the first 3 seconds, the on-screen text, a short shot list the owner
+   can film on a phone in a few minutes (e.g. the app screen while playing), the
+   caption and hashtags. The owner films, uploads the video to the library (R2),
+   clears it, and approves the draft. The card shows clearly which mode the draft is
+   in.
+2. **Right after launch** — a slice of Phase 3 is pulled forward: **template videos**
+   (like the launch announcement, scripted by the AI) and **gameplay captures**
+   generated automatically for TikTok drafts. The filming plan stays as the fallback.
+
+Links in TikTok captions are not clickable, so per-post attribution is not possible
+on TikTok: the profile's **link in bio** carries `utm_source=tiktok&utm_medium=social
+&utm_content=bio`, and TikTok visits/sign-ups are measured per platform and per week,
+not per post. TikTok business accounts only have the commercial music library; the
+writer never suggests trending sounds.
+
 ## Agents
 
 An agent is a **role stored in Gabee**, not a long-running process. Its behaviour is
@@ -245,8 +268,7 @@ stable because everything that defines it is persisted and versioned.
 |---|---|---|
 | **Strategist** | 3 direction proposals; then the week's titles for the chosen direction | objective · editorial line · platform profiles · last 4 weeks of slots, publications and owner feedback · internal metrics summary · upcoming observances/events (web search) |
 | **Writer — LinkedIn** | the LinkedIn draft for a slot | editorial line · LinkedIn profile · week direction · slot · last 10 LinkedIn publications + feedback · owner edits on past drafts (diffs) |
-| **Writer — X** | the X draft | same, X |
-| **Writer — Facebook** | the Facebook draft | same, Facebook |
+| **Writer — TikTok** | the TikTok draft: caption, hashtags, on-screen text, cover choice; when no suitable vertical video is cleared, a **filming plan** (see below) | same, TikTok · cleared vertical videos in the library |
 | **Art director** | media choice per draft from the library + a written visual brief (used by Phase 3 to generate media) | slot · draft text · media library index · platform format |
 | **Analyst** | the narrative part of the Sunday report | internal metrics (existing digest services) · publication log · feedback |
 
@@ -279,8 +301,8 @@ Generalise the AI access into a **task router**, modelled on Lehno
 (`lehno/apps/api/src/ia/routeur.service.ts`), living next to the existing seam in
 `apps/web/src/lib/server/ai/`:
 
-- **Tasks**: `content_strategy`, `content_titles`, `post_linkedin`, `post_x`,
-  `post_facebook`, `art_direction`, `report_narrative`, `stats_from_screenshot`
+- **Tasks**: `content_strategy`, `content_titles`, `post_linkedin`, `post_tiktok`
+  (later `post_x`, `post_facebook`), `art_direction`, `report_narrative`, `stats_from_screenshot`
   (Phase 2), `image_generation`, `video_generation` (Phase 3). Each task declares the
   **capability** it needs (`text`, `vision`, `image`, `video`) so an incapable model
   cannot be routed to it.
@@ -462,7 +484,9 @@ Match the repo's established layers (see `project_test_strategy`):
   feedback; reminders when late.
 - One direction per week across platforms by default, per-platform override possible.
 - Same daily topic, different post per platform, each with its own objective.
-- Platforms now: X, LinkedIn, Facebook.
+- Platforms at launch: **LinkedIn and TikTok**; X and Facebook later.
+- TikTok: filming plan from day one when no video fits, and automatic video
+  generation pulled forward to right after launch (see "TikTok").
 - Media (uploaded, and later generated) are stored on **Cloudflare R2**; the owner gets
   download links, checks files locally, then uploads them to each platform.
 - Language: French by default; each platform gets at least 2 English posts per week,
