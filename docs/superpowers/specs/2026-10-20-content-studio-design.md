@@ -173,6 +173,26 @@ anything imported from `docs/Comm/` starts `not_cleared` — its README lists kn
 problems (invented maze, forced keyboard sentences, hidden levels, "50 leçons" test
 data, `_archive/`).
 
+**Media storage — decided by the owner: Cloudflare R2.** Every media file (uploads
+now, generated and captured media from Phase 3) lives in a **private** R2 bucket,
+behind a storage port (Lehno pattern: `stockage.port.ts` + `r2.adapter.ts`, with an
+in-memory adapter for tests). Nothing is stored on the VPS disk or in the DB.
+The agent never posts: the owner **downloads** each file through a link, checks it
+locally, then uploads it to each social platform. So:
+
+- **Downloads** use short-lived **presigned GET URLs** generated on demand when the
+  owner clicks "Télécharger" in the admin (fresh link each time, e.g. 15 min expiry,
+  `Content-Disposition: attachment` with a readable file name such as
+  `2026-10-29-linkedin-gabee-code.mp4`). Emails link to the admin screen, never to a
+  raw presigned URL, so no long-lived bearer link sits in an inbox.
+- **Uploads** go straight from the browser to R2 with a **presigned PUT** (large
+  videos never transit through the Next.js server), then the app verifies the object
+  (size, MIME by content sniffing, checksum) before registering the asset.
+- Keys in env only (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+  `R2_BUCKET`) — real values in the gitignored `.env.production`, empty placeholders
+  in `.env.production.example`. The bucket and an API token scoped to that bucket
+  must exist **before the Oct 27 deploy** (owner action).
+
 **Job run** — every scheduled job execution: job key, period key (e.g.
 `week:2026-10-26`, `day:2026-10-27`), status, started/finished, error, attempts.
 Unique on (job key, period key) → idempotent.
@@ -317,9 +337,10 @@ operations show progress and never block the page; every destructive action
 - Prompt injection: untrusted content (web results, news, pasted text, uploaded file
   names) is delimited and treated as data; agents have no tools that write anything —
   only the app persists outputs after schema validation.
-- Uploads: allow-listed MIME types (png, jpg, webp, mp4), size caps, content sniffing,
-  random storage names, served only through an admin-authenticated route with
-  `Content-Disposition` and no inline SVG/HTML.
+- Media: private R2 bucket; access only through short-lived presigned URLs minted for
+  an authenticated admin. Allow-listed MIME types (png, jpg, webp, mp4), size caps,
+  content sniffing after upload, random object keys, `Content-Disposition: attachment`,
+  no inline SVG/HTML. R2 token scoped to the single bucket.
 - Tracked links point only to Gabee domains (allow-list), so a generated post cannot
   smuggle an arbitrary URL.
 - Generated text is rendered as text (escaped), never as HTML.
@@ -396,6 +417,8 @@ Match the repo's established layers (see `project_test_strategy`):
 - One direction per week across platforms by default, per-platform override possible.
 - Same daily topic, different post per platform, each with its own objective.
 - Platforms now: X, LinkedIn, Facebook.
+- Media (uploaded, and later generated) are stored on **Cloudflare R2**; the owner gets
+  download links, checks files locally, then uploads them to each platform.
 - Language: French by default, at least 2 posts a week in English.
 - A per-platform override changes the angle only, not the daily topic.
 - In production by 2026-10-27, first post from the loop on 2026-10-29.
@@ -426,9 +449,8 @@ Match the repo's established layers (see `project_test_strategy`):
 
 ## Left to the builder
 
-- Final Prisma model/field names and the media storage adapter (local volume on the
-  VPS behind a storage port, or object storage), with backups covered by
-  `docs/backups.md`.
+- Final Prisma model/field names; R2 bucket lifecycle/retention and whether
+  `docs/backups.md` should cover the bucket.
 - Exact default model ids/chains (from current Anthropic docs) and the backup provider.
 - Whether the Sunday content email merges with the existing weekly admin digest.
 - How observances/events are sourced (web search tool vs a curated calendar table,
