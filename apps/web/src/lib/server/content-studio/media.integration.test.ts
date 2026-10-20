@@ -30,7 +30,7 @@ async function rejects(p: Promise<unknown>, status: number) {
 
 test('initUpload rejects svg and a 301 MB video', async () => {
   await rejects(initUpload({ file_name: 'a.svg', mime: 'image/svg+xml' as never, size_bytes: 10 }, actor), 422);
-  await rejects(initUpload({ file_name: 'a.mp4', mime: 'video/mp4', size_bytes: 301 * 1024 * 1024 }, actor), 422);
+  await rejects(initUpload({ file_name: 'a.mp4', mime: 'video/mp4', size_bytes: 301 * 1024 * 1024, aspect: '16:9' }, actor), 422);
   assert.equal(await prisma.mediaAsset.count(), 0);
 });
 
@@ -60,7 +60,7 @@ test('register rejects missing object and sniffed-mime mismatch', async () => {
   assert.equal(missing.status, 'rejected');
   assert.ok(missing.rejectReason);
 
-  const b = await initUpload({ file_name: 'b.mp4', mime: 'video/mp4', size_bytes: 24 }, actor);
+  const b = await initUpload({ file_name: 'b.mp4', mime: 'video/mp4', size_bytes: 24, aspect: '9:16' }, actor);
   const rowB = await prisma.mediaAsset.findUniqueOrThrow({ where: { id: b.assetId } });
   store.putObject(rowB.objectKey, new TextEncoder().encode('<html>not a video</html>'.padEnd(16, ' ')), 'video/mp4');
   const bad = await completeUpload(b.assetId, actor);
@@ -118,4 +118,26 @@ test('setClearance stores flag and note; downloadUrl uses stored name and <=900s
   await rejects(setClearance('00000000-0000-4000-8000-0000000000ff', { cleared: true }, actor), 404);
   const pending = await createMediaAsset(prisma, { status: 'pending' });
   await rejects(downloadUrl(pending.id, 'x.png'), 409);
+});
+
+test('initUpload stores metadata; completeUpload derives size and aspect from the header', async () => {
+  const { assetId } = await initUpload(
+    { file_name: 'p.png', mime: 'image/png', size_bytes: 24, aspect: '1:1', language: 'en', tags: ['logo'] },
+    actor,
+  );
+  const row = await prisma.mediaAsset.findUniqueOrThrow({ where: { id: assetId } });
+  assert.deepEqual([row.aspect, row.language, row.tags], ['1:1', 'en', ['logo']]);
+  const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 4, 56, 0, 0, 5, 70]);
+  store.putObject(row.objectKey, png, 'image/png');
+  const dto = await completeUpload(assetId, actor);
+  assert.deepEqual([dto.width, dto.height, dto.aspect], [1080, 1350, '4:5']);
+});
+
+test('completeUpload keeps the given aspect when the size matches no ratio', async () => {
+  const { assetId } = await initUpload({ file_name: 'p.png', mime: 'image/png', size_bytes: 24, aspect: '1:1' }, actor);
+  const row = await prisma.mediaAsset.findUniqueOrThrow({ where: { id: assetId } });
+  const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 5, 220, 0, 0, 3, 232]);
+  store.putObject(row.objectKey, png, 'image/png');
+  const dto = await completeUpload(assetId, actor);
+  assert.deepEqual([dto.width, dto.height, dto.aspect], [1500, 1000, '1:1']);
 });

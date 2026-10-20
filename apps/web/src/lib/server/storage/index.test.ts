@@ -2,7 +2,7 @@ process.env.DATABASE_URL ??= 'postgresql://localhost:5432/gabee_test';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-const r2Env = { R2_ACCOUNT_ID: 'acc', R2_ACCESS_KEY_ID: 'k', R2_SECRET_ACCESS_KEY: 's', R2_BUCKET: 'b' };
+const r2Env = { MEDIA_R2_ACCOUNT_ID: 'acc', MEDIA_R2_ACCESS_KEY_ID: 'k', MEDIA_R2_SECRET_ACCESS_KEY: 's', MEDIA_R2_BUCKET: 'b' };
 
 test('memory storage is refused in production', async () => {
   const { selectStorage } = await import('./index');
@@ -19,7 +19,7 @@ test('selectStorage: memory outside prod, r2 when env complete, 503 otherwise', 
   assert.ok(selectStorage({ STORAGE_DRIVER: 'memory' }, false) instanceof MemoryStorage);
   assert.ok(selectStorage(r2Env, true) instanceof R2Storage);
   assert.throws(() => selectStorage({}, false), (e: unknown) => (e as { status?: number }).status === 503);
-  assert.throws(() => selectStorage({ ...r2Env, R2_BUCKET: undefined }, false), (e: unknown) => (e as { status?: number }).status === 503);
+  assert.throws(() => selectStorage({ ...r2Env, MEDIA_R2_BUCKET: undefined }, false), (e: unknown) => (e as { status?: number }).status === 503);
 });
 
 test('MemoryStorage head/readRange/delete round-trip and presign ttl', async () => {

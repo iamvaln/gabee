@@ -65,6 +65,6 @@ test('init -> complete -> clear -> list flow is audited', async () => {
 });
 
 test('init rejects an oversize video with 422', async () => {
-  const r = await init(webRequest(U, { cookie, body: { file_name: 'a.mp4', mime: 'video/mp4', size_bytes: 301 * 1024 * 1024 } }), undefined);
+  const r = await init(webRequest(U, { cookie, body: { file_name: 'a.mp4', mime: 'video/mp4', size_bytes: 301 * 1024 * 1024, aspect: '16:9' } }), undefined);
   assert.equal(r.status, 422);
 });

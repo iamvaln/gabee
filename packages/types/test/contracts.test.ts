@@ -685,7 +685,7 @@ describe('content studio', () => {
   it('MediaUploadInitSchema enforces size caps per kind at the boundary', () => {
     assert.equal(MEDIA_MAX_IMAGE_BYTES, 15 * 1024 * 1024);
     assert.equal(MEDIA_MAX_VIDEO_BYTES, 300 * 1024 * 1024);
-    const f = (mime: string, size_bytes: number) => MediaUploadInitSchema.safeParse({ file_name: 'a', mime, size_bytes }).success;
+    const f = (mime: string, size_bytes: number) => MediaUploadInitSchema.safeParse({ file_name: 'a', mime, size_bytes, ...(mime === 'video/mp4' ? { aspect: '9:16' } : {}) }).success;
     for (const m of ['image/png', 'image/jpeg', 'image/webp']) {
       assert.equal(f(m, MEDIA_MAX_IMAGE_BYTES), true);
       assert.equal(f(m, MEDIA_MAX_IMAGE_BYTES + 1), false);
@@ -693,5 +693,19 @@ describe('content studio', () => {
     assert.equal(f('video/mp4', MEDIA_MAX_VIDEO_BYTES), true);
     assert.equal(f('video/mp4', MEDIA_MAX_VIDEO_BYTES + 1), false);
     assert.equal(f('video/mp4', MEDIA_MAX_IMAGE_BYTES + 1), true);
+  });
+
+  it('MediaUploadInitSchema metadata: aspect required for video, optional lists bounded', () => {
+    const p = (o: object) => MediaUploadInitSchema.safeParse({ file_name: 'a', size_bytes: 10, ...o }).success;
+    assert.equal(p({ mime: 'video/mp4' }), false);
+    assert.equal(p({ mime: 'video/mp4', aspect: '16:9' }), true);
+    assert.equal(p({ mime: 'video/mp4', aspect: '3:2' }), false);
+    assert.equal(p({ mime: 'image/png' }), true);
+    for (const a of ['16:9', '1:1', '9:16', '4:5']) assert.equal(p({ mime: 'image/png', aspect: a }), true);
+    assert.equal(p({ mime: 'image/png', language: 'en', tags: ['a'] }), true);
+    assert.equal(p({ mime: 'image/png', language: 'de' }), false);
+    assert.equal(p({ mime: 'image/png', tags: Array(11).fill('a') }), false);
+    assert.equal(p({ mime: 'image/png', tags: [''] }), false);
+    assert.equal(p({ mime: 'image/png', tags: ['x'.repeat(41)] }), false);
   });
 });

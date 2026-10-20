@@ -7,9 +7,11 @@ import { writeAudit } from '../audit';
 import { reportError } from '../report-error';
 import { getStorage } from '../storage';
 import { sniffMime } from './sniff';
+import { imageSize, matchAspect } from './image-size';
 
 const PUT_TTL_SEC = 900;
 const GET_TTL_SEC = 900;
+const IMAGE_HEADER_BYTES = 64 * 1024;
 
 const EXT: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'video/mp4': 'mp4' };
 const BAD_FILE: Record<string, string> = {
@@ -113,6 +115,9 @@ export async function initUpload(
       fileName: file_name,
       mime,
       sizeBytes: size_bytes,
+      aspect: parsed.data.aspect ?? null,
+      language: parsed.data.language ?? null,
+      tags: parsed.data.tags ?? [],
       origin: 'upload',
       status: 'pending',
       uploadedById: actorId,
@@ -145,11 +150,20 @@ export async function completeUpload(assetId: string, _actorId: string): Promise
   if (head.sizeBytes !== row.sizeBytes) {
     return reject(row, 'La taille du fichier ne correspond pas à celle annoncée. Réessayez l’envoi.');
   }
-  const sniffed = sniffMime(await storage.readRange(row.objectKey, 16));
+  const isImage = row.kind === 'image';
+  const headBytes = await storage.readRange(row.objectKey, isImage ? IMAGE_HEADER_BYTES : 16);
+  const sniffed = sniffMime(headBytes.subarray(0, 16));
   if (sniffed !== row.mime) return reject(row, BAD_FILE[row.mime] ?? "Le format du fichier n'est pas valide.");
+  const size = isImage ? imageSize(headBytes, row.mime) : null;
   const updated = await prisma.mediaAsset.update({
     where: { id: row.id },
-    data: { status: 'ready', rejectReason: null },
+    data: {
+      status: 'ready',
+      rejectReason: null,
+      ...(size
+        ? { width: size.width, height: size.height, aspect: matchAspect(size.width, size.height) ?? row.aspect }
+        : {}),
+    },
   });
   return toMediaDto(updated);
 }
