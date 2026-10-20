@@ -83,6 +83,24 @@ function jsonFormat(schema: z.ZodType): BetaJSONOutputFormat {
   return { type: 'json_schema', schema: betaZodOutputFormat(schema).schema };
 }
 
+/**
+ * With web search the answer carries citations, which may not combine with
+ * structured output, so no `format` is sent: the schema goes in the system
+ * prompt instead and the router's zod validation stays the guard.
+ */
+function jsonOnlyInstruction(format: BetaJSONOutputFormat): string {
+  return (
+    'Answer with a single JSON object only — no prose, no markdown fences — matching this JSON schema:\n' +
+    JSON.stringify(format.schema)
+  );
+}
+
+/** Strip a surrounding ``` / ```json fence, if the model added one. */
+function stripJsonFence(text: string): string {
+  const fenced = /^\s*```(?:json)?\s*\n([\s\S]*?)\n?\s*```\s*$/i.exec(text);
+  return fenced?.[1] ?? text;
+}
+
 function inputTokensOf(usage: BetaUsage): number {
   // Cache reads/writes are billed as input here (no cache price is stored).
   return usage.input_tokens + (usage.cache_read_input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0);
@@ -132,12 +150,18 @@ export function createAnthropicAdapter(opts: { client?: AnthropicClientLike } = 
     async call(model: AiModelRow, route: AiRouteRow, req: AiRequest): Promise<AiCallResult> {
       const c = client();
       const hasUntrusted = req.blocks.some((b) => b.kind === 'text' && !b.trusted);
+      const format = jsonFormat(req.schema);
+      const system = [
+        req.system,
+        ...(hasUntrusted ? [UNTRUSTED_NOTICE] : []),
+        ...(req.webSearch ? [jsonOnlyInstruction(format)] : []),
+      ].join('\n\n');
       // Thinking is adaptive by default on current models: `thinking` is omitted.
       const base: Omit<MessageCreateParamsNonStreaming, 'messages'> = {
         model: model.key,
         max_tokens: route.maxTokens,
-        system: hasUntrusted ? `${req.system}\n\n${UNTRUSTED_NOTICE}` : req.system,
-        output_config: { effort: route.effort, format: jsonFormat(req.schema) },
+        system,
+        output_config: req.webSearch ? { effort: route.effort } : { effort: route.effort, format },
         betas: [SERVER_SIDE_FALLBACK_BETA],
         ...(req.webSearch
           ? { tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: req.webSearch.maxUses }] }
@@ -163,7 +187,7 @@ export function createAnthropicAdapter(opts: { client?: AnthropicClientLike } = 
       }
       if (stopReason !== 'end_turn') return { rawJson: undefined, inputTokens, outputTokens, stopReason };
       try {
-        return { rawJson: JSON.parse(finalText(message)) as unknown, inputTokens, outputTokens, stopReason };
+        return { rawJson: JSON.parse(stripJsonFence(finalText(message))) as unknown, inputTokens, outputTokens, stopReason };
       } catch (err) {
         return {
           rawJson: undefined,

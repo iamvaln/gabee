@@ -78,3 +78,11 @@ test('classifyAiError: typed router errors and unknown errors', () => {
   // Caller aborts are not outages either.
   assert.equal(classifyAiError(new APIUserAbortError()), 'invalid_request');
 });
+
+test('classifyAiError: a mid-stream api_error (no HTTP status) is an outage', () => {
+  // SSE `event: error` after a 200: the SDK raises a bare APIError without status.
+  const midStream = new APIError(undefined, { type: 'error', error: { type: 'api_error', message: 'Internal' } }, undefined, undefined, 'api_error');
+  assert.equal(midStream.status, undefined);
+  assert.equal(classifyAiError(midStream), 'outage');
+  assert.equal(aiErrorCode(midStream), 'api_error');
+});

@@ -143,8 +143,8 @@ test('router falls back on outage and records two usage rows', async () => {
     ],
   );
   assert.equal(catalogue.failures.get('claude-opus-5-5'), 1);
-  // The swallowed outage still reaches Sentry.
-  assert.equal(reported.length, 1);
+  // Per-attempt outages are metered on ai_usage, not sent to Sentry (no 429/529 storms).
+  assert.equal(reported.length, 0);
 });
 
 test('router never falls back on refusal', async () => {
@@ -291,4 +291,28 @@ test('a model whose provider has no adapter is skipped', async () => {
   setAiAdapters([new FakeAiAdapter([{ json: { title: 'from sonnet' } }])]);
   const res = await runAiTask(request());
   assert.equal(res.modelKey, 'claude-sonnet-5-5');
+});
+
+test('chain exhaustion by outages is reported once to Sentry', async () => {
+  setAiAdapters([new FakeAiAdapter([{ error: 'outage' }, { error: 'outage' }])]);
+  await assert.rejects(runAiTask(request()), AiUnavailableError);
+  assert.equal(reported.length, 1);
+  assert.ok(reported[0] instanceof AiUnavailableError);
+  assert.deepEqual((reported[0] as AiUnavailableError).reasons, [
+    'claude-opus-5-5: overloaded_error',
+    'claude-sonnet-5-5: overloaded_error',
+  ]);
+});
+
+test('an all-no_key chain is reported once to Sentry', async () => {
+  const saved = process.env.ANTHROPIC_API_KEY;
+  delete process.env.ANTHROPIC_API_KEY;
+  try {
+    resetAiAdapters();
+    await assert.rejects(runAiTask(request()), AiUnavailableError);
+    assert.equal(reported.length, 1);
+    assert.ok(reported[0] instanceof AiUnavailableError);
+  } finally {
+    if (saved !== undefined) process.env.ANTHROPIC_API_KEY = saved;
+  }
 });

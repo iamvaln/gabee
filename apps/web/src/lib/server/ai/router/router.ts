@@ -95,7 +95,8 @@ async function recordOutage(cat: AiCatalogue, modelKey: string): Promise<void> {
  * key-less models. Only an outage (429, 5xx/529, timeout, connection) moves on
  * to the next model; a refusal, an invalid request or an invalid output stops
  * the chain. Every attempt writes exactly one `ai_usage` row with its cost from
- * the catalogue prices.
+ * the catalogue prices. Sentry gets invalid requests, auth failures and chain
+ * exhaustion — not each outage attempt (those live on their usage rows).
  *
  * @throws AiRefusedError | AiInvalidOutputError | AiUnavailableError, or the
  *   provider's own error for invalid requests / auth failures.
@@ -141,15 +142,15 @@ export async function runAiTask<S extends z.ZodType>(req: AiRequest<S>): Promise
         errorCode,
       };
       await cat.recordUsage(record);
-      const context = { scope: 'ai.router', task: req.task, model: model.key, origin: req.origin, errorCode };
       if (kind === 'outage') {
+        // Metered on the usage row only: a 429/529 burst must not flood Sentry.
+        // Chain exhaustion is reported below.
         await recordOutage(cat, model.key);
-        reportError(err, { ...context, outcome: 'fallback' });
         reasons.push(`${model.key}: ${errorCode}`);
         continue;
       }
       if (kind === 'refusal') throw err instanceof AiRefusedError ? err : new AiRefusedError(null);
-      reportError(err, { ...context, outcome: kind });
+      reportError(err, { scope: 'ai.router', task: req.task, model: model.key, origin: req.origin, errorCode, outcome: kind });
       throw err;
     }
 
@@ -200,5 +201,7 @@ export async function runAiTask<S extends z.ZodType>(req: AiRequest<S>): Promise
     };
   }
 
-  throw new AiUnavailableError(reasons);
+  const unavailable = new AiUnavailableError(reasons);
+  reportError(unavailable, { scope: 'ai.router', task: req.task, origin: req.origin, reasons });
+  throw unavailable;
 }

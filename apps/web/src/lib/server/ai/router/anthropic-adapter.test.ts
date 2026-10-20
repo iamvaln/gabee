@@ -200,3 +200,25 @@ test('without a key and without an injected client the adapter is unavailable an
     if (saved !== undefined) process.env.ANTHROPIC_API_KEY = saved;
   }
 });
+
+test('web search: no output_config.format, JSON-only instruction with the schema in system', async () => {
+  const { client, created } = fakeClient([message()]);
+  await createAnthropicAdapter({ client }).call(MODEL, ROUTE, req({ webSearch: { maxUses: 2 } }));
+  const p = created[0]!;
+  assert.deepEqual(p.output_config, { effort: 'high' });
+  const system = String(p.system);
+  assert.match(system, /^You are the strategist\.\n\n/);
+  assert.match(system, /single JSON object/);
+  assert.match(system, /no prose/i);
+  // The JSON schema itself is embedded.
+  assert.ok(system.includes('"title"'), 'schema properties are in the system prompt');
+  assert.ok(system.includes('"type":"object"') || system.includes('"type": "object"'));
+});
+
+test('a ```json fenced answer still parses', async () => {
+  const { client } = fakeClient([
+    message({ content: [{ type: 'text', text: '```json\n{"title":"Rentrée"}\n```', citations: null }] }),
+  ]);
+  const res = await createAnthropicAdapter({ client }).call(MODEL, ROUTE, req({ webSearch: { maxUses: 1 } }));
+  assert.deepEqual(res.rawJson, { title: 'Rentrée' });
+});

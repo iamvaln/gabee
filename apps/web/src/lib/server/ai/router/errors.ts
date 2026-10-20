@@ -72,7 +72,9 @@ export function classifyAiError(err: unknown): AiErrorKind {
   if (err instanceof AiRefusedError) return 'refusal';
   if (err instanceof APIConnectionError) return 'outage'; // includes APIConnectionTimeoutError
   if (err instanceof APIError) {
-    if (err.type === 'overloaded_error' || err.type === 'rate_limit_error' || err.type === 'timeout_error') return 'outage';
+    // `api_error` also covers a mid-stream SSE error, raised without an HTTP status.
+    const outageTypes = ['overloaded_error', 'rate_limit_error', 'timeout_error', 'api_error'];
+    if (err.type && outageTypes.includes(err.type)) return 'outage';
     if (err instanceof RateLimitError || err instanceof InternalServerError || err instanceof ConflictError) return 'outage';
     if (err.status === 408) return 'outage';
     if (err instanceof AuthenticationError || err instanceof PermissionDeniedError) return 'auth';
