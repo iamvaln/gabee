@@ -82,7 +82,7 @@ export const WeekTitlesSchema = z.object({
       angle: z.string(),
       format: z.enum(SLOT_FORMATS),
       platforms: z.array(z.object({ platform: ContentPlatformSchema, language: ContentLanguageSchema })),
-      sources: z.array(z.object({ title: z.string(), url: z.string() })),
+      sources: z.array(z.object({ title: z.string(), url: z.url() })),
     }),
   ),
 });
@@ -131,12 +131,14 @@ export const ChooseDirectionRequestSchema = z.object({
 });
 export type ChooseDirectionRequest = z.infer<typeof ChooseDirectionRequestSchema>;
 
-export const UpdateSlotRequestSchema = z.object({
-  topic: z.string().min(1).max(300).optional(),
-  angle: z.string().max(1000).optional(),
-  format: z.enum(SLOT_FORMATS).optional(),
-  language: ContentLanguageSchema.optional(),
-});
+export const UpdateSlotRequestSchema = z
+  .object({
+    topic: z.string().min(1).max(200).optional(),
+    angle: z.string().max(500).optional(),
+    format: z.enum(SLOT_FORMATS).optional(),
+    platforms: z.array(z.object({ platform: ContentPlatformSchema, language: ContentLanguageSchema })).min(1).max(2).optional(),
+  })
+  .refine((v) => Object.values(v).some((x) => x !== undefined), { message: 'At least one field is required' });
 export type UpdateSlotRequest = z.infer<typeof UpdateSlotRequestSchema>;
 
 export const UpdateDraftRequestSchema = z.object({
@@ -156,22 +158,35 @@ export type MarkPublishedRequest = z.infer<typeof MarkPublishedRequestSchema>;
 export const SkipDayRequestSchema = z.object({ reason: z.string().min(1).max(300) });
 export type SkipDayRequest = z.infer<typeof SkipDayRequestSchema>;
 
+const isTimeZone = (tz: string): boolean => {
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const StudioSettingsUpdateSchema = z.object({
-  timezone: z.string().min(1).max(64).optional(),
-  monthly_budget_usd: z.number().nonnegative().optional(),
-  budget_alert_threshold: z.number().min(0).max(1).optional(),
-  recipients: z.array(z.email()).optional(),
+  timezone: z.string().refine(isTimeZone, { message: 'Unknown time zone' }).optional(),
+  recipients: z.array(z.email()).min(1).max(10).optional(),
+  monthly_budget_usd: z.number().positive().optional(),
+  budget_alert_ratio: z.number().gt(0).max(1).optional(),
 });
 export type StudioSettingsUpdate = z.infer<typeof StudioSettingsUpdateSchema>;
 
 export const ObjectiveUpsertSchema = z.object({
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
   type: z.enum(OBJECTIVE_TYPES),
-  target: z.number().nonnegative(),
-  note: z.string().max(1000).optional(),
+  statement: z.string().min(1).max(500),
+  targets: z.record(z.string(), z.number()).optional(),
 });
 export type ObjectiveUpsert = z.infer<typeof ObjectiveUpsertSchema>;
 
-export const EditorialLineUpdateSchema = z.object({ content: z.string().min(1).max(20000) });
+export const EditorialLineUpdateSchema = z.object({
+  body: z.string().min(1).max(20000),
+  product_facts: z.record(z.string(), z.unknown()),
+});
 export type EditorialLineUpdate = z.infer<typeof EditorialLineUpdateSchema>;
 
 export const MediaUploadInitSchema = z.object({

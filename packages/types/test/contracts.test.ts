@@ -648,6 +648,27 @@ describe('content studio', () => {
     assert.ok(CONTENT_LANGUAGES.length && OBJECTIVE_TYPES.length);
     assert.equal(ChooseDirectionRequestSchema.safeParse({ proposal_index: 3, refinement: '', platform_angles: {} }).success, false);
     assert.equal(ChooseDirectionRequestSchema.safeParse({ proposal_index: 2, refinement: 'x', platform_angles: { tiktok: 'y' } }).success, true);
+    const S = StudioSettingsUpdateSchema;
+    assert.equal(S.safeParse({ timezone: 'Africa/Douala', recipients: ['a@b.co'], monthly_budget_usd: 50, budget_alert_ratio: 1 }).success, true);
+    assert.equal(S.safeParse({ timezone: 'Not/AZone' }).success, false);
+    assert.equal(S.safeParse({ recipients: [] }).success, false);
+    assert.equal(S.safeParse({ monthly_budget_usd: 0 }).success, false);
+    assert.equal(S.safeParse({ budget_alert_ratio: 0 }).success, false);
+    assert.equal(S.safeParse({ budget_alert_ratio: 1.1 }).success, false);
+    const O = ObjectiveUpsertSchema;
+    assert.equal(O.safeParse({ month: '2026-10', type: 'signups', statement: 's', targets: { signups: 10 } }).success, true);
+    assert.equal(O.safeParse({ month: '2026-13', type: 'signups', statement: 's' }).success, false);
+    assert.equal(EditorialLineUpdateSchema.safeParse({ body: 'x', product_facts: { a: 1 } }).success, true);
+    assert.equal(EditorialLineUpdateSchema.safeParse({ body: 'x' }).success, false);
+    const U = UpdateSlotRequestSchema;
+    assert.equal(U.safeParse({}).success, false);
+    assert.equal(U.safeParse({ topic: 't', platforms: [{ platform: 'tiktok', language: 'en' }] }).success, true);
+    assert.equal(U.safeParse({ platforms: [] }).success, false);
+    assert.equal(U.safeParse({ language: 'en' }).success, false);
+    assert.equal(
+      WeekTitlesSchema.safeParse({ days: [{ date: '2026-10-26', topic: 't', angle: 'a', format: 'text', platforms: [], sources: [{ title: 's', url: 'nope' }] }] }).success,
+      false,
+    );
     assert.equal(SkipDayRequestSchema.safeParse({ reason: '' }).success, false);
     assert.equal(UpdateDraftRequestSchema.safeParse({ body: 'b', media_asset_id: null }).success, true);
     assert.equal(MediaUploadInitSchema.safeParse({ file_name: 'a.png', mime: 'image/png', size_bytes: 10 }).success, true);
@@ -657,9 +678,5 @@ describe('content studio', () => {
     assert.equal(ArtDirectionSchema.safeParse({ media_asset_id: null, visual_brief: 'v' }).success, true);
     assert.equal(ArtDirectionSchema.safeParse({ media_asset_id: 'nope', visual_brief: 'v' }).success, false);
     assert.equal(ReportNarrativeSchema.safeParse({ headline: 'h', highlights: [], watch_outs: [] }).success, true);
-    assert.equal(StudioSettingsUpdateSchema.safeParse({ timezone: 'Africa/Douala' }).success, true);
-    assert.equal(ObjectiveUpsertSchema.safeParse({ type: 'signups', target: 10 }).success, true);
-    assert.equal(EditorialLineUpdateSchema.safeParse({ content: 'x' }).success, true);
-    assert.equal(UpdateSlotRequestSchema.safeParse({ topic: 't', language: 'en' }).success, true);
   });
 });
