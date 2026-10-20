@@ -1,7 +1,7 @@
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { SignupRequestSchema } from '@gabee/types';
 import { route, readJson, json, HttpError } from '@/lib/server/http';
-import { signup } from '@/lib/server/services/accounts';
+import { signup, signupSourceFrom } from '@/lib/server/services/accounts';
 import { rateLimit, clientIpFrom } from '@/lib/server/rate-limit';
 import { isDisposableEmail } from '@/lib/server/disposable-emails';
 import { getPublicAppUrl } from '@/lib/server/public-url';
@@ -40,7 +40,10 @@ export const POST = route(async (req) => {
     }
   }
 
-  const parent = await signup(input.email, input.password, { phone: input.phone ?? null });
+  const parent = await signup(input.email, input.password, {
+    phone: input.phone ?? null,
+    signupSource: signupSourceFrom(input.attribution),
+  });
   // No session is issued at signup: the account must confirm its email first
   // (login is gated on `emailConfirmedAt`). The client shows a "check your
   // inbox" screen on this 201.

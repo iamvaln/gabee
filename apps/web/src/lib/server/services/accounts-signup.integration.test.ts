@@ -2,7 +2,7 @@ import '../../../test/setup-integration'; // src/lib/server/services -> src/test
 import test, { after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { createTestClient, resetDb } from '@gabee/db/testing';
-import { signup, login } from './accounts';
+import { signup, login, signupSourceFrom } from './accounts';
 import { HttpError } from '../http';
 import { CURRENT_TERMS_VERSION } from '@/lib/terms';
 
@@ -57,3 +57,27 @@ test('signup on an existing email is rejected (409 email_taken)', async () => {
 // not from the `signup()` service under test in this file — so a
 // mailinator.com signup would succeed at this layer. That guard belongs in a
 // route-level test, not here.
+
+test('signup stores attribution on parent account', async () => {
+  const parent = await signup('attributed@example.com', 'a-good-password', {
+    signupSource: signupSourceFrom({
+      utm: { source: 'LinkedIn', medium: 'social', campaign: 'w43', content: 'd1' },
+    }),
+  });
+  const row = await prisma.parentAccount.findUniqueOrThrow({ where: { id: parent.id } });
+  assert.deepEqual(row.signupSource, {
+    source: 'linkedin',
+    medium: 'social',
+    campaign: 'w43',
+    content: 'd1',
+  });
+});
+
+test('signupSourceFrom falls back to the referrer host, then direct', () => {
+  assert.deepEqual(signupSourceFrom({ utm: {}, referrer_host: 'news.example.org' }), {
+    source: 'news.example.org',
+    referrer_host: 'news.example.org',
+  });
+  assert.deepEqual(signupSourceFrom({ utm: {} }), { source: 'direct' });
+  assert.equal(signupSourceFrom(undefined), null);
+});

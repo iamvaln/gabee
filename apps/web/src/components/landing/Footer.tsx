@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AttributedLink } from './AttributedLink';
 import { parentSignupHref, kidAppHref, kidInstallHref } from './parent-app-links';
 import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
 import { getTranslations, getLocale } from 'next-intl/server';
@@ -28,7 +29,7 @@ export async function Footer() {
               <a href="#how">{t('howLink')}</a>
             </li>
             <li>
-              <Link href={parentSignupHref()}>{t('signupLink')}</Link>
+              <AttributedLink href={parentSignupHref()}>{t('signupLink')}</AttributedLink>
             </li>
             <li>
               {/* Discreet entry point for an already-installed kid PWA — not a
