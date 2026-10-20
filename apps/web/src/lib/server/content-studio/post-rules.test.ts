@@ -75,6 +75,23 @@ test('findUrls spots schemes, www and bare domains but not prose', () => {
   assert.deepEqual(findUrls("C'est fini.Le jeu continue, p. ex. le module Nombres, 3.5 étoiles, e.g. Mots."), []);
 });
 
+test('findUrls catches any host with a path and bare domains on any TLD', () => {
+  for (const url of ['wa.me/33612345678', 't.me/x', 'lnkd.in/abc', 'amzn.to/x', 'is.gd/x', 'rb.gy/x', 'bit.ly', 'example.museum', 'www.foo.co', 'GABEE.APP']) {
+    assert.deepEqual(findUrls(`Écrivez-nous sur ${url} !`), [url], url);
+  }
+  assert.deepEqual(findUrls('Rendez-vous sur Gabee.app?'), ['Gabee.app']);
+  assert.deepEqual(findUrls('contact@gabee.app'), ['gabee.app']);
+  // Rejected through the post rules too (Ruling 5: any URL the agent wrote).
+  assert.ok(checkPostRules('linkedin', li({ body: 'Parlons-en sur lnkd.in/abc' }), linkedin).some((v) => /lnkd\.in/.test(v)));
+  assert.ok(checkPostRules('tiktok', tt({ caption: 'Écrivez sur wa.me/336' }), tiktok).some((v) => /wa\.me/.test(v)));
+});
+
+test('findUrls leaves ordinary prose alone', () => {
+  for (const prose of ['Version 2.0 est là', '3.5 étoiles', 'M. Dupont arrive.', 'e.g. le module Mots', 'i.e. Nombres', 'U.S. schools', 'Note : 4.5/5', "C'est fini.Le jeu continue", 'v2.0/beta']) {
+    assert.deepEqual(findUrls(prose), [], prose);
+  }
+});
+
 test('checkTikTokMode refuses library_video when no cleared vertical video exists', () => {
   assert.equal(checkTikTokMode(tt({ mode: 'library_video', filming_plan: undefined }), 0).length, 1);
   assert.deepEqual(checkTikTokMode(tt({ mode: 'library_video', filming_plan: undefined }), 2), []);

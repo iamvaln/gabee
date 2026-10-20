@@ -33,16 +33,21 @@ export function parsePlatformRules(rules: unknown): PlatformRules {
  */
 export const LINK_RESERVE_CHARS = 200;
 
-// Bare domains are caught only on common TLDs, so prose like "fini.Le" or
-// "3.5" never trips the check.
-const TLDS = 'com|net|org|app|io|ly|co|fr|gl|gg|link|info|biz|tv|cm|ai|dev|xyz|page|site|eu|uk|us|ca|de|be|ch|sh|cc|ws|news|blog|store|shop';
+// No TLD list: any host counts (wa.me, t.me, lnkd.in, amzn.to, example.museum…).
+// A host is `label.` repeated, then a TLD of 2–24 letters — digits never form
+// a TLD, so "3.5", "v2.0" or "4.5/5" are prose. With a `/path` any letter case
+// counts; a path-less bare domain needs a one-case TLD ("bit.ly", "GABEE.APP"),
+// so a missing space in prose ("fini.Le jeu") is not taken for a domain.
+const PATH_CHARS = String.raw`[^\s<>"'()\[\]]`;
+const HOST_LABELS = String.raw`(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+`;
 const URL_RE = new RegExp(
   [
-    String.raw`\b[a-z][a-z0-9+.-]*:\/\/[^\s<>"'()\[\]]+`, // scheme://…
-    String.raw`\bwww\.[^\s<>"'()\[\]]+`, // www.…
-    String.raw`\b(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:${TLDS})\b(?:\/[^\s<>"'()\[\]]*)?`, // bit.ly/x
+    String.raw`\b[A-Za-z][A-Za-z0-9+.-]*:\/\/${PATH_CHARS}+`, // scheme://…
+    String.raw`\b[Ww]{3}\.${PATH_CHARS}+`, // www.…
+    String.raw`\b${HOST_LABELS}[A-Za-z]{2,24}\/${PATH_CHARS}*`, // wa.me/336…, lnkd.in/abc
+    String.raw`\b${HOST_LABELS}(?:[a-z]{2,24}|[A-Z]{2,24})\b(?![-.]?[A-Za-z0-9])`, // bit.ly, example.museum
   ].join('|'),
-  'gi',
+  'g',
 );
 
 /** Every URL-looking token in `text` (trailing punctuation trimmed). */
