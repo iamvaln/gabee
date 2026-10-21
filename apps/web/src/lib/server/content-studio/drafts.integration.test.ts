@@ -12,6 +12,7 @@ import { MemoryStorage } from '../storage/memory';
 import { FakeAiAdapter, resetAiAdapters, setAiAdapters, type AiAdapter, type FakeAiStep } from '../ai/router';
 import type { Actor } from './state';
 import { approveDraft, editDraft, generateDraftsForDay, markPublished, regenerateDraft, todayBoard } from './drafts';
+import { updateSlot } from './weeks';
 
 const prisma = createTestClient();
 const actor: Actor = { id: randomUUID(), role: 'admin' };
@@ -270,6 +271,35 @@ test('markPublished closes the slot when every draft is published', async () => 
   assert.equal((await prisma.contentSlot.findUniqueOrThrow({ where: { id: slot.id } })).status, 'done');
   assert.equal(await prisma.contentPublication.count(), 2);
   assert.equal(await prisma.auditLog.count({ where: { kind: 'content.draft.publish' } }), 2);
+});
+
+test('a draft generated while its slot is edited lands stale', async () => {
+  const { slot } = await fixture();
+  const adapter = byTask({ post_linkedin: [{ json: linkedinPost }], post_tiktok: [{ json: tiktokPlan }], art_direction: [{ json: art }, { json: art }] });
+  // Hold the LinkedIn writer until the owner has edited the day.
+  let reached!: () => void;
+  const atWriter = new Promise<void>((r) => (reached = r));
+  let release!: () => void;
+  const gate = new Promise<void>((r) => (release = r));
+  const writer = adapter.byTask.post_linkedin!;
+  const call = writer.call.bind(writer);
+  writer.call = async (...args) => {
+    reached();
+    await gate;
+    return call(...args);
+  };
+
+  const run = generateDraftsForDay(DAY, 'scheduled_job');
+  await atWriter;
+  await updateSlot(slot.id, { topic: 'Sujet modifié pendant la génération' }, actor);
+  release();
+  assert.deepEqual(await run, { created: 2, failed: 0 });
+
+  const drafts = await prisma.contentDraft.findMany({ where: { slotId: slot.id } });
+  // LinkedIn was written on the old topic; TikTok started after the edit.
+  assert.equal(drafts.find((d) => d.platform === 'linkedin')!.status, 'stale');
+  assert.equal(drafts.find((d) => d.platform === 'tiktok')!.status, 'ready');
+  assert.ok(drafts.every((d) => d.currentVersionId && d.generationLockUntil === null));
 });
 
 test('todayBoard returns the day slot and yesterday’s unpublished drafts', async () => {

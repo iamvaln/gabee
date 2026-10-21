@@ -17,7 +17,7 @@ test('canTransition follows the draft graph (stale from ready|approved, failed â
   assert.equal(canTransition('draft', 'approved', 'stale'), true);
   assert.equal(canTransition('draft', 'failed', 'generating'), true);
   assert.equal(canTransition('draft', 'stale', 'generating'), true);
-  assert.equal(canTransition('draft', 'generating', 'stale'), false);
+  assert.equal(canTransition('draft', 'generating', 'stale'), true);
   assert.equal(canTransition('draft', 'failed', 'stale'), false);
   assert.equal(canTransition('draft', 'ready', 'published'), false);
   assert.equal(canTransition('draft', 'nope', 'ready'), false);

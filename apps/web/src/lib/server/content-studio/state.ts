@@ -34,12 +34,13 @@ const GRAPHS: Record<StateKind, Record<string, readonly string[]>> = {
     skipped: [],
   },
   // generating → ready → approved → published (+ failed, stale).
-  // ready | approved → stale when the day's title changes; the owner then
+  // ready | approved → stale when the day's title changes (generating → stale
+  // when it changes while the agents write); the owner then
   // regenerates (→ generating), edits (→ ready) or keeps and approves it.
   // An owner edit of an approved draft unpins it (→ ready); a failed draft
   // that still holds an earlier version can be edited back to ready.
   draft: {
-    generating: ['ready', 'failed'],
+    generating: ['ready', 'failed', 'stale'],
     ready: ['approved', 'stale', 'generating'],
     approved: ['published', 'ready', 'stale', 'generating'],
     stale: ['generating', 'ready', 'approved'],

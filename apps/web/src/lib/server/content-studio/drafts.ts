@@ -235,6 +235,26 @@ async function nextVersionN(tx: Prisma.TransactionClient, draftId: string): Prom
   return (agg._max.n ?? 0) + 1;
 }
 
+/** What a draft is written from: the day's line. Status changes do not count. */
+function slotContent(s: { topic: string; angle: string; format: string; platforms: unknown; sources: unknown }): string {
+  return JSON.stringify([s.topic, s.angle, s.format, s.platforms, s.sources]);
+}
+
+/**
+ * Lock the slot row for the rest of the transaction and return its current
+ * line. `updateSlot` / `regenerateSlot` update that row first in their own
+ * transaction, so the two serialise on it: either the edit committed before
+ * (we see the new line and land `stale`) or it waits for our commit (its
+ * `markDraftsStale` then moves our `ready` draft to `stale`).
+ */
+async function lockSlotContent(tx: Prisma.TransactionClient, slotId: string): Promise<string> {
+  const rows = await tx.$queryRaw<Array<{ topic: string; angle: string; format: string; platforms: unknown; sources: unknown }>>`
+    SELECT topic, angle, format, platforms, sources FROM content_slots WHERE id = ${slotId}::uuid FOR UPDATE`;
+  const row = rows[0];
+  if (!row) throw new Error(`Slot ${slotId} disappeared while its draft was being written.`);
+  return slotContent(row);
+}
+
 function failureReason(err: unknown): string {
   if (err instanceof AiRefusedError) return "L'IA a refusé de rédiger ce post.";
   if (err instanceof AiInvalidOutputError) return "L'IA a produit un brouillon inutilisable.";
@@ -245,7 +265,9 @@ function failureReason(err: unknown): string {
 /**
  * Run writer then Art director on a locked draft and store version n+1
  * (`ready`), or record the failure (`failed` + plain reason). Never throws for
- * a generation failure; always releases the lock.
+ * a generation failure; always releases the lock. If the day's line (topic,
+ * angle, format, platforms, sources) changed while the agents ran, the draft
+ * was written from the old line: it lands `stale`, like drafts the edit found.
  *
  * Sentry: runAgent records router errors on its AgentRun and rethrows them
  * without reporting. A refusal or an invalid output is reported here, once.
@@ -259,6 +281,8 @@ async function generateLocked(draftId: string, origin: AiOrigin, actor?: Actor):
     const platform = asPlatform(draft.platform);
     const lang = asLanguage(draft.language);
     const writer = platform === 'linkedin' ? 'writer_linkedin' : 'writer_tiktok';
+    // Read before the agents load their memory from the slot.
+    const writtenFrom = slotContent(draft.slot);
 
     phase = 'agent';
     const post = (await runAgent(writer, { kind: 'draft', id: draftId }, origin, actor?.id)) as LinkedInPost | TikTokPost;
@@ -282,8 +306,9 @@ async function generateLocked(draftId: string, origin: AiOrigin, actor?: Actor):
       url = trackedUrl({ platform, target: 'landing', weekSlug, draftId, lang, bioLink: profile?.bioLink });
       payload = post;
     }
-    assertTransition('draft', 'generating', 'ready');
     await prisma.$transaction(async (tx) => {
+      const status = (await lockSlotContent(tx, draft.slotId)) === writtenFrom ? 'ready' : 'stale';
+      assertTransition('draft', 'generating', status);
       const version = await tx.contentDraftVersion.create({
         data: {
           draftId,
@@ -295,7 +320,7 @@ async function generateLocked(draftId: string, origin: AiOrigin, actor?: Actor):
       });
       const res = await tx.contentDraft.updateMany({
         where: { id: draftId, status: 'generating' },
-        data: { status: 'ready', currentVersionId: version.id, approvedVersionId: null, mediaAssetId: art.media_asset_id, trackedUrl: url, error: null },
+        data: { status, currentVersionId: version.id, approvedVersionId: null, mediaAssetId: art.media_asset_id, trackedUrl: url, error: null },
       });
       if (res.count !== 1) throw new Error(`Draft ${draftId} left "generating" while it was being written.`);
     });

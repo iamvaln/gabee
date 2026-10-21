@@ -23,7 +23,7 @@ import {
   type SlotPlatform,
 } from './drafts';
 import { checkLanguageQuota, type LanguageQuotaResult } from './language-quota';
-import { dateOf, daysInWeek, planWeek, sourcesOf, ymdOf, type Actor } from './state';
+import { dateOf, daysInWeek, planWeek, ymdOf, type Actor } from './state';
 
 /**
  * The week loop (spec "The weekly rhythm"): start a week and get 3 directions,
@@ -221,9 +221,16 @@ async function loadEditableSlot(slotId: string) {
   return slot;
 }
 
+/**
+ * Drafts written for the day before the edit. A draft still `generating` is
+ * left to its run, which sees the new line when it stores and lands `stale`.
+ */
+const STALE_FROM = ['ready', 'approved'] as const;
+
 /** Drafts already written for the day no longer match it: `ready | approved` → `stale` (published stay). */
 async function markDraftsStale(tx: Prisma.TransactionClient, slotId: string): Promise<number> {
-  const res = await tx.contentDraft.updateMany({ where: { slotId, status: { in: sourcesOf('draft', 'stale') } }, data: { status: 'stale' } });
+  for (const from of STALE_FROM) assertTransition('draft', from, 'stale');
+  const res = await tx.contentDraft.updateMany({ where: { slotId, status: { in: [...STALE_FROM] } }, data: { status: 'stale' } });
   return res.count;
 }
 
