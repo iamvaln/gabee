@@ -16,14 +16,16 @@ import {
   assertTransition,
   auditContent,
   enabledPlatforms,
+  generateDraftsForDay,
   parseSlotPlatforms,
   slotInclude,
   toSlotDto,
   type SlotDto,
   type SlotPlatform,
 } from './drafts';
+import { localParts } from './clock';
 import { checkLanguageQuota, type LanguageQuotaResult } from './language-quota';
-import { dateOf, daysInWeek, planWeek, ymdOf, type Actor } from './state';
+import { addDaysYmd, dateOf, daysInWeek, planWeek, ymdOf, type Actor } from './state';
 
 /**
  * The week loop (spec "The weekly rhythm"): start a week and get 3 directions,
@@ -106,7 +108,28 @@ export async function getWeek(weekId: string): Promise<WeekDto> {
   return toWeekDto(row, await enabledPlatforms());
 }
 
-async function getSlot(slotId: string): Promise<SlotDto> {
+/**
+ * The weeks the Semaine screen opens without knowing their id, on the
+ * studio-local calendar of `now`: `current` starts this Monday (on a Sunday,
+ * the Monday six days ago), `next` the Monday after (on a Sunday, tomorrow —
+ * the week the Sunday loop plans).
+ */
+export async function findWeeks(now: Date): Promise<{ today: string; current: WeekDto | null; next: WeekDto | null }> {
+  const { date: today, weekday } = localParts(now, await getStudioTimezone());
+  const monday = addDaysYmd(today, -((weekday + 6) % 7));
+  const nextMonday = addDaysYmd(monday, 7);
+  const [rows, platforms] = await Promise.all([
+    prisma.contentWeek.findMany({ where: { startsOn: { in: [dateOf(monday), dateOf(nextMonday)] } }, include: weekInclude }),
+    enabledPlatforms(),
+  ]);
+  const dtoOf = (startsOn: string) => {
+    const row = rows.find((w) => ymdOf(w.startsOn) === startsOn);
+    return row ? toWeekDto(row, platforms) : null;
+  };
+  return { today, current: dtoOf(monday), next: dtoOf(nextMonday) };
+}
+
+export async function getSlot(slotId: string): Promise<SlotDto> {
   const row = await prisma.contentSlot.findUnique({ where: { id: slotId }, include: slotInclude });
   if (!row) throw slotNotFound();
   return toSlotDto(row);
@@ -329,6 +352,38 @@ export async function validateWeek(weekId: string, actor: Actor, opts: { overrid
   });
   await auditContent(actor, 'content.week.validate', 'content_week', weekId, { override_quota: !quotaOk, quota });
   return getWeek(weekId);
+}
+
+export type QuotaWarning = { code: 'language_quota'; message: string; details: LanguageQuotaResult[] };
+
+/**
+ * After an owner change to a day line (edit or regenerate) of a validated
+ * week. `updateSlot` / `regenerateSlot` only mark the written drafts stale; if
+ * the day is today or past (studio-local), its drafts are due now, so the day
+ * is generated again: a platform added to the day gets its draft (and a
+ * failed one is retried — an owner action). The English minimum is checked
+ * again as a warning only: the owner already validated the week.
+ */
+export async function afterSlotChange(slotId: string, actor: Actor, now: Date): Promise<{ slot: SlotDto; warning: QuotaWarning | null }> {
+  const row = await prisma.contentSlot.findUnique({ where: { id: slotId }, select: { date: true, weekId: true, week: { select: { status: true } } } });
+  if (!row) throw slotNotFound();
+  if (row.week.status !== 'validated') return { slot: await getSlot(slotId), warning: null };
+
+  const day = ymdOf(row.date);
+  if (day <= localParts(now, await getStudioTimezone()).date) {
+    const res = await generateDraftsForDay(day, 'user_action', actor);
+    if (res.created + res.failed > 0) await auditContent(actor, 'content.day.generate', 'content_slot', slotId, { day, ...res });
+  }
+  const { language_quota: quota } = await getWeek(row.weekId);
+  const missing = quota.filter((q) => !q.ok);
+  const warning: QuotaWarning | null = missing.length
+    ? {
+        code: 'language_quota',
+        message: `Cette semaine n'a plus assez de posts en anglais (${missing.map((q) => `${q.platform} : ${q.english}/${q.required}`).join(', ')}). Passez un autre jour en anglais si vous le souhaitez.`,
+        details: quota,
+      }
+    : null;
+  return { slot: await getSlot(slotId), warning };
 }
 
 /** Skip a day (with a reason): no drafts, no reminders. */

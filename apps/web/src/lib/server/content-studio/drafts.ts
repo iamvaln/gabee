@@ -21,6 +21,7 @@ import { reportError } from '../report-error';
 import { AiInvalidOutputError, AiRefusedError, AiUnavailableError, type AiOrigin } from '../ai/router';
 import { runAgent } from './agents';
 import { trackedUrl } from './links';
+import { downloadUrl, draftMediaFileName } from './media';
 import { unifiedDiff } from './memory';
 import { checkPostRules } from './post-rules';
 import { addDaysYmd, canTransition, dateOf, sourcesOf, ymdOf, type Actor, type StateKind } from './state';
@@ -415,6 +416,14 @@ async function loadDraft(draftId: string) {
 
 export async function getDraft(draftId: string): Promise<DraftDto> {
   return toDraftDto(await loadDraft(draftId));
+}
+
+/** Presigned download of the draft's media under its readable name (`YYYY-MM-DD-<platform>-<slug>.<ext>`). */
+export async function draftMediaDownloadUrl(draftId: string): Promise<string> {
+  const draft = await loadDraft(draftId);
+  const m = draft.mediaAsset;
+  if (!m) throw new HttpError(404, 'no_media', "Ce brouillon n'a pas de média joint. Joignez-en un depuis la médiathèque.");
+  return downloadUrl(m.id, draftMediaFileName(ymdOf(draft.slot.date), draft.platform, draft.slot.topic, m.mime, m.fileName));
 }
 
 const lockHeld = (d: { generationLockUntil: Date | null }, now: Date) => d.generationLockUntil !== null && d.generationLockUntil > now;

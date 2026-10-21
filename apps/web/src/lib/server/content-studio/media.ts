@@ -229,6 +229,23 @@ export async function listMedia(filter: {
   return rows.map(toMediaDto);
 }
 
+/**
+ * Readable download name of a draft's media: `YYYY-MM-DD-<platform>-<slug>.<ext>`
+ * (slug = the day's topic, ASCII, at most 60 characters).
+ */
+export function draftMediaFileName(date: string, platform: string, topic: string, mime: string, fileName: string): string {
+  const slug =
+    topic
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .slice(0, 60)
+      .replace(/^-+|-+$/g, '') || 'post';
+  const ext = EXT[mime] ?? (fileName.includes('.') ? fileName.split('.').pop()!.toLowerCase() : 'bin');
+  return `${date}-${platform}-${slug}.${ext}`;
+}
+
 export async function downloadUrl(assetId: string, downloadName: string): Promise<string> {
   const row = await loadAsset(assetId);
   if (row.status !== 'ready') {
