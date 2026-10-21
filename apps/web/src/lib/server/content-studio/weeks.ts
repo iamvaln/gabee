@@ -51,6 +51,8 @@ export type WeekDto = {
   refinement: string | null;
   platform_angles: Partial<Record<ContentPlatform, string>>;
   validated_at: string | null;
+  /** Last change of the week row: the UI offers to restart a `proposing` week only once it looks stuck. */
+  updated_at: string;
   /** English minimum per enabled platform over the non-skipped days. */
   language_quota: LanguageQuotaResult[];
   slots: SlotDto[];
@@ -94,6 +96,7 @@ function toWeekDto(row: WeekRow, platforms: ContentPlatform[]): WeekDto {
     refinement: row.refinement,
     platform_angles: parseAngles(row.platformAngles),
     validated_at: row.validatedAt?.toISOString() ?? null,
+    updated_at: row.updatedAt.toISOString(),
     language_quota: quotaOf(row.slots, days, platforms),
     slots: row.slots.map(toSlotDto),
   };

@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Language } from '@gabee/types';
 import type { AdminRole } from '@/lib/server/auth';
 import { AIcon, type AdminIconName } from './icons';
 import { BeeLogo } from './bee';
+import { STUDIO_CHANGED } from '../communication/_components/api';
 
 type Bi = { fr: string; en: string };
 interface NavItem {
@@ -24,6 +26,16 @@ const NAV: NavEntry[] = [
   { id: 'healthy-use', icon: 'shield', href: '/admin/healthy-use', label: { fr: 'Usage sain', en: 'Healthy use' } },
   { id: 'flags', icon: 'tag', href: '/admin/flags', label: { fr: 'Fonctionnalités', en: 'Feature flags' } },
   { id: 'rollout', icon: 'mail', href: '/admin/rollout', label: { fr: 'Déploiement', en: 'Rollout' } },
+  {
+    id: 'communication', icon: 'megaphone', href: '/admin/communication', label: { fr: 'Communication', en: 'Communication' },
+    sub: [
+      { href: '/admin/communication', label: { fr: "Aujourd'hui", en: 'Today' } },
+      { href: '/admin/communication/semaine', label: { fr: 'Semaine', en: 'Week' } },
+      { href: '/admin/communication/audience', label: { fr: 'Audience', en: 'Audience' } },
+      { href: '/admin/communication/medias', label: { fr: 'Médiathèque', en: 'Media library' } },
+      { href: '/admin/communication/reglages', label: { fr: 'Réglages', en: 'Settings' } },
+    ],
+  },
   {
     id: 'users', icon: 'users', href: '/admin/users/parents', label: { fr: 'Utilisateurs', en: 'Users' },
     sub: [
@@ -53,6 +65,36 @@ function isItem(e: NavEntry): e is NavItem {
   return 'id' in e;
 }
 
+type Pending = { proposals: number; titles: number; approve: number; publish: number };
+
+/**
+ * What waits for the owner in the Communication studio (proposals to pick,
+ * titles to validate, drafts to approve, posts to mark published). Read on
+ * load and after each studio change — never polled.
+ */
+function usePendingCount(): number {
+  const [count, setCount] = useState(0);
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/communication/pending', { headers: { 'Content-Type': 'application/json' }, cache: 'no-store' });
+      if (!res.ok) throw new Error(`pending counts: HTTP ${res.status}`);
+      const p = (await res.json()) as Pending;
+      setCount(p.proposals + p.titles + p.approve + p.publish);
+    } catch (err) {
+      // The badge is a hint: without it the screens still list everything. Keep the error visible to devtools.
+      console.error('[admin] Communication badge unavailable', err);
+      setCount(0);
+    }
+  }, []);
+  useEffect(() => {
+    void load();
+    const onChange = () => void load();
+    window.addEventListener(STUDIO_CHANGED, onChange);
+    return () => window.removeEventListener(STUDIO_CHANGED, onChange);
+  }, [load]);
+  return count;
+}
+
 export function AdminShell({
   role,
   email,
@@ -66,29 +108,52 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const pending = usePendingCount();
+  const L = lang === 'fr';
+
+  // Phone (≤ 820px): the sidebar is an off-canvas drawer behind the top-bar menu button.
+  const [navOpen, setNavOpen] = useState(false);
+  const menuBtn = useRef<HTMLButtonElement>(null);
+  const sideRef = useRef<HTMLElement>(null);
+  const closeNav = useCallback((refocus: boolean) => {
+    setNavOpen(false);
+    if (refocus) menuBtn.current?.focus();
+  }, []);
+  useEffect(() => setNavOpen(false), [pathname]);
+  useEffect(() => {
+    if (!navOpen) return;
+    sideRef.current?.querySelector<HTMLElement>('.nav a')?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeNav(true);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [navOpen, closeNav]);
 
   const setLang = (l: Language) => {
     document.cookie = `admin_lang=${l}; path=/; max-age=31536000`;
     router.refresh();
   };
 
+  // The dashboard (`/admin`) is a prefix of every admin path: it is only active on itself.
   const sectionActive = (item: NavItem) =>
     pathname === item.href ||
-    (item.sub ? item.sub.some((s) => pathname === s.href || pathname.startsWith(s.href + '/')) : pathname.startsWith(item.href + '/'));
+    (item.href !== '/admin' &&
+      (item.sub ? item.sub.some((s) => pathname === s.href || pathname.startsWith(s.href + '/')) : pathname.startsWith(item.href + '/')));
 
   return (
-    <div className="admin">
+    <div className={'admin' + (navOpen ? ' nav-open' : '')}>
       {/* a11y: skip-to-content — focusable, hits before the sidebar so
           keyboard users can jump past the nav on every page. */}
       <a href="#main" className="skip-link">
         {lang === 'fr' ? 'Aller au contenu' : 'Skip to content'}
       </a>
-      <aside className="side">
+      <aside className="side" id="admin-side" ref={sideRef}>
         <div className="side-brand">
           <BeeLogo size={28} />
           <span className="env-chip">Admin</span>
         </div>
-        <nav className="nav">
+        <nav className="nav" aria-label={L ? 'Menu principal' : 'Main menu'}>
           {NAV.map((entry, i) => {
             if (!isItem(entry)) return <div key={'g' + i} className="nav-group-label">{entry.group[lang]}</div>;
             const open = !!entry.sub && sectionActive(entry);
@@ -98,6 +163,12 @@ export function AdminShell({
                 <Link className={'nav-item' + (active ? ' active' : '')} href={entry.href}>
                   <span className="ni-icon"><AIcon name={entry.icon} /></span>
                   <span>{entry.label[lang]}</span>
+                  {entry.id === 'communication' && pending > 0 && (
+                    <span className="ni-badge">
+                      <span aria-hidden>{pending > 99 ? '99+' : pending}</span>
+                      <span className="sr-only">{L ? `, ${pending} à traiter` : `, ${pending} to do`}</span>
+                    </span>
+                  )}
                 </Link>
                 {entry.sub && open && (
                   <div className="nav-sub">
@@ -160,9 +231,22 @@ export function AdminShell({
           </button>
         </div>
       </aside>
+      <div className="side-scrim" aria-hidden onClick={() => closeNav(false)} />
 
       <main id="main" tabIndex={-1} className="main">
         <header className="topbar">
+          <button
+            ref={menuBtn}
+            type="button"
+            className="icon-btn menu-btn"
+            aria-label={navOpen ? (L ? 'Fermer le menu' : 'Close menu') : L ? 'Ouvrir le menu' : 'Open menu'}
+            aria-expanded={navOpen}
+            aria-controls="admin-side"
+            onClick={() => setNavOpen((o) => !o)}
+          >
+            <AIcon name="menu" size={20} />
+            {pending > 0 && !navOpen && <span className="dot" />}
+          </button>
           <Breadcrumbs lang={lang} />
 
           <div className="search">
@@ -212,6 +296,12 @@ const CRUMB_LABELS: Record<string, Bi> = {
   rollout: { fr: 'Déploiement', en: 'Rollout' },
   messages: { fr: 'Messages', en: 'Messages' },
   login: { fr: 'Connexion', en: 'Sign in' },
+  communication: { fr: 'Communication', en: 'Communication' },
+  semaine: { fr: 'Semaine', en: 'Week' },
+  audience: { fr: 'Audience', en: 'Audience' },
+  medias: { fr: 'Médiathèque', en: 'Media library' },
+  reglages: { fr: 'Réglages', en: 'Settings' },
+  journal: { fr: 'Journal', en: 'Log' },
 };
 
 const MODULE_NAMES: Record<string, Bi> = {
