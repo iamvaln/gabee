@@ -167,6 +167,34 @@ test('late validation: day.generate waits, then drafts and the notification foll
   assert.equal((await run('day.generate', 'day:2026-10-26')).attempts, 0);
 });
 
+test('day.generate never regenerates a failed draft: the owner retries it', async () => {
+  const w = await week('validated');
+  const s = await slot(w.id, '2026-10-28', 'drafted');
+  await createContentDraft(prisma, s.id, { platform: 'linkedin', status: 'failed', error: "L'IA a refusé de rédiger ce post." });
+  await createContentDraft(prisma, s.id, { platform: 'tiktok', status: 'ready' });
+  const adapter = byTask(draftScripts());
+
+  const t = await tick('2026-10-28T04:10');
+  assert.equal(statusOf(t, 'day.generate'), 'succeeded');
+  assert.equal(callsOf(adapter, 'post_linkedin'), 0, 'no paid retry');
+  assert.equal(await prisma.agentRun.count(), 0);
+  const li = await prisma.contentDraft.findFirstOrThrow({ where: { slotId: s.id, platform: 'linkedin' } });
+  assert.equal(li.status, 'failed');
+  assert.equal((await run('day.generate', 'day:2026-10-28')).attempts, 0);
+});
+
+test('day.generate writes only the missing draft of a day', async () => {
+  const w = await week('validated');
+  const s = await slot(w.id, '2026-10-28', 'drafted');
+  await createContentDraft(prisma, s.id, { platform: 'linkedin', status: 'stale' });
+  const adapter = byTask(draftScripts());
+  assert.equal(statusOf(await tick('2026-10-28T04:10'), 'day.generate'), 'succeeded');
+  assert.equal(callsOf(adapter, 'post_linkedin'), 0, 'a stale draft is the owner’s call');
+  assert.equal(callsOf(adapter, 'post_tiktok'), 1);
+  const drafts = await prisma.contentDraft.findMany({ where: { slotId: s.id } });
+  assert.deepEqual(drafts.map((d) => `${d.platform}:${d.status}`).sort(), ['linkedin:stale', 'tiktok:ready']);
+});
+
 test('day jobs on a day without a slot, or a skipped one, succeed without AI or email', async () => {
   const w = await week('validated');
   await slot(w.id, '2026-10-27', 'skipped');
@@ -239,8 +267,8 @@ test('week.propose skips a week that already exists', async () => {
   assert.equal(adapter.byTask.content_strategy, undefined);
 });
 
-test('failed job backs off and alerts after 4 attempts', async () => {
-  byTask({ content_strategy: Array.from({ length: 60 }, () => ({ error: 'outage' as const })) });
+test('failed job backs off, then is abandoned and alerted at the 4th attempt', async () => {
+  const adapter = byTask({ content_strategy: Array.from({ length: 60 }, () => ({ error: 'outage' as const })) });
 
   const t1 = await tick('2026-10-25T06:05');
   assert.equal(statusOf(t1, 'week.propose'), 'failed');
@@ -265,19 +293,26 @@ test('failed job backs off and alerts after 4 attempts', async () => {
   assert.equal((await notifications('job.failed')).length, 0, 'no alert before the 4th attempt');
 
   const t4 = await tick('2026-10-25T07:15');
-  assert.equal(statusOf(t4, 'week.propose'), 'failed');
+  assert.equal(statusOf(t4, 'week.propose'), 'abandoned');
   assert.equal(statusOf(t4, 'week.email'), 'waiting', 'no proposals yet');
   row = await run('week.propose', 'week:2026-10-26');
+  assert.equal(row.status, 'abandoned', 'Ruling 12: at most 4 attempts');
   assert.equal(row.attempts, 4);
-  assert.equal(row.nextAttemptAt?.toISOString(), at('2026-10-25T08:15').toISOString(), 'capped at 60 min');
+  assert.equal(row.nextAttemptAt, null);
+  assert.ok(row.error);
   const alerts = await notifications('job.failed');
   assert.equal(alerts.length, 1);
   assert.equal(alerts[0]!.periodKey, 'week.propose|week:2026-10-26');
   assert.match(sent.find((m) => /a échoué/.test(m.subject))!.subject, /week\.propose/);
   assert.equal(reported.filter((r) => r.scope === 'content.jobs').length, 0, 'an unavailable AI was already reported by the router');
 
-  await tick('2026-10-25T08:15');
-  assert.equal((await run('week.propose', 'week:2026-10-26')).attempts, 5);
+  // Terminal: no 5th attempt, no further paid call.
+  const calls = callsOf(adapter, 'content_strategy');
+  for (const local of ['2026-10-25T08:15', '2026-10-25T10:00', '2026-10-25T23:50']) {
+    assert.equal(statusOf(await tick(local), 'week.propose'), undefined, local);
+  }
+  assert.equal((await run('week.propose', 'week:2026-10-26')).attempts, 4);
+  assert.equal(callsOf(adapter, 'content_strategy'), calls);
   assert.equal((await notifications('job.failed')).length, 1, 'alerted once');
   assert.equal(sent.filter((m) => /a échoué/.test(m.subject)).length, 1);
 });
@@ -291,7 +326,7 @@ test('a job failing on its own error is reported once, at the 4th attempt', asyn
   }
   assert.equal(reported.filter((r) => r.scope === 'content.jobs').length, 0, 'recorded on the run row until exhausted');
   assert.match((await run('week.propose', 'week:2026-10-26')).error ?? '', /editorial line/);
-  assert.equal(statusOf(await tick('2026-10-25T07:10'), 'week.propose'), 'failed');
+  assert.equal(statusOf(await tick('2026-10-25T07:10'), 'week.propose'), 'abandoned');
   const jobReports = reported.filter((r) => r.scope === 'content.jobs');
   assert.equal(jobReports.length, 1);
   assert.match(String(jobReports[0]!.err), /editorial line/);
@@ -303,9 +338,10 @@ test('a job failing on an error reported upstream is not reported again', async 
   byTask({ report_narrative: Array.from({ length: 4 }, () => ({ json: report })) });
   // A broken sender: every Sunday email fails (recorded + reported by notify).
   const broken = async (): Promise<EmailSendResult> => ({ ok: false, error: 'mailer down' });
-  for (const local of ['2026-10-25T07:00', '2026-10-25T07:10', '2026-10-25T07:30', '2026-10-25T08:10']) {
+  for (const local of ['2026-10-25T07:00', '2026-10-25T07:10', '2026-10-25T07:30']) {
     assert.equal(statusOf(await runTick(at(local), { send: broken }), 'week.email'), 'failed', local);
   }
+  assert.equal(statusOf(await runTick(at('2026-10-25T08:10'), { send: broken }), 'week.email'), 'abandoned');
   assert.equal((await run('week.email', 'week:2026-10-26')).attempts, 4);
   // Every failed send is reported by notifyOnce; the job layer adds nothing for an
   // error already reported upstream.

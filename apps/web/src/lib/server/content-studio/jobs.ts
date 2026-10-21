@@ -30,15 +30,17 @@ import { getWeek, proposeDirections, startWeek } from './weeks';
  *
  * A handler that throws marks the row `failed` with `attempts + 1` and a
  * backoff (`2^attempts × 5 min`, at most 60 min); it is retried while still
- * due. At the 4th failed attempt the owner is emailed (once) and the error is
- * reported to Sentry (once) unless it was reported where it happened.
+ * due. The 4th failure is terminal (Ruling 12, cost): the row becomes
+ * `abandoned` — never claimed again, no further paid retry — the owner is
+ * emailed and the error is reported to Sentry, once each (unless it was
+ * reported where it happened). The owner retries from the admin.
  */
 
-export type JobRunStatus = 'succeeded' | 'waiting' | 'failed';
+export type JobRunStatus = 'succeeded' | 'waiting' | 'failed' | 'abandoned';
 export type TickSummary = {
   /** Jobs this tick claimed and ran; `error` = the job's bookkeeping itself failed (reported). */
   ran: { jobKey: JobKey; periodKey: string; status: JobRunStatus | 'error' }[];
-  /** Due jobs left alone: already succeeded, running elsewhere, or backing off. */
+  /** Due jobs left alone: already succeeded or abandoned, running elsewhere, or backing off. */
   skipped: number;
 };
 
@@ -50,8 +52,8 @@ type Handler = (job: DueJob, ctx: Ctx) => Promise<Outcome>;
 const RUNNING_STALE_MS = 15 * 60_000;
 const BACKOFF_BASE_MS = 5 * 60_000;
 const BACKOFF_CAP_MS = 60 * 60_000;
-/** The owner is alerted when a job has failed this many times in its period. */
-const ALERT_AFTER_ATTEMPTS = 4;
+/** A job gets at most this many attempts per period, then is `abandoned` and the owner alerted. */
+const MAX_ATTEMPTS = 4;
 
 const REPORT_UNAVAILABLE: ReportNarrative = { headline: "Le bilan n'a pas pu être rédigé cette fois.", highlights: [], watch_outs: [] };
 
@@ -89,26 +91,35 @@ async function claim(job: DueJob, now: Date): Promise<{ attempts: number } | nul
   return { attempts: row.attempts };
 }
 
-async function recordFailure(job: DueJob, ctx: Ctx, attemptsBefore: number, err: unknown): Promise<void> {
+/** Record a failed attempt: `failed` with a backoff, or `abandoned` (terminal) at the last attempt. */
+async function recordFailure(job: DueJob, ctx: Ctx, attemptsBefore: number, err: unknown): Promise<'failed' | 'abandoned'> {
   const attempts = attemptsBefore + 1;
   const error = messageOf(err);
-  const delay = Math.min(2 ** attempts * BACKOFF_BASE_MS, BACKOFF_CAP_MS);
-  await prisma.jobRun.update({
-    where: { jobKey_periodKey: { jobKey: job.jobKey, periodKey: job.periodKey } },
-    data: { status: 'failed', attempts, error, nextAttemptAt: new Date(ctx.now.getTime() + delay), finishedAt: ctx.now },
-  });
-  if (attempts < ALERT_AFTER_ATTEMPTS) return;
+  const where = { jobKey_periodKey: { jobKey: job.jobKey, periodKey: job.periodKey } };
+  if (attempts < MAX_ATTEMPTS) {
+    const delay = Math.min(2 ** attempts * BACKOFF_BASE_MS, BACKOFF_CAP_MS);
+    await prisma.jobRun.update({
+      where,
+      data: { status: 'failed', attempts, error, nextAttemptAt: new Date(ctx.now.getTime() + delay), finishedAt: ctx.now },
+    });
+    return 'failed';
+  }
+  // Terminal: claim() never takes an `abandoned` row, so this runs once per (job, period).
+  await prisma.jobRun.update({ where, data: { status: 'abandoned', attempts, error, nextAttemptAt: null, finishedAt: ctx.now } });
   // An unavailable AI was reported by the router; a ReportedUpstreamError where it happened.
-  if (attempts === ALERT_AFTER_ATTEMPTS && !(err instanceof AiUnavailableError || err instanceof ReportedUpstreamError)) {
+  if (!(err instanceof AiUnavailableError || err instanceof ReportedUpstreamError)) {
     reportError(err, { scope: 'content.jobs', jobKey: job.jobKey, periodKey: job.periodKey, attempts });
   }
-  // notifyOnce keeps it to one email; a failed alert send is retried by the next failure.
+  // One email. If this send fails, notifyOnce records the failed row and
+  // reports it, but nothing retries it (the job is terminal) — the Journal
+  // still shows the abandoned job.
   await notifyOnce(
     'job.failed',
     `${job.jobKey}|${job.periodKey}`,
     () => jobFailedEmail({ jobKey: job.jobKey, periodKey: job.periodKey, error, link: studioLink('/journal') }),
     ctx.send,
   );
+  return 'abandoned';
 }
 
 // ── Day state ──
@@ -116,13 +127,14 @@ async function recordFailure(job: DueJob, ctx: Ctx, attemptsBefore: number, err:
 type DayState =
   | { kind: 'closed' }
   | { kind: 'not_validated' }
-  | { kind: 'open'; written: boolean; failed: number };
+  | { kind: 'open'; written: boolean };
 
 /**
  * Where the drafts of studio-local `day` stand: `closed` (no slot, skipped,
  * done, or no enabled platform planned), `not_validated` (its week is not
  * validated yet), or `open` — `written` once every planned platform has a
- * draft no generation is working on, `failed` drafts counted.
+ * draft no generation is working on, in any status (a `failed` or `stale`
+ * draft is the owner's to retry).
  */
 async function dayState(day: string): Promise<DayState> {
   const slot = await prisma.contentSlot.findFirst({
@@ -138,7 +150,7 @@ async function dayState(day: string): Promise<DayState> {
   if (planned.length === 0) return { kind: 'closed' };
   const status = new Map(slot.drafts.map((d) => [d.platform, d.status]));
   const pending = planned.filter((p) => !status.has(p) || status.get(p) === 'generating').length;
-  return { kind: 'open', written: pending === 0, failed: planned.filter((p) => status.get(p) === 'failed').length };
+  return { kind: 'open', written: pending === 0 };
 }
 
 // ── Handlers ──
@@ -212,18 +224,22 @@ const HANDLERS: Record<JobKey, Handler> = {
     return 'done';
   },
 
-  /** The day's drafts, as soon as its week is validated (even late). Failed drafts are retried with backoff. */
+  /**
+   * The day's drafts, as soon as its week is validated (even late). Writes
+   * only missing drafts and crashed runs: a draft that failed (recorded on its
+   * row and reported by generateDraftsForDay) or went stale is left to the
+   * owner — never a paid retry from the scheduler (Ruling 12).
+   */
   'day.generate': async ({ periodKey }) => {
     const day = periodDate(periodKey);
     const before = await dayState(day);
     if (before.kind === 'closed') return 'done';
     if (before.kind === 'not_validated') return 'waiting';
-    if (before.written && before.failed === 0) return 'done';
-    await generateDraftsForDay(day, 'scheduled_job');
+    if (before.written) return 'done';
+    await generateDraftsForDay(day, 'scheduled_job', undefined, { includeFailed: false });
     const after = await dayState(day);
     if (after.kind !== 'open') return after.kind === 'closed' ? 'done' : 'waiting';
-    // Each failed draft was recorded on its row and reported by generateDraftsForDay.
-    if (after.failed > 0) throw new ReportedUpstreamError(`${after.failed} draft(s) of ${day} failed to generate; the next attempt writes them again.`);
+    // Not written: another run still holds a draft — check again next tick.
     return after.written ? 'done' : 'waiting';
   },
 
@@ -265,8 +281,7 @@ async function runJob(job: DueJob, ctx: Ctx): Promise<JobRunStatus | null> {
   try {
     outcome = await HANDLERS[job.jobKey](job, ctx);
   } catch (err) {
-    await recordFailure(job, ctx, claimed.attempts, err);
-    return 'failed';
+    return recordFailure(job, ctx, claimed.attempts, err);
   }
   if (outcome === 'waiting') {
     await prisma.jobRun.update({ where: key, data: { status: 'waiting', finishedAt: ctx.now } });

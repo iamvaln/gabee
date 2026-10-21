@@ -12,11 +12,12 @@ INTERVAL=${CONTENT_TICK_INTERVAL_S:-600}
 
 poke() {
   local response rc=0
-  # Same curl flags as digest-once: `--fail-with-body` prints the body on
-  # non-2xx and exits non-zero, so both are visible in the log.
+  # Same curl flags as digest-once (`--fail-with-body` prints the body on
+  # non-2xx and exits non-zero, so both are visible in the log), but a longer
+  # timeout: the Sunday and 04:00 ticks run several AI calls.
   response=$(
     curl --silent --show-error --fail-with-body \
-      --max-time 60 \
+      --max-time 300 \
       -X POST "${CONTENT_TICK_URL}" \
       -H "Authorization: Bearer ${CRON_SECRET}"
   ) || rc=$?

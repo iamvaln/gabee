@@ -210,8 +210,10 @@ function withoutLink(text: string, url: string): string {
 
 // ── Generation ──
 
-/** Statuses the daily run (re)generates: a fresh row, a crashed run (expired lock), a failure. */
+/** Statuses a day run (re)generates: a fresh row, a crashed run (expired lock), a failure. */
 const DAY_GENERATION_FROM = ['generating', 'failed'] as const;
+/** The scheduler's day run never retries a failure (Ruling 12, cost): only fresh rows and crashed runs. */
+const SCHEDULED_GENERATION_FROM = ['generating'] as const;
 /** Statuses the owner may regenerate from (plus a crashed `generating`). */
 const REGENERATE_FROM = ['generating', ...sourcesOf('draft', 'generating')];
 /** Slot statuses whose drafts may be generated. */
@@ -348,9 +350,16 @@ function initialUrl(platform: ContentPlatform, draftId: string, weekSlug: string
  * Idempotent — drafts already written (ready, approved, published, stale) are
  * left alone — and single-flight per draft, so concurrent runs never write the
  * same draft twice. Does nothing unless the slot belongs to a validated week
- * and is still open.
+ * and is still open. `includeFailed: false` (the scheduler) leaves `failed`
+ * drafts to the owner's "Réessayer" instead of paying for them again.
  */
-export async function generateDraftsForDay(day: string, origin: AiOrigin, actor?: Actor): Promise<{ created: number; failed: number }> {
+export async function generateDraftsForDay(
+  day: string,
+  origin: AiOrigin,
+  actor?: Actor,
+  opts: { includeFailed?: boolean } = {},
+): Promise<{ created: number; failed: number }> {
+  const from = opts.includeFailed === false ? SCHEDULED_GENERATION_FROM : DAY_GENERATION_FROM;
   const slot = await prisma.contentSlot.findFirst({ where: { date: dateOf(day) }, include: { week: true } });
   if (!slot || slot.week.status !== 'validated' || !GENERATABLE_SLOTS.includes(slot.status)) return { created: 0, failed: 0 };
 
@@ -370,7 +379,7 @@ export async function generateDraftsForDay(day: string, origin: AiOrigin, actor?
       skipDuplicates: true,
     });
     const draft = await prisma.contentDraft.findUniqueOrThrow({ where: { slotId_platform: { slotId: slot.id, platform } }, select: { id: true } });
-    if (await acquireLock(draft.id, DAY_GENERATION_FROM, now, language)) locked.push(draft.id);
+    if (await acquireLock(draft.id, from, now, language)) locked.push(draft.id);
   }
   if (locked.length === 0) return { created: 0, failed: 0 };
 

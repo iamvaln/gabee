@@ -1370,7 +1370,8 @@ model AgentRun {
 /// `hour:2026-10-27T05`). `status` = `running` (claimed by a tick; taken over
 /// after 15 min) | `waiting` (could not act yet — re-run next tick, no attempt
 /// counted) | `succeeded` | `failed` (retried from `nextAttemptAt` while the
-/// job is still due; the owner is alerted at the 4th attempt).
+/// job is still due) | `abandoned` (terminal after the 4th failed attempt,
+/// `nextAttemptAt` null, never retried automatically; the owner is alerted).
 model JobRun {
   id            String    @id @default(uuid()) @db.Uuid
   jobKey        String    @map("job_key")
