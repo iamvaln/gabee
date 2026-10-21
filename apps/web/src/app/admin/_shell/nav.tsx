@@ -7,7 +7,7 @@ import type { Language } from '@gabee/types';
 import type { AdminRole } from '@/lib/server/auth';
 import { AIcon, type AdminIconName } from './icons';
 import { BeeLogo } from './bee';
-import { STUDIO_CHANGED } from '../communication/_components/api';
+import { STUDIO_CHANGED } from './studio-events';
 
 type Bi = { fr: string; en: string };
 interface NavItem {
@@ -121,6 +121,13 @@ export function AdminShell({
   }, []);
   useEffect(() => setNavOpen(false), [pathname]);
   useEffect(() => {
+    // Back to the desktop layout (rotation, resize): the drawer state no longer applies.
+    const wide = window.matchMedia('(min-width: 821px)');
+    const onWide = () => wide.matches && setNavOpen(false);
+    wide.addEventListener('change', onWide);
+    return () => wide.removeEventListener('change', onWide);
+  }, []);
+  useEffect(() => {
     if (!navOpen) return;
     sideRef.current?.querySelector<HTMLElement>('.nav a')?.focus();
     const onKey = (e: KeyboardEvent) => {
@@ -152,8 +159,12 @@ export function AdminShell({
         <div className="side-brand">
           <BeeLogo size={28} />
           <span className="env-chip">Admin</span>
+          <button type="button" className="icon-btn side-close" aria-label={L ? 'Fermer le menu' : 'Close menu'} onClick={() => closeNav(true)}>
+            <AIcon name="x" size={18} />
+          </button>
         </div>
-        <nav className="nav" aria-label={L ? 'Menu principal' : 'Main menu'}>
+        {/* A tap on a link closes the drawer even when it is the current page (no route change then). */}
+        <nav className="nav" aria-label={L ? 'Menu principal' : 'Main menu'} onClick={(e) => (e.target as HTMLElement).closest('a') && setNavOpen(false)}>
           {NAV.map((entry, i) => {
             if (!isItem(entry)) return <div key={'g' + i} className="nav-group-label">{entry.group[lang]}</div>;
             const open = !!entry.sub && sectionActive(entry);
@@ -233,7 +244,8 @@ export function AdminShell({
       </aside>
       <div className="side-scrim" aria-hidden onClick={() => closeNav(false)} />
 
-      <main id="main" tabIndex={-1} className="main">
+      {/* While the phone drawer is open, the page behind it is out of reach (focus stays in the drawer). */}
+      <main id="main" tabIndex={-1} className="main" inert={navOpen}>
         <header className="topbar">
           <button
             ref={menuBtn}

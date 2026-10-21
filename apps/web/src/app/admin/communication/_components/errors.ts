@@ -1,5 +1,6 @@
 import type { Language } from '@gabee/types';
 import { ApiError } from './api';
+import type { Bi } from './format';
 
 /**
  * Plain-words error copy for the studio screens, by API error `code`. Shared
@@ -8,8 +9,6 @@ import { ApiError } from './api';
  * the case (a state that just changed, a week that exists, the English
  * minimum with its counts…) are shown as sent when the admin reads French.
  */
-
-type Bi = { fr: string; en: string };
 
 const COPY: Record<string, Bi> = {
   network: {
@@ -45,8 +44,8 @@ const COPY: Record<string, Bi> = {
     en: 'Not enough English posts this week. Switch more days to English, or tick "Validate anyway".',
   },
   generation_in_progress: {
-    fr: 'Gabee rédige déjà ce brouillon. Patientez un instant puis rechargez la page.',
-    en: 'Gabee is already writing this draft. Wait a moment, then reload the page.',
+    fr: 'Gabee travaille déjà dessus. Attendez la fin, puis rechargez la page.',
+    en: 'Gabee is already working on this. Wait for it to finish, then reload the page.',
   },
   ai_unavailable: {
     fr: "Le service d'IA est indisponible pour le moment. Rien n'a été perdu : réessayez dans quelques minutes.",
@@ -140,4 +139,14 @@ export function errorText(err: unknown, lang: Language, overrides: Record<string
       : 'This item no longer exists. Reload the page.';
   }
   return (COPY[err.code] ?? FALLBACK)[lang];
+}
+
+/**
+ * A long AI call whose answer never arrived (connection cut, timeout, proxy
+ * error): the server may still be working, so nothing is retried for now.
+ */
+export function unknownOutcomeText(lang: Language): string {
+  return lang === 'fr'
+    ? 'La connexion a été coupée ; Gabee continue peut-être. Cette page se met à jour toute seule.'
+    : 'The connection was cut; Gabee may still be working. This page updates by itself.';
 }

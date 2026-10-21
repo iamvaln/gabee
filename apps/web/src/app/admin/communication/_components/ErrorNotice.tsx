@@ -10,12 +10,15 @@ export function ErrorNotice({
   onRetry,
   retryLabel,
   busy = false,
+  details,
 }: {
   message: string;
   lang: Language;
   onRetry?: () => void;
   retryLabel?: string;
   busy?: boolean;
+  /** Server-side specifics (e.g. the platform rules a text breaks), folded away. */
+  details?: string[];
 }) {
   return (
     <div className="studio-notice bad" role="alert">
@@ -24,6 +27,16 @@ export function ErrorNotice({
       </span>
       <div className="studio-notice-body">
         <p>{message}</p>
+        {details && details.length > 0 && (
+          <details className="studio-details">
+            <summary>{lang === 'fr' ? 'Détails techniques' : 'Technical details'}</summary>
+            <ul>
+              {details.map((d) => (
+                <li key={d}>{d}</li>
+              ))}
+            </ul>
+          </details>
+        )}
         {onRetry && (
           <div className="studio-notice-action">
             <button type="button" className="btn secondary sm" onClick={onRetry} disabled={busy}>
@@ -61,10 +74,12 @@ export function Notice({
 }
 
 /**
- * A long AI operation in flight (up to ~2 minutes): what is happening, that
- * it takes time, and an indeterminate bar. Announced politely to screen readers.
+ * A long AI operation in flight: what is happening, that it takes time, and
+ * an indeterminate bar. Announced politely to screen readers. `sub` replaces
+ * the default "up to 2 minutes, keep this page open" (e.g. for a run the
+ * scheduler owns, where the page refreshes itself).
  */
-export function AiWorking({ title, lang }: { title: string; lang: Language }) {
+export function AiWorking({ title, lang, sub }: { title: string; lang: Language; sub?: string }) {
   return (
     <div className="studio-working" role="status" aria-live="polite">
       <span className="studio-working-spark" aria-hidden>
@@ -73,9 +88,10 @@ export function AiWorking({ title, lang }: { title: string; lang: Language }) {
       <div className="grow">
         <p className="studio-working-title">{title}</p>
         <p className="studio-working-sub">
-          {lang === 'fr'
-            ? 'Cela peut prendre jusqu’à 2 minutes. Gardez cette page ouverte.'
-            : 'This can take up to 2 minutes. Keep this page open.'}
+          {sub ??
+            (lang === 'fr'
+              ? 'Cela peut prendre jusqu’à 2 minutes. Gardez cette page ouverte.'
+              : 'This can take up to 2 minutes. Keep this page open.')}
         </p>
         <div className="ai-progress" aria-hidden>
           <i />

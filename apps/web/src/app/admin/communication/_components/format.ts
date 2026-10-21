@@ -3,7 +3,7 @@ import type { DraftDto } from '@/lib/server/content-studio/drafts';
 
 /** Labels and formatting shared by the Aujourd'hui and Semaine screens. */
 
-type Bi = { fr: string; en: string };
+export type Bi = { fr: string; en: string };
 
 export const PLATFORM_LABEL: Record<ContentPlatform, string> = { linkedin: 'LinkedIn', tiktok: 'TikTok' };
 
@@ -27,6 +27,8 @@ export const DRAFT_STATUS: Record<string, { tone: string; label: Bi }> = {
   approved: { tone: 'ok', label: { fr: 'Validé', en: 'Approved' } },
   published: { tone: 'ok', label: { fr: 'Publié', en: 'Published' } },
   failed: { tone: 'bad', label: { fr: 'Échec', en: 'Failed' } },
+  /** UI-only: `generating` whose run died (no live lock). */
+  interrupted: { tone: 'bad', label: { fr: 'Interrompu', en: 'Interrupted' } },
   stale: { tone: 'neutral', label: { fr: 'À revoir', en: 'Needs review' } },
 };
 

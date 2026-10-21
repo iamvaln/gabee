@@ -36,13 +36,15 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
   }, [copied]);
 
   const platform = PLATFORM_LABEL[draft.platform];
-  const generating = busy === 'regenerate' || draft.generating || draft.status === 'generating';
+  // `generating` with no live lock: the run died (crash, deploy) and nobody is writing it any more.
+  const crashed = draft.status === 'generating' && !draft.generating && busy !== 'regenerate';
+  const generating = busy === 'regenerate' || draft.generating;
   const hasText = draft.payload !== null;
   const media = draft.media;
   const isTikTok = draft.platform === 'tiktok';
   const videoOk = media !== null && media.kind === 'video' && media.cleared;
   const mediaOk = isTikTok ? videoOk : media === null || media.cleared;
-  const status = generating ? 'generating' : draft.status;
+  const status = generating ? 'generating' : crashed ? 'interrupted' : draft.status;
   const badge = DRAFT_STATUS[status] ?? { tone: 'neutral', label: { fr: status, en: status } };
   const locked = busy !== null || generating;
 
@@ -126,6 +128,18 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
       <div className="studio-post-body">
         {generating && <AiWorking lang={lang} title={t(`Gabee rédige le post ${platform}…`, `Gabee is writing the ${platform} post…`)} />}
 
+        {crashed && (
+          <ErrorNotice
+            lang={lang}
+            message={t(
+              'La rédaction s’est interrompue. Relancez-la : rien n’est perdu.',
+              'Writing this post was interrupted. Run it again: nothing is lost.',
+            )}
+            onRetry={regenerate}
+            busy={locked}
+          />
+        )}
+
         {!generating && draft.status === 'failed' && (
           <ErrorNotice
             lang={lang}
@@ -150,33 +164,14 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
           hasText && !generating && <Preview draft={draft} lang={lang} />
         )}
 
-        {hasText && !generating && draft.status !== 'published' && <MediaNotices draft={draft} lang={lang} />}
+        {hasText && !generating && !crashed && draft.status !== 'published' && <MediaNotices draft={draft} lang={lang} />}
 
         {draft.publication && <PublicationSummary publication={draft.publication} lang={lang} />}
 
-        {error && (
-          <div className="studio-notice bad" role="alert">
-            <span className="studio-notice-icon" aria-hidden>
-              <AIcon name="alert" size={18} />
-            </span>
-            <div className="studio-notice-body">
-              <p>{error.text}</p>
-              {error.details && error.details.length > 0 && (
-                <details className="studio-details">
-                  <summary>{t('Détails techniques', 'Technical details')}</summary>
-                  <ul>
-                    {error.details.map((d) => (
-                      <li key={d}>{d}</li>
-                    ))}
-                  </ul>
-                </details>
-              )}
-            </div>
-          </div>
-        )}
+        {error && <ErrorNotice lang={lang} message={error.text} details={error.details} />}
       </div>
 
-      {!editing && hasText && (
+      {!editing && hasText && !crashed && (
         <div className="studio-actions" role="group" aria-label={t(`Actions sur le post ${platform}`, `${platform} post actions`)}>
           <button type="button" className="btn secondary" onClick={copy} disabled={generating}>
             <AIcon name={copied === 'ok' ? 'check' : 'copy'} />

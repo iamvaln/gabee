@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import type { Language } from '@gabee/types';
 import type { DraftDto, SlotDto, TodayBoard } from '@/lib/server/content-studio/drafts';
+import type { WeekDto } from '@/lib/server/content-studio/weeks';
 import { EmptyState, PageHead } from '../_shell/primitives';
 import { AIcon } from '../_shell/icons';
 import { api, reportUnexpected } from './_components/api';
@@ -12,7 +13,7 @@ import { ErrorNotice, Notice } from './_components/ErrorNotice';
 import { errorText } from './_components/errors';
 import { FORMAT_LABEL, PLATFORM_LABEL, SLOT_STATUS, longDay } from './_components/format';
 import { PendingPostCard, PostCard } from './_components/PostCard';
-import { RelaunchProposals, StartWeekButton, launchTarget, type WeeksResponse } from './_components/StartWeek';
+import { RelaunchProposals, StartWeekButton, launchTarget, type Failure, type WeeksResponse } from './_components/StartWeek';
 
 type Data = { board: TodayBoard; weeks: WeeksResponse };
 
@@ -31,7 +32,7 @@ export function TodayClient({ lang }: { lang: Language }) {
   const router = useRouter();
   const [data, setData] = useState<Data | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [launchError, setLaunchError] = useState<string | null>(null);
+  const [launchFailure, setLaunchFailure] = useState<Failure | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -48,20 +49,25 @@ export function TodayClient({ lang }: { lang: Language }) {
     void load();
   }, [load]);
 
-  // A draft is being written by the scheduler (not by a click here): refresh until it lands.
-  const generating = !!data && [data.board.slot, data.board.yesterday].some((s) => s?.drafts.some((d) => d.generating || d.status === 'generating'));
+  // A draft is being written (its lock is live) by the scheduler, not by a click here: refresh
+  // until it lands. A `generating` draft without a live lock is a dead run: no polling, the card
+  // offers Réessayer instead.
+  const generating = !!data && [data.board.slot, data.board.yesterday].some((s) => s?.drafts.some((d) => d.generating));
   useEffect(() => {
     if (!generating) return;
     const id = window.setInterval(() => void load(), GENERATING_POLL_MS);
     return () => window.clearInterval(id);
   }, [generating, load]);
 
-  const replaceDraft = (next: DraftDto) =>
+  /** A card changed its draft: show it at once, then re-read the board (slot status, "all published"). */
+  const replaceDraft = (next: DraftDto) => {
     setData((d) => {
       if (!d) return d;
       const swap = (s: SlotDto | null) => (s && s.id === next.slot_id ? { ...s, drafts: s.drafts.map((x) => (x.id === next.id ? next : x)) } : s);
       return { ...d, board: { ...d.board, slot: swap(d.board.slot), yesterday: swap(d.board.yesterday) } };
     });
+    void load();
+  };
 
   const head = (
     <PageHead title={t("Aujourd'hui", 'Today')} sub={data ? capitalize(longDay(data.board.day, lang)) : undefined}>
@@ -120,11 +126,11 @@ export function TodayClient({ lang }: { lang: Language }) {
         board={board}
         weeks={weeks}
         lang={lang}
-        launchError={launchError}
+        launchFailure={launchFailure}
         onDraft={replaceDraft}
         onStarted={() => router.push('/admin/communication/semaine')}
-        onLaunchFailed={(message) => {
-          setLaunchError(message);
+        onLaunchFailed={(failure) => {
+          setLaunchFailure(failure);
           void load();
         }}
         onReload={() => void load()}
@@ -137,7 +143,7 @@ function TodayBody({
   board,
   weeks,
   lang,
-  launchError,
+  launchFailure,
   onDraft,
   onStarted,
   onLaunchFailed,
@@ -146,10 +152,10 @@ function TodayBody({
   board: TodayBoard;
   weeks: WeeksResponse;
   lang: Language;
-  launchError: string | null;
+  launchFailure: Failure | null;
   onDraft: (d: DraftDto) => void;
   onStarted: () => void;
-  onLaunchFailed: (message: string) => void;
+  onLaunchFailed: (failure: Failure) => void;
   onReload: () => void;
 }) {
   const L = lang === 'fr';
@@ -165,14 +171,16 @@ function TodayBody({
   if (board.week_status === null) {
     const target = launchTarget(weeks);
     if (target.exists) {
-      // Sunday: today's week is over or never ran, next week is already being planned.
+      // Sunday: today's week is over or never ran, next week is already being planned —
+      // possibly by a launch from here that just failed.
+      const planned = weeks[target.which]!;
       return (
         <div className="card">
           <EmptyState
             icon="🗓️"
             title={t('Rien de prévu aujourd’hui', 'Nothing planned today')}
-            body={t('La semaine prochaine est en préparation dans l’écran Semaine.', "Next week is being planned on the Week screen.")}
-            action={weekLink}
+            body={t('La semaine prochaine est en préparation dans l’écran Semaine.', 'Next week is being planned on the Week screen.')}
+            action={launchFailure ? <LaunchFailure week={planned} failure={launchFailure} lang={lang} onDone={onStarted} link={weekLink} /> : weekLink}
           />
         </div>
       );
@@ -219,11 +227,7 @@ function TodayBody({
             "Pick a direction and validate the titles: the day's drafts are written right after.",
           )}
           action={
-            proposing && launchError ? (
-              <RelaunchProposals week={proposing} lang={lang} failure={launchError} onDone={onStarted} />
-            ) : (
-              weekLink
-            )
+            proposing && launchFailure ? <LaunchFailure week={proposing} failure={launchFailure} lang={lang} onDone={onStarted} link={weekLink} /> : weekLink
           }
         />
       </div>
@@ -302,5 +306,34 @@ function TodayBody({
         </p>
       )}
     </section>
+  );
+}
+
+/**
+ * A launch from this screen failed and left its week behind. If the answer
+ * proves the Strategist run ended, offer to run it again here; otherwise
+ * (connection cut: it may still be running) say so next to the week link.
+ */
+function LaunchFailure({
+  week,
+  failure,
+  lang,
+  onDone,
+  link,
+}: {
+  week: WeekDto;
+  failure: Failure;
+  lang: Language;
+  onDone: () => void;
+  link: React.ReactNode;
+}) {
+  if (week.status === 'proposing' && failure.ended) {
+    return <RelaunchProposals week={week} lang={lang} failure={failure.message} onDone={onDone} />;
+  }
+  return (
+    <div className="col gap12 studio-start">
+      <ErrorNotice lang={lang} message={failure.message} />
+      {link}
+    </div>
   );
 }

@@ -15,14 +15,30 @@ export class ApiError extends Error {
     public code: string,
     message: string,
     public details?: unknown,
+    /** The answer is the studio API's own JSON error: the request was handled to the end. */
+    public fromServer = false,
   ) {
     super(message);
     this.name = 'ApiError';
   }
 }
 
-/** The request never got an answer (offline, DNS, server down). */
+/** The request never got an answer (offline, DNS, timeout): its outcome is unknown. */
 const networkError = () => new ApiError(0, 'network', 'Network request failed');
+
+/** Codes that prove the AI call is over (it failed), so no paid run is still going. */
+const AI_ENDED = new Set(['ai_unavailable', 'ai_refused', 'ai_invalid_output']);
+
+/**
+ * True when `err` proves a long AI operation has ended on the server: the
+ * API answered with its own JSON error for an AI failure, or a JSON 5xx
+ * (the route's error path ran). A network failure, a timeout or a proxy
+ * page proves nothing: the server may still be working.
+ */
+export function provesRunEnded(err: unknown): boolean {
+  if (!(err instanceof ApiError) || !err.fromServer) return false;
+  return AI_ENDED.has(err.code) || err.status >= 500;
+}
 
 export async function api<T>(path: string, init: { method?: 'GET' | 'POST' | 'PATCH' | 'PUT'; body?: unknown } = {}): Promise<T> {
   let res: Response;
@@ -48,7 +64,7 @@ export async function api<T>(path: string, init: { method?: 'GET' | 'POST' | 'PA
   }
   if (!res.ok) {
     const e = (data as { error?: { code?: string; message?: string; details?: unknown } } | null)?.error;
-    throw new ApiError(res.status, e?.code ?? 'internal_error', e?.message ?? `HTTP ${res.status}`, e?.details);
+    throw new ApiError(res.status, e?.code ?? 'internal_error', e?.message ?? `HTTP ${res.status}`, e?.details, e !== undefined);
   }
   return data as T;
 }
@@ -63,12 +79,7 @@ export function reportUnexpected(err: unknown, context: Record<string, unknown>)
   Sentry.captureException(err, { tags: { scope: 'admin.communication' }, extra: context });
 }
 
-/** Studio data changed: the nav badge re-reads the pending counts. */
-export const STUDIO_CHANGED = 'gabee:studio-changed';
-
-export function notifyStudioChanged(): void {
-  window.dispatchEvent(new Event(STUDIO_CHANGED));
-}
+export { notifyStudioChanged } from '../../_shell/studio-events';
 
 /**
  * "Télécharger le média": the route answers with a redirect to a short-lived

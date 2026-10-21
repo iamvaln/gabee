@@ -59,6 +59,23 @@ export const PROPOSALS = [
   },
 ] as const;
 
+/**
+ * A week left in `proposing` (Strategist running, or its run died), last
+ * touched `minutesAgo` minutes ago: the screen offers to relaunch only once
+ * it looks stuck (10 min).
+ */
+export async function seedProposingWeek(startsOn: string, minutesAgo: number): Promise<{ weekId: string }> {
+  const week = await prisma.contentWeek.create({ data: { startsOn: dateOf(startsOn), firstDay: dateOf(startsOn), status: 'proposing' } });
+  await ageWeek(week.id, minutesAgo);
+  return { weekId: week.id };
+}
+
+/** Set the week's `updated_at` (Prisma's @updatedAt would overwrite it on a normal update). */
+export async function ageWeek(weekId: string, minutesAgo: number): Promise<void> {
+  // The column is a UTC timestamp without time zone: compute it in JS, not with the session-zoned now().
+  await prisma.$executeRaw`UPDATE content_weeks SET updated_at = ${new Date(Date.now() - minutesAgo * 60_000)} WHERE id = ${weekId}::uuid`;
+}
+
 /** A week (Monday `startsOn`) waiting for the owner's direction. */
 export async function seedProposalsWeek(startsOn: string): Promise<{ weekId: string }> {
   const week = await prisma.contentWeek.create({
@@ -107,6 +124,8 @@ type TodayOpts = {
   longTokens?: boolean;
   /** A cleared image attached to the LinkedIn draft. */
   linkedinImage?: boolean;
+  /** `generating` with no lock: a run that died (crash, deploy) while writing the LinkedIn draft. */
+  linkedinInterrupted?: boolean;
 };
 
 /**
@@ -170,7 +189,15 @@ export async function seedTodayBoard(opts: TodayOpts = {}): Promise<{ linkedinDr
   const body = `${LINKEDIN_BODY}${opts.longTokens ? `\n\n${longUrl}` : ''}\n\n${LINKEDIN_URL}`;
 
   const linkedin = await prisma.contentDraft.create({
-    data: { slotId: slot.id, platform: 'linkedin', language: 'fr', status: 'ready', trackedUrl: LINKEDIN_URL, mediaAssetId: media?.id ?? null },
+    data: {
+      slotId: slot.id,
+      platform: 'linkedin',
+      language: 'fr',
+      status: opts.linkedinInterrupted ? 'generating' : 'ready',
+      generationLockUntil: null,
+      trackedUrl: LINKEDIN_URL,
+      mediaAssetId: media?.id ?? null,
+    },
   });
   const liVersion = await prisma.contentDraftVersion.create({
     data: { draftId: linkedin.id, n: 1, source: 'agent', payload: { body, hashtags, link_target: 'signup' } },

@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import {
   CONTENT_PLATFORMS,
   SLOT_FORMATS,
@@ -17,6 +17,7 @@ import { api, notifyStudioChanged, reportUnexpected } from './api';
 import { ConfirmDialog, Dialog } from './Dialog';
 import { AiWorking, ErrorNotice } from './ErrorNotice';
 import { errorText } from './errors';
+import { failureOf } from './StartWeek';
 import { FORMAT_LABEL, LANGUAGE_LABEL, PLATFORM_LABEL, SLOT_STATUS, dayParts, longDay } from './format';
 
 type Op = { slotId: string; kind: 'save' | 'regenerate' | 'skip'; long: boolean };
@@ -24,9 +25,9 @@ type SlotResult = { slot: SlotDto; warning?: QuotaWarning | null };
 
 /**
  * Step 2 of the Semaine screen: one line per day (topic, angle, format, one
- * FR/EN switch per platform) with Valider · Modifier · Régénérer · Sauter.
- * One change runs at a time (a regeneration re-runs the Strategist: never
- * two at once). After each change the caller re-reads the week (quota).
+ * FR/EN switch per platform) with Marquer comme relu · Modifier · Régénérer ·
+ * Sauter. One change runs at a time (a regeneration re-runs the Strategist:
+ * never two at once). After each change the caller re-reads the week (quota).
  */
 export function DayLines({
   week,
@@ -42,7 +43,7 @@ export function DayLines({
   /** Studio-local today: editing a validated day up to today rewrites its drafts (slow). */
   today: string;
   lang: Language;
-  /** Lines the owner ticked "Valider" in this browser (titles step only). */
+  /** Lines the owner marked "relu" in this browser (titles step only; a checklist, not server state). */
   reviewed: ReadonlySet<string>;
   onToggleReviewed: (slot: SlotDto) => void;
   onChanged: (warning: QuotaWarning | null) => Promise<void>;
@@ -56,6 +57,10 @@ export function DayLines({
   const [editing, setEditing] = useState<string | null>(null);
   const [confirmRegen, setConfirmRegen] = useState<SlotDto | null>(null);
   const [skipping, setSkipping] = useState<SlotDto | null>(null);
+  const [confirmLang, setConfirmLang] = useState<{ slot: SlotDto; platform: ContentPlatform; language: ContentLanguage } | null>(null);
+  const [editorDirty, setEditorDirty] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState<string | null>(null);
+  const [reloadError, setReloadError] = useState<string | null>(null);
 
   const editableWeek = week.status === 'titles_ready' || week.status === 'validated';
   const reviewing = week.status === 'titles_ready';
@@ -68,26 +73,58 @@ export function DayLines({
     setOp({ slotId: slot.id, kind, long });
     onBusyChange(true);
     setErrors(({ [slot.id]: _drop, ...rest }) => rest);
+    let res: SlotResult;
     try {
-      const res = await call();
-      notifyStudioChanged();
-      await onChanged(res.warning ?? null);
-      return true;
+      res = await call();
     } catch (err) {
       reportUnexpected(err, { action: `slot-${kind}`, slotId: slot.id });
-      setErrors((e) => ({ ...e, [slot.id]: errorText(err, lang) }));
-      return false;
-    } finally {
+      // A regeneration whose answer never came may still be running: say so rather than "error".
+      setErrors((e) => ({ ...e, [slot.id]: kind === 'regenerate' ? failureOf(err, lang).message : errorText(err, lang) }));
       setOp(null);
       onBusyChange(false);
+      return false;
+    }
+    // The change is saved; reading the week back is a separate step with its own error.
+    notifyStudioChanged();
+    await reload(res.warning ?? null);
+    setOp(null);
+    onBusyChange(false);
+    return true;
+  }
+
+  async function reload(warning: QuotaWarning | null) {
+    try {
+      await onChanged(warning);
+      setReloadError(null);
+    } catch (err) {
+      reportUnexpected(err, { action: 'reload-week', weekId: week.id });
+      setReloadError(
+        t(
+          `La modification est enregistrée, mais la semaine n’a pas pu être relue. ${errorText(err, lang)}`,
+          `The change is saved, but the week could not be read back. ${errorText(err, lang)}`,
+        ),
+      );
     }
   }
+
+  /** Open the editor of a line; unsaved edits on another line are only dropped after asking. */
+  const openEditor = (slotId: string) => {
+    if (editing && editing !== slotId && editorDirty) setConfirmDiscard(slotId);
+    else {
+      setEditorDirty(false);
+      setEditing(slotId);
+    }
+  };
 
   const patch = (slot: SlotDto, body: UpdateSlotRequest) =>
     mutate(slot, 'save', () => api<SlotResult>(`/slots/${slot.id}`, { method: 'PATCH', body }));
 
-  const setLanguage = (slot: SlotDto, platform: ContentPlatform, language: ContentLanguage) =>
+  const applyLanguage = (slot: SlotDto, platform: ContentPlatform, language: ContentLanguage) =>
     patch(slot, { platforms: slot.platforms.map((p) => (p.platform === platform ? { ...p, language } : p)) });
+
+  // On a validated day that is due, the switch rewrites its drafts (paid) and drops their approval: ask first.
+  const setLanguage = (slot: SlotDto, platform: ContentPlatform, language: ContentLanguage) =>
+    rewritesDrafts(slot) ? setConfirmLang({ slot, platform, language }) : void applyLanguage(slot, platform, language);
 
   const regenerate = (slot: SlotDto) => {
     setConfirmRegen(null);
@@ -96,6 +133,7 @@ export function DayLines({
 
   return (
     <>
+      {reloadError && <ErrorNotice lang={lang} message={reloadError} onRetry={() => void reload(null)} retryLabel={t('Relire la semaine', 'Read the week again')} />}
       <ol className="studio-days">
         {week.slots.map((slot) => {
           const { weekday, day } = dayParts(slot.date, lang);
@@ -116,9 +154,16 @@ export function DayLines({
                     slot={slot}
                     lang={lang}
                     busy={running !== null}
-                    onCancel={() => setEditing(null)}
+                    onCancel={() => {
+                      setEditing(null);
+                      setEditorDirty(false);
+                    }}
+                    onDirtyChange={setEditorDirty}
                     onSave={async (body) => {
-                      if (await patch(slot, body)) setEditing(null);
+                      if (await patch(slot, body)) {
+                        setEditing(null);
+                        setEditorDirty(false);
+                      }
                     }}
                   />
                 ) : (
@@ -126,9 +171,9 @@ export function DayLines({
                     <div className="studio-dayline-head">
                       <h3 className="studio-dayline-topic">{slot.topic}</h3>
                       {reviewing && isReviewed ? (
-                        <span className="badge ok">
-                          <i className="bdot" />
-                          {t('Validé', 'Validated')}
+                        <span className="badge neutral">
+                          <AIcon name="check" size={12} />
+                          {t('Relu', 'Reviewed')}
                         </span>
                       ) : (
                         status &&
@@ -196,12 +241,26 @@ export function DayLines({
                 {open && editing !== slot.id && (
                   <div className="studio-actions" role="group" aria-label={t(`Actions du ${longDay(slot.date, lang)}`, `Actions for ${longDay(slot.date, lang)}`)}>
                     {reviewing && (
-                      <button type="button" className="btn secondary" aria-pressed={isReviewed} onClick={() => onToggleReviewed(slot)} disabled={busy}>
-                        <AIcon name={isReviewed ? 'x' : 'check'} />
-                        {isReviewed ? t('Annuler', 'Undo') : t('Valider', 'Validate')}
+                      <button
+                        type="button"
+                        className={'btn secondary studio-review' + (isReviewed ? ' on' : '')}
+                        aria-pressed={isReviewed}
+                        onClick={() => onToggleReviewed(slot)}
+                        disabled={busy}
+                        title={isReviewed ? t('Retirer la marque « relu »', 'Remove the "reviewed" mark') : undefined}
+                      >
+                        <AIcon name="check" />
+                        {isReviewed ? (
+                          <>
+                            {t('Relu', 'Reviewed')}
+                            <span className="studio-review-undo">{t(' · Retirer', ' · Remove')}</span>
+                          </>
+                        ) : (
+                          t('Marquer comme relu', 'Mark as reviewed')
+                        )}
                       </button>
                     )}
-                    <button type="button" className="btn secondary" onClick={() => setEditing(slot.id)} disabled={busy}>
+                    <button type="button" className="btn secondary" onClick={() => openEditor(slot.id)} disabled={busy}>
                       <AIcon name="edit" />
                       {t('Modifier', 'Edit')}
                     </button>
@@ -239,6 +298,44 @@ export function DayLines({
           confirmLabel={t('Régénérer', 'Regenerate')}
           onConfirm={() => regenerate(confirmRegen)}
           onClose={() => setConfirmRegen(null)}
+        />
+      )}
+      {confirmLang && (
+        <ConfirmDialog
+          lang={lang}
+          title={t(
+            `Passer le post ${PLATFORM_LABEL[confirmLang.platform]} en ${LANGUAGE_LABEL[confirmLang.language].fr} ?`,
+            `Switch the ${PLATFORM_LABEL[confirmLang.platform]} post to ${LANGUAGE_LABEL[confirmLang.language].en}?`,
+          )}
+          body={t(
+            'Ce jour est validé et ses brouillons sont déjà dus : Gabee va les réécrire (une nouvelle rédaction, donc un coût), et un post déjà validé devra être revalidé.',
+            "This day is validated and its drafts are already due: Gabee will rewrite them (a new paid run), and an approved post will need approving again.",
+          )}
+          confirmLabel={t('Changer la langue', 'Change the language')}
+          onConfirm={() => {
+            const c = confirmLang;
+            setConfirmLang(null);
+            void applyLanguage(c.slot, c.platform, c.language);
+          }}
+          onClose={() => setConfirmLang(null)}
+        />
+      )}
+      {confirmDiscard && (
+        <ConfirmDialog
+          lang={lang}
+          title={t('Abandonner vos modifications ?', 'Discard your edits?')}
+          body={t(
+            'Le jour en cours de modification n’est pas enregistré. Ouvrir un autre jour abandonne ces modifications.',
+            'The day being edited is not saved. Opening another day discards these edits.',
+          )}
+          confirmLabel={t('Abandonner', 'Discard')}
+          danger
+          onConfirm={() => {
+            setEditorDirty(false);
+            setEditing(confirmDiscard);
+            setConfirmDiscard(null);
+          }}
+          onClose={() => setConfirmDiscard(null)}
         />
       )}
       {skipping && (
@@ -302,12 +399,14 @@ function SlotEditor({
   busy,
   onCancel,
   onSave,
+  onDirtyChange,
 }: {
   slot: SlotDto;
   lang: Language;
   busy: boolean;
   onCancel: () => void;
   onSave: (body: UpdateSlotRequest) => void;
+  onDirtyChange: (dirty: boolean) => void;
 }) {
   const L = lang === 'fr';
   const t = (fr: string, en: string) => (L ? fr : en);
@@ -324,6 +423,7 @@ function SlotEditor({
     ...(JSON.stringify(platforms) !== JSON.stringify(slot.platforms) ? { platforms } : {}),
   };
   const changed = Object.keys(body).length > 0;
+  useEffect(() => onDirtyChange(changed), [changed, onDirtyChange]);
   const valid = topic.trim().length > 0 && platforms.length > 0;
 
   const togglePlatform = (p: ContentPlatform, on: boolean) =>

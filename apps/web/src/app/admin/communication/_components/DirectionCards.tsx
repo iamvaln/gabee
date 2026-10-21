@@ -32,7 +32,8 @@ export function DirectionCards({
   const [chosen, setChosen] = useState<number | null>(week.chosen_index);
   const [refinement, setRefinement] = useState(week.refinement ?? '');
   const [angles, setAngles] = useState<Partial<Record<ContentPlatform, string>>>(week.platform_angles);
-  const hasAngles = Object.values(angles).some((v) => v && v.trim());
+  // Opened once if the week already has angles; afterwards the owner opens/closes it (typing never collapses it).
+  const [anglesOpen] = useState(() => Object.values(week.platform_angles).some((v) => v && v.trim()));
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -111,7 +112,7 @@ export function DirectionCards({
           />
           <p className="help">{t('Gabee en tient compte pour écrire le titre de chaque jour.', "Gabee uses it to write each day's title.")}</p>
         </div>
-        <details className="studio-details" open={hasAngles || undefined}>
+        <details className="studio-details" open={anglesOpen || undefined}>
           <summary>{t('Angle par plateforme (facultatif)', 'Angle per platform (optional)')}</summary>
           <div className="studio-angle-grid">
             {CONTENT_PLATFORMS.map((p) => (
