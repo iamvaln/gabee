@@ -138,6 +138,39 @@ export async function getSlot(slotId: string): Promise<SlotDto> {
   return toSlotDto(row);
 }
 
+/** A Strategist run younger than this is taken as live (the router gives up long before: 5 min max per call). */
+export const WEEK_RUN_WINDOW_MS = 10 * 60_000;
+
+/**
+ * Ruling 15 (cost): one paid Strategist run per week at a time. Refuses with
+ * 409 `generation_in_progress` while a `running` Strategist run on this week
+ * (proposals or titles) started less than 10 minutes ago — a second tab, a
+ * retry while the first call is still waiting, or the scheduler racing the
+ * owner. A crashed run stops counting after 10 minutes.
+ */
+export async function assertNoLiveWeekRun(weekId: string, now: Date = new Date()): Promise<void> {
+  const live = await prisma.agentRun.findFirst({
+    where: {
+      agentKey: 'strategist',
+      subjectKind: { in: ['week_proposals', 'week_titles'] },
+      subjectId: weekId,
+      status: 'running',
+      startedAt: { gt: new Date(now.getTime() - WEEK_RUN_WINDOW_MS) },
+    },
+    orderBy: { startedAt: 'desc' },
+    select: { startedAt: true },
+  });
+  if (!live) return;
+  const minutes = Math.floor((now.getTime() - live.startedAt.getTime()) / 60_000);
+  const since = minutes < 1 ? "il y a moins d'une minute" : `il y a ${minutes} min`;
+  throw new HttpError(
+    409,
+    'generation_in_progress',
+    `Gabee travaille déjà sur cette semaine (lancé ${since}). Attendez la fin, puis rechargez la page ; si rien ne bouge, réessayez dans 10 minutes.`,
+    { started_at: live.startedAt.toISOString() },
+  );
+}
+
 const weekExists = (startsOn: string) =>
   new HttpError(409, 'week_exists', `La semaine du ${startsOn} existe déjà. Ouvrez-la depuis l'écran Semaine.`, { starts_on: startsOn });
 
@@ -173,6 +206,7 @@ export async function proposeDirections(weekId: string, origin: AiOrigin, actor?
   const week = await prisma.contentWeek.findUnique({ where: { id: weekId }, select: { status: true } });
   if (!week) throw weekNotFound();
   assertTransition('week', week.status, 'proposals_ready');
+  await assertNoLiveWeekRun(weekId);
   const out = (await runAgent('strategist', { kind: 'week_proposals', id: weekId }, origin, actor?.id)) as DirectionProposals;
   const res = await prisma.contentWeek.updateMany({
     where: { id: weekId, status: week.status },
@@ -195,6 +229,7 @@ export async function chooseDirection(weekId: string, req: ChooseDirectionReques
   if (week.status !== 'direction_set') assertTransition('week', week.status, 'direction_set');
   const proposals = parseProposals(week.proposals);
   if (!proposals?.[req.proposal_index]) throw new HttpError(409, 'invalid_transition', "Cette direction n'existe pas. Rechargez la page.");
+  await assertNoLiveWeekRun(weekId);
 
   const angles = Object.fromEntries(Object.entries(req.platform_angles).flatMap(([k, v]) => (v && v.trim() ? [[k, v.trim()]] : [])));
   await prisma.$transaction(async (tx) => {
@@ -298,6 +333,7 @@ export async function updateSlot(slotId: string, patch: UpdateSlotRequest, actor
  */
 export async function regenerateSlot(slotId: string, actor: Actor): Promise<SlotDto> {
   const slot = await loadEditableSlot(slotId);
+  await assertNoLiveWeekRun(slot.weekId);
   const titles = (await runAgent('strategist', { kind: 'week_titles', id: slot.weekId }, 'user_action', actor.id)) as WeekTitles;
   const day = titles.days.find((d) => d.date === ymdOf(slot.date));
   if (!day) throw new Error(`The titles run did not plan ${ymdOf(slot.date)}.`);

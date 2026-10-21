@@ -8,7 +8,7 @@ import { setErrorReporterForTests } from '../report-error';
 import { HttpError } from '../http';
 import { FakeAiAdapter, resetAiAdapters, setAiAdapters, type FakeAiStep } from '../ai/router';
 import type { Actor } from './state';
-import { chooseDirection, getWeek, regenerateSlot, skipDay, startWeek, updateSlot, validateWeek } from './weeks';
+import { chooseDirection, getWeek, proposeDirections, regenerateSlot, skipDay, startWeek, updateSlot, validateWeek } from './weeks';
 
 const prisma = createTestClient();
 const actor: Actor = { id: randomUUID(), role: 'admin' };
@@ -210,4 +210,58 @@ test('skipDay records the reason and refuses a done slot', async () => {
   const done = await createContentSlot(prisma, week.id, { status: 'done' });
   await assert.rejects(skipDay(done.id, 'x', actor), isHttp(409, 'invalid_transition'));
   assert.equal(reported.length, 0);
+});
+
+// ── Ruling 15: one paid Strategist run per week at a time ──
+
+async function strategistRun(weekId: string, subjectKind: 'week_proposals' | 'week_titles', minutesAgo: number, status = 'running') {
+  const agent = await prisma.agent.findUniqueOrThrow({ where: { key: 'strategist' } });
+  return prisma.agentRun.create({
+    data: {
+      agentKey: 'strategist',
+      agentVersionId: agent.publishedVersionId!,
+      origin: 'user_action',
+      subjectKind,
+      subjectId: weekId,
+      inputHash: 'h',
+      input: {},
+      status,
+      startedAt: new Date(Date.now() - minutesAgo * 60_000),
+    },
+  });
+}
+
+test('propose, direction and slot regenerate refuse while a strategist run on the week is live', async () => {
+  const proposing = await createContentWeek(prisma, { status: 'proposing' });
+  const ready = await createContentWeek(prisma, { status: 'proposals_ready', proposals });
+  const titled = await titledWeek((i) => (i < 2 ? ['en', 'en'] : ['fr', 'fr']));
+  await strategistRun(proposing.id, 'week_proposals', 2);
+  await strategistRun(ready.id, 'week_titles', 0);
+  await strategistRun(titled.id, 'week_titles', 9);
+  const adapter = fake([]);
+
+  const inProgress = (err: unknown) => isHttp(409, 'generation_in_progress')(err) && /Attendez la fin/.test((err as HttpError).message);
+  await assert.rejects(proposeDirections(proposing.id, 'user_action', actor), inProgress);
+  await assert.rejects(chooseDirection(ready.id, { proposal_index: 1, refinement: '', platform_angles: {} }, actor), inProgress);
+  await assert.rejects(regenerateSlot(titled.slots[2]!.id, actor), inProgress);
+
+  // Nothing was paid for and nothing changed.
+  assert.equal(adapter.calls.length, 0);
+  assert.equal((await prisma.contentWeek.findUniqueOrThrow({ where: { id: proposing.id } })).status, 'proposing');
+  const readyRow = await prisma.contentWeek.findUniqueOrThrow({ where: { id: ready.id } });
+  assert.equal(readyRow.status, 'proposals_ready');
+  assert.equal(readyRow.chosenIndex, null);
+  assert.equal((await getWeek(titled.id)).slots[2]!.topic, titled.slots[2]!.topic);
+  assert.equal((await audits('content.week.direction')).length, 1); // titledWeek's own choice only
+});
+
+test('a crashed (over 10 min) or finished strategist run does not block the week', async () => {
+  const week = await createContentWeek(prisma, { status: 'proposing' });
+  await strategistRun(week.id, 'week_proposals', 11); // crashed: still "running" but too old
+  await strategistRun(week.id, 'week_proposals', 1, 'failed');
+  const other = await createContentWeek(prisma, { status: 'proposing' });
+  await strategistRun(other.id, 'week_proposals', 1); // another week's live run
+  fake([{ json: proposals }]);
+  const out = await proposeDirections(week.id, 'user_action', actor);
+  assert.equal(out.status, 'proposals_ready');
 });
