@@ -130,3 +130,31 @@ by spinning up a local Postgres + pointing `restore` at it.)
 | `pg_dump: server version: 17.x; pg_dump version: 16.x` | Postgres image major bumped past 16                                       | Bump `postgresql16-client` → `postgresql17-client` in `ops/backup/Dockerfile`, rebuild                                            |
 | Loop runs but no files in R2           | Pruning happens BEFORE we'd see anything; check the upload log line above it. | `docker compose logs backup` for the actual error; common cause is bucket name typo                                              |
 | `[backup-loop] startup backup FAILED`  | First-run misconfig                                                           | Inspect the lines above for the exact error; the loop will retry on schedule                                                     |
+
+## 7. Media files (R2 bucket `gabee-media`)
+
+The Content Studio's media library (images and videos for posts) is stored in a
+**separate, private R2 bucket**, `gabee-media`, accessed by the web app with its
+own `MEDIA_R2_*` keys. See `docs/ops/content-studio-runbook.md` for setup.
+
+**These files are not part of the database backups.** The nightly `pg_dump`
+only covers Postgres. The `media_assets` table holds each file's metadata
+(name, type, size, checksum, clearance) and its R2 object key (`object_key`,
+`media/<yyyy>/<mm>/<uuid>.<ext>`). It does not hold the file itself. So:
+
+- **Restoring a DB backup** brings back the media rows. Their files are found
+  again as long as the bucket still has those objects. Files uploaded after the
+  backup stay in the bucket, but no row points to them anymore.
+- **Losing the bucket, or an object in it,** loses the files but not the
+  posts. Drafts, publications and their text stay in the database. A post whose
+  media is gone keeps its text, and its download link fails until you upload the
+  file again and attach it.
+- No retention or cleanup runs on the bucket. Nothing in the app deletes a
+  cleared or attached file. Only an upload that fails verification is removed.
+
+Protecting the files is **the owner's call** and is not set up today. The
+options are R2 **object versioning** or a lifecycle rule on `gabee-media` in
+the Cloudflare dashboard, or a periodic copy to another bucket or to the
+owner's machine. If you add a copy, give it its own token, scoped to the
+destination. Never reuse the `gabee-backup-sidecar` token or the web app's
+media token.
