@@ -1366,8 +1366,11 @@ model AgentRun {
 }
 
 /// Scheduled job executions, unique per (job, period) → each job runs at most
-/// once per period key (e.g. `week:2026-10-26`, `day:2026-10-27`). A failed
-/// row is retried from `nextAttemptAt` until the attempt cap.
+/// once per period key (e.g. `week:2026-10-26`, `day:2026-10-27@09`,
+/// `hour:2026-10-27T05`). `status` = `running` (claimed by a tick; taken over
+/// after 15 min) | `waiting` (could not act yet — re-run next tick, no attempt
+/// counted) | `succeeded` | `failed` (retried from `nextAttemptAt` while the
+/// job is still due; the owner is alerted at the 4th attempt).
 model JobRun {
   id            String    @id @default(uuid()) @db.Uuid
   jobKey        String    @map("job_key")

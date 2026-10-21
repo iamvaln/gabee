@@ -147,6 +147,23 @@ services:
         condition: service_healthy
     networks: [internal]
 
+  # ── Content Studio tick: POST /api/cron/content-tick every 10 min ───────────
+  # Same image as cron-digest (built and pushed by release.yml), started in its
+  # `tick-loop` mode. The web service decides which Communication jobs are due
+  # (studio-local time) and runs each once per period, so a late or extra poke
+  # is harmless. Internal network only.
+  cron-content:
+    image: ${REGISTRY:-ghcr.io/iamvaln}/gabee-cron-digest:${IMAGE_TAG:-latest}
+    command: ["tick-loop"]
+    restart: unless-stopped
+    environment:
+      CONTENT_TICK_URL: http://web:3000/api/cron/content-tick
+      CRON_SECRET: ${CRON_SECRET}
+    depends_on:
+      web:
+        condition: service_healthy
+    networks: [internal]
+
   # ── Kid PWA (static, served by nginx) ───────────────────────────────────────
   kid:
     build:

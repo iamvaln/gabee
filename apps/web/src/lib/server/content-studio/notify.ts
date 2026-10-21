@@ -100,6 +100,20 @@ export async function notifyOnce(kind: string, periodKey: string, build: () => E
   return result;
 }
 
+/**
+ * A scheduled-job failure already reported to Sentry where it happened (a
+ * failed send above, a failed draft generation): the job layer records it on
+ * its run row but does not report it again.
+ */
+export class ReportedUpstreamError extends Error {
+  override name = 'ReportedUpstreamError';
+}
+
+/** Throw (already reported) when some recipient did not get the email, so the job retries it. */
+export function requireDelivered(res: NotifyResult, what: string): void {
+  if (res.failed > 0) throw new ReportedUpstreamError(`${what} could not be sent to ${res.failed} recipient(s); the next attempt resends it.`);
+}
+
 /** What waits for the owner on studio-local `day` (`YYYY-MM-DD`); also the admin nav badge. */
 export async function pendingCounts(day: string): Promise<{ proposals: number; titles: number; approve: number; publish: number }> {
   const slot = { date: { lte: dateOf(day) }, status: { not: 'skipped' } };

@@ -1,0 +1,47 @@
+#!/bin/bash
+# Content Studio tick — POSTs $CONTENT_TICK_URL every CONTENT_TICK_INTERVAL_S
+# seconds (default 600 = 10 min). The web service decides which jobs are due
+# (studio-local time) and runs each at most once per period, so an extra or
+# late poke is harmless. A failed poke is logged to stderr and NEVER stops the
+# loop — the next tick catches up.
+set -euo pipefail
+
+: "${CONTENT_TICK_URL:?CONTENT_TICK_URL is required (e.g. http://web:3000/api/cron/content-tick)}"
+: "${CRON_SECRET:?CRON_SECRET is required (shared with the web service)}"
+INTERVAL=${CONTENT_TICK_INTERVAL_S:-600}
+
+poke() {
+  local response rc=0
+  # Same curl flags as digest-once: `--fail-with-body` prints the body on
+  # non-2xx and exits non-zero, so both are visible in the log.
+  response=$(
+    curl --silent --show-error --fail-with-body \
+      --max-time 60 \
+      -X POST "${CONTENT_TICK_URL}" \
+      -H "Authorization: Bearer ${CRON_SECRET}"
+  ) || rc=$?
+  local now
+  now=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+  if [ "$rc" -ne 0 ]; then
+    echo "[tick] ${now} FAILED (curl rc=${rc}): ${response:-}" >&2
+    return "$rc"
+  fi
+  # Log the run summary when jq's available; otherwise the raw body.
+  if command -v jq >/dev/null 2>&1; then
+    echo "[tick] ${now} $(echo "$response" | jq -c '.summary')"
+  else
+    echo "[tick] ${now} ${response}"
+  fi
+}
+
+echo "[tick-loop] started — every ${INTERVAL}s, target ${CONTENT_TICK_URL}"
+
+# Startup poke so a misconfig (missing secret, unreachable web) surfaces
+# within seconds of deploy. Failure here doesn't abort the loop.
+poke || echo "[tick-loop] startup poke FAILED — will retry in ${INTERVAL}s" >&2
+
+while true; do
+  sleep "$INTERVAL"
+  poke || true
+done
