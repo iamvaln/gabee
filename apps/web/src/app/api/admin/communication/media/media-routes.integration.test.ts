@@ -1,7 +1,7 @@
 import '../../../../../test/setup-integration';
 import test, { after, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { createTestClient, resetDb, createMediaAsset } from '@gabee/db/testing';
+import { createContentDraft, createContentSlot, createContentWeek, createMediaAsset, createTestClient, resetDb } from '@gabee/db/testing';
 import { createLoginableParent } from '@/test/factories';
 import { parentToken, adminCookie, parentCookie, webRequest } from '@/test/auth';
 import { MemoryStorage } from '@/lib/server/storage/memory';
@@ -67,4 +67,49 @@ test('init -> complete -> clear -> list flow is audited', async () => {
 test('init rejects an oversize video with 422', async () => {
   const r = await init(webRequest(U, { cookie, body: { file_name: 'a.mp4', mime: 'video/mp4', size_bytes: 301 * 1024 * 1024, aspect: '16:9' } }), undefined);
   assert.equal(r.status, 422);
+});
+
+test('library list says which drafts use each asset', async () => {
+  const a = await createMediaAsset(prisma, { fileName: 'used.png' });
+  const b = await createMediaAsset(prisma, { fileName: 'free.png' });
+  const week = await createContentWeek(prisma, { status: 'validated' });
+  const slot = await createContentSlot(prisma, week.id);
+  await createContentDraft(prisma, slot.id, { platform: 'linkedin', status: 'approved', mediaAssetId: a.id });
+  const slot2 = await createContentSlot(prisma, week.id);
+  await createContentDraft(prisma, slot2.id, { platform: 'linkedin', status: 'published', mediaAssetId: a.id });
+  await createContentDraft(prisma, slot2.id, { platform: 'tiktok', status: 'ready', mediaAssetId: a.id });
+
+  const res = await list(webRequest(U, { method: 'GET', cookie }), undefined);
+  const { assets } = await res.json();
+  const byName = (n: string) => assets.find((x: { fileName: string }) => x.fileName === n);
+  assert.deepEqual(byName('used.png').usage, { approved: 1, published: 1, other: 1 });
+  assert.deepEqual(byName('free.png').usage, { approved: 0, published: 0, other: 0 });
+  assert.ok(b);
+});
+
+test('tags follow the upload rules: at most 10, trimmed, without #, deduplicated', async () => {
+  const a = await createMediaAsset(prisma);
+  const eleven = Array.from({ length: 11 }, (_, i) => `t${i}`);
+  const tooMany = await patch(webRequest(`${U}/${a.id}`, { method: 'PATCH', cookie, body: { tags: eleven } }), ctx(a.id));
+  assert.equal(tooMany.status, 422);
+
+  const ok = await patch(webRequest(`${U}/${a.id}`, { method: 'PATCH', cookie, body: { tags: [' #Code ', 'code', 'Niveau 2', '#'] } }), ctx(a.id));
+  assert.equal(ok.status, 200);
+  assert.deepEqual((await ok.json()).asset.tags, ['code', 'niveau 2']);
+
+  const init2 = await init(
+    webRequest(U, { cookie, body: { file_name: 'b.png', mime: 'image/png', size_bytes: 16, tags: ['#Lecture', 'lecture'] } }),
+    undefined,
+  );
+  const { assetId } = await init2.json();
+  assert.deepEqual((await prisma.mediaAsset.findUniqueOrThrow({ where: { id: assetId } })).tags, ['lecture']);
+});
+
+test('clearing keeps its note; removing the clearance records why', async () => {
+  const a = await createMediaAsset(prisma);
+  const on = await patch(webRequest(`${U}/${a.id}`, { method: 'PATCH', cookie, body: { cleared: true, note: 'Droits vérifiés' } }), ctx(a.id));
+  assert.deepEqual([(await on.json()).asset.cleared, (await prisma.mediaAsset.findUniqueOrThrow({ where: { id: a.id } })).clearanceNote], [true, 'Droits vérifiés']);
+  const off = await patch(webRequest(`${U}/${a.id}`, { method: 'PATCH', cookie, body: { cleared: false, note: 'Un enfant reconnaissable' } }), ctx(a.id));
+  const row = (await off.json()).asset;
+  assert.deepEqual([row.cleared, row.clearanceNote], [false, 'Un enfant reconnaissable']);
 });

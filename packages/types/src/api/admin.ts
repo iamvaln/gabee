@@ -409,14 +409,39 @@ export type AuditListResponse = z.infer<typeof AuditListResponseSchema>;
 export const AiUsageRowSchema = z.object({
   provider: z.string(),
   model: z.string(),
-  purpose: AiPurposeSchema,
+  /** An `AiPurposeSchema` value for question authoring, or the Communication `AI_TASKS` key. */
+  purpose: z.string(),
   calls: z.number().int().min(0),
   input_tokens: z.number().int().min(0),
   output_tokens: z.number().int().min(0),
   cost_usd: z.number().min(0),
 });
+/** Communication calls carry an AI task (the studio budget); question authoring does not. */
+export const AiUsageGroupSchema = z.enum(['communication', 'authoring']);
+const AttemptCounts = {
+  calls: z.number().int().min(0),
+  /** Provider error or outage (no usable answer, usually no cost). */
+  failed: z.number().int().min(0),
+  /** The model answered, but the answer was cut short, not JSON or off-schema (it is billed). */
+  invalid_output: z.number().int().min(0),
+  refused: z.number().int().min(0),
+};
+export const AiUsageTaskRowSchema = z.object({
+  /** The AI task (Communication) or the authoring purpose. */
+  key: z.string(),
+  group: AiUsageGroupSchema,
+  ...AttemptCounts,
+  succeeded: z.number().int().min(0),
+  input_tokens: z.number().int().min(0),
+  output_tokens: z.number().int().min(0),
+  cost_usd: z.number().min(0),
+});
+const AiUsageGroupTotalsSchema = z.object({ ...AttemptCounts, cost_usd: z.number().min(0) });
 export const AiUsageResponseSchema = z.object({
   rows: z.array(AiUsageRowSchema),
+  /** Communication tasks first, then authoring; each by cost. */
+  by_task: z.array(AiUsageTaskRowSchema),
+  groups: z.object({ communication: AiUsageGroupTotalsSchema, authoring: AiUsageGroupTotalsSchema }),
   total_cost_usd: z.number().min(0),
   total_calls: z.number().int().min(0),
 });

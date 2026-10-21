@@ -34,6 +34,7 @@ const NAV: NavEntry[] = [
       { href: '/admin/communication/audience', label: { fr: 'Audience', en: 'Audience' } },
       { href: '/admin/communication/medias', label: { fr: 'Médiathèque', en: 'Media library' } },
       { href: '/admin/communication/reglages', label: { fr: 'Réglages', en: 'Settings' } },
+      { href: '/admin/communication/journal', label: { fr: 'Journal', en: 'Log' } },
     ],
   },
   {

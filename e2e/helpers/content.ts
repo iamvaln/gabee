@@ -235,3 +235,125 @@ export async function seedTodayBoard(opts: TodayOpts = {}): Promise<{ linkedinDr
 
   return { linkedinDraftId: linkedin.id, tiktokDraftId: tiktok.id, slotId: slot.id, today };
 }
+
+type MediaOpts = {
+  id?: string;
+  kind?: 'image' | 'video';
+  fileName?: string;
+  aspect?: '16:9' | '1:1' | '9:16' | '4:5';
+  cleared?: boolean;
+  tags?: string[];
+};
+
+/** A verified (`ready`) library file, as `complete` leaves it after an upload. */
+export async function seedMediaAsset(opts: MediaOpts = {}) {
+  const kind = opts.kind ?? 'image';
+  const video = kind === 'video';
+  return prisma.mediaAsset.create({
+    data: {
+      ...(opts.id ? { id: opts.id } : {}),
+      kind,
+      objectKey: `e2e/${opts.id ?? Math.random().toString(36).slice(2)}.${video ? 'mp4' : 'png'}`,
+      fileName: opts.fileName ?? (video ? 'video.mp4' : 'image.png'),
+      mime: video ? 'video/mp4' : 'image/png',
+      sizeBytes: video ? 4_200_000 : 180_000,
+      width: video ? null : 1600,
+      height: video ? null : 900,
+      aspect: opts.aspect ?? (video ? '9:16' : '16:9'),
+      tags: opts.tags ?? [],
+      status: 'ready',
+      cleared: opts.cleared ?? false,
+      uploadedById: await adminId(),
+    },
+  });
+}
+
+/** Empty the scheduler and agent journals. */
+export async function resetJournal(): Promise<void> {
+  await prisma.aiUsage.deleteMany({ where: { task: { not: null } } });
+  await prisma.agentRun.deleteMany({});
+  await prisma.jobRun.deleteMany({});
+}
+
+/** The 04:00 run gave up after its 4 attempts, and one writer answer was unusable. */
+export async function seedFailedJournal(): Promise<{ error: string }> {
+  const today = studioToday();
+  const error = `AI unavailable: claude-opus-5-5: overloaded_error; claude-opus-5-5: timeout after 120000 ms (${'détail '.repeat(30).trim()})`;
+  const started = new Date(Date.now() - 2 * 3_600_000);
+  await prisma.jobRun.createMany({
+    data: [
+      {
+        jobKey: 'day.generate',
+        periodKey: `day:${today}`,
+        status: 'abandoned',
+        attempts: 4,
+        error,
+        startedAt: started,
+        finishedAt: new Date(started.getTime() + 95_000),
+      },
+      {
+        jobKey: 'week.email',
+        periodKey: `week:${mondayOf(today)}`,
+        status: 'succeeded',
+        startedAt: new Date(started.getTime() - 86_400_000),
+        finishedAt: new Date(started.getTime() - 86_400_000 + 3_000),
+      },
+    ],
+  });
+  const version = await prisma.agentVersion.findFirstOrThrow({ where: { agentKey: 'writer_linkedin' } });
+  const run = await prisma.agentRun.create({
+    data: {
+      agentKey: 'writer_linkedin',
+      agentVersionId: version.id,
+      origin: 'scheduled_job',
+      subjectKind: 'week_titles',
+      subjectId: (await prisma.contentWeek.create({ data: { startsOn: dateOf(mondayOf(today)), firstDay: dateOf(mondayOf(today)), status: 'validated' } })).id,
+      inputHash: 'e2e',
+      input: {},
+      status: 'invalid_output',
+      errorCode: 'schema_mismatch',
+      errorMessage: 'The AI answer did not match the expected format.',
+      latencyMs: 38_000,
+      startedAt: new Date(started.getTime() + 10_000),
+      finishedAt: new Date(started.getTime() + 48_000),
+    },
+  });
+  await prisma.aiUsage.create({
+    data: { provider: 'anthropic', model: 'claude-opus-5-5', purpose: 'post_linkedin', task: 'post_linkedin', agentRunId: run.id, costUsd: 0.0312, status: 'invalid_output' },
+  });
+  return { error };
+}
+
+const AUDIENCE_SIGNUP_EMAIL = 'e2e-audience-signup@staging.gabee.app';
+
+/** Visits and one attributed sign-up for the Audience screen (studio-local today). */
+export async function seedAudience(draftId: string): Promise<void> {
+  const now = new Date();
+  const day = dateOf(studioToday(now));
+  const visit = (source: string, content: string | null) => ({ occurredAt: now, day, path: '/fr', deviceClass: 'desktop', source, content });
+  await prisma.webVisit.createMany({
+    data: [
+      ...Array.from({ length: 5 }, () => visit('linkedin', draftId)),
+      ...Array.from({ length: 2 }, () => visit('tiktok', 'bio')),
+      visit('direct', null),
+    ],
+  });
+  await prisma.parentAccount.create({
+    data: { email: AUDIENCE_SIGNUP_EMAIL, createdAt: now, signupSource: { source: 'linkedin', medium: 'social', content: draftId } },
+  });
+}
+
+export async function resetAudience(): Promise<void> {
+  await prisma.webVisit.deleteMany({});
+  await prisma.parentAccount.deleteMany({ where: { email: AUDIENCE_SIGNUP_EMAIL } });
+}
+
+/** Back to the seeded Réglages: editorial line v1 only, default settings, no objective. */
+export async function resetStudioSettings(): Promise<void> {
+  await prisma.editorialLineVersion.deleteMany({ where: { version: { gt: 1 } } });
+  await prisma.contentObjective.deleteMany({});
+  await prisma.studioSettings.update({
+    where: { id: 'default' },
+    data: { timezone: STUDIO_TZ, monthlyBudgetUsd: 50, budgetAlertRatio: 0.8 },
+  });
+}

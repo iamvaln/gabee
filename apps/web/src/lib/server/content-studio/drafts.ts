@@ -492,8 +492,16 @@ export async function editDraft(draftId: string, patch: UpdateDraftRequest, acto
   let mediaAssetId = draft.mediaAssetId;
   if (patch.media_asset_id !== undefined) {
     if (patch.media_asset_id !== null) {
-      const asset = await prisma.mediaAsset.findUnique({ where: { id: patch.media_asset_id }, select: { id: true } });
+      const asset = await prisma.mediaAsset.findUnique({ where: { id: patch.media_asset_id }, select: { id: true, kind: true, status: true } });
       if (!asset) throw new HttpError(422, 'media_not_found', "Ce fichier n'existe pas dans la médiathèque. Choisissez-en un autre.");
+      // An upload still in progress, or rejected at verification, has no usable file behind it.
+      if (asset.status !== 'ready') {
+        throw new HttpError(422, 'media_not_ready', "Ce fichier n'a pas été vérifié (envoi inachevé ou refusé). Choisissez-en un autre dans la médiathèque.");
+      }
+      // Clearance is checked at approval; the kind is a platform rule (a TikTok post is a video).
+      if (platform === 'tiktok' && asset.kind !== 'video') {
+        throw new HttpError(422, 'media_kind_mismatch', 'Un post TikTok est une vidéo : choisissez une vidéo, pas une image.');
+      }
     }
     mediaAssetId = patch.media_asset_id;
   }

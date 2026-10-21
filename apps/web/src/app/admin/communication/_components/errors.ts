@@ -95,6 +95,26 @@ const COPY: Record<string, Bi> = {
     fr: 'Ce texte ne respecte pas les règles de la plateforme (longueur, hashtags ou lien). Corrigez-le puis enregistrez.',
     en: "This text breaks the platform's rules (length, hashtags or link). Fix it, then save.",
   },
+  media_not_ready: {
+    fr: "Ce fichier n'a pas été vérifié (envoi inachevé ou refusé). Choisissez-en un autre dans la Médiathèque.",
+    en: 'This file was never verified (unfinished or rejected upload). Pick another one in the Media library.',
+  },
+  media_kind_mismatch: {
+    fr: 'Un post TikTok est une vidéo : choisissez une vidéo, pas une image.',
+    en: 'A TikTok post is a video: pick a video, not an image.',
+  },
+  media_not_found: {
+    fr: "Ce fichier n'existe plus dans la Médiathèque. Choisissez-en un autre.",
+    en: 'This file is no longer in the Media library. Pick another one.',
+  },
+  not_pending: {
+    fr: 'Ce fichier a déjà été traité. Rechargez la page pour voir la Médiathèque à jour.',
+    en: 'This file was already processed. Reload the page to see the up-to-date Media library.',
+  },
+  invalid_timezone: {
+    fr: 'Ce fuseau horaire est inconnu. Choisissez-en un dans la liste.',
+    en: 'This time zone is unknown. Pick one from the list.',
+  },
   invalid_platforms: {
     fr: 'Chaque plateforme ne peut apparaître qu’une fois, et doit être activée. Corrigez la liste puis enregistrez.',
     en: 'Each platform may appear once and must be enabled. Fix the list, then save.',

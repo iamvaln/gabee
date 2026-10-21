@@ -82,14 +82,13 @@ export function reportUnexpected(err: unknown, context: Record<string, unknown>)
 export { notifyStudioChanged } from '../../_shell/studio-events';
 
 /**
- * "Télécharger le média": the route answers with a redirect to a short-lived
+ * "Télécharger": the route answers with a redirect to a short-lived
  * presigned URL served as an attachment. Probe it without following the
  * redirect so an error (storage down, file not ready) shows in the page
  * instead of replacing it, then navigate to it: the attachment downloads
  * and the page stays put. Throws `ApiError` on failure.
  */
-export async function downloadDraftMedia(draftId: string): Promise<void> {
-  const url = `${API}/drafts/${draftId}/media`;
+async function download(url: string): Promise<void> {
   let res: Response;
   try {
     res = await fetch(url, { redirect: 'manual', cache: 'no-store' });
@@ -102,3 +101,12 @@ export async function downloadDraftMedia(draftId: string): Promise<void> {
   }
   window.location.assign(url);
 }
+
+/** A draft's media, under its readable name (`YYYY-MM-DD-<platform>-<slug>.<ext>`). */
+export const downloadDraftMedia = (draftId: string) => download(`${API}/drafts/${draftId}/media`);
+
+/** A library file, under its own file name. */
+export const downloadMedia = (assetId: string) => download(mediaFileUrl(assetId));
+
+/** The library file's route (a redirect to a short-lived presigned URL; images render through it). */
+export const mediaFileUrl = (assetId: string) => `${API}/media/${assetId}/download`;

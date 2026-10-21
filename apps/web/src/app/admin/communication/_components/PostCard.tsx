@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useId, useState } from 'react';
 import type { ContentLanguage, ContentPlatform, Language, LinkedInPost, TikTokPost } from '@gabee/types';
-import type { DraftDto } from '@/lib/server/content-studio/drafts';
+import type { DraftDto, MediaSummary } from '@/lib/server/content-studio/drafts';
 import { AIcon } from '../../_shell/icons';
 import { API, ApiError, api, downloadDraftMedia, notifyStudioChanged, reportUnexpected } from './api';
 import { copyText } from './copy';
@@ -11,9 +11,12 @@ import { ConfirmDialog } from './Dialog';
 import { AiWorking, ErrorNotice, Notice } from './ErrorNotice';
 import { errorText } from './errors';
 import { DRAFT_STATUS, LANGUAGE_LABEL, PLATFORM_LABEL, dateTime, postText } from './format';
+import { kindLabel } from './media';
+import { MediaPicker } from './MediaPicker';
 import { PublishDialog } from './PublishDialog';
 
 const MEDIA_LIBRARY = '/admin/communication/medias';
+const MEDIA_UPLOAD = '/admin/communication/medias?upload=1';
 
 type Busy = null | 'approve' | 'regenerate' | 'save' | 'download';
 
@@ -25,6 +28,8 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
   const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState<{ text: string; details?: string[] } | null>(null);
   const [editing, setEditing] = useState(false);
+  /** Open the editor straight on "Choisir un média" (from the media notice). */
+  const [pickFirst, setPickFirst] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [copied, setCopied] = useState<null | 'ok' | 'fail'>(null);
@@ -89,15 +94,23 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
     setCopied((await copyText(postText(draft))) ? 'ok' : 'fail');
   }
 
-  const save = (body: string, hashtags: string[]) =>
+  /** `media`: the new attachment (an id, or null to remove it); undefined leaves it as it is. */
+  const save = (body: string, hashtags: string[], media: string | null | undefined) =>
     run('save', async () => {
-      const res = await api<{ draft: DraftDto }>(`/drafts/${draft.id}`, { method: 'PATCH', body: { body, hashtags } });
+      const res = await api<{ draft: DraftDto }>(`/drafts/${draft.id}`, {
+        method: 'PATCH',
+        body: { body, hashtags, ...(media !== undefined ? { media_asset_id: media } : {}) },
+      });
       onChange(res.draft);
       setEditing(false);
       notifyStudioChanged();
     });
 
   const canEdit = hasText && ['ready', 'approved', 'stale', 'failed'].includes(draft.status);
+  const openEditor = (pick: boolean) => {
+    setPickFirst(pick);
+    setEditing(true);
+  };
   const canRegenerate = ['ready', 'approved', 'stale'].includes(draft.status);
   const canApprove = hasText && ['ready', 'stale'].includes(draft.status);
 
@@ -159,12 +172,14 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
         )}
 
         {editing && draft.payload ? (
-          <DraftEditor draft={draft} lang={lang} busy={busy === 'save'} onCancel={() => setEditing(false)} onSave={save} />
+          <DraftEditor draft={draft} lang={lang} busy={busy === 'save'} pickFirst={pickFirst} onCancel={() => setEditing(false)} onSave={save} />
         ) : (
           hasText && !generating && <Preview draft={draft} lang={lang} />
         )}
 
-        {hasText && !generating && !crashed && draft.status !== 'published' && <MediaNotices draft={draft} lang={lang} />}
+        {hasText && !generating && !crashed && !editing && draft.status !== 'published' && (
+          <MediaNotices draft={draft} lang={lang} onPick={canEdit && !locked ? () => openEditor(true) : undefined} />
+        )}
 
         {draft.publication && <PublicationSummary publication={draft.publication} lang={lang} />}
 
@@ -184,7 +199,7 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
             </button>
           )}
           {canEdit && (
-            <button type="button" className="btn secondary" onClick={() => setEditing(true)} disabled={locked}>
+            <button type="button" className="btn secondary" onClick={() => openEditor(false)} disabled={locked}>
               <AIcon name="edit" />
               {t('Modifier', 'Edit')}
             </button>
@@ -409,49 +424,70 @@ function MediaThumb({ draft, lang }: { draft: DraftDto; lang: Language }) {
   );
 }
 
-function MediaNotices({ draft, lang }: { draft: DraftDto; lang: Language }) {
+function MediaNotices({ draft, lang, onPick }: { draft: DraftDto; lang: Language; onPick?: () => void }) {
   const L = lang === 'fr';
   const m = draft.media;
-  const libraryLink = (label: string) => (
-    <Link className="btn secondary sm" href={MEDIA_LIBRARY}>
+  const link = (label: string, href = MEDIA_LIBRARY) => (
+    <Link className="btn secondary sm" href={href}>
       {label}
     </Link>
   );
+  const pick = (label: string) =>
+    onPick && (
+      <button type="button" className="btn secondary sm" onClick={onPick}>
+        {label}
+      </button>
+    );
+  const notCleared = (
+    <Notice
+      tone="warn"
+      action={
+        <>
+          {link(L ? 'Ouvrir la Médiathèque' : 'Open the Media library')}
+          {pick(L ? 'Changer de média' : 'Change media')}
+        </>
+      }
+    >
+      {L
+        ? 'Ce média n’est pas autorisé à la publication — autorisez-le dans la Médiathèque.'
+        : 'This media is not cleared for publication — clear it in the Media library.'}
+    </Notice>
+  );
   if (draft.platform === 'tiktok') {
     if (m && m.kind === 'video' && m.cleared) return null;
-    if (m && m.kind === 'video') {
-      return (
-        <Notice tone="warn" action={libraryLink(L ? 'Ouvrir la Médiathèque' : 'Open the Media library')}>
-          {L
-            ? 'Ce média n’est pas autorisé à la publication — autorisez-le dans la Médiathèque.'
-            : 'This media is not cleared for publication — clear it in the Media library.'}
-        </Notice>
-      );
-    }
+    if (m && m.kind === 'video') return notCleared;
     return (
-      <Notice tone="warn" action={libraryLink(L ? 'Ouvrir la Médiathèque' : 'Open the Media library')}>
+      <Notice
+        tone="warn"
+        action={
+          <>
+            {pick(L ? 'Choisir une vidéo' : 'Choose a video')}
+            {link(L ? 'Téléverser une vidéo' : 'Upload a video', MEDIA_UPLOAD)}
+          </>
+        }
+      >
         {L
-          ? 'Un post TikTok est une vidéo. Filmez-la en suivant le plan, ajoutez-la à la Médiathèque et autorisez-la : vous pourrez ensuite valider ce post.'
-          : 'A TikTok post is a video. Film it following the plan, add it to the Media library and clear it: you can then approve this post.'}
+          ? 'Un post TikTok est une vidéo. Filmez-la en suivant le plan, ajoutez-la à la Médiathèque et autorisez-la, puis joignez-la ici : vous pourrez ensuite valider ce post.'
+          : 'A TikTok post is a video. Film it following the plan, add it to the Media library and clear it, then attach it here: you can then approve this post.'}
       </Notice>
     );
   }
   if (!m) {
     return (
-      <Notice tone="info" action={libraryLink(L ? 'Téléverser un fichier' : 'Upload a file')}>
+      <Notice
+        tone="info"
+        action={
+          <>
+            {pick(L ? 'Choisir un média' : 'Choose media')}
+            {link(L ? 'Téléverser un fichier' : 'Upload a file', MEDIA_UPLOAD)}
+          </>
+        }
+      >
         {L ? 'Aucun média autorisé — le post partira en texte seul' : 'No cleared media — the post will go out as text only'}
       </Notice>
     );
   }
-  if (!m.cleared) {
-    return (
-      <Notice tone="warn" action={libraryLink(L ? 'Ouvrir la Médiathèque' : 'Open the Media library')}>
-        {L
-          ? 'Ce média n’est pas autorisé à la publication — autorisez-le dans la Médiathèque.'
-          : 'This media is not cleared for publication — clear it in the Media library.'}
-      </Notice>
-    );
-  }
+  if (!m.cleared) return notCleared;
   return null;
 }
 
@@ -487,14 +523,16 @@ function DraftEditor({
   draft,
   lang,
   busy,
+  pickFirst,
   onCancel,
   onSave,
 }: {
   draft: DraftDto;
   lang: Language;
   busy: boolean;
+  pickFirst: boolean;
   onCancel: () => void;
-  onSave: (body: string, hashtags: string[]) => void;
+  onSave: (body: string, hashtags: string[], media: string | null | undefined) => void;
 }) {
   const L = lang === 'fr';
   const isLi = draft.platform === 'linkedin';
@@ -503,7 +541,10 @@ function DraftEditor({
   const initial = isLi ? stripLink((p as LinkedInPost).body, url) : (p as TikTokPost).caption;
   const [body, setBody] = useState(initial);
   const [tags, setTags] = useState(p.hashtags.join(' '));
+  const [media, setMedia] = useState<MediaSummary | null>(draft.media);
+  const [picking, setPicking] = useState(pickFirst);
   const id = useId();
+  const mediaChanged = (media?.id ?? null) !== (draft.media?.id ?? null);
   const hashtags = tags
     .split(/\s+/)
     .filter(Boolean)
@@ -514,7 +555,7 @@ function DraftEditor({
       className="studio-editor"
       onSubmit={(e) => {
         e.preventDefault();
-        if (body.trim()) onSave(body, hashtags);
+        if (body.trim()) onSave(body, hashtags, mediaChanged ? (media?.id ?? null) : undefined);
       }}
     >
       {draft.status === 'approved' && (
@@ -541,6 +582,50 @@ function DraftEditor({
         </label>
         <input id={`${id}-tags`} className="inp" value={tags} onChange={(e) => setTags(e.target.value)} autoCapitalize="off" autoCorrect="off" spellCheck={false} />
       </div>
+      <div>
+        <p className="field-label" id={`${id}-media`}>
+          {isLi ? (L ? 'Média (facultatif)' : 'Media (optional)') : L ? 'Vidéo' : 'Video'}
+        </p>
+        <div className="studio-media-choice" aria-labelledby={`${id}-media`} role="group">
+          {media ? (
+            <span className="studio-media-chosen">
+              <AIcon name={media.kind === 'video' ? 'play' : 'eye'} size={18} />
+              <span className="studio-pick-text">
+                <span className="studio-pick-name">{media.file_name}</span>
+                <span className="studio-pick-meta">
+                  {kindLabel(media.kind, lang)}
+                  {media.aspect ? ` · ${media.aspect}` : ''}
+                  {media.cleared ? '' : L ? ' · non autorisé' : ' · not cleared'}
+                </span>
+              </span>
+            </span>
+          ) : (
+            <span className="studio-muted-text">{isLi ? (L ? 'Aucun : texte seul' : 'None: text only') : L ? 'Aucune vidéo jointe' : 'No video attached'}</span>
+          )}
+          <span className="studio-media-choice-actions">
+            <button type="button" className="btn secondary sm" onClick={() => setPicking(true)} disabled={busy}>
+              {media ? (L ? 'Changer de média' : 'Change media') : L ? 'Choisir un média' : 'Choose media'}
+            </button>
+            {media && (
+              <button type="button" className="btn ghost sm" onClick={() => setMedia(null)} disabled={busy}>
+                {L ? 'Retirer' : 'Remove'}
+              </button>
+            )}
+          </span>
+        </div>
+      </div>
+      {picking && (
+        <MediaPicker
+          platform={draft.platform}
+          lang={lang}
+          currentId={media?.id ?? null}
+          onClose={() => setPicking(false)}
+          onPick={(a) => {
+            setMedia({ id: a.id, kind: a.kind, file_name: a.fileName, cleared: a.cleared, aspect: a.aspect });
+            setPicking(false);
+          }}
+        />
+      )}
       <div className="studio-actions">
         <button type="button" className="btn secondary" onClick={onCancel} disabled={busy}>
           {L ? 'Annuler' : 'Cancel'}

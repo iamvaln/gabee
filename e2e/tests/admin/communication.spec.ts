@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { test, expect, type Page } from '@playwright/test';
@@ -9,7 +10,13 @@ import {
   addDays,
   ageWeek,
   mondayOf,
+  resetAudience,
   resetContentStudio,
+  resetJournal,
+  resetStudioSettings,
+  seedAudience,
+  seedFailedJournal,
+  seedMediaAsset,
   seedProposalsWeek,
   seedProposingWeek,
   seedTitles,
@@ -48,6 +55,9 @@ test.beforeAll(async ({ browser }, testInfo) => {
 
 test.beforeEach(async () => {
   await resetContentStudio();
+  await resetJournal();
+  await resetAudience();
+  await resetStudioSettings();
 });
 
 const card = (page: Page, platform: 'LinkedIn' | 'TikTok') => page.getByRole('article', { name: new RegExp(`^${platform}`) });
@@ -281,4 +291,200 @@ test('a proposing week offers to relaunch only once it looks stuck', async ({ pa
   await page.reload();
   await expect(page.getByRole('button', { name: 'Relancer les propositions' })).toBeVisible();
   await expect(page.getByText('Les propositions de cette semaine n’ont pas abouti.', { exact: false })).toBeVisible();
+});
+
+test('upload a video, clear it and attach it to a tiktok draft', async ({ page }) => {
+  const { tiktokDraftId } = await seedTodayBoard();
+  await seedMediaAsset({ kind: 'image', fileName: 'affiche.png', aspect: '16:9', cleared: true });
+
+  // Storage is R2 in production and refused as memory under `next start` (Ruling 14): stand in for the
+  // browser's two storage hops — the signed PUT and the server-side verification — and seed the row
+  // that verification would leave behind.
+  const assetId = randomUUID();
+  const putUrl = 'https://e2e-media.r2.cloudflarestorage.com/media/2026/10/upload.mp4?X-Amz-Signature=e2e';
+  let initBody: unknown = null;
+  let put: { method: string; contentType: string | undefined; size: number } | null = null;
+  let completed = 0;
+  let releasePut!: () => void;
+  const putHeld = new Promise<void>((r) => (releasePut = r));
+  await page.route('**/api/admin/communication/media', (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    initBody = route.request().postDataJSON();
+    return route.fulfill({ json: { assetId, uploadUrl: putUrl } });
+  });
+  await page.route('https://e2e-media.r2.cloudflarestorage.com/**', async (route) => {
+    const cors = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'PUT', 'access-control-allow-headers': 'content-type' };
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+    put = { method: route.request().method(), contentType: route.request().headers()['content-type'], size: route.request().postDataBuffer()?.length ?? 0 };
+    await putHeld;
+    return route.fulfill({ status: 200, headers: cors, body: '' });
+  });
+  await page.route(`**/api/admin/communication/media/${assetId}/complete`, async (route) => {
+    completed++;
+    const row = await seedMediaAsset({ id: assetId, kind: 'video', fileName: 'lecture-du-soir.mp4', aspect: '9:16', tags: ['lecture', 'soir'] });
+    return route.fulfill({
+      json: {
+        asset: { ...row, createdAt: row.createdAt.toISOString(), updatedAt: undefined, objectKey: undefined, uploadedById: undefined, checksum: undefined },
+      },
+    });
+  });
+
+  await page.goto('/admin/communication/medias');
+  await expect(page.getByRole('heading', { name: 'Médiathèque', level: 1 })).toBeVisible();
+  await expect(page.getByRole('article', { name: 'affiche.png' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Téléverser un fichier' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Téléverser un fichier' });
+  const fileInput = dialog.getByLabel('Fichier');
+
+  // Checked in the browser first, in plain French: an SVG is refused before anything is sent.
+  await fileInput.setInputFiles({ name: 'logo.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg/>') });
+  await expect(dialog.getByText(/Ce type de fichier n’est pas accepté/)).toBeVisible();
+
+  const video = Buffer.alloc(64 * 1024, 1);
+  await fileInput.setInputFiles({ name: 'lecture-du-soir.mp4', mimeType: 'video/mp4', buffer: video });
+  // A video needs its format (the server cannot read it from the file).
+  const send = dialog.getByRole('button', { name: 'Envoyer le fichier' });
+  await send.click();
+  await expect(dialog.getByText('Choisissez le format de la vidéo.')).toBeVisible();
+  await dialog.getByLabel('Format de la vidéo').selectOption('9:16');
+  await dialog.getByLabel('Mots-clés (facultatif)').fill('lecture, soir');
+  await send.click();
+
+  // While the file travels to storage: progress, and a way to stop.
+  await expect(dialog.getByRole('progressbar', { name: 'Envoi du fichier' })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Annuler l’envoi' })).toBeVisible();
+  releasePut();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('status').filter({ hasText: 'lecture-du-soir.mp4 est dans la médiathèque' })).toBeVisible();
+
+  expect(initBody).toEqual({ file_name: 'lecture-du-soir.mp4', mime: 'video/mp4', size_bytes: video.length, aspect: '9:16', tags: ['lecture', 'soir'] });
+  expect(put).toEqual({ method: 'PUT', contentType: 'video/mp4', size: video.length });
+  expect(completed).toBe(1);
+
+  // Clear it for publication, with a note.
+  const asset = page.getByRole('article', { name: 'lecture-du-soir.mp4' });
+  await expect(asset.getByText('Non autorisé', { exact: true })).toBeVisible();
+  await asset.getByRole('button', { name: 'Autoriser' }).click();
+  const clear = page.getByRole('dialog', { name: 'Autoriser ce média ?' });
+  await clear.getByLabel('Note (facultatif)').fill('Tourné à la maison, aucun enfant reconnaissable.');
+  await clear.getByRole('button', { name: 'Autoriser la publication' }).click();
+  await expect(asset.getByText('Autorisé', { exact: true })).toBeVisible();
+  await expect(asset.getByText('Tourné à la maison, aucun enfant reconnaissable.')).toBeVisible();
+  const cleared = await prisma.mediaAsset.findUniqueOrThrow({ where: { id: assetId } });
+  expect([cleared.cleared, cleared.clearanceNote]).toEqual([true, 'Tourné à la maison, aucun enfant reconnaissable.']);
+
+  // Attach it to today's TikTok draft from the card, then approve.
+  await page.goto('/admin/communication');
+  const tt = card(page, 'TikTok');
+  await expect(tt.getByRole('button', { name: 'Valider', exact: true })).toBeDisabled();
+  await tt.getByRole('button', { name: 'Modifier' }).click();
+  await tt.getByRole('button', { name: 'Choisir un média' }).click();
+  const picker = page.getByRole('dialog', { name: 'Choisir un média' });
+  // TikTok takes vertical videos only: the cleared 16:9 image is not offered.
+  await expect(picker.getByText('affiche.png')).toHaveCount(0);
+  await picker.getByRole('radio', { name: /lecture-du-soir\.mp4/ }).check();
+  await picker.getByRole('button', { name: 'Joindre ce média' }).click();
+  await expect(tt.getByText('lecture-du-soir.mp4')).toBeVisible();
+  await tt.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(tt.getByText(/Un post TikTok est une vidéo/)).toHaveCount(0);
+  await tt.getByRole('button', { name: 'Valider', exact: true }).click();
+  await expect(tt.getByText('Validé', { exact: true })).toBeVisible();
+
+  const draft = await prisma.contentDraft.findUniqueOrThrow({ where: { id: tiktokDraftId } });
+  expect([draft.mediaAssetId, draft.status]).toEqual([assetId, 'approved']);
+});
+
+test('journal shows a failed job with its error', async ({ page }) => {
+  const { error } = await seedFailedJournal();
+  await page.goto('/admin/communication/journal');
+  await expect(page.getByRole('heading', { name: 'Journal', level: 1 })).toBeVisible();
+
+  const jobs = page.getByRole('region', { name: 'Tâches planifiées' });
+  const failed = jobs.getByRole('listitem').filter({ hasText: 'Rédaction des posts du jour' });
+  await expect(failed.getByText('Abandonné', { exact: true })).toBeVisible();
+  await expect(failed.getByText('4 essais')).toBeVisible();
+  await expect(failed).toHaveClass(/is-failed/);
+  await failed.getByText('Voir l’erreur complète').click();
+  await expect(failed.getByText(error)).toBeVisible();
+  await expect(jobs.getByRole('listitem').filter({ hasText: 'Email des propositions' }).getByText('Réussi', { exact: true })).toBeVisible();
+
+  const agents = page.getByRole('region', { name: 'Appels aux agents' });
+  const run = agents.getByRole('listitem').filter({ hasText: 'Rédacteur LinkedIn' });
+  await expect(run.getByText('Réponse inutilisable', { exact: true })).toBeVisible();
+  await expect(run.getByText('0,0312 $')).toBeVisible();
+
+  // "Échecs seulement" hides what went fine.
+  await page.getByRole('button', { name: 'Échecs seulement' }).click();
+  await expect(jobs.getByRole('listitem').filter({ hasText: 'Email des propositions' })).toHaveCount(0);
+  await expect(failed).toBeVisible();
+});
+
+test('audience shows visits and sign-ups by source and by post', async ({ page }) => {
+  const { linkedinDraftId } = await seedTodayBoard();
+  await seedAudience(linkedinDraftId);
+  await page.goto('/admin/communication/audience');
+  await expect(page.getByRole('heading', { name: 'Audience', level: 1 })).toBeVisible();
+
+  await expect(page.getByRole('group', { name: 'Visites' })).toContainText('8');
+  await expect(page.getByRole('group', { name: 'Inscriptions' })).toContainText('1');
+  await expect(page.getByRole('group', { name: 'Première source' })).toContainText('LinkedIn');
+
+  const bySource = page.getByRole('table', { name: 'Par source' });
+  await expect(bySource.getByRole('row', { name: /LinkedIn 5 1/ })).toBeVisible();
+  await expect(bySource.getByRole('row', { name: /Accès direct 1 0/ })).toBeVisible();
+  const byPost = page.getByRole('table', { name: 'Par publication' });
+  await expect(byPost.getByRole('row').filter({ hasText: 'Lire 10 minutes avant le dîner' })).toContainText('LinkedIn');
+  await expect(byPost.getByRole('row').filter({ hasText: 'Lien de la bio TikTok' })).toContainText('2');
+});
+
+test.describe('as a super-admin', () => {
+  test('owner sets the paid offer and publishes a new editorial line version', async ({ page }) => {
+    await page.goto('/admin/communication/reglages');
+    await expect(page.getByRole('heading', { name: 'Réglages', level: 1 })).toBeVisible();
+    const line = page.getByRole('region', { name: 'Ligne éditoriale' });
+    await expect(line.getByText(/Version 1 · publiée le/)).toBeVisible();
+
+    await line.getByLabel('Une offre payante existe').check();
+    await line.getByLabel('Nom de l’offre').fill('Gabee Famille');
+    await line.getByLabel('Prix', { exact: true }).fill('2 000 FCFA / mois');
+    await line.getByLabel('Ce qu’elle comprend (une ligne par point)').fill('Enfants illimités\nRapports détaillés');
+    await line.getByRole('button', { name: 'Publier la version 2' }).click();
+    await expect(line.getByText(/Version 2 · publiée le/)).toBeVisible();
+
+    const v2 = await prisma.editorialLineVersion.findUniqueOrThrow({ where: { version: 2 } });
+    const facts = v2.productFacts as Record<string, unknown>;
+    expect(facts.paid_offer).toEqual({ name: 'Gabee Famille', price: '2 000 FCFA / mois', includes: ['Enfants illimités', 'Rapports détaillés'] });
+    expect(Array.isArray(facts.modules)).toBe(true); // facts the form does not edit are kept
+
+    // Budget: dollars per month and a percentage threshold.
+    const budget = page.getByRole('region', { name: 'Budget IA' });
+    await budget.getByLabel('Budget mensuel').fill('80');
+    await budget.getByLabel('Alerte à').fill('75');
+    await budget.getByRole('button', { name: 'Enregistrer' }).click();
+    await expect(budget.getByText('Enregistré')).toBeVisible();
+    const settings = await prisma.studioSettings.findUniqueOrThrow({ where: { id: 'default' } });
+    expect([settings.monthlyBudgetUsd, settings.budgetAlertRatio]).toEqual([80, 0.75]);
+  });
+});
+
+test.describe('as a plain admin', () => {
+  const ADMIN_IP = '10.20.0.8'; // its own login bucket
+  test.use({ storageState: { cookies: [], origins: [] }, extraHTTPHeaders: { 'x-forwarded-for': ADMIN_IP } });
+
+  test('admin (not super) sees settings read-only', async ({ page }) => {
+    await page.goto('/admin/login');
+    await page.locator('#ae').fill(FIXTURES.adminOnlyEmail);
+    await page.locator('#ap').fill(FIXTURES.adminOnlyPassword);
+    await page.getByRole('button', { name: 'Se connecter' }).click();
+    await expect(page).toHaveURL(/\/admin$/);
+
+    await page.goto('/admin/communication/reglages');
+    await expect(page.getByRole('heading', { name: 'Réglages', level: 1 })).toBeVisible();
+    await expect(page.getByText('Lecture seule : seul un super-admin peut modifier ces réglages.')).toBeVisible();
+    await expect(page.getByText(/Version 1 · publiée le/)).toBeVisible();
+    await expect(page.getByLabel('Fuseau horaire')).toBeDisabled();
+    await expect(page.getByLabel('Budget mensuel')).toBeDisabled();
+    await expect(page.getByRole('button', { name: /Enregistrer|Publier/ })).toHaveCount(0);
+  });
 });

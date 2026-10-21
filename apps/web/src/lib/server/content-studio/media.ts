@@ -117,7 +117,7 @@ export async function initUpload(
       sizeBytes: size_bytes,
       aspect: parsed.data.aspect ?? null,
       language: parsed.data.language ?? null,
-      tags: parsed.data.tags ?? [],
+      tags: normalizeTags(parsed.data.tags ?? []),
       origin: 'upload',
       status: 'pending',
       uploadedById: actorId,
@@ -204,9 +204,15 @@ export async function setClearance(
   return toMediaDto(updated);
 }
 
+/** Tags as stored: trimmed, without a leading `#`, lower case, each once (empty ones dropped). */
+export function normalizeTags(tags: string[]): string[] {
+  const out = tags.map((t) => t.trim().replace(/^#+/, '').trim().toLocaleLowerCase('fr')).filter(Boolean);
+  return [...new Set(out)];
+}
+
 export async function setTags(assetId: string, tags: string[]): Promise<MediaAssetDto> {
   await loadAsset(assetId);
-  return toMediaDto(await prisma.mediaAsset.update({ where: { id: assetId }, data: { tags } }));
+  return toMediaDto(await prisma.mediaAsset.update({ where: { id: assetId }, data: { tags: normalizeTags(tags) } }));
 }
 
 export async function listMedia(filter: {
@@ -227,6 +233,31 @@ export async function listMedia(filter: {
     orderBy: { createdAt: 'desc' },
   });
   return rows.map(toMediaDto);
+}
+
+/** How many drafts use a file, by where they stand (the clearance dialog warns about approved and published posts). */
+export type MediaUsage = { approved: number; published: number; other: number };
+export type LibraryAssetDto = MediaAssetDto & { usage: MediaUsage };
+
+/** The Médiathèque list: `listMedia` plus, per file, the drafts it is attached to. */
+export async function listLibrary(filter: Parameters<typeof listMedia>[0]): Promise<LibraryAssetDto[]> {
+  const assets = await listMedia(filter);
+  const counts = assets.length
+    ? await prisma.contentDraft.groupBy({
+        by: ['mediaAssetId', 'status'],
+        where: { mediaAssetId: { in: assets.map((a) => a.id) } },
+        _count: { _all: true },
+      })
+    : [];
+  return assets.map((a) => {
+    const usage: MediaUsage = { approved: 0, published: 0, other: 0 };
+    for (const c of counts) {
+      if (c.mediaAssetId !== a.id) continue;
+      const slot = c.status === 'approved' || c.status === 'published' ? c.status : 'other';
+      usage[slot] += c._count._all;
+    }
+    return { ...a, usage };
+  });
 }
 
 /**

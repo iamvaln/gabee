@@ -195,6 +195,10 @@ export const MEDIA_MAX_VIDEO_BYTES = 300 * 1024 * 1024;
 export const MEDIA_ASPECTS = ['16:9', '1:1', '9:16', '4:5'] as const;
 export type MediaAspect = (typeof MEDIA_ASPECTS)[number];
 
+/** Library tags (module, level, theme): the same limits at upload and when edited. */
+export const MEDIA_MAX_TAGS = 10;
+export const MediaTagsSchema = z.array(z.string().min(1).max(40)).max(MEDIA_MAX_TAGS);
+
 export const MediaUploadInitSchema = z
   .object({
     file_name: z.string().min(1).max(200),
@@ -202,7 +206,7 @@ export const MediaUploadInitSchema = z
     size_bytes: z.number().int().positive(),
     aspect: z.enum(MEDIA_ASPECTS).optional(),
     language: z.enum(CONTENT_LANGUAGES).optional(),
-    tags: z.array(z.string().min(1).max(40)).max(10).optional(),
+    tags: MediaTagsSchema.optional(),
   })
   .superRefine((v, ctx) => {
     if (v.mime === 'video/mp4' && !v.aspect) {

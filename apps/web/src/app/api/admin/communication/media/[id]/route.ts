@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MediaClearanceSchema } from '@gabee/types';
+import { MediaClearanceSchema, MediaTagsSchema } from '@gabee/types';
 import { route, json, readJson, requireAdmin } from '@/lib/server/http';
 import { auditMedia, setClearance, setTags } from '@/lib/server/content-studio/media';
 
@@ -10,7 +10,7 @@ type Ctx = { params: Promise<{ id: string }> };
 const PatchSchema = z.object({
   cleared: z.boolean().optional(),
   note: MediaClearanceSchema.shape.note,
-  tags: z.array(z.string().min(1).max(40)).max(20).optional(),
+  tags: MediaTagsSchema.optional(),
 });
 
 // Clearance and tags: the owner and admins both clear media.

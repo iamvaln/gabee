@@ -1,6 +1,6 @@
 import { MediaUploadInitSchema } from '@gabee/types';
 import { route, json, readJson, requireAdmin } from '@/lib/server/http';
-import { auditMedia, initUpload, listMedia } from '@/lib/server/content-studio/media';
+import { auditMedia, initUpload, listLibrary } from '@/lib/server/content-studio/media';
 
 export const runtime = 'nodejs';
 
@@ -8,7 +8,7 @@ export const GET = route(async (req) => {
   await requireAdmin(req);
   const q = req.nextUrl.searchParams;
   const cleared = q.get('cleared');
-  const assets = await listMedia({
+  const assets = await listLibrary({
     kind: q.get('kind') ?? undefined,
     cleared: cleared === null ? undefined : cleared === 'true',
     aspect: q.get('aspect') ?? undefined,

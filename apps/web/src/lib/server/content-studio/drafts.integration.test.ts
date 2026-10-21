@@ -233,7 +233,7 @@ test('tiktok approval requires a cleared video', async () => {
   await assert.rejects(approveDraft(draft.id, actor), isHttp(409, 'video_required'));
 
   const image = await createMediaAsset(prisma, { kind: 'image', aspect: '9:16', cleared: true });
-  await editDraft(draft.id, { media_asset_id: image.id }, actor);
+  await prisma.contentDraft.update({ where: { id: draft.id }, data: { mediaAssetId: image.id } });
   await assert.rejects(approveDraft(draft.id, actor), isHttp(409, 'video_required'));
 
   const video = await createMediaAsset(prisma, { kind: 'video', mime: 'video/mp4', aspect: '9:16', cleared: true });
@@ -252,6 +252,30 @@ test('linkedin approval accepts text only but refuses an uncleared media', async
   await assert.rejects(approveDraft(withMedia.id, actor), isHttp(409, 'media_not_cleared'));
   await editDraft(withMedia.id, { media_asset_id: null }, actor);
   assert.equal((await approveDraft(withMedia.id, actor)).status, 'approved');
+});
+
+test('editDraft attaches only a ready file that fits the platform', async () => {
+  const { slot } = await fixture();
+  const tiktok = await readyDraft(slot.id, 'tiktok');
+  const linkedin = await readyDraft(slot.id, 'linkedin');
+
+  // A TikTok post is a video: an image is refused, whatever its clearance.
+  const image = await createMediaAsset(prisma, { kind: 'image', aspect: '9:16', cleared: true });
+  await assert.rejects(editDraft(tiktok.id, { media_asset_id: image.id }, actor), isHttp(422, 'media_kind_mismatch'));
+  // An upload that never completed, or was rejected, is not a usable file.
+  for (const status of ['pending', 'verifying', 'rejected']) {
+    const video = await createMediaAsset(prisma, { kind: 'video', mime: 'video/mp4', aspect: '9:16', status });
+    await assert.rejects(editDraft(tiktok.id, { media_asset_id: video.id }, actor), isHttp(422, 'media_not_ready'));
+  }
+  const unchanged = await prisma.contentDraft.findUniqueOrThrow({ where: { id: tiktok.id } });
+  assert.equal(unchanged.mediaAssetId, null);
+  assert.equal(await prisma.contentDraftVersion.count({ where: { draftId: tiktok.id } }), 1, 'a refused attach writes no version');
+
+  // An uncleared video may be attached (approval waits for its clearance); LinkedIn takes images and videos.
+  const video = await createMediaAsset(prisma, { kind: 'video', mime: 'video/mp4', aspect: '9:16', cleared: false });
+  assert.equal((await editDraft(tiktok.id, { media_asset_id: video.id }, actor)).media?.id, video.id);
+  assert.equal((await editDraft(linkedin.id, { media_asset_id: image.id }, actor)).media?.id, image.id);
+  assert.equal((await editDraft(linkedin.id, { media_asset_id: video.id }, actor)).media?.id, video.id);
 });
 
 test('markPublished closes the slot when every draft is published', async () => {
