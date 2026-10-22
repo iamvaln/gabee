@@ -54,6 +54,27 @@ const AGENT_ERROR: Record<string, Bi> = {
   agent_error: { fr: "Une erreur inattendue s'est produite pendant l'appel.", en: 'An unexpected error happened during the call.' },
 };
 
+/** What to do once a job gave up (no automatic retry): by job kind. */
+const RESTART: Record<string, Bi> = {
+  'day.generate': {
+    fr: 'Les posts de ce jour n’ont pas été rédigés. Ouvrez Aujourd’hui et utilisez « Réessayer » sur chaque post.',
+    en: "This day's posts were not written. Open Today and use “Try again” on each post.",
+  },
+  'week.propose': {
+    fr: 'Les propositions de cette semaine n’ont pas été préparées. Ouvrez Semaine et utilisez « Relancer les propositions ».',
+    en: "This week's proposals were not prepared. Open Week and use “Relaunch the proposals”.",
+  },
+};
+const MISSED: Bi = {
+  fr: 'Cette exécution n’a pas eu lieu (email ou contrôle manqué). Rien n’est bloqué : la période suivante se déroule normalement.',
+  en: 'This run did not happen (missed email or check). Nothing is blocked: the next period runs normally.',
+};
+const ALERT: Record<'sent' | 'failed' | 'none', Bi> = {
+  sent: { fr: 'Un email d’alerte a été envoyé.', en: 'An alert email was sent.' },
+  failed: { fr: 'L’email d’alerte n’a pas pu partir.', en: 'The alert email could not be sent.' },
+  none: { fr: 'Aucun email d’alerte n’a été enregistré.', en: 'No alert email was recorded.' },
+};
+
 const ORIGIN: Record<string, Bi> = {
   scheduled_job: { fr: 'Planifié', en: 'Scheduled' },
   user_action: { fr: 'Action dans l’admin', en: 'Admin action' },
@@ -136,8 +157,8 @@ export function JournalClient({ lang }: { lang: Language }) {
       sub={
         data
           ? t(
-              `Les 50 dernières tâches planifiées et les 50 derniers appels aux agents. Heures du studio (${data.timezone}).`,
-              `The last 50 scheduled jobs and 50 agent calls. Studio time (${data.timezone}).`,
+              `Les 50 dernières tâches planifiées et les 50 derniers appels aux agents. Heures du studio (${data.timezone}). Les contrôles horaires du budget réussis ne sont pas listés.`,
+              `The last 50 scheduled jobs and 50 agent calls. Studio time (${data.timezone}). Successful hourly budget checks are not listed.`,
             )
           : undefined
       }
@@ -169,23 +190,30 @@ export function JournalClient({ lang }: { lang: Language }) {
   const agentFailed = (a: AgentRunEntry) => !!AGENT_STATUS[a.status]?.failed;
   const jobs = filter === 'failed' ? data.jobs.filter(jobFailed) : data.jobs;
   const agents = filter === 'failed' ? data.agents.filter(agentFailed) : data.agents;
-  const abandoned = data.jobs.filter((j) => j.status === 'abandoned').length;
+  const abandonedJobs = data.jobs.filter((j) => j.status === 'abandoned');
+  // Only the writing and the proposals leave something to restart by hand.
+  const blocking = abandonedJobs.some((j) => RESTART[j.job_key]);
   const empty = data.jobs.length === 0 && data.agents.length === 0;
 
   return (
     <>
       {head}
       {loadError && <ErrorNotice lang={lang} message={loadError} onRetry={() => void load()} />}
-      {abandoned > 0 && (
+      {abandonedJobs.length > 0 && (
         <Notice tone="warn">
           <p>
             {L
-              ? abandoned > 1
-                ? `${abandoned} tâches planifiées ont abandonné après 4 essais et ne seront pas relancées seules. Lisez leur erreur ci-dessous, puis relancez depuis Aujourd’hui ou Semaine (Réessayer, Relancer).`
-                : 'Une tâche planifiée a abandonné après 4 essais et ne sera pas relancée seule. Lisez son erreur ci-dessous, puis relancez depuis Aujourd’hui ou Semaine (Réessayer, Relancer).'
-              : abandoned > 1
-                ? `${abandoned} scheduled jobs gave up after 4 attempts and will not run again by themselves. Read their error below, then retry from Today or Week (Try again, Relaunch).`
-                : 'A scheduled job gave up after 4 attempts and will not run again by itself. Read its error below, then retry from Today or Week (Try again, Relaunch).'}
+              ? `${abandonedJobs.length > 1 ? `${abandonedJobs.length} tâches planifiées ont abandonné` : 'Une tâche planifiée a abandonné'} après 4 essais${abandonedJobs.length > 1 ? ' : elles ne seront pas relancées seules.' : ' : elle ne sera pas relancée seule.'} `
+              : `${abandonedJobs.length > 1 ? `${abandonedJobs.length} scheduled jobs gave up` : 'A scheduled job gave up'} after 4 attempts and will not run again by ${abandonedJobs.length > 1 ? 'themselves' : 'itself'}. `}
+            {blocking
+              ? t(
+                  'Relancez à la main ce qui manque (indiqué sur chaque ligne ci-dessous).',
+                  'Restart what is missing by hand (shown on each line below).',
+                )
+              : t(
+                  'Rien n’est bloqué : il s’agit d’emails ou de contrôles, et la période suivante se déroule normalement.',
+                  'Nothing is blocked: these are emails or checks, and the next period runs normally.',
+                )}
           </p>
         </Notice>
       )}
@@ -295,7 +323,7 @@ function JobRow({ job, tz, lang }: { job: JobRunEntry; tz: string; lang: Languag
         : `Next attempt at ${studioTime(job.next_attempt_at, tz, lang).split(' · ')[1]}.`
       : null;
   } else if (job.status === 'abandoned') {
-    what = L ? 'Plus aucun essai automatique : un email a prévenu les destinataires.' : 'No more automatic attempts: recipients were emailed.';
+    what = `${(RESTART[job.job_key] ?? MISSED)[lang]} ${job.alert ? ALERT[job.alert][lang] : ''}`.trim();
   } else if (job.status === 'waiting') {
     what = L ? 'Attend que la semaine soit validée ou que les posts soient prêts.' : 'Waiting for the week to be validated or the posts to be ready.';
   }

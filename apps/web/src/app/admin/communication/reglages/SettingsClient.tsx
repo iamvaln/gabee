@@ -2,18 +2,22 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { OBJECTIVE_TYPES, type Language } from '@gabee/types';
+import { OBJECTIVE_TYPES, StudioSettingsUpdateSchema, type Language } from '@gabee/types';
 import type { EditorialLineDto, ObjectiveDto, StudioSettingsDto, StudioSettingsView } from '@/lib/server/content-studio/settings';
 import { PageHead } from '../../_shell/primitives';
 import { AIcon } from '../../_shell/icons';
 import { api, reportUnexpected } from '../_components/api';
+import { ConfirmDialog } from '../_components/Dialog';
 import { ErrorNotice, Notice } from '../_components/ErrorNotice';
 import { errorText } from '../_components/errors';
 import { dateTime, type Bi } from '../_components/format';
+import { useUnsavedGuard } from '../_components/useUnsavedGuard';
+import { usd } from '../../_shell/ai-labels';
 import { ProductFactsForm } from './ProductFactsForm';
 import { buildFacts, factsErrors, factsForm, type FactsForm } from './product-facts';
 
 type View = StudioSettingsView & { can_edit: boolean };
+type OnDirty = (card: string, dirty: boolean) => void;
 type ObjectiveType = (typeof OBJECTIVE_TYPES)[number];
 
 const OBJECTIVE_LABEL: Record<ObjectiveType, Bi> = {
@@ -23,7 +27,6 @@ const OBJECTIVE_LABEL: Record<ObjectiveType, Bi> = {
   awareness: { fr: 'Notoriété', en: 'Awareness' },
 };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TARGETS = 6;
 
 /** Studio-local `YYYY-MM` of now, and the month after. */
@@ -49,6 +52,10 @@ export function SettingsClient({ lang }: { lang: Language }) {
   const t = (fr: string, en: string) => (L ? fr : en);
   const [view, setView] = useState<View | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Which cards hold unsaved edits: leaving the page asks first.
+  const [dirtyCards, setDirtyCards] = useState<Record<string, boolean>>({});
+  const onDirty = useCallback<OnDirty>((card, dirty) => setDirtyCards((d) => (d[card] === dirty ? d : { ...d, [card]: dirty })), []);
+  const guard = useUnsavedGuard(Object.values(dirtyCards).some(Boolean), lang);
 
   const load = useCallback(async () => {
     try {
@@ -103,14 +110,23 @@ export function SettingsClient({ lang }: { lang: Language }) {
         <ObjectiveCard
           lang={lang}
           readOnly={ro}
+          onDirty={onDirty}
           tz={view.settings.timezone}
           objectives={view.objectives}
           onSaved={(o) => setView((v) => v && { ...v, objectives: [...v.objectives.filter((x) => x.month !== o.month), o].sort((a, b) => a.month.localeCompare(b.month)) })}
         />
-        <EditorialCard lang={lang} readOnly={ro} line={view.editorial_line} onPublished={(line) => setView((v) => v && { ...v, editorial_line: line })} />
-        <NotificationsCard lang={lang} readOnly={ro} settings={view.settings} onSaved={(s) => setView((v) => v && { ...v, settings: s })} />
-        <BudgetCard lang={lang} readOnly={ro} settings={view.settings} onSaved={(s) => setView((v) => v && { ...v, settings: s })} />
+        <EditorialCard lang={lang} readOnly={ro} onDirty={onDirty} line={view.editorial_line} onPublished={(line) => setView((v) => v && { ...v, editorial_line: line })} />
+        <NotificationsCard lang={lang} readOnly={ro} onDirty={onDirty} settings={view.settings} onSaved={(s) => setView((v) => v && { ...v, settings: s })} />
+        <BudgetCard
+          lang={lang}
+          readOnly={ro}
+          onDirty={onDirty}
+          settings={view.settings}
+          spent={view.budget}
+          onSaved={(s) => setView((v) => v && { ...v, settings: s })}
+        />
       </div>
+      {guard}
     </>
   );
 }
@@ -162,9 +178,8 @@ function SettingsCard({
         </h2>
         {sub && <div className="studio-settings-sub">{sub}</div>}
       </div>
-      <fieldset className="studio-fieldset studio-settings-body" disabled={readOnly}>
-        {children}
-      </fieldset>
+      {/* Read-only: text stays selectable (readOnly fields); only choices are disabled. */}
+      <div className="studio-fieldset studio-settings-body">{children}</div>
       {!readOnly && footer && <div className="studio-settings-foot">{footer}</div>}
     </section>
   );
@@ -205,12 +220,14 @@ const targetRows = (targets: Record<string, number> | null): TargetRow[] =>
 function ObjectiveCard({
   lang,
   readOnly,
+  onDirty,
   tz,
   objectives,
   onSaved,
 }: {
   lang: Language;
   readOnly: boolean;
+  onDirty: OnDirty;
   tz: string;
   objectives: ObjectiveDto[];
   onSaved: (o: ObjectiveDto) => void;
@@ -225,6 +242,8 @@ function ObjectiveCard({
   const [statement, setStatement] = useState('');
   const [rows, setRows] = useState<TargetRow[]>([]);
   const [touched, setTouched] = useState(false);
+  /** A month the owner asked to switch to while the form holds unsaved edits. */
+  const [switchTo, setSwitchTo] = useState<string | null>(null);
   const { state, run, touch } = useSave(lang);
 
   // Show the chosen month's saved objective (again after a save or a month switch).
@@ -233,7 +252,7 @@ function ObjectiveCard({
     setStatement(current?.statement ?? '');
     setRows(targetRows(current?.targets ?? null));
     setTouched(false);
-  }, [current]);
+  }, [current, month]);
 
   const targets: Record<string, number> = {};
   let targetsOk = true;
@@ -252,6 +271,7 @@ function ObjectiveCard({
     targets: targetsOk ? null : t('Chaque cible a un nom et un nombre positif.', 'Each target has a name and a positive number.'),
   };
   const valid = !problems.type && !problems.statement && !problems.targets;
+  useEffect(() => onDirty('objective', dirty), [dirty, onDirty]);
 
   const save = (e: React.FormEvent) => {
     e.preventDefault();
@@ -285,8 +305,8 @@ function ObjectiveCard({
               type="button"
               className={'chip' + (month === m ? ' on' : '')}
               aria-pressed={month === m}
-              // Switching month drops unsaved edits: the fieldset is read-only for admins, so it stays reachable.
-              onClick={() => setMonth(m)}
+              // Readable by admins too. Switching drops unsaved edits, so it asks first.
+              onClick={() => (m === month ? undefined : dirty ? setSwitchTo(m) : setMonth(m))}
             >
               {monthLabel(m, lang)}
             </button>
@@ -308,6 +328,7 @@ function ObjectiveCard({
             className="inp"
             value={type}
             onChange={(e) => change(setType)(e.target.value as ObjectiveType | '')}
+            disabled={readOnly}
             aria-invalid={touched && !!problems.type}
           >
             <option value="">{t('Choisir…', 'Choose…')}</option>
@@ -331,7 +352,8 @@ function ObjectiveCard({
             maxLength={500}
             value={statement}
             onChange={(e) => change(setStatement)(e.target.value)}
-            placeholder={t('ex. : 30 nouvelles familles inscrites, surtout via LinkedIn.', 'e.g. 30 new families signed up, mostly from LinkedIn.')}
+            readOnly={readOnly}
+            placeholder={readOnly ? undefined : t('ex. : 30 nouvelles familles inscrites, surtout via LinkedIn.', 'e.g. 30 new families signed up, mostly from LinkedIn.')}
             aria-invalid={touched && !!problems.statement}
           />
           {touched && problems.statement && <p className="studio-field-error">{problems.statement}</p>}
@@ -345,8 +367,9 @@ function ObjectiveCard({
                 <input
                   className="inp"
                   aria-label={t(`Indicateur ${i + 1}`, `Metric ${i + 1}`)}
-                  placeholder={t('ex. inscriptions', 'e.g. sign-ups')}
+                  placeholder={readOnly ? undefined : t('ex. inscriptions', 'e.g. sign-ups')}
                   value={r.label}
+                  readOnly={readOnly}
                   maxLength={60}
                   onChange={(e) => change(setRows)(rows.map((x) => (x.key === r.key ? { ...x, label: e.target.value } : x)))}
                 />
@@ -354,8 +377,9 @@ function ObjectiveCard({
                   className="inp studio-target-value"
                   aria-label={t(`Valeur visée ${i + 1}`, `Target value ${i + 1}`)}
                   inputMode="decimal"
-                  placeholder="30"
+                  placeholder={readOnly ? undefined : '30'}
                   value={r.value}
+                  readOnly={readOnly}
                   onChange={(e) => change(setRows)(rows.map((x) => (x.key === r.key ? { ...x, value: e.target.value } : x)))}
                 />
                 {!readOnly && (
@@ -380,13 +404,43 @@ function ObjectiveCard({
           )}
         </fieldset>
       </form>
+      {switchTo && (
+        <ConfirmDialog
+          lang={lang}
+          title={t('Changer de mois sans enregistrer ?', 'Switch month without saving?')}
+          body={
+            L
+              ? `Vos modifications de l’objectif de ${monthLabel(month, lang).toLowerCase()} ne sont pas enregistrées. Elles seront perdues.`
+              : `Your changes to the ${monthLabel(month, lang)} objective are not saved. They will be lost.`
+          }
+          confirmLabel={t(`Ouvrir ${monthLabel(switchTo, lang).toLowerCase()}`, `Open ${monthLabel(switchTo, lang)}`)}
+          danger
+          onConfirm={() => {
+            setMonth(switchTo);
+            setSwitchTo(null);
+          }}
+          onClose={() => setSwitchTo(null)}
+        />
+      )}
     </SettingsCard>
   );
 }
 
 // ── Editorial line + product facts ──
 
-function EditorialCard({ lang, readOnly, line, onPublished }: { lang: Language; readOnly: boolean; line: EditorialLineDto | null; onPublished: (l: EditorialLineDto) => void }) {
+function EditorialCard({
+  lang,
+  readOnly,
+  onDirty,
+  line,
+  onPublished,
+}: {
+  lang: Language;
+  readOnly: boolean;
+  onDirty: OnDirty;
+  line: EditorialLineDto | null;
+  onPublished: (l: EditorialLineDto) => void;
+}) {
   const L = lang === 'fr';
   const t = (fr: string, en: string) => (L ? fr : en);
   const id = useId();
@@ -401,6 +455,7 @@ function EditorialCard({ lang, readOnly, line, onPublished }: { lang: Language; 
   const bodyProblem = body.trim() === '' ? t('Le texte ne peut pas être vide.', 'The text cannot be empty.') : null;
   const valid = !bodyProblem && Object.values(errors).every((e) => !e);
   const nextVersion = (line?.version ?? 0) + 1;
+  useEffect(() => onDirty('editorial', dirty), [dirty, onDirty]);
 
   const publish = (e: React.FormEvent) => {
     e.preventDefault();
@@ -468,8 +523,9 @@ function EditorialCard({ lang, readOnly, line, onPublished }: { lang: Language; 
             maxLength={20000}
             value={body}
             onChange={(e) => setBody(e.target.value)}
+            readOnly={readOnly}
             aria-invalid={touched && !!bodyProblem}
-            spellCheck
+            spellCheck={!readOnly}
           />
           {touched && bodyProblem && <p className="studio-field-error">{bodyProblem}</p>}
           <p className="help">
@@ -495,42 +551,70 @@ function zones(current: string): string[] {
   return list.includes(current) ? list : [current, ...list];
 }
 
-function NotificationsCard({ lang, readOnly, settings, onSaved }: { lang: Language; readOnly: boolean; settings: StudioSettingsDto; onSaved: (s: StudioSettingsDto) => void }) {
+function NotificationsCard({
+  lang,
+  readOnly,
+  onDirty,
+  settings,
+  onSaved,
+}: {
+  lang: Language;
+  readOnly: boolean;
+  onDirty: OnDirty;
+  settings: StudioSettingsDto;
+  onSaved: (s: StudioSettingsDto) => void;
+}) {
   const L = lang === 'fr';
   const t = (fr: string, en: string) => (L ? fr : en);
   const id = useId();
   const [recipients, setRecipients] = useState(settings.recipients.join('\n'));
   const [tz, setTz] = useState(settings.timezone);
   const [touched, setTouched] = useState(false);
+  /** Saving a new time zone asks first: it moves the studio's day boundaries. */
+  const [confirmTz, setConfirmTz] = useState(false);
   const { state, run, touch } = useSave(lang);
   const options = useMemo(() => zones(settings.timezone), [settings.timezone]);
 
   const list = [...new Set(recipients.split(/[\s,;]+/).map((r) => r.trim()).filter(Boolean))];
-  const bad = list.filter((r) => !EMAIL_RE.test(r));
-  const problem =
-    list.length === 0
-      ? t('Indiquez au moins une adresse.', 'Enter at least one address.')
-      : list.length > 10
-        ? t('10 adresses au plus.', 'At most 10 addresses.')
-        : bad.length
-          ? t(`Adresse invalide : ${bad.join(', ')}`, `Invalid address: ${bad.join(', ')}`)
-          : null;
   const recipientsChanged = JSON.stringify(list) !== JSON.stringify(settings.recipients);
-  const dirty = recipientsChanged || tz !== settings.timezone;
+  const tzChanged = tz !== settings.timezone;
+  // The server's own rule (StudioSettingsUpdate): 1 to 10 valid addresses — checked only when the list changes,
+  // so an empty list kept as is never blocks a time-zone change.
+  let problem: string | null = null;
+  if (recipientsChanged) {
+    const parsed = StudioSettingsUpdateSchema.safeParse({ recipients: list });
+    if (list.length === 0) {
+      problem = t(
+        'Gardez au moins une adresse : la liste ne peut pas être vidée (sans destinataire, les emails partiraient à l’adresse admin par défaut).',
+        'Keep at least one address: the list cannot be emptied (without recipients, emails would go to the default admin address).',
+      );
+    } else if (!parsed.success) {
+      const bad = [...new Set(parsed.error.issues.filter((i) => i.path.length === 2).map((i) => list[i.path[1] as number]))];
+      problem = bad.length
+        ? t(`Adresse invalide : ${bad.join(', ')}`, `Invalid address: ${bad.join(', ')}`)
+        : t('10 adresses au plus.', 'At most 10 addresses.');
+    }
+  }
+  const dirty = recipientsChanged || tzChanged;
+  useEffect(() => onDirty('notifications', dirty), [dirty, onDirty]);
 
-  const save = (e: React.FormEvent) => {
-    e.preventDefault();
-    setTouched(true);
-    if (problem || !dirty) return;
+  const send = () =>
     void run('settings-notifications', async () => {
       const res = await api<{ settings: StudioSettingsDto }>('/settings', {
         method: 'PATCH',
-        body: { ...(recipientsChanged ? { recipients: list } : {}), ...(tz !== settings.timezone ? { timezone: tz } : {}) },
+        body: { ...(recipientsChanged ? { recipients: list } : {}), ...(tzChanged ? { timezone: tz } : {}) },
       });
       onSaved(res.settings);
       setRecipients(res.settings.recipients.join('\n'));
       setTz(res.settings.timezone);
     });
+
+  const save = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTouched(true);
+    if (problem || !dirty) return;
+    if (tzChanged) setConfirmTz(true);
+    else send();
   };
 
   return (
@@ -551,18 +635,26 @@ function NotificationsCard({ lang, readOnly, settings, onSaved }: { lang: Langua
             rows={3}
             value={recipients}
             onChange={(e) => setRecipients(e.target.value)}
+            readOnly={readOnly}
             autoCapitalize="off"
             spellCheck={false}
             inputMode="email"
             aria-invalid={touched && !!problem}
+            aria-describedby={`${id}-to-help`}
           />
-          {touched && problem ? <p className="studio-field-error">{problem}</p> : <p className="help">{t('10 adresses au plus.', 'At most 10 addresses.')}</p>}
+          <p id={`${id}-to-help`} className={touched && problem ? 'studio-field-error' : 'help'}>
+            {touched && problem
+              ? problem
+              : list.length === 0
+                ? t('Sans destinataire, les emails partent à l’adresse admin par défaut.', 'Without recipients, emails go to the default admin address.')
+                : t('10 adresses au plus.', 'At most 10 addresses.')}
+          </p>
         </div>
         <div>
           <label className="field-label" htmlFor={`${id}-tz`}>
             {t('Fuseau horaire', 'Time zone')}
           </label>
-          <select id={`${id}-tz`} className="inp" value={tz} onChange={(e) => setTz(e.target.value)}>
+          <select id={`${id}-tz`} className="inp" value={tz} onChange={(e) => setTz(e.target.value)} disabled={readOnly}>
             {options.map((z) => (
               <option key={z} value={z}>
                 {z.replace(/_/g, ' ')}
@@ -577,13 +669,45 @@ function NotificationsCard({ lang, readOnly, settings, onSaved }: { lang: Langua
           </p>
         </div>
       </form>
+      {confirmTz && (
+        <ConfirmDialog
+          lang={lang}
+          title={t('Changer le fuseau horaire ?', 'Change the time zone?')}
+          body={
+            L
+              ? `Le studio passe de ${settings.timezone} à ${tz}. Les jours commencent alors à minuit dans ce fuseau : les tâches (4 h, 5 h, dimanche 6 h…) et les limites de jour se décalent dès la prochaine heure, et l’Audience compte les jours autrement. Les semaines déjà planifiées gardent leurs dates.`
+              : `The studio moves from ${settings.timezone} to ${tz}. Days then start at midnight in that zone: the jobs (4 am, 5 am, Sunday 6 am…) and day boundaries shift from the next hour, and Audience counts days differently. Weeks already planned keep their dates.`
+          }
+          confirmLabel={t('Changer le fuseau', 'Change the zone')}
+          onConfirm={() => {
+            setConfirmTz(false);
+            send();
+          }}
+          onClose={() => setConfirmTz(false)}
+        />
+      )}
     </SettingsCard>
   );
 }
 
 // ── AI budget ──
 
-function BudgetCard({ lang, readOnly, settings, onSaved }: { lang: Language; readOnly: boolean; settings: StudioSettingsDto; onSaved: (s: StudioSettingsDto) => void }) {
+function BudgetCard({
+  lang,
+  readOnly,
+  onDirty,
+  settings,
+  spent,
+  onSaved,
+}: {
+  lang: Language;
+  readOnly: boolean;
+  onDirty: OnDirty;
+  settings: StudioSettingsDto;
+  /** This studio-local month's Communication spend (what the budget counts). */
+  spent: StudioSettingsView['budget'];
+  onSaved: (s: StudioSettingsDto) => void;
+}) {
   const L = lang === 'fr';
   const t = (fr: string, en: string) => (L ? fr : en);
   const id = useId();
@@ -598,6 +722,7 @@ function BudgetCard({ lang, readOnly, settings, onSaved }: { lang: Language; rea
   const percentProblem = !(Number.isFinite(p) && p >= 1 && p <= 100) ? t('Entre 1 et 100 %.', 'Between 1 and 100%.') : null;
   const ratio = Math.round(p) / 100;
   const dirty = b !== settings.monthly_budget_usd || ratio !== settings.budget_alert_ratio;
+  useEffect(() => onDirty('budget', dirty), [dirty, onDirty]);
 
   const save = (e: React.FormEvent) => {
     e.preventDefault();
@@ -618,10 +743,20 @@ function BudgetCard({ lang, readOnly, settings, onSaved }: { lang: Language; rea
     <SettingsCard
       title={t('Budget IA', 'AI budget')}
       sub={
-        <p>
-          {t('Couvre les tâches Communication du mois. Un email prévient les destinataires quand la dépense atteint le seuil. ', 'Covers the month’s Communication tasks. An email warns the recipients when spending reaches the threshold. ')}
-          <Link href="/admin/ops/ai-usage">{t('Voir la dépense', 'See spending')}</Link>
-        </p>
+        <>
+          <p>
+            {t(
+              'Couvre les tâches Communication du mois (heure du studio). Un email prévient les destinataires quand la dépense atteint le seuil.',
+              'Covers the month’s Communication tasks (studio time). An email warns the recipients when spending reaches the threshold.',
+            )}
+          </p>
+          <p className="studio-budget-now">
+            {L
+              ? `Ce mois-ci : ${usd(spent.spent_usd, lang)} dépensés sur ${usd(settings.monthly_budget_usd, lang)}. `
+              : `This month: ${usd(spent.spent_usd, lang)} spent of ${usd(settings.monthly_budget_usd, lang)}. `}
+            <Link href="/admin/ops/ai-usage">{t('Voir la dépense', 'See spending')}</Link>
+          </p>
+        </>
       }
       readOnly={readOnly}
       footer={<SaveBar lang={lang} state={state} label={t('Enregistrer', 'Save')} dirty={dirty} form={`${id}-form`} />}
@@ -632,7 +767,7 @@ function BudgetCard({ lang, readOnly, settings, onSaved }: { lang: Language; rea
             {t('Budget mensuel', 'Monthly budget')}
           </label>
           <div className="studio-unit">
-            <input id={`${id}-budget`} className="inp" inputMode="decimal" value={budget} onChange={(e) => setBudget(e.target.value)} aria-invalid={touched && !!budgetProblem} aria-describedby={`${id}-budget-unit`} />
+            <input id={`${id}-budget`} className="inp" inputMode="decimal" value={budget} onChange={(e) => setBudget(e.target.value)} readOnly={readOnly} aria-invalid={touched && !!budgetProblem} aria-describedby={`${id}-budget-unit`} />
             <span id={`${id}-budget-unit`}>{t('USD / mois', 'USD / month')}</span>
           </div>
           {touched && budgetProblem && <p className="studio-field-error">{budgetProblem}</p>}
@@ -642,7 +777,7 @@ function BudgetCard({ lang, readOnly, settings, onSaved }: { lang: Language; rea
             {t('Alerte à', 'Alert at')}
           </label>
           <div className="studio-unit">
-            <input id={`${id}-ratio`} className="inp" inputMode="numeric" value={percent} onChange={(e) => setPercent(e.target.value)} aria-invalid={touched && !!percentProblem} aria-describedby={`${id}-ratio-unit`} />
+            <input id={`${id}-ratio`} className="inp" inputMode="numeric" value={percent} onChange={(e) => setPercent(e.target.value)} readOnly={readOnly} aria-invalid={touched && !!percentProblem} aria-describedby={`${id}-ratio-unit`} />
             <span id={`${id}-ratio-unit`}>{t('% du budget', '% of budget')}</span>
           </div>
           {touched && percentProblem ? (

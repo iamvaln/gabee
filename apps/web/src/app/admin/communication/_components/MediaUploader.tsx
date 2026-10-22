@@ -3,11 +3,11 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { CONTENT_LANGUAGES, type ContentLanguage, type Language, type MediaAspect } from '@gabee/types';
 import type { MediaAssetDto } from '@/lib/server/content-studio/media';
-import { ApiError, api, reportUnexpected } from './api';
+import { ApiError, api, reportUnexpected, reportUploadFailure } from './api';
 import { Dialog } from './Dialog';
 import { errorText } from './errors';
 import { LANGUAGE_LABEL } from './format';
-import { ASPECT_LABEL, MEDIA_ASPECTS, checkFile, fileSize, parseTags, tagsError, uploadMime, type UploadMime } from './media';
+import { ASPECT_LABEL, MEDIA_ASPECTS, checkFile, fileSize, parseTags, shortName, tagsError, uploadMime, type UploadMime } from './media';
 
 /**
  * Upload one file to the library: ask the server for a signed PUT URL (it
@@ -24,8 +24,12 @@ type Phase =
   | { step: 'verify' };
 
 class PutError extends Error {
-  constructor(readonly aborted: boolean) {
-    super(aborted ? 'upload aborted' : 'upload failed');
+  /** `status` 0: no HTTP answer (network, CORS, timeout). */
+  constructor(
+    readonly aborted: boolean,
+    readonly status = 0,
+  ) {
+    super(aborted ? 'upload aborted' : `upload failed (HTTP ${status})`);
   }
 }
 
@@ -37,7 +41,7 @@ function putFile(url: string, file: File, mime: UploadMime, onProgress: (sent: n
     xhr.open('PUT', url);
     xhr.setRequestHeader('Content-Type', mime);
     xhr.upload.onprogress = (e) => onProgress(e.loaded);
-    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new PutError(false)));
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new PutError(false, xhr.status)));
     // A CORS refusal, a dropped connection or an expired signature all land here: the browser does not say which.
     xhr.onerror = () => reject(new PutError(false));
     xhr.ontimeout = () => reject(new PutError(false));
@@ -100,7 +104,7 @@ export function MediaUploader({ lang, onClose, onUploaded }: { lang: Language; o
     if (tagsProblem) return;
     setError(null);
     // The server keeps at most 200 characters of the name; keep the extension.
-    const name = file.name.length > 200 ? `${file.name.slice(0, 190)}.${file.name.split('.').pop()}` : file.name;
+    const name = shortName(file.name);
     let stage: 'init' | 'put' | 'verify' = 'init';
     try {
       setPhase({ step: 'init' });
@@ -137,6 +141,8 @@ export function MediaUploader({ lang, onClose, onUploaded }: { lang: Language; o
       if (!mounted.current) return;
       setPhase({ step: 'idle' });
       if (err instanceof PutError) {
+        // A failed transfer is worth knowing about (bucket CORS, expired signature…): status only, never the signed URL.
+        if (!err.aborted) reportUploadFailure(err.status, mime);
         setError(
           err.aborted
             ? t('Envoi annulé. Le fichier n’a pas été ajouté.', 'Upload cancelled. The file was not added.')

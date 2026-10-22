@@ -1,4 +1,4 @@
-import { MEDIA_ASPECTS, MEDIA_MAX_IMAGE_BYTES, MEDIA_MAX_TAGS, MEDIA_MAX_VIDEO_BYTES, type ContentPlatform, type Language, type MediaAspect } from '@gabee/types';
+import { MEDIA_ASPECTS, MEDIA_MAX_IMAGE_BYTES, MEDIA_MAX_TAGS, MEDIA_MAX_VIDEO_BYTES, fitsPlatform, type ContentPlatform, type Language, type MediaAspect } from '@gabee/types';
 import type { LibraryAssetDto } from '@/lib/server/content-studio/media';
 import type { Bi } from './format';
 
@@ -28,6 +28,14 @@ export function uploadMime(file: File): UploadMime | null {
   if (file.type !== '') return null;
   const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
   return BY_EXTENSION[ext] ?? null;
+}
+
+/** The server keeps at most 200 characters of a file name: shorten it, keeping the extension when there is one. */
+export function shortName(name: string): string {
+  if (name.length <= 200) return name;
+  const dot = name.lastIndexOf('.');
+  const ext = dot > 0 && name.length - dot <= 10 ? name.slice(dot) : '';
+  return name.slice(0, 200 - ext.length) + ext;
 }
 
 /** "4,2 Mo" / "4.2 MB". */
@@ -74,9 +82,9 @@ export function tagsError(tags: string[], lang: Language): string | null {
   return null;
 }
 
-/** The files a platform's post can take: TikTok, vertical videos; LinkedIn, any image or video. */
-export function pickerFilter(platform: ContentPlatform): { kind?: 'video'; aspect?: MediaAspect } {
-  return platform === 'tiktok' ? { kind: 'video', aspect: '9:16' } : {};
+/** The files a platform's post can take (Ruling 16, the rule the server applies on save and approval). */
+export function fitsPost(asset: Pick<LibraryAsset, 'kind' | 'aspect'>, platform: ContentPlatform): boolean {
+  return fitsPlatform(asset.kind, asset.aspect, platform).ok;
 }
 
 export function kindLabel(kind: string, lang: Language): string {

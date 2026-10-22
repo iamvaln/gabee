@@ -28,6 +28,19 @@ export async function monthSpendUsd(month: string, tz?: string): Promise<number>
   return agg._sum.costUsd ?? 0;
 }
 
+/** This studio-local month's Communication spend against the budget (Ops › Usage IA, Réglages). */
+export async function studioBudget(now: Date): Promise<{ month: string; spentUsd: number; budgetUsd: number; alertRatio: number }> {
+  const settings = await prisma.studioSettings.findUnique({ where: { id: 'default' } });
+  const tz = settings?.timezone ?? 'Africa/Douala';
+  const month = localParts(now, tz).date.slice(0, 7);
+  return {
+    month,
+    spentUsd: Math.round((await monthSpendUsd(month, tz)) * 1e6) / 1e6,
+    budgetUsd: settings?.monthlyBudgetUsd ?? 50,
+    alertRatio: settings?.budgetAlertRatio ?? 0.8,
+  };
+}
+
 export type BudgetCheck = { month: string; spentUsd: number; budgetUsd: number; alerted: boolean };
 
 /**

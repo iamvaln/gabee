@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { ArtDirection, ContentPlatform, LinkedInPost, TikTokPost, WeekTitles } from '@gabee/types';
+import { fitsPlatform, type ArtDirection, type ContentPlatform, type LinkedInPost, type TikTokPost, type WeekTitles } from '@gabee/types';
 
 /**
  * "Schema-valid but unusable" checks (Review Focus 3). The router already
@@ -150,10 +150,13 @@ export function checkArtDirection(
   const asset = media.find((m) => m.id === output.media_asset_id);
   if (!asset) {
     out.push(`media_asset_id ${output.media_asset_id} is not in media_library: pick a listed id or null.`);
-  } else if (platform === 'tiktok' && (asset.kind !== 'video' || asset.aspect !== '9:16')) {
-    out.push(`TikTok needs a vertical (9:16) video; ${asset.id} is a ${asset.aspect ?? 'unknown-aspect'} ${asset.kind}.`);
-  } else if (platform === 'linkedin' && asset.aspect !== '16:9' && asset.aspect !== '1:1') {
-    out.push(`LinkedIn takes 16:9 (or 1:1) media; ${asset.id} is ${asset.aspect ?? 'of unknown aspect'}.`);
+  } else if (!fitsPlatform(asset.kind, asset.aspect, platform).ok) {
+    // Ruling 16: the same rule as the picker, draft edits and approval.
+    out.push(
+      platform === 'tiktok'
+        ? `TikTok needs a vertical (9:16) video; ${asset.id} is a ${asset.aspect ?? 'unknown-aspect'} ${asset.kind}.`
+        : `LinkedIn takes an image or a video in 16:9, 1:1 or 4:5 (never vertical, and a video needs a known aspect); ${asset.id} is a ${asset.aspect ?? 'unknown-aspect'} ${asset.kind}.`,
+    );
   }
   return out;
 }

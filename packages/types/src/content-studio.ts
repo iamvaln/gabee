@@ -195,6 +195,29 @@ export const MEDIA_MAX_VIDEO_BYTES = 300 * 1024 * 1024;
 export const MEDIA_ASPECTS = ['16:9', '1:1', '9:16', '4:5'] as const;
 export type MediaAspect = (typeof MEDIA_ASPECTS)[number];
 
+/**
+ * Which library files a platform's post can use (Ruling 16) — one rule for the
+ * media picker, draft edits, approval and the Art director's check.
+ * TikTok: a vertical (9:16) video. LinkedIn: an image or a video in 16:9, 1:1
+ * or 4:5 (vertical formats display badly). An image of unknown aspect is
+ * allowed on LinkedIn; a video of unknown aspect is not (its aspect is set at
+ * upload, Ruling 10).
+ */
+export const PLATFORM_MEDIA: Record<ContentPlatform, { kinds: readonly ('image' | 'video')[]; aspects: readonly MediaAspect[] }> = {
+  tiktok: { kinds: ['video'], aspects: ['9:16'] },
+  linkedin: { kinds: ['image', 'video'], aspects: ['16:9', '1:1', '4:5'] },
+};
+
+export type MediaFit = { ok: true } | { ok: false; code: 'media_kind_mismatch' | 'media_aspect_mismatch' };
+
+export function fitsPlatform(kind: string, aspect: string | null, platform: ContentPlatform): MediaFit {
+  const rule = PLATFORM_MEDIA[platform];
+  if (!(rule.kinds as readonly string[]).includes(kind)) return { ok: false, code: 'media_kind_mismatch' };
+  if (aspect === null) return kind === 'image' ? { ok: true } : { ok: false, code: 'media_aspect_mismatch' };
+  if (!(rule.aspects as readonly string[]).includes(aspect)) return { ok: false, code: 'media_aspect_mismatch' };
+  return { ok: true };
+}
+
 /** Library tags (module, level, theme): the same limits at upload and when edited. */
 export const MEDIA_MAX_TAGS = 10;
 export const MediaTagsSchema = z.array(z.string().min(1).max(40)).max(MEDIA_MAX_TAGS);

@@ -70,13 +70,13 @@ export function ProductFactsForm({
             <label className="field-label" htmlFor={`${id}-min`}>
               {t('De (ans)', 'From (years)')}
             </label>
-            <input id={`${id}-min`} className="inp" inputMode="numeric" value={value.ageMin} onChange={(e) => set({ ageMin: e.target.value })} aria-invalid={!!errors.ages} />
+            <input id={`${id}-min`} className="inp" readOnly={readOnly} inputMode="numeric" value={value.ageMin} onChange={(e) => set({ ageMin: e.target.value })} aria-invalid={!!errors.ages} />
           </div>
           <div>
             <label className="field-label" htmlFor={`${id}-max`}>
               {t('À (ans)', 'To (years)')}
             </label>
-            <input id={`${id}-max`} className="inp" inputMode="numeric" value={value.ageMax} onChange={(e) => set({ ageMax: e.target.value })} aria-invalid={!!errors.ages} />
+            <input id={`${id}-max`} className="inp" readOnly={readOnly} inputMode="numeric" value={value.ageMax} onChange={(e) => set({ ageMax: e.target.value })} aria-invalid={!!errors.ages} />
           </div>
         </div>
         {errors.ages && <p className="studio-field-error">{errors.ages}</p>}
@@ -89,13 +89,13 @@ export function ProductFactsForm({
             <label className="field-label" htmlFor={`${id}-fprice`}>
               {t('Prix de l’offre gratuite', 'Free tier price')}
             </label>
-            <input id={`${id}-fprice`} className="inp" value={value.freePrice} onChange={(e) => set({ freePrice: e.target.value })} placeholder="0 FCFA" />
+            <input id={`${id}-fprice`} className="inp" readOnly={readOnly} value={value.freePrice} onChange={(e) => set({ freePrice: e.target.value })} placeholder={readOnly ? undefined : '0 FCFA'} />
           </div>
           <div>
             <label className="field-label" htmlFor={`${id}-fkids`}>
               {t('Enfants inclus (au plus)', 'Children included (at most)')}
             </label>
-            <input id={`${id}-fkids`} className="inp" inputMode="numeric" value={value.freeChildren} onChange={(e) => set({ freeChildren: e.target.value })} aria-invalid={!!errors.freeChildren} />
+            <input id={`${id}-fkids`} className="inp" readOnly={readOnly} inputMode="numeric" value={value.freeChildren} onChange={(e) => set({ freeChildren: e.target.value })} aria-invalid={!!errors.freeChildren} />
           </div>
         </div>
         {errors.freeChildren && <p className="studio-field-error">{errors.freeChildren}</p>}
@@ -104,7 +104,7 @@ export function ProductFactsForm({
       <div className="studio-facts-group">
         <p className="section-label">{t('Offre payante', 'Paid offer')}</p>
         <label className="studio-check">
-          <input type="checkbox" checked={value.paid} onChange={(e) => set({ paid: e.target.checked })} />
+          <input type="checkbox" disabled={readOnly} checked={value.paid} onChange={(e) => set({ paid: e.target.checked })} />
           {t('Une offre payante existe', 'A paid offer exists')}
         </label>
         {value.paid ? (
@@ -114,20 +114,20 @@ export function ProductFactsForm({
                 <label className="field-label" htmlFor={`${id}-pname`}>
                   {t('Nom de l’offre', 'Offer name')}
                 </label>
-                <input id={`${id}-pname`} className="inp" value={value.paidName} onChange={(e) => set({ paidName: e.target.value })} maxLength={80} aria-invalid={!!errors.paid && !value.paidName.trim()} />
+                <input id={`${id}-pname`} className="inp" readOnly={readOnly} value={value.paidName} onChange={(e) => set({ paidName: e.target.value })} maxLength={80} aria-invalid={!!errors.paid && !value.paidName.trim()} />
               </div>
               <div>
                 <label className="field-label" htmlFor={`${id}-pprice`}>
                   {t('Prix', 'Price')}
                 </label>
-                <input id={`${id}-pprice`} className="inp" value={value.paidPrice} onChange={(e) => set({ paidPrice: e.target.value })} placeholder={t('ex. 2 000 FCFA / mois', 'e.g. 2,000 FCFA / month')} maxLength={80} aria-invalid={!!errors.paid && !value.paidPrice.trim()} />
+                <input id={`${id}-pprice`} className="inp" readOnly={readOnly} value={value.paidPrice} onChange={(e) => set({ paidPrice: e.target.value })} placeholder={readOnly ? undefined : t('ex. 2 000 FCFA / mois', 'e.g. 2,000 FCFA / month')} maxLength={80} aria-invalid={!!errors.paid && !value.paidPrice.trim()} />
               </div>
             </div>
             <div>
               <label className="field-label" htmlFor={`${id}-pinc`}>
                 {t('Ce qu’elle comprend (une ligne par point)', 'What it includes (one line per item)')}
               </label>
-              <textarea id={`${id}-pinc`} className="ta" rows={3} value={value.paidIncludes} onChange={(e) => set({ paidIncludes: e.target.value })} />
+              <textarea id={`${id}-pinc`} className="ta" readOnly={readOnly} rows={3} value={value.paidIncludes} onChange={(e) => set({ paidIncludes: e.target.value })} />
             </div>
             {errors.paid && <p className="studio-field-error">{errors.paid}</p>}
           </>
@@ -140,7 +140,7 @@ export function ProductFactsForm({
         <label className="field-label" htmlFor={`${id}-other`}>
           {t('Autres faits (un par ligne)', 'Other facts (one per line)')}
         </label>
-        <textarea id={`${id}-other`} className="ta" rows={5} value={value.otherFacts} onChange={(e) => set({ otherFacts: e.target.value })} />
+        <textarea id={`${id}-other`} className="ta" readOnly={readOnly} rows={5} value={value.otherFacts} onChange={(e) => set({ otherFacts: e.target.value })} />
       </div>
 
       {kept.length > 0 && (

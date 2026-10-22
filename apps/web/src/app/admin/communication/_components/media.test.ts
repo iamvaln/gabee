@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MEDIA_MAX_IMAGE_BYTES, MEDIA_MAX_VIDEO_BYTES } from '@gabee/types';
-import { checkFile, fileSize, parseTags, pickerFilter, tagsError, uploadMime } from './media';
+import { checkFile, fileSize, fitsPost, parseTags, shortName, tagsError, uploadMime } from './media';
 
 /** A File of `size` bytes without allocating it (only `size` is read by the checks). */
 function file(name: string, type: string, size = 1024): File {
@@ -36,13 +36,25 @@ test('parseTags matches the server normal form', () => {
   assert.match(tagsError(['x'.repeat(41)], 'en') ?? '', /40 characters/);
 });
 
-test('pickerFilter: TikTok takes vertical videos, LinkedIn any file', () => {
-  assert.deepEqual(pickerFilter('tiktok'), { kind: 'video', aspect: '9:16' });
-  assert.deepEqual(pickerFilter('linkedin'), {});
+test('fitsPost: the picker offers what the server will accept (Ruling 16)', () => {
+  assert.equal(fitsPost({ kind: 'video', aspect: '9:16' }, 'tiktok'), true);
+  assert.equal(fitsPost({ kind: 'video', aspect: '16:9' }, 'tiktok'), false);
+  assert.equal(fitsPost({ kind: 'image', aspect: '4:5' }, 'linkedin'), true);
+  assert.equal(fitsPost({ kind: 'image', aspect: '9:16' }, 'linkedin'), false);
+  assert.equal(fitsPost({ kind: 'video', aspect: null }, 'linkedin'), false);
 });
 
 test('fileSize reads like a file manager', () => {
   assert.equal(fileSize(15 * 1024 * 1024, 'fr'), '15 Mo');
   assert.equal(fileSize(4.2 * 1024 * 1024, 'en'), '4.2 MB');
   assert.equal(fileSize(300, 'fr'), '1 Ko');
+});
+
+test('shortName keeps 200 characters, with the extension when there is one', () => {
+  assert.equal(shortName('a.mp4'), 'a.mp4');
+  const long = `${'x'.repeat(250)}.mp4`;
+  assert.equal(shortName(long).length, 200);
+  assert.ok(shortName(long).endsWith('x.mp4'));
+  // No extension: a plain cut (it used to append the whole name after a dot).
+  assert.equal(shortName('y'.repeat(260)), 'y'.repeat(200));
 });

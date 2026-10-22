@@ -24,6 +24,7 @@ import {
   UpdateDraftRequestSchema,
   MediaUploadInitSchema,
   MediaClearanceSchema,
+  fitsPlatform,
   UtmSchema,
   LinkedInPostSchema,
   ArtDirectionSchema,
@@ -707,5 +708,29 @@ describe('content studio', () => {
     assert.equal(p({ mime: 'image/png', tags: Array(11).fill('a') }), false);
     assert.equal(p({ mime: 'image/png', tags: [''] }), false);
     assert.equal(p({ mime: 'image/png', tags: ['x'.repeat(41)] }), false);
+  });
+});
+
+describe('fitsPlatform (Ruling 16)', () => {
+  const fit = (kind: string, aspect: string | null, platform: 'linkedin' | 'tiktok') => {
+    const r = fitsPlatform(kind, aspect, platform);
+    return r.ok ? 'ok' : r.code;
+  };
+  it('TikTok takes a vertical video only', () => {
+    assert.equal(fit('video', '9:16', 'tiktok'), 'ok');
+    assert.equal(fit('image', '9:16', 'tiktok'), 'media_kind_mismatch');
+    for (const a of ['16:9', '1:1', '4:5']) assert.equal(fit('video', a, 'tiktok'), 'media_aspect_mismatch');
+    assert.equal(fit('video', null, 'tiktok'), 'media_aspect_mismatch');
+  });
+  it('LinkedIn takes images and videos in 16:9, 1:1 or 4:5, never vertical', () => {
+    for (const kind of ['image', 'video']) {
+      for (const a of ['16:9', '1:1', '4:5']) assert.equal(fit(kind, a, 'linkedin'), 'ok');
+      assert.equal(fit(kind, '9:16', 'linkedin'), 'media_aspect_mismatch');
+    }
+  });
+  it('an unknown aspect is fine for an image, not for a video', () => {
+    assert.equal(fit('image', null, 'linkedin'), 'ok');
+    assert.equal(fit('video', null, 'linkedin'), 'media_aspect_mismatch');
+    assert.equal(fit('audio', '16:9', 'linkedin'), 'media_kind_mismatch');
   });
 });

@@ -1,9 +1,10 @@
-import type { ContentLanguage, ContentPlatform, Language, LinkedInPost, SlotFormat, TikTokPost } from '@gabee/types';
+import type { BilingualText, ContentLanguage, ContentPlatform, Language, LinkedInPost, SlotFormat, TikTokPost } from '@gabee/types';
 import type { DraftDto } from '@/lib/server/content-studio/drafts';
 
 /** Labels and formatting shared by the Aujourd'hui and Semaine screens. */
 
-export type Bi = { fr: string; en: string };
+/** French / English copy: the shared `BilingualText` contract (one type across the admin). */
+export type Bi = BilingualText;
 
 export const PLATFORM_LABEL: Record<ContentPlatform, string> = { linkedin: 'LinkedIn', tiktok: 'TikTok' };
 

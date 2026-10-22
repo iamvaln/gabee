@@ -10,6 +10,7 @@ import { GET as getSettings, PATCH as patchSettings } from './route';
 import { PUT as putObjective } from '../objective/route';
 import { POST as publishLine } from '../editorial-line/route';
 import { GET as audience } from '../audience/route';
+import { studioBudget } from '@/lib/server/content-studio/budget';
 
 const prisma = createTestClient();
 const U = 'http://localhost/api/admin/communication';
@@ -143,4 +144,29 @@ test('every mutation writes an audit row', async () => {
   const settingsDiff = rows.find((r) => r.kind === 'content.settings.update')!.diff as { before: { budget_alert_ratio: number }; after: { budget_alert_ratio: number } };
   assert.equal(settingsDiff.before.budget_alert_ratio, 0.8);
   assert.equal(settingsDiff.after.budget_alert_ratio, 0.5);
+});
+
+test('settings GET carries this studio-local month’s Communication spend', async () => {
+  const tz = 'Africa/Douala';
+  const now = new Date();
+  const thisMonth = localParts(now, tz).date.slice(0, 7);
+  // 1st of this month at noon local (well inside the month), and 40 days before it (last month).
+  const inMonth = new Date(`${thisMonth}-01T11:00:00Z`);
+  const lastMonth = new Date(inMonth.getTime() - 40 * 86_400_000);
+  const row = (costUsd: number, createdAt: Date, task: string | null) => ({
+    provider: 'anthropic',
+    model: 'claude-opus-5-5',
+    purpose: task ?? 'question_generation',
+    task,
+    costUsd,
+    createdAt,
+  });
+  await prisma.aiUsage.createMany({
+    data: [row(1.25, inMonth, 'post_linkedin'), row(0.5, now, 'content_strategy'), row(3, lastMonth, 'post_tiktok'), row(9, now, null)],
+  });
+  const view = await (await getSettings(req('GET', '/settings', adminC), undefined)).json();
+  // Last month and question authoring are not part of the studio budget.
+  assert.deepEqual(view.budget, { month: thisMonth, spent_usd: 1.75 });
+  // The Ops page reads the same figure against the settings' budget.
+  assert.deepEqual(await studioBudget(now), { month: thisMonth, spentUsd: 1.75, budgetUsd: 50, alertRatio: 0.8 });
 });

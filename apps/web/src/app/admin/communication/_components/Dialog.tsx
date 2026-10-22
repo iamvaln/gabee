@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { Language } from '@gabee/types';
 import { AIcon } from '../../_shell/icons';
 
@@ -10,7 +11,10 @@ const FOCUSABLE =
 /**
  * Modal dialog: focus moves in (to `[data-autofocus]` or the first field),
  * Tab stays inside, Escape and the backdrop close it (unless `busy`), and
- * focus returns to the control that opened it.
+ * focus returns to the control that opened it. Rendered into `document.body`
+ * through a portal, so a dialog opened from inside a form (the media picker
+ * in the post editor) is not part of that form in the DOM, and its submit
+ * events stop at the dialog so they never reach that form's React handler.
  */
 export function Dialog({
   title,
@@ -29,6 +33,9 @@ export function Dialog({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  // The portal target exists only in the browser (a dialog can render on the server, e.g. `?upload=1`).
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => setHost(document.body), []);
   // Read through a ref so the effect below runs once per opening.
   const closeRef = useRef(onClose);
   const busyRef = useRef(busy);
@@ -38,9 +45,9 @@ export function Dialog({
   });
 
   useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
     const root = ref.current;
-    if (!root) return;
+    if (!host || !root) return;
+    const opener = document.activeElement as HTMLElement | null;
     const first = root.querySelector<HTMLElement>('[data-autofocus]') ?? root.querySelector<HTMLElement>(FOCUSABLE);
     first?.focus();
 
@@ -68,10 +75,14 @@ export function Dialog({
       document.removeEventListener('keydown', onKey, true);
       opener?.focus();
     };
-  }, []);
+  }, [host]);
 
-  return (
+  if (!host) return null;
+  return createPortal(
     <div
+      // React bubbles events through the component tree even across a portal: a form inside the dialog
+      // must never submit a form around the component that opened it (the post editor around the picker).
+      onSubmit={(e) => e.stopPropagation()}
       className="modal-scrim studio-scrim"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !busy) onClose();
@@ -93,7 +104,8 @@ export function Dialog({
         <div className="modal-body">{children}</div>
         <div className="modal-foot">{footer}</div>
       </div>
-    </div>
+    </div>,
+    host,
   );
 }
 

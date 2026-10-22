@@ -13,6 +13,7 @@ import {
   type SlotFormat,
   type TikTokPost,
   type UpdateDraftRequest,
+  fitsPlatform,
 } from '@gabee/types';
 import { prisma } from '../db';
 import { HttpError } from '../http';
@@ -455,6 +456,20 @@ export async function regenerateDraft(draftId: string, actor: Actor): Promise<Dr
   return getDraft(draftId);
 }
 
+/** A file that does not fit the platform (Ruling 16), in plain French. */
+function mediaFitError(status: 409 | 422, code: 'media_kind_mismatch' | 'media_aspect_mismatch', platform: ContentPlatform): HttpError {
+  if (platform === 'tiktok') {
+    return new HttpError(
+      status,
+      code,
+      code === 'media_kind_mismatch'
+        ? 'Un post TikTok est une vidéo : choisissez une vidéo, pas une image.'
+        : 'TikTok demande une vidéo verticale (9:16). Choisissez une vidéo dans ce format.',
+    );
+  }
+  return new HttpError(status, code, 'LinkedIn affiche mal les formats verticaux : choisissez du 16:9, 1:1 ou 4:5 (une vidéo doit avoir son format renseigné).');
+}
+
 function invalidPost(violations: string[]): HttpError {
   return new HttpError(422, 'invalid_post', `Ce texte ne respecte pas les règles de la plateforme : ${violations.join(' ')} Corrigez-le puis réessayez.`, violations);
 }
@@ -492,16 +507,15 @@ export async function editDraft(draftId: string, patch: UpdateDraftRequest, acto
   let mediaAssetId = draft.mediaAssetId;
   if (patch.media_asset_id !== undefined) {
     if (patch.media_asset_id !== null) {
-      const asset = await prisma.mediaAsset.findUnique({ where: { id: patch.media_asset_id }, select: { id: true, kind: true, status: true } });
+      const asset = await prisma.mediaAsset.findUnique({ where: { id: patch.media_asset_id }, select: { id: true, kind: true, aspect: true, status: true } });
       if (!asset) throw new HttpError(422, 'media_not_found', "Ce fichier n'existe pas dans la médiathèque. Choisissez-en un autre.");
       // An upload still in progress, or rejected at verification, has no usable file behind it.
       if (asset.status !== 'ready') {
         throw new HttpError(422, 'media_not_ready', "Ce fichier n'a pas été vérifié (envoi inachevé ou refusé). Choisissez-en un autre dans la médiathèque.");
       }
-      // Clearance is checked at approval; the kind is a platform rule (a TikTok post is a video).
-      if (platform === 'tiktok' && asset.kind !== 'video') {
-        throw new HttpError(422, 'media_kind_mismatch', 'Un post TikTok est une vidéo : choisissez une vidéo, pas une image.');
-      }
+      // Clearance is checked at approval; kind and aspect are the platform's rule (Ruling 16).
+      const fit = fitsPlatform(asset.kind, asset.aspect, platform);
+      if (!fit.ok) throw mediaFitError(422, fit.code, platform);
     }
     mediaAssetId = patch.media_asset_id;
   }
@@ -543,7 +557,13 @@ export async function approveDraft(draftId: string, actor: Actor): Promise<Draft
 
   const m = draft.mediaAsset;
   const usable = m !== null && m.cleared && m.status === 'ready';
-  if (draft.platform === 'tiktok') {
+  const platform = asPlatform(draft.platform);
+  // A file that is there but the wrong shape says so (Ruling 16); a TikTok image is still "no video".
+  if (m && (platform === 'linkedin' || m.kind === 'video')) {
+    const fit = fitsPlatform(m.kind, m.aspect, platform);
+    if (!fit.ok) throw mediaFitError(409, fit.code, platform);
+  }
+  if (platform === 'tiktok') {
     if (!m || m.kind !== 'video' || !usable) {
       throw new HttpError(
         409,

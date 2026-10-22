@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { Language, MediaAspect } from '@gabee/types';
 import type { MediaAssetDto } from '@/lib/server/content-studio/media';
 import { EmptyState, PageHead } from '../../_shell/primitives';
@@ -38,12 +38,17 @@ export function MediaClient({ lang, openUpload }: { lang: Language; openUpload: 
   const [uploading, setUploading] = useState(openUpload);
   const [added, setAdded] = useState<MediaAssetDto | null>(null);
 
+  // Quick filter taps can answer out of order: only the latest request may update the grid.
+  const seq = useRef(0);
   const load = useCallback(async () => {
+    const mine = ++seq.current;
     try {
       const res = await api<{ assets: LibraryAsset[] }>(`/media${query(filters)}`);
+      if (mine !== seq.current) return;
       setAssets(res.assets);
       setLoadError(null);
     } catch (err) {
+      if (mine !== seq.current) return;
       reportUnexpected(err, { action: 'load-media' });
       setLoadError(errorText(err, lang));
     }
@@ -428,8 +433,8 @@ function ClearanceDialog({
           <>
             <p className="studio-dialog-text">
               {t(
-                `« ${asset.fileName} » ne pourra plus être joint à un nouveau post, ni validé sur un post.`,
-                `"${asset.fileName}" can no longer be attached to a new post, nor approved on one.`,
+                `« ${asset.fileName} » ne pourra plus être validé sur un post tant qu’il ne sera pas de nouveau autorisé.`,
+                `"${asset.fileName}" can no longer be approved on a post until it is cleared again.`,
               )}
             </p>
             {approved > 0 && (

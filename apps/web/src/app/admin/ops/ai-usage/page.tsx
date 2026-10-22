@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
 import { requireAdminPage } from '@/lib/server/auth';
 import { getAiUsage } from '@/lib/server/services/admin-observability';
+import { studioBudget } from '@/lib/server/content-studio/budget';
+import Link from 'next/link';
 import { PageHead } from '../../_shell/primitives';
 import { AdminBee } from '../../_shell/bee';
 import { aiTaskLabel, usd as usdPrecise } from '../../_shell/ai-labels';
@@ -14,7 +16,7 @@ export default async function AiUsagePage() {
   await requireAdminPage();
   const lang = (await cookies()).get('admin_lang')?.value === 'en' ? 'en' : 'fr';
   const L = lang === 'fr';
-  const usage = await getAiUsage();
+  const [usage, budget] = await Promise.all([getAiUsage(), studioBudget(new Date())]);
 
   const nf = (n: number) => n.toLocaleString(L ? 'fr-FR' : 'en-US');
   const usd = (n: number) => usdPrecise(n, lang);
@@ -23,6 +25,8 @@ export default async function AiUsagePage() {
 
   const totalTokens = usage.rows.reduce((s, r) => s + r.input_tokens + r.output_tokens, 0);
   const comm = usage.groups.communication;
+  const monthName = new Intl.DateTimeFormat(L ? 'fr-FR' : 'en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${budget.month}-01T00:00:00Z`));
+  const usedShare = budget.budgetUsd > 0 ? budget.spentUsd / budget.budgetUsd : 0;
   const failures = comm.failed + comm.invalid_output + comm.refused + usage.groups.authoring.failed + usage.groups.authoring.invalid_output + usage.groups.authoring.refused;
 
   return (
@@ -31,26 +35,35 @@ export default async function AiUsagePage() {
         title={L ? 'Usage IA' : 'AI usage'}
         sub={
           L
-            ? 'Coût, échecs et volume d’appels par tâche, puis par fournisseur et modèle.'
-            : 'Cost, failures and call volume per task, then per provider and model.'
+            ? 'La dépense du mois face au budget du studio, puis, depuis le début : coût, échecs et volume d’appels par tâche, par fournisseur et par modèle.'
+            : 'This month’s spend against the studio budget, then, since the start: cost, failures and call volume per task, provider and model.'
         }
       />
 
       <div className="tiles">
-        <div className="card tile">
-          <div className="tile-label">{L ? 'Coût total' : 'Total cost'}</div>
-          <div className="tile-num">{usd(usage.total_cost_usd)}</div>
-          <div className="tile-foot">{L ? 'tous appels enregistrés' : 'all recorded calls'}</div>
-        </div>
-        <div className="card tile">
-          <div className="tile-label">Communication</div>
-          <div className="tile-num">{usd(comm.cost_usd)}</div>
+        <div className={'card tile' + (usedShare >= budget.alertRatio ? ' ai-tile-alert' : '')} role="group" aria-label={L ? 'Ce mois-ci' : 'This month'}>
+          <div className="tile-label" aria-hidden>
+            {L ? 'Ce mois-ci' : 'This month'}
+          </div>
+          <div className="tile-num">{usd(budget.spentUsd)}</div>
           <div className="tile-foot">
-            {L ? `${nf(comm.calls)} appels · compte dans le budget du studio` : `${nf(comm.calls)} calls · counts toward the studio budget`}
+            {L ? `sur ${usd(budget.budgetUsd)} (budget du studio) · ${monthName}` : `of ${usd(budget.budgetUsd)} (studio budget) · ${monthName}`}
+            {' · '}
+            <Link href="/admin/communication/reglages">{L ? 'Réglages' : 'Settings'}</Link>
           </div>
         </div>
         <div className="card tile">
-          <div className="tile-label">{L ? 'Appels' : 'Calls'}</div>
+          <div className="tile-label">{L ? 'Communication · depuis le début' : 'Communication · since the start'}</div>
+          <div className="tile-num">{usd(comm.cost_usd)}</div>
+          <div className="tile-foot">{L ? `${nf(comm.calls)} appels` : `${nf(comm.calls)} calls`}</div>
+        </div>
+        <div className="card tile">
+          <div className="tile-label">{L ? 'Coût total · depuis le début' : 'Total cost · since the start'}</div>
+          <div className="tile-num">{usd(usage.total_cost_usd)}</div>
+          <div className="tile-foot">{L ? `tous usages · ${nf(totalTokens)} tokens` : `every use · ${nf(totalTokens)} tokens`}</div>
+        </div>
+        <div className="card tile">
+          <div className="tile-label">{L ? 'Appels · depuis le début' : 'Calls · since the start'}</div>
           <div className="tile-num tnum">{nf(usage.total_calls)}</div>
           <div className="tile-foot">
             {failures > 0
@@ -62,17 +75,12 @@ export default async function AiUsagePage() {
                 : 'all succeeded'}
           </div>
         </div>
-        <div className="card tile">
-          <div className="tile-label">Tokens</div>
-          <div className="tile-num tnum">{nf(totalTokens)}</div>
-          <div className="tile-foot">{L ? 'entrée + sortie' : 'input + output'}</div>
-        </div>
       </div>
 
       {usage.by_task.length > 0 && (
         <div className="card tbl-wrap mt16">
           <div className="card-head">
-            <h3 id="ai-by-task">{L ? 'Par tâche' : 'By task'}</h3>
+            <h3 id="ai-by-task">{L ? 'Par tâche, depuis le début' : 'By task, since the start'}</h3>
             <span className="card-title-sub">
               {L
                 ? 'Chaque tentative compte : échecs (erreur ou indisponibilité), réponses inutilisables (payées) et refus.'
@@ -123,7 +131,7 @@ export default async function AiUsagePage() {
 
       <div className="card tbl-wrap mt16">
         <div className="card-head">
-          <h3>{L ? 'Par modèle' : 'By model'}</h3>
+          <h3>{L ? 'Par modèle, depuis le début' : 'By model, since the start'}</h3>
         </div>
         {usage.rows.length === 0 ? (
           <div className="empty-state">

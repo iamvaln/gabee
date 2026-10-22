@@ -114,6 +114,21 @@ test('checkArtDirection only accepts a listed asset of the right shape', () => {
   assert.equal(checkArtDirection({ media_asset_id: null, visual_brief: '  ' }, 'linkedin', media).length, 1);
 });
 
+test('checkArtDirection follows the shared platform rule (Ruling 16)', () => {
+  const asset = (id: string, kind: string, aspect: string | null) => ({ id, kind, aspect });
+  const media = [
+    asset('44444444-4444-4444-8444-444444444444', 'image', '4:5'),
+    asset('55555555-5555-4555-8555-555555555555', 'image', '9:16'),
+    asset('66666666-6666-4666-8666-666666666666', 'video', null),
+    asset('77777777-7777-4777-8777-777777777777', 'video', '16:9'),
+  ];
+  const pick = (i: number, platform: 'linkedin' | 'tiktok') => checkArtDirection({ media_asset_id: media[i]!.id, visual_brief: 'x' }, platform, media);
+  assert.deepEqual(pick(0, 'linkedin'), [], 'LinkedIn takes 4:5');
+  assert.match(pick(1, 'linkedin')[0] ?? '', /16:9, 1:1 or 4:5/);
+  assert.equal(pick(2, 'linkedin').length, 1, 'a video of unknown aspect does not fit');
+  assert.match(pick(3, 'tiktok')[0] ?? '', /vertical \(9:16\) video/);
+});
+
 test('checkWeekTitles requires exactly the planned dates and platforms', () => {
   const day = (date: string) => ({
     date,

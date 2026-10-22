@@ -4,6 +4,7 @@ import { prisma } from '../db';
 import { HttpError } from '../http';
 import { getStudioTimezone } from '../services/web-visits';
 import { localParts } from './clock';
+import { monthSpendUsd } from './budget';
 import { auditContent } from './drafts';
 import { unifiedDiff } from './memory';
 import type { Actor } from './state';
@@ -51,6 +52,8 @@ export type StudioSettingsView = {
   objectives: ObjectiveDto[];
   /** The line the agents use now (highest published version). */
   editorial_line: EditorialLineDto | null;
+  /** Communication AI spend of the current studio-local month (`YYYY-MM`), what the budget counts. */
+  budget: { month: string; spent_usd: number };
 };
 
 const SETTINGS_ID = 'default';
@@ -93,14 +96,23 @@ function toEditorialDto(row: EditorialRow): EditorialLineDto {
 const currentLine = () => prisma.editorialLineVersion.findFirst({ where: { publishedAt: { not: null } }, orderBy: { version: 'desc' } });
 
 export async function getSettings(now: Date): Promise<StudioSettingsView> {
-  const month = localParts(now, await getStudioTimezone()).date.slice(0, 7);
-  const [settings, objectives, line] = await Promise.all([
+  const tz = await getStudioTimezone();
+  const month = localParts(now, tz).date.slice(0, 7);
+  const [settings, objectives, line, spent] = await Promise.all([
     prisma.studioSettings.findUnique({ where: { id: SETTINGS_ID } }),
     prisma.contentObjective.findMany({ where: { month: { gte: month } }, orderBy: { month: 'asc' } }),
     currentLine(),
+    monthSpendUsd(month, tz),
   ]);
-  return { settings: toSettingsDto(settings), objectives: objectives.map(toObjectiveDto), editorial_line: line ? toEditorialDto(line) : null };
+  return {
+    settings: toSettingsDto(settings),
+    objectives: objectives.map(toObjectiveDto),
+    editorial_line: line ? toEditorialDto(line) : null,
+    budget: { month, spent_usd: roundUsd(spent) },
+  };
 }
+
+const roundUsd = (n: number) => Math.round(n * 1e6) / 1e6;
 
 function isTimeZone(tz: string): boolean {
   try {

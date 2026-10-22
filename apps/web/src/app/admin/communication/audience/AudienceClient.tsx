@@ -43,7 +43,10 @@ export function AudienceClient({ lang }: { lang: Language }) {
   // Studio-local today, as the server's default range (the last 7 days) ends on it.
   const today = useRef<string | null>(null);
 
+  // Switching period quickly can answer out of order: only the latest request may update the screen.
+  const seq = useRef(0);
   const load = useCallback(async () => {
+    const mine = ++seq.current;
     try {
       let next: AudienceReport;
       if (period === 7 || !today.current) {
@@ -51,9 +54,11 @@ export function AudienceClient({ lang }: { lang: Language }) {
         today.current = next.to;
       }
       if (period !== 7) next = await api<AudienceReport>(`/audience?from=${addDaysYmd(today.current, -(period - 1))}&to=${today.current}`);
+      if (mine !== seq.current) return;
       setReport(next!);
       setLoadError(null);
     } catch (err) {
+      if (mine !== seq.current) return;
       reportUnexpected(err, { action: 'load-audience', period });
       setLoadError(errorText(err, lang));
     }

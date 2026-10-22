@@ -79,6 +79,18 @@ export function reportUnexpected(err: unknown, context: Record<string, unknown>)
   Sentry.captureException(err, { tags: { scope: 'admin.communication' }, extra: context });
 }
 
+/**
+ * The browser's PUT to storage failed (not cancelled): report it with the
+ * HTTP status and the file type only — the signed URL is a bearer credential
+ * and never leaves this tab.
+ */
+export function reportUploadFailure(status: number, mime: string): void {
+  Sentry.captureException(new Error(`Media upload to storage failed (HTTP ${status || 'none'})`), {
+    tags: { scope: 'admin.communication', action: 'media-upload-put' },
+    extra: { status, mime },
+  });
+}
+
 export { notifyStudioChanged } from '../../_shell/studio-events';
 
 /**

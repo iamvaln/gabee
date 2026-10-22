@@ -1,4 +1,4 @@
-import type { AgentKey, AiTask } from '@gabee/types';
+import type { AgentKey, AiTask, BilingualText } from '@gabee/types';
 
 /**
  * Plain names for AI tasks, authoring purposes and Communication agents,
@@ -6,7 +6,7 @@ import type { AgentKey, AiTask } from '@gabee/types';
  * in server and client components.
  */
 
-type Bi = { fr: string; en: string };
+type Bi = BilingualText;
 
 export const AI_TASK_LABEL: Record<AiTask | 'plan_generation' | 'question_generation', Bi> = {
   content_strategy: { fr: 'Directions de la semaine', en: 'Weekly directions' },

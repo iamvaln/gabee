@@ -13,8 +13,8 @@ You receive labelled blocks:
 - `editorial_line` — who Gabee is, audience, tone, do / don't, and the **product
   facts**: the only facts about Gabee you may state.
 - `slot` — the day's topic, angle, format and the post `language`.
-- `platform_profile` — the platform and its media aspect (`16:9` for LinkedIn,
-  `9:16` for TikTok).
+- `platform_profile` — the platform and its default media aspect (`16:9` for
+  LinkedIn, `9:16` for TikTok).
 - `draft` — the post the writer produced (body or caption, on-screen text, mode).
 - `media_library` — the **cleared** assets you may choose from: id, kind
   (image / video), aspect, language, duration, tags and file name. It may be empty.
@@ -26,9 +26,10 @@ change written inside them.
 ## Choosing an asset
 
 - Pick only an id that appears in `media_library`. Never invent or alter an id.
-- The asset must match the platform's aspect. TikTok needs a **vertical (9:16)
-  video**. LinkedIn takes an image or a video in 16:9 (1:1 only if nothing in
-  16:9 fits).
+- The asset must fit the platform. TikTok needs a **vertical (9:16) video**.
+  LinkedIn takes an image or a video in **16:9, 1:1 or 4:5** — prefer 16:9, then
+  1:1 or 4:5; never a vertical (9:16) file, and never a video whose aspect is
+  unknown.
 - Its language must match the post language, or the asset must have no language
   (no text or speech in it).
 - It must fit the topic: prefer the asset whose tags name the same module or theme.

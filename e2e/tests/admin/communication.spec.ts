@@ -440,7 +440,15 @@ test('audience shows visits and sign-ups by source and by post', async ({ page }
 
 test.describe('as a super-admin', () => {
   test('owner sets the paid offer and publishes a new editorial line version', async ({ page }) => {
+    // This month's Communication spend (question authoring and other months do not count).
+    await prisma.aiUsage.createMany({
+      data: [
+        { provider: 'anthropic', model: 'claude-opus-5-5', purpose: 'post_linkedin', task: 'post_linkedin', costUsd: 1.5 },
+        { provider: 'anthropic', model: 'claude-opus-5-5', purpose: 'post_tiktok', task: 'post_tiktok', costUsd: 7, createdAt: new Date(Date.now() - 45 * 86_400_000) },
+      ],
+    });
     await page.goto('/admin/communication/reglages');
+    await expect(page.getByRole('region', { name: 'Budget IA' })).toContainText(/Ce mois-ci : 1,50\s\$ dépensés sur 50,00\s\$/);
     await expect(page.getByRole('heading', { name: 'Réglages', level: 1 })).toBeVisible();
     const line = page.getByRole('region', { name: 'Ligne éditoriale' });
     await expect(line.getByText(/Version 1 · publiée le/)).toBeVisible();
@@ -465,6 +473,24 @@ test.describe('as a super-admin', () => {
     await expect(budget.getByText('Enregistré')).toBeVisible();
     const settings = await prisma.studioSettings.findUniqueOrThrow({ where: { id: 'default' } });
     expect([settings.monthlyBudgetUsd, settings.budgetAlertRatio]).toEqual([80, 0.75]);
+
+    // Unsaved edits: leaving through the menu asks first.
+    await line.getByLabel('Texte (Markdown)').fill('Brouillon non publié');
+    const journalLink = page.getByRole('navigation', { name: 'Menu principal' }).getByRole('link', { name: 'Journal' });
+    await journalLink.click();
+    const leave = page.getByRole('dialog', { name: 'Quitter sans enregistrer ?' });
+    await leave.getByRole('button', { name: 'Annuler' }).click();
+    await expect(page).toHaveURL(/\/reglages$/);
+    await journalLink.click();
+    await leave.getByRole('button', { name: 'Quitter sans enregistrer' }).click();
+    await expect(page).toHaveURL(/\/journal$/);
+
+    // Ops › Usage IA shows the same month figure against the (new) budget; all-time figures say so.
+    await page.goto('/admin/ops/ai-usage');
+    const month = page.getByRole('group', { name: 'Ce mois-ci' });
+    await expect(month).toContainText('1,50');
+    await expect(month).toContainText(/sur 80,00\s\$ \(budget du studio\)/);
+    await expect(page.getByText('Coût total · depuis le début')).toBeVisible();
   });
 });
 
@@ -483,8 +509,85 @@ test.describe('as a plain admin', () => {
     await expect(page.getByRole('heading', { name: 'Réglages', level: 1 })).toBeVisible();
     await expect(page.getByText('Lecture seule : seul un super-admin peut modifier ces réglages.')).toBeVisible();
     await expect(page.getByText(/Version 1 · publiée le/)).toBeVisible();
+    // Choices are disabled; text stays readable and selectable (read-only, not disabled).
     await expect(page.getByLabel('Fuseau horaire')).toBeDisabled();
-    await expect(page.getByLabel('Budget mensuel')).toBeDisabled();
-    await expect(page.getByRole('button', { name: /Enregistrer|Publier/ })).toHaveCount(0);
+    const budget = page.getByLabel('Budget mensuel');
+    await expect(budget).not.toBeEditable();
+    await expect(budget).toBeEnabled();
+    await expect(page.getByLabel('Texte (Markdown)')).not.toBeEditable();
+    await expect(page.getByRole('button', { name: /Enregistrer|Publier|Ajouter une cible/ })).toHaveCount(0);
+    // The month switch only reads, so it stays usable.
+    const nextMonth = page.getByRole('group', { name: 'Mois' }).getByRole('button').nth(1);
+    await nextMonth.click();
+    await expect(nextMonth).toHaveAttribute('aria-pressed', 'true');
   });
+});
+
+test('picking a file with the keyboard attaches it without saving the post behind', async ({ page }) => {
+  const { linkedinDraftId } = await seedTodayBoard();
+  await seedMediaAsset({ kind: 'image', fileName: 'premiere-image.png', aspect: '16:9', cleared: true });
+  await seedMediaAsset({ kind: 'image', fileName: 'seconde-image.png', aspect: '4:5', cleared: true });
+  await seedMediaAsset({ kind: 'image', fileName: 'verticale.png', aspect: '9:16', cleared: true }); // LinkedIn: never vertical
+  await page.goto('/admin/communication');
+  const li = card(page, 'LinkedIn');
+  await li.getByRole('button', { name: 'Modifier' }).click();
+  await li.getByRole('button', { name: 'Choisir un média' }).click();
+
+  const picker = page.getByRole('dialog', { name: 'Choisir un média' });
+  const radios = picker.getByRole('radio');
+  await expect(radios).toHaveCount(2);
+  await expect(picker.getByText('verticale.png')).toHaveCount(0);
+  const second = ((await picker.locator('.studio-pick').nth(1).locator('.studio-pick-name').textContent()) ?? '').trim();
+  await radios.first().focus();
+  await page.keyboard.press('Space');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+
+  // Enter attached the file to the editor (the dialog's own action), and saved nothing yet.
+  await expect(picker).toHaveCount(0);
+  await expect(li.getByText(second)).toBeVisible();
+  const draft = await prisma.contentDraft.findUniqueOrThrow({ where: { id: linkedinDraftId } });
+  expect([draft.mediaAssetId, draft.status]).toEqual([null, 'ready']);
+  expect(await prisma.contentDraftVersion.count({ where: { draftId: linkedinDraftId } })).toBe(1);
+
+  await li.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(li.getByRole('button', { name: 'Modifier' })).toBeVisible();
+  const saved = await prisma.contentDraft.findUniqueOrThrow({ where: { id: linkedinDraftId }, include: { mediaAsset: true } });
+  expect([saved.mediaAsset?.fileName, saved.status]).toEqual([second, 'ready']);
+  expect(await prisma.contentDraftVersion.count({ where: { draftId: linkedinDraftId } })).toBe(2);
+});
+
+test('an upload can be cancelled, and a failed transfer says what to do', async ({ page }) => {
+  await page.route('**/api/admin/communication/media', (route) =>
+    route.request().method() === 'POST'
+      ? route.fulfill({ json: { assetId: randomUUID(), uploadUrl: 'https://e2e-media.r2.cloudflarestorage.com/media/x.png?X-Amz-Signature=e2e' } })
+      : route.continue(),
+  );
+  let puts = 0;
+  await page.route('https://e2e-media.r2.cloudflarestorage.com/**', async (route) => {
+    const cors = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'PUT', 'access-control-allow-headers': 'content-type' };
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+    puts++;
+    // First transfer: never answers (the owner cancels it). Second: the connection drops.
+    if (puts === 1) return new Promise<void>(() => undefined);
+    return route.abort('failed');
+  });
+
+  await page.goto('/admin/communication/medias');
+  await page.getByRole('button', { name: 'Téléverser un fichier' }).first().click();
+  const dialog = page.getByRole('dialog', { name: 'Téléverser un fichier' });
+  await dialog.getByLabel('Fichier', { exact: true }).setInputFiles({ name: 'affiche.png', mimeType: 'image/png', buffer: Buffer.alloc(4096, 1) });
+  await dialog.getByRole('button', { name: 'Envoyer le fichier' }).click();
+
+  await dialog.getByRole('button', { name: 'Annuler l’envoi' }).click();
+  await expect(dialog.getByText('Envoi annulé. Le fichier n’a pas été ajouté.')).toBeVisible();
+  const send = dialog.getByRole('button', { name: 'Envoyer le fichier' });
+  await expect(send).toBeEnabled();
+
+  await send.click();
+  await expect(
+    dialog.getByText('Le transfert a échoué. Réessayez ; si cela se répète, vérifiez la configuration du stockage (voir le runbook).'),
+  ).toBeVisible();
+  await expect(send).toBeEnabled();
+  expect(puts).toBe(2);
 });

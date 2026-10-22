@@ -25,6 +25,12 @@ export type JobRunEntry = {
   /** null while it runs. */
   duration_ms: number | null;
   next_attempt_at: string | null;
+  /**
+   * Abandoned jobs only: did the "job failed" email leave? `sent` (to at least
+   * one recipient), `failed` (every attempt failed), `none` (no email
+   * recorded). null for any other status.
+   */
+  alert: 'sent' | 'failed' | 'none' | null;
 };
 
 export type AgentRunEntry = {
@@ -80,6 +86,17 @@ export async function studioJournal(limit = JOURNAL_LIMIT): Promise<StudioJourna
     }),
   ]);
 
+  // The abandon alert is notifyOnce('job.failed', `${jobKey}|${periodKey}`) (jobs.ts).
+  const alertKeys = jobs.filter((j) => j.status === 'abandoned').map((j) => `${j.jobKey}|${j.periodKey}`);
+  const alerts = alertKeys.length
+    ? await prisma.studioNotification.findMany({ where: { kind: 'job.failed', periodKey: { in: alertKeys } }, select: { periodKey: true, status: true } })
+    : [];
+  const alertOf = (key: string): 'sent' | 'failed' | 'none' => {
+    const rows = alerts.filter((a) => a.periodKey === key);
+    if (rows.some((a) => a.status === 'sent')) return 'sent';
+    return rows.length ? 'failed' : 'none';
+  };
+
   const runIds = runs.map((r) => r.id);
   const draftIds = runs.filter((r) => r.subjectKind === 'draft').map((r) => r.subjectId);
   const weekIds = runs.filter((r) => WEEK_SUBJECTS.has(r.subjectKind)).map((r) => r.subjectId);
@@ -109,6 +126,7 @@ export async function studioJournal(limit = JOURNAL_LIMIT): Promise<StudioJourna
       finished_at: j.finishedAt?.toISOString() ?? null,
       duration_ms: j.status === 'running' ? null : durationOf(j.startedAt, j.finishedAt),
       next_attempt_at: j.nextAttemptAt?.toISOString() ?? null,
+      alert: j.status === 'abandoned' ? alertOf(`${j.jobKey}|${j.periodKey}`) : null,
     })),
     agents: runs.map((r) => {
       const draft = r.subjectKind === 'draft' ? draftOf.get(r.subjectId) : undefined;

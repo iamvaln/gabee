@@ -103,6 +103,10 @@ const COPY: Record<string, Bi> = {
     fr: 'Un post TikTok est une vidéo : choisissez une vidéo, pas une image.',
     en: 'A TikTok post is a video: pick a video, not an image.',
   },
+  media_aspect_mismatch: {
+    fr: "Ce format ne convient pas à cette plateforme. Choisissez un autre fichier dans la Médiathèque.",
+    en: 'This format does not suit this platform. Pick another file in the Media library.',
+  },
   media_not_found: {
     fr: "Ce fichier n'existe plus dans la Médiathèque. Choisissez-en un autre.",
     en: 'This file is no longer in the Media library. Pick another one.',
@@ -142,6 +146,9 @@ const SERVER_FR = new Set([
   'not_found',
   'no_media',
   'platform_not_planned',
+  // The platform rule says which format to pick (Ruling 16).
+  'media_kind_mismatch',
+  'media_aspect_mismatch',
 ]);
 
 /**

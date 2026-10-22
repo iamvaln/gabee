@@ -1404,6 +1404,8 @@ ol.studio-list { list-style: decimal; }
   .studio-submit-row .hint { margin: 0; }
   .studio-chosen { flex-direction: column; }
   .studio-modal .modal-foot { flex-wrap: wrap; }
+  /* Dialogs render in a portal outside `.studio`: same thumb-sized targets. */
+  .studio-modal .btn { min-height: 44px; }
   .studio-modal .modal-foot .btn { flex: 1; min-height: 44px; }
 }
 
@@ -1473,6 +1475,7 @@ ol.studio-list { list-style: decimal; }
 .studio-pick-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .studio-pick-name { font-size: 13.5px; font-weight: 800; overflow-wrap: anywhere; }
 .studio-pick-meta { color: var(--text-3); font-size: 12px; font-weight: 700; }
+.studio-pick-text .badge { align-self: flex-start; margin-top: 4px; }
 .studio-media-choice {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
   padding: 10px 12px; border: 1px dashed var(--border-strong); border-radius: var(--r-sm); background: var(--surface-2);
@@ -1524,7 +1527,11 @@ ol.studio-list { list-style: decimal; }
 .studio-save-status { display: inline-flex; align-items: center; gap: 5px; margin-right: auto; color: var(--text-3); font-size: 12.5px; font-weight: 800; }
 .studio-save-status:has(svg) { color: var(--ok); }
 .studio-save-error { flex-basis: 100%; margin: 0; }
-.studio-fieldset:disabled .inp, .studio-fieldset:disabled .ta { background: var(--surface-2); color: var(--text-2); cursor: default; }
+.studio-settings .inp[readonly], .studio-settings .ta[readonly], .studio-settings .inp:disabled {
+  background: var(--surface-2); color: var(--text-2); cursor: default;
+}
+.studio-settings .inp[readonly]:focus, .studio-settings .ta[readonly]:focus { border-color: var(--border-strong); box-shadow: none; }
+.studio-budget-now { margin-top: 4px !important; color: var(--text) !important; font-weight: 700; }
 .studio-targets { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .studio-target { display: grid; grid-template-columns: minmax(0, 1fr) 110px auto; gap: 8px; align-items: center; }
 .studio-add { align-self: flex-start; }
@@ -1564,3 +1571,5 @@ ol.studio-list { list-style: decimal; }
   .studio-media-choice-actions { width: 100%; }
   .studio-media-choice-actions .btn { flex: 1; }
 }
+.ai-tile-alert { border-color: #ECD89B; background: var(--warn-bg); }
+.tile-foot a { color: var(--info); font-weight: 800; }

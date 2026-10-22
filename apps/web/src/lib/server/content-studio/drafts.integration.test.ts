@@ -271,11 +271,38 @@ test('editDraft attaches only a ready file that fits the platform', async () => 
   assert.equal(unchanged.mediaAssetId, null);
   assert.equal(await prisma.contentDraftVersion.count({ where: { draftId: tiktok.id } }), 1, 'a refused attach writes no version');
 
+  // Ruling 16: the aspect must fit too. TikTok: vertical only.
+  const wide = await createMediaAsset(prisma, { kind: 'video', mime: 'video/mp4', aspect: '16:9', cleared: true });
+  await assert.rejects(editDraft(tiktok.id, { media_asset_id: wide.id }, actor), (e: unknown) => isHttp(422, 'media_aspect_mismatch')(e) && /9:16/.test((e as Error).message));
+  // LinkedIn: no vertical file, and a video needs a known aspect.
+  const vertical = await createMediaAsset(prisma, { kind: 'image', aspect: '9:16', cleared: true });
+  await assert.rejects(editDraft(linkedin.id, { media_asset_id: vertical.id }, actor), (e: unknown) => isHttp(422, 'media_aspect_mismatch')(e) && /16:9, 1:1 ou 4:5/.test((e as Error).message));
+  const unknownVideo = await createMediaAsset(prisma, { kind: 'video', mime: 'video/mp4', aspect: null, cleared: true });
+  await assert.rejects(editDraft(linkedin.id, { media_asset_id: unknownVideo.id }, actor), isHttp(422, 'media_aspect_mismatch'));
+
   // An uncleared video may be attached (approval waits for its clearance); LinkedIn takes images and videos.
   const video = await createMediaAsset(prisma, { kind: 'video', mime: 'video/mp4', aspect: '9:16', cleared: false });
   assert.equal((await editDraft(tiktok.id, { media_asset_id: video.id }, actor)).media?.id, video.id);
-  assert.equal((await editDraft(linkedin.id, { media_asset_id: image.id }, actor)).media?.id, image.id);
-  assert.equal((await editDraft(linkedin.id, { media_asset_id: video.id }, actor)).media?.id, video.id);
+  const portrait = await createMediaAsset(prisma, { kind: 'image', aspect: '4:5', cleared: true });
+  assert.equal((await editDraft(linkedin.id, { media_asset_id: portrait.id }, actor)).media?.id, portrait.id);
+  const square = await createMediaAsset(prisma, { kind: 'video', mime: 'video/mp4', aspect: '1:1', cleared: true });
+  assert.equal((await editDraft(linkedin.id, { media_asset_id: square.id }, actor)).media?.id, square.id);
+  const unknownImage = await createMediaAsset(prisma, { kind: 'image', aspect: null, width: null, height: null, cleared: true });
+  assert.equal((await editDraft(linkedin.id, { media_asset_id: unknownImage.id }, actor)).media?.id, unknownImage.id);
+});
+
+test('approval refuses a file that does not fit the platform', async () => {
+  const { slot } = await fixture();
+  const tiktok = await readyDraft(slot.id, 'tiktok');
+  const linkedin = await readyDraft(slot.id, 'linkedin');
+  // Attached before the rule existed (or by hand): approval re-checks it.
+  const wide = await createMediaAsset(prisma, { kind: 'video', mime: 'video/mp4', aspect: '16:9', cleared: true });
+  await prisma.contentDraft.update({ where: { id: tiktok.id }, data: { mediaAssetId: wide.id } });
+  await assert.rejects(approveDraft(tiktok.id, actor), isHttp(409, 'media_aspect_mismatch'));
+  const vertical = await createMediaAsset(prisma, { kind: 'image', aspect: '9:16', cleared: true });
+  await prisma.contentDraft.update({ where: { id: linkedin.id }, data: { mediaAssetId: vertical.id } });
+  await assert.rejects(approveDraft(linkedin.id, actor), isHttp(409, 'media_aspect_mismatch'));
+  assert.equal(await prisma.contentDraft.count({ where: { status: 'approved' } }), 0);
 });
 
 test('markPublished closes the slot when every draft is published', async () => {

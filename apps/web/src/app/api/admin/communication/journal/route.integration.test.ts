@@ -114,6 +114,8 @@ test('journal lists job and agent runs newest first, with duration, cost and the
   );
   const abandoned = body.jobs.find((j: { status: string }) => j.status === 'abandoned');
   assert.equal(abandoned.error, 'AI unavailable: claude-opus-5-5: overloaded');
+  assert.equal(abandoned.alert, 'none', 'no alert row recorded');
+  assert.equal(body.jobs.find((j: { job_key: string }) => j.job_key === 'week.email').alert, null, 'only abandoned jobs carry an alert status');
   assert.equal(abandoned.attempts, 4);
   assert.equal(abandoned.duration_ms, 90_000);
   assert.equal(abandoned.period_key, 'day:2026-10-28');
@@ -149,4 +151,28 @@ test('journal keeps the last 50 of each', async () => {
   const body = await (await journal(webRequest(U, { method: 'GET', cookie }), undefined)).json();
   assert.equal(body.jobs.length, 50);
   assert.equal(body.jobs[0].period_key, 'day:2026-10-01@54', 'newest first');
+});
+
+test('journal says whether the abandoned job’s alert email really left', async () => {
+  const at2 = (iso: string) => new Date(iso);
+  await prisma.jobRun.createMany({
+    data: [
+      { jobKey: 'day.generate', periodKey: 'day:2026-10-28', status: 'abandoned', attempts: 4, error: 'x', startedAt: at2('2026-10-28T03:00:00Z'), finishedAt: at2('2026-10-28T03:01:00Z') },
+      { jobKey: 'week.propose', periodKey: 'week:2026-10-26', status: 'abandoned', attempts: 4, error: 'y', startedAt: at2('2026-10-25T05:00:00Z'), finishedAt: at2('2026-10-25T05:01:00Z') },
+    ],
+  });
+  // One recipient failed, one got it → sent; the other job's only alert failed → failed.
+  await prisma.studioNotification.createMany({
+    data: [
+      { kind: 'job.failed', periodKey: 'day.generate|day:2026-10-28', recipient: 'a@gabee.app', status: 'failed', error: 'Mailgun 502' },
+      { kind: 'job.failed', periodKey: 'day.generate|day:2026-10-28', recipient: 'b@gabee.app', status: 'sent' },
+      { kind: 'job.failed', periodKey: 'week.propose|week:2026-10-26', recipient: 'a@gabee.app', status: 'failed', error: 'Mailgun 502' },
+      // Another kind on the same period is not the alert.
+      { kind: 'day.ready', periodKey: 'day:2026-10-28', recipient: 'a@gabee.app', status: 'sent' },
+    ],
+  });
+  const body = await (await journal(webRequest(U, { method: 'GET', cookie }), undefined)).json();
+  const alertOf = (key: string) => body.jobs.find((j: { job_key: string }) => j.job_key === key).alert;
+  assert.equal(alertOf('day.generate'), 'sent');
+  assert.equal(alertOf('week.propose'), 'failed');
 });
