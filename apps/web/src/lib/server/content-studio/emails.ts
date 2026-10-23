@@ -19,6 +19,23 @@ export const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ESCAPES[c]
 const dateFmt = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('fr-FR', { ...opts, timeZone: 'UTC' });
 const shortDay = (ymd: string) => dateFmt({ day: 'numeric', month: 'short' }).format(new Date(`${ymd}T00:00:00Z`));
 const longDay = (ymd: string) => dateFmt({ weekday: 'long', day: 'numeric', month: 'short' }).format(new Date(`${ymd}T00:00:00Z`));
+/** `2026-10` → `d’octobre 2026`, `2026-11` → `de novembre 2026`. */
+function ofMonth(yyyyMm: string): string {
+  const name = dateFmt({ month: 'long', year: 'numeric' }).format(new Date(`${yyyyMm}-01T00:00:00Z`));
+  return /^[aeiouy]/i.test(name) ? `d’${name}` : `de ${name}`;
+}
+
+/**
+ * French typography: a no-break space before « : » « % » « » » and after « « »,
+ * a narrow no-break space before « ; ! ? » — so a line never wraps before
+ * them. Only a space that is already there is replaced (URLs are untouched).
+ */
+export function frenchSpacing(s: string): string {
+  return s
+    .replace(/ ([:%»])/g, '\u00a0$1')
+    .replace(/« /g, '«\u00a0')
+    .replace(/ ([;!?])/g, '\u202f$1');
+}
 
 /** Totals and the three best sources of a `getAudience` result. */
 export function summariseAudience(a: { bySource: { source: string; visits: number; signups: number }[] }): AudienceSummary {
@@ -36,11 +53,18 @@ export function summariseAudience(a: { bySource: { source: string; visits: numbe
 
 type Block = { title?: string; lines: string[] };
 
-function render(subject: string, heading: string, blocks: Block[], cta: { label: string; href: string }): EmailContent {
+function render(subjectIn: string, headingIn: string, blocksIn: Block[], ctaIn: { label: string; href: string }): EmailContent {
+  const subject = frenchSpacing(subjectIn);
+  const heading = frenchSpacing(headingIn);
+  const cta = { label: frenchSpacing(ctaIn.label), href: ctaIn.href };
+  // A block with nothing to say is dropped rather than shown empty.
+  const blocks = blocksIn
+    .filter((b) => b.lines.length > 0)
+    .map((b) => ({ title: b.title === undefined ? undefined : frenchSpacing(b.title), lines: b.lines.map(frenchSpacing) }));
   const text = [
     heading,
     ...blocks.map((b) => [b.title ? `\n${b.title}` : '', ...b.lines.map((l) => `- ${l}`)].filter(Boolean).join('\n')),
-    `\n${cta.label} : ${cta.href}`,
+    `\n${cta.label}\u00a0: ${cta.href}`,
   ].join('\n');
   const html = `
 <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;color:#0f172a">
@@ -123,18 +147,32 @@ function draftLine(d: DraftDto): string {
 export function dailyDraftsEmail(input: { day: string; topic: string; drafts: DraftDto[]; link: string }): EmailContent {
   const { day, topic, drafts, link } = input;
   return render(
-    `Gabee · Brouillons du ${longDay(day)} sont prêts`,
+    `Gabee · Les brouillons du ${longDay(day)} sont prêts`,
     `Les brouillons du ${longDay(day)} sont prêts`,
     [{ title: `Sujet : ${topic}`, lines: drafts.map(draftLine) }],
     { label: 'Relire et approuver', href: link },
   );
 }
 
-export function weekReminderEmail(input: { link: string }): EmailContent {
+/**
+ * Sunday reminder for next week, still waiting on the owner: a direction to
+ * pick (`proposals_ready`, `direction_set`) or titles to validate
+ * (`titles_ready`). `firstDay` is the week's first planned day.
+ */
+export function weekReminderEmail(input: { status: string; firstDay: string; link: string }): EmailContent {
+  const from = `à partir du ${longDay(input.firstDay)}`;
+  if (input.status === 'titles_ready') {
+    return render(
+      'Gabee · Les titres de la semaine attendent votre validation',
+      'La semaine n’est pas encore validée',
+      [{ lines: [`Les titres de chaque jour sont prêts. Sans validation, aucun brouillon ne sera écrit ${from}.`] }],
+      { label: 'Valider la semaine', href: input.link },
+    );
+  }
   return render(
     'Gabee · La direction de la semaine attend votre choix',
     'La semaine n’a pas encore de direction',
-    [{ lines: ['Trois directions sont proposées. Sans choix, aucun brouillon ne sera écrit lundi.'] }],
+    [{ lines: [`Trois directions sont proposées. Sans choix, aucun brouillon ne sera écrit ${from}.`] }],
     { label: 'Choisir une direction', href: input.link },
   );
 }
@@ -150,11 +188,13 @@ export function dayReminderEmail(input: { pending: { approve: number; publish: n
   });
 }
 
+/** `month` is `YYYY-MM` (studio-local); the email names it (« d’octobre 2026 »). */
 export function budgetAlertEmail(input: { spentUsd: number; budgetUsd: number; month: string; link: string }): EmailContent {
   const pct = input.budgetUsd > 0 ? Math.round((input.spentUsd / input.budgetUsd) * 100) : 0;
+  const month = ofMonth(input.month);
   return render(
-    `Gabee · Budget IA de ${input.month} à ${pct} %`,
-    `Le budget IA de ${input.month} est à ${pct} %`,
+    `Gabee · Budget IA ${month} à ${pct} %`,
+    `Le budget IA ${month} est à ${pct} %`,
     [{ lines: [`${input.spentUsd.toFixed(2)} $ dépensés sur ${input.budgetUsd.toFixed(2)} $.`, 'Pour continuer, relevez le budget dans les réglages.'] }],
     { label: 'Ouvrir les réglages', href: input.link },
   );
