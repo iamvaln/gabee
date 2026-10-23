@@ -3,13 +3,13 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { BilingualText, Language } from '@gabee/types';
+import type { Language } from '@gabee/types';
 import type { AdminRole } from '@/lib/server/auth';
+import type { Bi } from '../communication/_components/format';
 import { AIcon, type AdminIconName } from './icons';
 import { BeeLogo } from './bee';
 import { STUDIO_CHANGED } from './studio-events';
 
-type Bi = BilingualText;
 interface NavItem {
   id: string;
   icon: AdminIconName;
