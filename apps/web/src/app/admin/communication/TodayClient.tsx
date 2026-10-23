@@ -13,12 +13,14 @@ import { ErrorNotice, Notice } from './_components/ErrorNotice';
 import { errorText } from './_components/errors';
 import { FORMAT_LABEL, PLATFORM_LABEL, SLOT_STATUS, longDay } from './_components/format';
 import { PendingPostCard, PostCard } from './_components/PostCard';
-import { RelaunchProposals, StartWeekButton, launchTarget, type Failure, type WeeksResponse } from './_components/StartWeek';
+import { RelaunchProposals, StartWeekButton, launchTarget, weekLooksStuck, type Failure, type WeeksResponse } from './_components/StartWeek';
 
 type Data = { board: TodayBoard; weeks: WeeksResponse };
 
 /** While the scheduler writes a draft, re-read the board this often (no faster: it is a 1–2 minute job). */
 const GENERATING_POLL_MS = 15_000;
+/** After a launch whose answer was cut off, re-read the board this often until its week moves on. */
+const LAUNCH_POLL_MS = 15_000;
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -39,6 +41,9 @@ export function TodayClient({ lang }: { lang: Language }) {
       const [board, weeks] = await Promise.all([api<TodayBoard>('/today'), api<WeeksResponse>('/weeks')]);
       setData({ board, weeks });
       setLoadError(null);
+      // The launched week has moved on (proposals ready, or further): the launch's error is history.
+      const planned = weeks[launchTarget(weeks).which];
+      if (planned && planned.status !== 'proposing') setLaunchFailure(null);
     } catch (err) {
       reportUnexpected(err, { action: 'load-today' });
       setLoadError(errorText(err, lang));
@@ -58,6 +63,18 @@ export function TodayClient({ lang }: { lang: Language }) {
     const id = window.setInterval(() => void load(), GENERATING_POLL_MS);
     return () => window.clearInterval(id);
   }, [generating, load]);
+
+  // A launch from here lost its answer (connection cut, or the proxy gave up: Cloudflare stops
+  // waiting after 100 s) while the Strategist may still be writing: re-read until the week leaves
+  // `proposing`. Not once it looks stuck — no run can be live then, and Semaine offers to relaunch.
+  const plannedWeek = data ? data.weeks[launchTarget(data.weeks).which] : null;
+  const awaitingLaunch =
+    !!launchFailure && !launchFailure.ended && plannedWeek?.status === 'proposing' && !weekLooksStuck(plannedWeek);
+  useEffect(() => {
+    if (!awaitingLaunch) return;
+    const id = window.setInterval(() => void load(), LAUNCH_POLL_MS);
+    return () => window.clearInterval(id);
+  }, [awaitingLaunch, load]);
 
   /** A card changed its draft: show it at once, then re-read the board (slot status, "all published"). */
   const replaceDraft = (next: DraftDto) => {

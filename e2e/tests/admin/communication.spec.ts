@@ -293,6 +293,37 @@ test('a proposing week offers to relaunch only once it looks stuck', async ({ pa
   await expect(page.getByText('Les propositions de cette semaine n’ont pas abouti.', { exact: false })).toBeVisible();
 });
 
+test('a launch cut off by the proxy keeps Aujourd\'hui updating until the proposals land', async ({ page }) => {
+  // What prod does when the Strategist outlives Cloudflare's 100 s: the week exists in
+  // `proposing`, the browser gets a proxy error page (not the API's JSON).
+  const today = studioToday();
+  const sunday = new Date(`${today}T00:00:00Z`).getUTCDay() === 0;
+  const startsOn = sunday ? addDays(today, 1) : mondayOf(today);
+  const firstDay = addDays(today, 1);
+  let weekId = '';
+  await page.route('**/api/admin/communication/weeks', async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    const week = await prisma.contentWeek.create({
+      data: { startsOn: new Date(`${startsOn}T00:00:00Z`), firstDay: new Date(`${sunday ? startsOn : firstDay}T00:00:00Z`), status: 'proposing' },
+    });
+    weekId = week.id;
+    await route.fulfill({ status: 524, contentType: 'text/html', body: '<html><body>error code: 524</body></html>' });
+  });
+
+  await page.goto('/admin/communication');
+  await page.getByRole('button', { name: 'Lancer la semaine maintenant' }).click();
+  const cut = page.getByText('La connexion a été coupée', { exact: false });
+  await expect(cut.first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Relancer les propositions' })).toHaveCount(0);
+
+  // The Strategist finishes on the server: the page notices on its own, no reload.
+  const polled = page.waitForRequest((r) => r.method() === 'GET' && r.url().endsWith('/api/admin/communication/weeks'), { timeout: 30_000 });
+  await prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'proposals_ready', proposals: { proposals: PROPOSALS } } });
+  await polled;
+  await expect(cut).toHaveCount(0, { timeout: 30_000 });
+  await expect(page.getByRole('link', { name: 'Ouvrir la semaine' })).toBeVisible();
+});
+
 test('upload a video, clear it and attach it to a tiktok draft', async ({ page }) => {
   const { tiktokDraftId } = await seedTodayBoard();
   await seedMediaAsset({ kind: 'image', fileName: 'affiche.png', aspect: '16:9', cleared: true });

@@ -110,7 +110,7 @@ is in `apps/web/src/lib/server/env.ts`.
 | `ADMIN_APP_URL` | optional | base of the links in studio emails; defaults to `https://admin.gabee.app` |
 
 The studio only needs all four `MEDIA_R2_*` variables. If any one is missing,
-every media action answers `storage_unavailable` (section 5.6). Never set
+every media action answers `storage_unavailable` (section 5.7). Never set
 `STORAGE_DRIVER=memory` in production: production refuses it, and every media
 action then answers `storage_unavailable`.
 
@@ -203,7 +203,7 @@ Weekdays: **Tue 27 Oct, Wed 28 Oct, Thu 29 Oct** 2026, **Sun 1 Nov**.
 5. **Médiathèque → Téléverser un fichier**: upload a first file. **This is
    the test of the bucket CORS and token** (the automated tests stub this step).
    Expected: a progress bar, then "Vérification du fichier…", then the file in
-   the list. If it fails, see section 5.6. Then:
+   the list. If it fails, see section 5.7. Then:
    - **Autoriser** the file (only cleared media can be attached or approved);
    - upload and clear at least one **vertical (9:16) video**, because a TikTok
      post is a video;
@@ -314,7 +314,16 @@ on that week started less than **10 minutes** ago and is still running. Wait,
 then reload. If that run crashed, the same action works again once the 10
 minutes are up.
 
-### 5.5 Budget alert
+### 5.5 "La connexion a été coupée ; Gabee continue peut-être"
+
+An AI step (proposals, titles) can take longer than Cloudflare waits for an
+answer (100 seconds). The browser then gets no answer, but the server keeps
+working. **Wait**: Aujourd'hui and Semaine re-read the week every 15–20
+seconds and update by themselves when the step is done. Do not click again.
+If nothing changes for 10 minutes, the run died: Semaine then offers
+**Relancer les propositions**.
+
+### 5.6 Budget alert
 
 The hourly check emails the recipients once per month when the month's
 Communication spend reaches the threshold (default 80 % of 50 USD). Question
@@ -323,7 +332,7 @@ See the spend in **Réglages → Budget IA → Voir la dépense**
 (`/admin/ops/ai-usage`). Then raise the budget, or move routes to a cheaper
 model (section 6).
 
-### 5.6 `storage_unavailable` / uploads that fail
+### 5.7 `storage_unavailable` / uploads that fail
 
 - **Every media action fails with "Le stockage des médias ne répond pas ou
   n'est pas configuré"**: one of the four `MEDIA_R2_*` variables is missing in
@@ -339,7 +348,7 @@ model (section 6).
   stored object (size, real file type) and it did not match. Allowed: PNG,
   JPEG, WebP up to 15 MB, MP4 up to 300 MB.
 
-### 5.7 AI unavailable (`ai_unavailable`)
+### 5.8 AI unavailable (`ai_unavailable`)
 
 "Le service d'IA est indisponible" means no model in the task's chain could
 run. The Journal error lists each model with its reason:

@@ -14,12 +14,10 @@ import { DirectionCards } from '../_components/DirectionCards';
 import { AiWorking, ErrorNotice, Notice } from '../_components/ErrorNotice';
 import { errorText } from '../_components/errors';
 import { PLATFORM_LABEL, addDaysYmd, dateTime, dayMonth, weekdayOf } from '../_components/format';
-import { RelaunchProposals, StartWeekButton, failureOf, launchTarget, type Failure, type WeeksResponse } from '../_components/StartWeek';
+import { RelaunchProposals, StartWeekButton, failureOf, launchTarget, weekLooksStuck, type Failure, type WeeksResponse } from '../_components/StartWeek';
 
 type Which = 'current' | 'next';
 
-/** A `proposing` / `direction_set` week untouched this long has no live Strategist run (the server guard uses the same window). */
-const STUCK_MS = 10 * 60_000;
 /** While the scheduler (or a cut-off request) works on the shown week, re-read it this often. */
 const WAIT_POLL_MS = 20_000;
 
@@ -34,8 +32,6 @@ function defaultWhich(w: WeeksResponse): Which {
 }
 
 const mondayOf = (ymd: string) => addDaysYmd(ymd, -((weekdayOf(ymd) + 6) % 7));
-
-const isStuck = (week: WeekDto) => Date.now() - Date.parse(week.updated_at) >= STUCK_MS;
 
 /**
  * Semaine: the week loop for the current or next week — 3 directions, then
@@ -281,7 +277,7 @@ function WeekView({
   // poll until the week moves on, or until it looks stuck. A failure that proves the run
   // ended stops the polling — the screen then offers to run it again.
   const runEnded = (failure?.ended ?? false) || (opError?.ended ?? false);
-  const runMayBeLive = (week.status === 'proposing' || week.status === 'direction_set') && !isStuck(week) && !runEnded && op === null;
+  const runMayBeLive = (week.status === 'proposing' || week.status === 'direction_set') && !weekLooksStuck(week) && !runEnded && op === null;
   useEffect(() => {
     if (!runMayBeLive) return;
     const id = window.setInterval(() => void onReload(), WAIT_POLL_MS);
@@ -345,7 +341,7 @@ function WeekView({
 
   // ── Step 1 ──
   if (week.status === 'proposing') {
-    const canRelaunch = failure?.ended || isStuck(week);
+    const canRelaunch = failure?.ended || weekLooksStuck(week);
     return (
       <>
         <Stepper status={week.status} lang={lang} />
@@ -370,7 +366,7 @@ function WeekView({
   const directionStep = week.status === 'proposals_ready' || week.status === 'direction_set' || changing;
   if (directionStep) {
     // Titles may still be being written (another tab, or a request whose answer was cut off).
-    const titlesMayRun = week.status === 'direction_set' && !isStuck(week) && !opError?.ended && op === null;
+    const titlesMayRun = week.status === 'direction_set' && !weekLooksStuck(week) && !opError?.ended && op === null;
     return (
       <>
         <Stepper status={changing ? 'proposals_ready' : week.status} lang={lang} />
