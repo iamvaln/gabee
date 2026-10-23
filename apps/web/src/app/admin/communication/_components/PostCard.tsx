@@ -2,17 +2,17 @@
 
 import Link from 'next/link';
 import { useEffect, useId, useState } from 'react';
-import type { ContentLanguage, ContentPlatform, Language, LinkedInPost, TikTokPost } from '@gabee/types';
-import type { DraftDto, MediaSummary } from '@/lib/server/content-studio/drafts';
+import type { ContentLanguage, ContentPlatform, Language } from '@gabee/types';
+import type { DraftDto } from '@/lib/server/content-studio/drafts';
 import { AIcon } from '../../_shell/icons';
-import { API, ApiError, api, downloadDraftMedia, notifyStudioChanged, reportUnexpected } from './api';
+import { ApiError, api, downloadDraftMedia, notifyStudioChanged, reportUnexpected } from './api';
 import { copyText } from './copy';
 import { ConfirmDialog } from './Dialog';
+import { DraftEditor } from './DraftEditor';
 import { AiWorking, ErrorNotice, Notice } from './ErrorNotice';
 import { errorText } from './errors';
 import { DRAFT_STATUS, LANGUAGE_LABEL, PLATFORM_LABEL, dateTime, postText } from './format';
-import { kindLabel } from './media';
-import { MediaPicker } from './MediaPicker';
+import { Preview } from './PostPreview';
 import { PublishDialog } from './PublishDialog';
 
 const MEDIA_LIBRARY = '/admin/communication/medias';
@@ -300,130 +300,6 @@ function PlatformMark({ platform }: { platform: ContentPlatform }) {
   );
 }
 
-// ── Preview ──
-
-const TOKEN_RE = /(https?:\/\/\S+|#[\p{L}\p{N}_]+)/gu;
-
-/** Post text with links and hashtags highlighted (not clickable: a click would count as a visit). */
-function RichText({ text }: { text: string }) {
-  const parts = text.split(TOKEN_RE);
-  return (
-    <>
-      {parts.map((part, i) =>
-        i % 2 === 1 ? (
-          <span key={i} className={part.startsWith('#') ? 'studio-tag' : 'studio-link'}>
-            {part}
-          </span>
-        ) : (
-          part
-        ),
-      )}
-    </>
-  );
-}
-
-function Preview({ draft, lang }: { draft: DraftDto; lang: Language }) {
-  const L = lang === 'fr';
-  if (draft.platform === 'linkedin') {
-    return (
-      <div className="studio-preview li">
-        <div className="studio-li-author" aria-hidden>
-          <span className="studio-li-avatar">G</span>
-          <span>
-            <b>Gabee</b>
-            <small>{L ? 'Aperçu du post' : 'Post preview'}</small>
-          </span>
-        </div>
-        <p className="studio-post-text">
-          <RichText text={postText(draft)} />
-        </p>
-        {draft.media && <MediaThumb draft={draft} lang={lang} />}
-      </div>
-    );
-  }
-  const p = draft.payload as TikTokPost;
-  const plan = p.mode === 'filming_plan' && p.filming_plan ? p.filming_plan : null;
-  return (
-    <div className="studio-preview tt">
-      <div className="studio-tt-visual">
-        {draft.media?.kind === 'video' ? (
-          <MediaThumb draft={draft} lang={lang} />
-        ) : (
-          <div className="studio-tt-frame is-empty">
-            <AIcon name="device" size={26} />
-            <span>{L ? 'Vidéo à filmer' : 'Video to film'}</span>
-          </div>
-        )}
-      </div>
-      <div className="studio-tt-text">
-        <span className={`badge ${plan ? 'warn' : 'info'}`}>
-          <i className="bdot" />
-          {plan ? (L ? 'À filmer' : 'To film') : L ? 'Vidéo de la médiathèque' : 'Library video'}
-        </span>
-        <div>
-          <p className="section-label">{L ? 'Légende' : 'Caption'}</p>
-          <p className="studio-post-text">
-            <RichText text={postText(draft)} />
-          </p>
-        </div>
-        {p.on_screen_text.length > 0 && (
-          <div>
-            <p className="section-label">{L ? 'Texte à l’écran' : 'On-screen text'}</p>
-            <ol className="studio-list">
-              {p.on_screen_text.map((line, i) => (
-                <li key={i}>{line}</li>
-              ))}
-            </ol>
-          </div>
-        )}
-        {plan && (
-          <section className="studio-plan" aria-label={L ? 'Plan de tournage' : 'Filming plan'}>
-            <h4>
-              <AIcon name="play" size={14} />
-              {L ? 'Plan de tournage' : 'Filming plan'}
-              <span className="studio-plan-dur">≈ {Math.round(plan.duration_s)} s</span>
-            </h4>
-            <p className="studio-plan-hook">
-              <span>{L ? 'Accroche (3 premières secondes)' : 'Hook (first 3 seconds)'}</span>
-              {plan.hook}
-            </p>
-            <ol className="studio-list">
-              {plan.shots.map((shot, i) => (
-                <li key={i}>{shot}</li>
-              ))}
-            </ol>
-          </section>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/**
- * The attached media. Images load through the draft's media route (a
- * short-lived presigned URL); a video shows as a tile, so opening the screen
- * never pulls a large file. Any load failure falls back to the tile.
- */
-function MediaThumb({ draft, lang }: { draft: DraftDto; lang: Language }) {
-  const [failed, setFailed] = useState(false);
-  const m = draft.media!;
-  const L = lang === 'fr';
-  if (m.kind === 'image' && !failed) {
-    // Plain <img>: a private, short-lived presigned URL that next/image cannot optimise.
-    return <img className="studio-media-img" src={`${API}/drafts/${draft.id}/media`} alt={m.file_name} loading="lazy" onError={() => setFailed(true)} />;
-  }
-  return (
-    <div className={'studio-media-tile' + (draft.platform === 'tiktok' ? ' studio-tt-frame' : '')}>
-      <AIcon name={m.kind === 'video' ? 'play' : 'eye'} size={22} />
-      <span className="studio-media-name">{m.file_name}</span>
-      <span className="studio-media-meta">
-        {m.kind === 'video' ? (L ? 'Vidéo' : 'Video') : L ? 'Image' : 'Image'}
-        {m.aspect ? ` · ${m.aspect}` : ''}
-      </span>
-    </div>
-  );
-}
-
 function MediaNotices({ draft, lang, onPick }: { draft: DraftDto; lang: Language; onPick?: () => void }) {
   const L = lang === 'fr';
   const m = draft.media;
@@ -515,130 +391,4 @@ function PublicationSummary({ publication, lang }: { publication: NonNullable<Dr
       {publication.comment && <blockquote>{publication.comment}</blockquote>}
     </div>
   );
-}
-
-// ── Edit ──
-
-function DraftEditor({
-  draft,
-  lang,
-  busy,
-  pickFirst,
-  onCancel,
-  onSave,
-}: {
-  draft: DraftDto;
-  lang: Language;
-  busy: boolean;
-  pickFirst: boolean;
-  onCancel: () => void;
-  onSave: (body: string, hashtags: string[], media: string | null | undefined) => void;
-}) {
-  const L = lang === 'fr';
-  const isLi = draft.platform === 'linkedin';
-  const p = draft.payload!;
-  const url = draft.tracked_url;
-  const initial = isLi ? stripLink((p as LinkedInPost).body, url) : (p as TikTokPost).caption;
-  const [body, setBody] = useState(initial);
-  const [tags, setTags] = useState(p.hashtags.join(' '));
-  const [media, setMedia] = useState<MediaSummary | null>(draft.media);
-  const [picking, setPicking] = useState(pickFirst);
-  const id = useId();
-  const mediaChanged = (media?.id ?? null) !== (draft.media?.id ?? null);
-  const hashtags = tags
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((h) => (h.startsWith('#') ? h : `#${h}`));
-
-  return (
-    <form
-      className="studio-editor"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (body.trim()) onSave(body, hashtags, mediaChanged ? (media?.id ?? null) : undefined);
-      }}
-    >
-      {draft.status === 'approved' && (
-        <Notice tone="warn">{L ? 'Enregistrer une modification retire la validation de ce post.' : 'Saving an edit removes the approval of this post.'}</Notice>
-      )}
-      <div>
-        <label className="field-label" htmlFor={`${id}-body`}>
-          {isLi ? (L ? 'Texte du post' : 'Post text') : L ? 'Légende' : 'Caption'}
-          <span className="studio-count">
-            {body.length} {L ? 'caractères' : 'characters'}
-          </span>
-        </label>
-        <textarea id={`${id}-body`} className="ta" rows={isLi ? 10 : 5} value={body} onChange={(e) => setBody(e.target.value)} data-autofocus autoFocus />
-        {isLi && (
-          <p className="help">
-            {L ? 'Le lien suivi est ajouté automatiquement à la fin : ' : 'The tracked link is added at the end automatically: '}
-            <span className="studio-link">{url}</span>
-          </p>
-        )}
-      </div>
-      <div>
-        <label className="field-label" htmlFor={`${id}-tags`}>
-          {L ? 'Hashtags (séparés par des espaces)' : 'Hashtags (separated by spaces)'}
-        </label>
-        <input id={`${id}-tags`} className="inp" value={tags} onChange={(e) => setTags(e.target.value)} autoCapitalize="off" autoCorrect="off" spellCheck={false} />
-      </div>
-      <div>
-        <p className="field-label" id={`${id}-media`}>
-          {isLi ? (L ? 'Média (facultatif)' : 'Media (optional)') : L ? 'Vidéo' : 'Video'}
-        </p>
-        <div className="studio-media-choice" aria-labelledby={`${id}-media`} role="group">
-          {media ? (
-            <span className="studio-media-chosen">
-              <AIcon name={media.kind === 'video' ? 'play' : 'eye'} size={18} />
-              <span className="studio-pick-text">
-                <span className="studio-pick-name">{media.file_name}</span>
-                <span className="studio-pick-meta">
-                  {kindLabel(media.kind, lang)}
-                  {media.aspect ? ` · ${media.aspect}` : ''}
-                  {media.cleared ? '' : L ? ' · non autorisé' : ' · not cleared'}
-                </span>
-              </span>
-            </span>
-          ) : (
-            <span className="studio-muted-text">{isLi ? (L ? 'Aucun : texte seul' : 'None: text only') : L ? 'Aucune vidéo jointe' : 'No video attached'}</span>
-          )}
-          <span className="studio-media-choice-actions">
-            <button type="button" className="btn secondary sm" onClick={() => setPicking(true)} disabled={busy}>
-              {media ? (L ? 'Changer de média' : 'Change media') : L ? 'Choisir un média' : 'Choose media'}
-            </button>
-            {media && (
-              <button type="button" className="btn ghost sm" onClick={() => setMedia(null)} disabled={busy}>
-                {L ? 'Retirer' : 'Remove'}
-              </button>
-            )}
-          </span>
-        </div>
-      </div>
-      {picking && (
-        <MediaPicker
-          platform={draft.platform}
-          lang={lang}
-          currentId={media?.id ?? null}
-          onClose={() => setPicking(false)}
-          onPick={(a) => {
-            setMedia({ id: a.id, kind: a.kind, file_name: a.fileName, cleared: a.cleared, aspect: a.aspect });
-            setPicking(false);
-          }}
-        />
-      )}
-      <div className="studio-actions">
-        <button type="button" className="btn secondary" onClick={onCancel} disabled={busy}>
-          {L ? 'Annuler' : 'Cancel'}
-        </button>
-        <button type="submit" className="btn studio-primary" disabled={busy || !body.trim()}>
-          {busy ? (L ? 'Enregistrement…' : 'Saving…') : L ? 'Enregistrer' : 'Save'}
-        </button>
-      </div>
-    </form>
-  );
-}
-
-function stripLink(text: string, url: string): string {
-  const trimmed = text.trimEnd();
-  return trimmed.endsWith(url) ? trimmed.slice(0, -url.length).trimEnd() : trimmed;
 }
