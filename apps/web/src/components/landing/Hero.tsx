@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AttributedLink } from './AttributedLink';
 import { parentSignupHref, kidInstallHref } from './parent-app-links';
 import { getTranslations } from 'next-intl/server';
 import { LandingBee } from './LandingBee';
@@ -19,13 +19,13 @@ export async function Hero() {
           </h1>
           <p className="hero-sub">{t('sub')}</p>
           <div className="hero-ctas">
-            <Link href={parentSignupHref()} className="lbtn lbtn-primary lbtn-lg">
+            <AttributedLink href={parentSignupHref()} className="lbtn lbtn-primary lbtn-lg">
               {t('cta')}
-            </Link>
+            </AttributedLink>
             {/* Install CTA — links to the kid PWA with ?install=1 (the prompt
                 can only fire on the kid origin, so we deep-link there). "How it
                 works" isn't repeated here — it already lives in the top nav. */}
-            <a
+            <AttributedLink
               href={kidInstallHref()}
               target="_blank"
               rel="noopener noreferrer"
@@ -33,7 +33,7 @@ export async function Hero() {
             >
               <Download />
               {t('installKid')}
-            </a>
+            </AttributedLink>
           </div>
           <p className="hero-reassure">
             <Check /> {t('reassure')}

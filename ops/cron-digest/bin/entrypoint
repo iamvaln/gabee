@@ -3,6 +3,7 @@
 # same way:
 #   docker compose run --rm cron-digest run
 #   docker compose run --rm cron-digest shell
+# `tick-loop` is the cron-content service: the 10-minute Content Studio tick.
 set -euo pipefail
 
 cmd="${1:-loop}"
@@ -10,6 +11,7 @@ shift || true
 
 case "$cmd" in
   loop)  exec digest-loop ;;
+  tick-loop) exec tick-loop ;;
   run)   exec digest-once ;;
   shell) exec /bin/bash ;;
   *)     exec "$cmd" "$@" ;;

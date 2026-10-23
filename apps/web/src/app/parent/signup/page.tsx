@@ -9,6 +9,7 @@ import {
   parsePhoneNumberFromString,
   type CountryCode,
 } from 'libphonenumber-js';
+import { utmFromSearch } from '@/components/landing/attribution';
 import { AuthAside, AuthLangToggle } from "../_components/auth-aside";
 
 /**
@@ -72,6 +73,15 @@ function SignupInner() {
   const search = useSearchParams();
   const inviteToken = search.get('invite');
   const inviteEmail = search.get('email');
+  // Where the visitor came from, forwarded by the landing CTAs (`utm_*`, or
+  // `ref=<host>` for an external referrer). Sent with the signup so the
+  // account records its source; absent when they arrived directly.
+  const attribution = useMemo(() => {
+    const utm = utmFromSearch(`?${search.toString()}`);
+    const ref = search.get('ref')?.slice(0, 200);
+    if (Object.keys(utm).length === 0 && !ref) return null;
+    return { utm, ...(ref ? { referrer_host: ref } : {}) };
+  }, [search]);
   const [lang, setLang] = useState<'fr' | 'en'>('fr');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -149,6 +159,7 @@ function SignupInner() {
         password,
         phone: phoneE164,
         terms_accepted: accept,
+        ...(attribution ? { attribution } : {}),
       }),
     });
     if (res.ok) {

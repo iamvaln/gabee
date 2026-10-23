@@ -8,6 +8,11 @@ import {
   createCurriculum,
   createQuestion,
   createDevice,
+  createContentWeek,
+  createContentSlot,
+  createContentDraft,
+  createMediaAsset,
+  seedContentStudio,
 } from '../src/testing';
 
 const prisma = createTestClient();
@@ -77,3 +82,64 @@ test('resetDb truncates everything except _prisma_migrations', async () => {
   `;
   assert.ok(count > 0n);
 });
+
+test('seedContentStudio is idempotent and never overwrites admin edits', async () => {
+  await seedContentStudio(prisma);
+  const counts = async () => ({
+    settings: await prisma.studioSettings.count(),
+    models: await prisma.aiModel.count(),
+    routes: await prisma.aiTaskRoute.count(),
+    profiles: await prisma.platformProfile.count(),
+    lines: await prisma.editorialLineVersion.count(),
+    agents: await prisma.agent.count(),
+    versions: await prisma.agentVersion.count(),
+  });
+  const first = await counts();
+  assert.deepEqual(first, { settings: 1, models: 3, routes: 6, profiles: 2, lines: 1, agents: 5, versions: 5 });
+
+  // A super-admin edits a price, a route and publishes an agent v2.
+  await prisma.aiModel.update({ where: { key: 'claude-opus-5-5' }, data: { inputUsdPerMTok: 9 } });
+  await prisma.aiTaskRoute.update({
+    where: { task_rank: { task: 'post_tiktok', rank: 1 } },
+    data: { modelKey: 'claude-sonnet-5-5' },
+  });
+  const v2 = await prisma.agentVersion.create({
+    data: { agentKey: 'strategist', version: 2, instructions: 'edited', publishedAt: new Date() },
+  });
+  await prisma.agent.update({ where: { key: 'strategist' }, data: { publishedVersionId: v2.id } });
+
+  await seedContentStudio(prisma);
+  assert.deepEqual(await counts(), { ...first, versions: 6 });
+  const opus = await prisma.aiModel.findUniqueOrThrow({ where: { key: 'claude-opus-5-5' } });
+  assert.equal(opus.inputUsdPerMTok, 9);
+  const route = await prisma.aiTaskRoute.findUniqueOrThrow({ where: { task_rank: { task: 'post_tiktok', rank: 1 } } });
+  assert.equal(route.modelKey, 'claude-sonnet-5-5');
+  const strategist = await prisma.agent.findUniqueOrThrow({ where: { key: 'strategist' } });
+  assert.equal(strategist.publishedVersionId, v2.id);
+  const writer = await prisma.agent.findUniqueOrThrow({
+    where: { key: 'writer_tiktok' },
+    include: { publishedVersion: true },
+  });
+  assert.equal(writer.publishedVersion?.version, 1);
+  assert.match(writer.publishedVersion?.instructions ?? '', /TikTok/);
+});
+
+test('content studio factories build a week → slot → draft with media', async () => {
+  const week = await createContentWeek(prisma);
+  const other = await createContentWeek(prisma);
+  assert.notEqual(week.startsOn.getTime(), other.startsOn.getTime());
+  const day1 = await createContentSlot(prisma, week.id);
+  const day2 = await createContentSlot(prisma, week.id);
+  assert.equal(day2.date.getTime() - day1.date.getTime(), 24 * 60 * 60 * 1000);
+  const media = await createMediaAsset(prisma, { kind: 'video', mime: 'video/mp4', aspect: '9:16', cleared: true });
+  const draft = await createContentDraft(prisma, day1.id, { platform: 'tiktok', mediaAssetId: media.id });
+  const loaded = await prisma.contentDraft.findUniqueOrThrow({
+    where: { id: draft.id },
+    include: { slot: { include: { week: true } }, mediaAsset: true },
+  });
+  assert.equal(loaded.slot.week.id, week.id);
+  assert.equal(loaded.mediaAsset?.cleared, true);
+  // A media file in use cannot be deleted from the library.
+  await assert.rejects(prisma.mediaAsset.delete({ where: { id: media.id } }));
+});
+

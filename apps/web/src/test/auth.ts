@@ -52,6 +52,7 @@ export function webRequest(
     cookie?: { name: string; value: string };
     bearer?: string;
     ip?: string;
+    headers?: Record<string, string>;
   } = {},
 ): NextRequest {
   const headers: Record<string, string> = {
@@ -60,6 +61,7 @@ export function webRequest(
   if (opts.body !== undefined) headers['content-type'] = 'application/json';
   if (opts.cookie) headers['cookie'] = `${opts.cookie.name}=${opts.cookie.value}`;
   if (opts.bearer) headers['authorization'] = `Bearer ${opts.bearer}`;
+  Object.assign(headers, opts.headers);
   return new NextRequest(url, {
     method: opts.method ?? 'POST',
     headers,

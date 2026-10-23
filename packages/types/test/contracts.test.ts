@@ -1,4 +1,39 @@
 import { describe, it } from 'node:test';
+import {
+  MEDIA_MAX_IMAGE_BYTES,
+  MEDIA_MAX_VIDEO_BYTES,
+  DirectionProposalsSchema,
+  TikTokPostSchema,
+  WeekTitlesSchema,
+  MarkPublishedRequestSchema,
+  VisitBeaconSchema,
+  AI_TASKS,
+  AI_CAPABILITIES,
+  AI_TASK_CAPABILITY,
+  AGENT_KEYS,
+  AGENT_TASK,
+  JOB_KEYS,
+  SLOT_FORMATS,
+  WEEK_STATUSES,
+  SLOT_STATUSES,
+  DRAFT_STATUSES,
+  CONTENT_LANGUAGES,
+  OBJECTIVE_TYPES,
+  ChooseDirectionRequestSchema,
+  SkipDayRequestSchema,
+  UpdateDraftRequestSchema,
+  MediaUploadInitSchema,
+  MediaClearanceSchema,
+  fitsPlatform,
+  UtmSchema,
+  LinkedInPostSchema,
+  ArtDirectionSchema,
+  ReportNarrativeSchema,
+  StudioSettingsUpdateSchema,
+  ObjectiveUpsertSchema,
+  EditorialLineUpdateSchema,
+  UpdateSlotRequestSchema,
+} from '../src/index';
 import assert from 'node:assert/strict';
 import {
   SignupRequestSchema,
@@ -562,5 +597,140 @@ describe('rollout & invite contracts', () => {
       notified_at: null,
     });
     assert.equal(row.notified_at, null);
+  });
+});
+
+describe('content studio', () => {
+  const proposal = { title: 't', rationale: 'r', evidence: ['e'], sample_angles: ['a'] };
+
+  it('DirectionProposalsSchema requires exactly 3 proposals', () => {
+    assert.equal(DirectionProposalsSchema.safeParse({ proposals: [proposal, proposal] }).success, false);
+    assert.equal(DirectionProposalsSchema.safeParse({ proposals: [proposal, proposal, proposal] }).success, true);
+  });
+
+  it('TikTokPostSchema requires filming_plan when mode is filming_plan', () => {
+    const base = { caption: 'c', hashtags: ['x'], on_screen_text: ['y'] };
+    assert.equal(TikTokPostSchema.safeParse({ ...base, mode: 'filming_plan' }).success, false);
+    assert.equal(
+      TikTokPostSchema.safeParse({ ...base, mode: 'filming_plan', filming_plan: { hook: 'h', shots: ['s'], duration_s: 20 } }).success,
+      true,
+    );
+    assert.equal(TikTokPostSchema.safeParse({ ...base, mode: 'library_video' }).success, true);
+  });
+
+  it('WeekTitlesSchema rejects a platform outside CONTENT_PLATFORMS', () => {
+    const day = (platform: string) => ({
+      days: [{ date: '2026-10-26', topic: 't', angle: 'a', format: 'text', platforms: [{ platform, language: 'fr' }], sources: [{ title: 's', url: 'https://x.co' }] }],
+    });
+    assert.equal(WeekTitlesSchema.safeParse(day('linkedin')).success, true);
+    assert.equal(WeekTitlesSchema.safeParse(day('facebook')).success, false);
+  });
+
+  it('MarkPublishedRequestSchema rejects rating 0 and 6', () => {
+    const p = 'https://linkedin.com/posts/x';
+    assert.equal(MarkPublishedRequestSchema.safeParse({ post_url: p, rating: 0 }).success, false);
+    assert.equal(MarkPublishedRequestSchema.safeParse({ post_url: p, rating: 6 }).success, false);
+    assert.equal(MarkPublishedRequestSchema.safeParse({ post_url: p, rating: 5, comment: 'ok' }).success, true);
+  });
+
+  it('VisitBeaconSchema rejects a 121-char utm value', () => {
+    assert.equal(VisitBeaconSchema.safeParse({ path: '/', utm: { source: 'a'.repeat(121) } }).success, false);
+    assert.equal(VisitBeaconSchema.safeParse({ path: '/', utm: { source: 'a'.repeat(120) }, lang: 'en' }).success, true);
+  });
+
+  it('SignupRequestSchema accepts optional attribution', () => {
+    const base = { email: 'a@b.co', password: 'password1', terms_accepted: true as const };
+    assert.equal(SignupRequestSchema.safeParse(base).success, true);
+    assert.equal(SignupRequestSchema.safeParse({ ...base, attribution: { utm: { source: 'linkedin' }, referrer_host: 'l.co' } }).success, true);
+  });
+
+  it('other contracts and code-owned maps', () => {
+    for (const t of AI_TASKS) assert.ok(AI_CAPABILITIES.includes(AI_TASK_CAPABILITY[t]));
+    for (const a of AGENT_KEYS) assert.ok(AI_TASKS.includes(AGENT_TASK[a]));
+    assert.ok(JOB_KEYS.length && SLOT_FORMATS.length && WEEK_STATUSES.length && SLOT_STATUSES.length && DRAFT_STATUSES.length);
+    assert.ok(CONTENT_LANGUAGES.length && OBJECTIVE_TYPES.length);
+    assert.equal(ChooseDirectionRequestSchema.safeParse({ proposal_index: 3, refinement: '', platform_angles: {} }).success, false);
+    assert.equal(ChooseDirectionRequestSchema.safeParse({ proposal_index: 2, refinement: 'x', platform_angles: { tiktok: 'y' } }).success, true);
+    const S = StudioSettingsUpdateSchema;
+    assert.equal(S.safeParse({ timezone: 'Africa/Douala', recipients: ['a@b.co'], monthly_budget_usd: 50, budget_alert_ratio: 1 }).success, true);
+    assert.equal(S.safeParse({ timezone: 'Not/AZone' }).success, false);
+    assert.equal(S.safeParse({ recipients: [] }).success, false);
+    assert.equal(S.safeParse({ monthly_budget_usd: 0 }).success, false);
+    assert.equal(S.safeParse({ budget_alert_ratio: 0 }).success, false);
+    assert.equal(S.safeParse({ budget_alert_ratio: 1.1 }).success, false);
+    const O = ObjectiveUpsertSchema;
+    assert.equal(O.safeParse({ month: '2026-10', type: 'signups', statement: 's', targets: { signups: 10 } }).success, true);
+    assert.equal(O.safeParse({ month: '2026-13', type: 'signups', statement: 's' }).success, false);
+    assert.equal(EditorialLineUpdateSchema.safeParse({ body: 'x', product_facts: { a: 1 } }).success, true);
+    assert.equal(EditorialLineUpdateSchema.safeParse({ body: 'x' }).success, false);
+    const U = UpdateSlotRequestSchema;
+    assert.equal(U.safeParse({}).success, false);
+    assert.equal(U.safeParse({ topic: 't', platforms: [{ platform: 'tiktok', language: 'en' }] }).success, true);
+    assert.equal(U.safeParse({ platforms: [] }).success, false);
+    assert.equal(U.safeParse({ language: 'en' }).success, false);
+    assert.equal(
+      WeekTitlesSchema.safeParse({ days: [{ date: '2026-10-26', topic: 't', angle: 'a', format: 'text', platforms: [], sources: [{ title: 's', url: 'nope' }] }] }).success,
+      false,
+    );
+    assert.equal(SkipDayRequestSchema.safeParse({ reason: '' }).success, false);
+    assert.equal(UpdateDraftRequestSchema.safeParse({ body: 'b', media_asset_id: null }).success, true);
+    assert.equal(MediaUploadInitSchema.safeParse({ file_name: 'a.png', mime: 'image/png', size_bytes: 10 }).success, true);
+    assert.equal(MediaClearanceSchema.safeParse({ cleared: true }).success, true);
+    assert.equal(UtmSchema.safeParse({}).success, true);
+    assert.equal(LinkedInPostSchema.safeParse({ body: 'b', hashtags: [], link_target: 'landing' }).success, true);
+    assert.equal(ArtDirectionSchema.safeParse({ media_asset_id: null, visual_brief: 'v' }).success, true);
+    assert.equal(ArtDirectionSchema.safeParse({ media_asset_id: 'nope', visual_brief: 'v' }).success, false);
+    assert.equal(ReportNarrativeSchema.safeParse({ headline: 'h', highlights: [], watch_outs: [] }).success, true);
+  });
+
+  it('MediaUploadInitSchema enforces size caps per kind at the boundary', () => {
+    assert.equal(MEDIA_MAX_IMAGE_BYTES, 15 * 1024 * 1024);
+    assert.equal(MEDIA_MAX_VIDEO_BYTES, 300 * 1024 * 1024);
+    const f = (mime: string, size_bytes: number) => MediaUploadInitSchema.safeParse({ file_name: 'a', mime, size_bytes, ...(mime === 'video/mp4' ? { aspect: '9:16' } : {}) }).success;
+    for (const m of ['image/png', 'image/jpeg', 'image/webp']) {
+      assert.equal(f(m, MEDIA_MAX_IMAGE_BYTES), true);
+      assert.equal(f(m, MEDIA_MAX_IMAGE_BYTES + 1), false);
+    }
+    assert.equal(f('video/mp4', MEDIA_MAX_VIDEO_BYTES), true);
+    assert.equal(f('video/mp4', MEDIA_MAX_VIDEO_BYTES + 1), false);
+    assert.equal(f('video/mp4', MEDIA_MAX_IMAGE_BYTES + 1), true);
+  });
+
+  it('MediaUploadInitSchema metadata: aspect required for video, optional lists bounded', () => {
+    const p = (o: object) => MediaUploadInitSchema.safeParse({ file_name: 'a', size_bytes: 10, ...o }).success;
+    assert.equal(p({ mime: 'video/mp4' }), false);
+    assert.equal(p({ mime: 'video/mp4', aspect: '16:9' }), true);
+    assert.equal(p({ mime: 'video/mp4', aspect: '3:2' }), false);
+    assert.equal(p({ mime: 'image/png' }), true);
+    for (const a of ['16:9', '1:1', '9:16', '4:5']) assert.equal(p({ mime: 'image/png', aspect: a }), true);
+    assert.equal(p({ mime: 'image/png', language: 'en', tags: ['a'] }), true);
+    assert.equal(p({ mime: 'image/png', language: 'de' }), false);
+    assert.equal(p({ mime: 'image/png', tags: Array(11).fill('a') }), false);
+    assert.equal(p({ mime: 'image/png', tags: [''] }), false);
+    assert.equal(p({ mime: 'image/png', tags: ['x'.repeat(41)] }), false);
+  });
+});
+
+describe('fitsPlatform (Ruling 16)', () => {
+  const fit = (kind: string, aspect: string | null, platform: 'linkedin' | 'tiktok') => {
+    const r = fitsPlatform(kind, aspect, platform);
+    return r.ok ? 'ok' : r.code;
+  };
+  it('TikTok takes a vertical video only', () => {
+    assert.equal(fit('video', '9:16', 'tiktok'), 'ok');
+    assert.equal(fit('image', '9:16', 'tiktok'), 'media_kind_mismatch');
+    for (const a of ['16:9', '1:1', '4:5']) assert.equal(fit('video', a, 'tiktok'), 'media_aspect_mismatch');
+    assert.equal(fit('video', null, 'tiktok'), 'media_aspect_mismatch');
+  });
+  it('LinkedIn takes images and videos in 16:9, 1:1 or 4:5, never vertical', () => {
+    for (const kind of ['image', 'video']) {
+      for (const a of ['16:9', '1:1', '4:5']) assert.equal(fit(kind, a, 'linkedin'), 'ok');
+      assert.equal(fit(kind, '9:16', 'linkedin'), 'media_aspect_mismatch');
+    }
+  });
+  it('an unknown aspect is fine for an image, not for a video', () => {
+    assert.equal(fit('image', null, 'linkedin'), 'ok');
+    assert.equal(fit('video', null, 'linkedin'), 'media_aspect_mismatch');
+    assert.equal(fit('audio', '16:9', 'linkedin'), 'media_kind_mismatch');
   });
 });

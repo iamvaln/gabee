@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AttributedLink } from './AttributedLink';
 import { parentSignupHref } from './parent-app-links';
 import { getTranslations } from 'next-intl/server';
 import { SectionHead } from './SectionHead';
@@ -28,9 +28,9 @@ export async function Pricing() {
               {t('noteLink')}
             </a>
           </p>
-          <Link href={parentSignupHref()} className="lbtn lbtn-primary lbtn-lg">
+          <AttributedLink href={parentSignupHref()} className="lbtn lbtn-primary lbtn-lg">
             {t('cta')}
-          </Link>
+          </AttributedLink>
         </div>
       </div>
     </section>

@@ -36,12 +36,13 @@ const CSP = [
     : "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://*.r2.cloudflarestorage.com",
+  "media-src 'self' blob: https://*.r2.cloudflarestorage.com",
   // Dev needs the HMR websocket + the Next /_next/* fetch endpoints (same-origin
   // so 'self' covers them); add `ws:` and `wss:` explicitly so Safari behaves.
   isDev
-    ? "connect-src 'self' ws: wss:"
-    : "connect-src 'self'",
+    ? "connect-src 'self' ws: wss: https://*.r2.cloudflarestorage.com"
+    : "connect-src 'self' https://*.r2.cloudflarestorage.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -172,10 +173,15 @@ function isPathAllowed(role: HostRole, pathname: string): boolean {
 
   switch (role) {
     case 'apex':
-      // Marketing surface — landing + legal + contact-form API endpoint.
+      // Marketing surface — landing + legal + contact-form and visit-beacon API endpoints.
       if (pathname.startsWith('/parent')) return false;
       if (pathname.startsWith('/admin')) return false;
-      if (pathname.startsWith('/api') && pathname !== '/api/contact') return false;
+      if (
+        pathname.startsWith('/api') &&
+        pathname !== '/api/contact' &&
+        pathname !== '/api/visits'
+      )
+        return false;
       return true;
     case 'parents':
       // Parent dashboard host. /parent pages + every /api route (the
@@ -202,7 +208,7 @@ function isPathAllowed(role: HostRole, pathname: string): boolean {
  *   api.     → only /api/* (+ CORS for the kid origin)
  *   parents. → /parent/* (plus the API routes parent surfaces call)
  *   admin.   → /admin/*  (plus the API routes admin surfaces call)
- *   apex     → marketing (next-intl localised) + /api/contact
+ *   apex     → marketing (next-intl localised) + /api/contact + /api/visits
  * Locally (`localhost`) the enforcement is disabled — dev keeps path-based
  * routing so a single `pnpm dev` covers every surface.
  */

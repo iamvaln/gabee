@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { routing, type Locale } from '@/lib/i18n/routing';
+import { VisitBeacon } from '@/components/landing/VisitBeacon';
 import './landing.css';
 
 // Locale segment is statically rendered for the supported locales (`fr`, `en`).
@@ -80,6 +81,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider locale={typedLocale} messages={messages}>
       <div className="landing">{children}</div>
+      <VisitBeacon lang={typedLocale} />
     </NextIntlClientProvider>
   );
 }

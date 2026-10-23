@@ -182,38 +182,87 @@ function dailySessionCounts(rows: { startedAt: Date }[]): number[] {
 
 // ─── AI usage (§11.3 · O1) ───────────────────────────────────────────────────
 
-const AI_PURPOSES = new Set(['plan_generation', 'question_generation']);
+/** Costs are summed from floats: keep micro-dollars, so 0.1 + 0.05 reads 0.15. */
+const roundUsd = (n: number) => Math.round(n * 1e6) / 1e6;
+
+type AiUsageTaskRow = AiUsageResponse['by_task'][number];
+type AiUsageGroupTotals = AiUsageResponse['groups']['communication'];
+
+const emptyTotals = (): AiUsageGroupTotals => ({ calls: 0, failed: 0, invalid_output: 0, refused: 0, cost_usd: 0 });
 
 /**
- * AI usage rolled up by (provider, model, purpose). Rows are written by the AI layer
- * (another agent, concurrent) and may be empty in dev — handled gracefully. Unknown
- * purpose strings are coerced to question_generation so the contract holds.
+ * AI usage for the Ops page (§11.3 · O1, spec "Errors and observability").
+ *
+ * - `rows`: by provider × model × purpose. Communication calls write their
+ *   AI task as the purpose, so each row keeps its real purpose.
+ * - `by_task` / `groups`: Communication (rows with a `task`, the studio
+ *   budget) apart from question authoring, with every attempt counted —
+ *   failed, refused and invalid-output attempts are metered too.
  */
 export async function getAiUsage(): Promise<AiUsageResponse> {
-  const grouped = await prisma.aiUsage.groupBy({
-    by: ['provider', 'model', 'purpose'],
-    _count: { _all: true },
-    _sum: { inputTokens: true, outputTokens: true, costUsd: true },
-  });
+  const [byModel, byTask] = await Promise.all([
+    prisma.aiUsage.groupBy({
+      by: ['provider', 'model', 'purpose'],
+      _count: { _all: true },
+      _sum: { inputTokens: true, outputTokens: true, costUsd: true },
+    }),
+    prisma.aiUsage.groupBy({
+      by: ['task', 'purpose', 'status'],
+      _count: { _all: true },
+      _sum: { inputTokens: true, outputTokens: true, costUsd: true },
+    }),
+  ]);
 
-  const rows: AiUsageRow[] = grouped.map((g) => ({
+  const rows: AiUsageRow[] = byModel.map((g) => ({
     provider: g.provider,
     model: g.model,
-    purpose: AI_PURPOSES.has(g.purpose)
-      ? (g.purpose as AiUsageRow['purpose'])
-      : 'question_generation',
+    purpose: g.purpose,
     calls: g._count._all,
     input_tokens: g._sum.inputTokens ?? 0,
     output_tokens: g._sum.outputTokens ?? 0,
-    cost_usd: g._sum.costUsd ?? 0,
+    cost_usd: roundUsd(g._sum.costUsd ?? 0),
   }));
-
   rows.sort((a, b) => b.cost_usd - a.cost_usd || b.calls - a.calls);
 
-  const total_cost_usd = rows.reduce((s, r) => s + r.cost_usd, 0);
-  const total_calls = rows.reduce((s, r) => s + r.calls, 0);
+  const tasks = new Map<string, AiUsageTaskRow>();
+  const groups = { communication: emptyTotals(), authoring: emptyTotals() };
+  for (const g of byTask) {
+    const group = g.task ? 'communication' : 'authoring';
+    const key = g.task ?? g.purpose;
+    const line =
+      tasks.get(`${group}:${key}`) ??
+      ({ key, group, calls: 0, succeeded: 0, failed: 0, invalid_output: 0, refused: 0, input_tokens: 0, output_tokens: 0, cost_usd: 0 } satisfies AiUsageTaskRow);
+    tasks.set(`${group}:${key}`, line);
+    const n = g._count._all;
+    const cost = g._sum.costUsd ?? 0;
+    line.calls += n;
+    line.input_tokens += g._sum.inputTokens ?? 0;
+    line.output_tokens += g._sum.outputTokens ?? 0;
+    line.cost_usd += cost;
+    const totals = groups[group];
+    totals.calls += n;
+    totals.cost_usd += cost;
+    // `status` is one of succeeded | failed | refused | invalid_output (router); legacy rows are `succeeded`.
+    if (g.status === 'failed' || g.status === 'invalid_output' || g.status === 'refused') {
+      line[g.status] += n;
+      totals[g.status] += n;
+    } else {
+      line.succeeded += n;
+    }
+  }
+  const by_task = [...tasks.values()]
+    .map((l) => ({ ...l, cost_usd: roundUsd(l.cost_usd) }))
+    .sort((a, b) => (a.group === b.group ? b.cost_usd - a.cost_usd || b.calls - a.calls || a.key.localeCompare(b.key) : a.group === 'communication' ? -1 : 1));
+  groups.communication.cost_usd = roundUsd(groups.communication.cost_usd);
+  groups.authoring.cost_usd = roundUsd(groups.authoring.cost_usd);
 
-  return { rows, total_cost_usd, total_calls };
+  return {
+    rows,
+    by_task,
+    groups,
+    total_cost_usd: roundUsd(rows.reduce((s, r) => s + r.cost_usd, 0)),
+    total_calls: rows.reduce((s, r) => s + r.calls, 0),
+  };
 }
 
 // ─── Audit log (§4.4 · O3) ───────────────────────────────────────────────────

@@ -49,8 +49,10 @@ if [ -n "${ADMIN_DIGEST_URL:-}" ]; then
   fi
 fi
 
-# Secondary, best-effort: purge raw device IPs past the retention window
-# (privacy — see services/device-ip-retention.ts). Idempotent, so a daily poke
+# Secondary, best-effort: purge raw device IPs past the retention window and
+# web_visits rows older than 25 months (privacy — see
+# services/device-ip-retention.ts, services/web-visits-retention.ts). The
+# summary is printed as-is (`{device_ips, web_visits}`). Idempotent, so a daily poke
 # is safe; on most days it deletes little or nothing. A failure here NEVER
 # changes this script's exit status — we log and move on, same as the admin
 # digest above. The response carries counts only, never an IP value.

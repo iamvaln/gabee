@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ParentAccountSchema } from '../progress';
+import { SignupAttributionSchema } from '../content-studio';
 
 /**
  * Auth API (own provider-agnostic email/password — not Supabase Auth). Passwords are
@@ -35,6 +36,8 @@ export const SignupRequestSchema = z.object({
    * the ConsentRecord it creates alongside the account.
    */
   terms_accepted: z.literal(true),
+  /** Optional first-touch marketing attribution (Content Studio). */
+  attribution: SignupAttributionSchema.optional(),
 });
 export type SignupRequest = z.infer<typeof SignupRequestSchema>;
 
