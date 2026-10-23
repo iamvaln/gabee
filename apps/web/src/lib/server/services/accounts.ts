@@ -1,4 +1,4 @@
-import type { ParentAccount } from '@gabee/types';
+import type { ParentAccount, SignupAttribution } from '@gabee/types';
 import { prisma } from '../db';
 import { HttpError } from '../http';
 import { hashPassword, verifyPassword } from '../auth';
@@ -6,6 +6,28 @@ import { mapParentAccount } from '../mappers';
 import { CURRENT_TERMS_VERSION } from '@/lib/terms';
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
+
+/** What we keep of where a parent came from (see `ParentAccount.signupSource`). */
+export type SignupSource = {
+  source: string;
+  medium?: string;
+  campaign?: string;
+  content?: string;
+  referrer_host?: string;
+};
+
+/** `source` = utm_source, else the referrer host, else 'direct'. Null when nothing was sent. */
+export function signupSourceFrom(a: SignupAttribution | undefined): SignupSource | null {
+  if (!a) return null;
+  const { utm, referrer_host } = a;
+  return {
+    source: utm.source?.trim().toLowerCase() || referrer_host?.trim().toLowerCase() || 'direct',
+    ...(utm.medium ? { medium: utm.medium } : {}),
+    ...(utm.campaign ? { campaign: utm.campaign } : {}),
+    ...(utm.content ? { content: utm.content } : {}),
+    ...(referrer_host ? { referrer_host } : {}),
+  };
+}
 
 /**
  * Create a parent account + its first (active) credential + its first proof
@@ -19,7 +41,7 @@ const normalizeEmail = (email: string) => email.trim().toLowerCase();
 export async function signup(
   email: string,
   password: string,
-  opts: { phone?: string | null } = {},
+  opts: { phone?: string | null; signupSource?: SignupSource | null } = {},
 ): Promise<ParentAccount> {
   const normalized = normalizeEmail(email);
   const existing = await prisma.parentAccount.findUnique({ where: { email: normalized } });
@@ -31,6 +53,7 @@ export async function signup(
       data: {
         email: normalized,
         ...(opts.phone ? { phone: opts.phone } : {}),
+        ...(opts.signupSource ? { signupSource: opts.signupSource } : {}),
         credentials: { create: { hash, salt, algorithm: 'scrypt' } },
       },
       include: { children: true },

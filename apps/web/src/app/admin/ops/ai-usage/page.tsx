@@ -1,31 +1,33 @@
 import { cookies } from 'next/headers';
 import { requireAdminPage } from '@/lib/server/auth';
 import { getAiUsage } from '@/lib/server/services/admin-observability';
+import { studioBudget } from '@/lib/server/content-studio/budget';
+import Link from 'next/link';
 import { PageHead } from '../../_shell/primitives';
 import { AdminBee } from '../../_shell/bee';
+import { aiTaskLabel, usd as usdPrecise } from '../../_shell/ai-labels';
 
 export const dynamic = 'force-dynamic';
 
-// O1 — AI usage by provider × model × purpose (admin spec §11.3). Rows come from the
-// AiUsage table, written by the concurrent AI layer; empty in dev → empty state.
+// O1 — AI usage (admin spec §11.3, Content Studio "Errors and observability"): by
+// task — Communication apart from question authoring, failed and invalid-output
+// attempts counted — then by provider × model × purpose. Empty in dev → empty state.
 export default async function AiUsagePage() {
   await requireAdminPage();
   const lang = (await cookies()).get('admin_lang')?.value === 'en' ? 'en' : 'fr';
   const L = lang === 'fr';
-  const usage = await getAiUsage();
+  const [usage, budget] = await Promise.all([getAiUsage(), studioBudget(new Date())]);
 
   const nf = (n: number) => n.toLocaleString(L ? 'fr-FR' : 'en-US');
-  const usd = (n: number) => `$${n.toFixed(2)}`;
-  const purposeLabel = (p: string) =>
-    p === 'plan_generation'
-      ? L
-        ? 'Génération de plans'
-        : 'Plan generation'
-      : L
-        ? 'Génération de questions'
-        : 'Question generation';
+  const usd = (n: number) => usdPrecise(n, lang);
+  const purposeLabel = (p: string) => aiTaskLabel(p, lang);
+  const groupLabel = (g: 'communication' | 'authoring') => (g === 'communication' ? 'Communication' : L ? 'Contenu pédagogique' : 'Learning content');
 
   const totalTokens = usage.rows.reduce((s, r) => s + r.input_tokens + r.output_tokens, 0);
+  const comm = usage.groups.communication;
+  const monthName = new Intl.DateTimeFormat(L ? 'fr-FR' : 'en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${budget.month}-01T00:00:00Z`));
+  const usedShare = budget.budgetUsd > 0 ? budget.spentUsd / budget.budgetUsd : 0;
+  const failures = comm.failed + comm.invalid_output + comm.refused + usage.groups.authoring.failed + usage.groups.authoring.invalid_output + usage.groups.authoring.refused;
 
   return (
     <div className="page">
@@ -33,32 +35,103 @@ export default async function AiUsagePage() {
         title={L ? 'Usage IA' : 'AI usage'}
         sub={
           L
-            ? 'Tokens, coût et volume d’appels par fournisseur, modèle et finalité.'
-            : 'Tokens, cost and call volume per provider, model and purpose.'
+            ? 'La dépense du mois face au budget du studio, puis, depuis le début : coût, échecs et volume d’appels par tâche, par fournisseur et par modèle.'
+            : 'This month’s spend against the studio budget, then, since the start: cost, failures and call volume per task, provider and model.'
         }
       />
 
-      <div className="tiles" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
+      <div className="tiles">
+        <div className={'card tile' + (usedShare >= budget.alertRatio ? ' ai-tile-alert' : '')} role="group" aria-label={L ? 'Ce mois-ci' : 'This month'}>
+          <div className="tile-label" aria-hidden>
+            {L ? 'Ce mois-ci' : 'This month'}
+          </div>
+          <div className="tile-num">{usd(budget.spentUsd)}</div>
+          <div className="tile-foot">
+            {L ? `sur ${usd(budget.budgetUsd)} (budget du studio) · ${monthName}` : `of ${usd(budget.budgetUsd)} (studio budget) · ${monthName}`}
+            {' · '}
+            <Link href="/admin/communication/reglages">{L ? 'Réglages' : 'Settings'}</Link>
+          </div>
+        </div>
         <div className="card tile">
-          <div className="tile-label">{L ? 'Coût total' : 'Total cost'}</div>
+          <div className="tile-label">{L ? 'Communication · depuis le début' : 'Communication · since the start'}</div>
+          <div className="tile-num">{usd(comm.cost_usd)}</div>
+          <div className="tile-foot">{L ? `${nf(comm.calls)} appels` : `${nf(comm.calls)} calls`}</div>
+        </div>
+        <div className="card tile">
+          <div className="tile-label">{L ? 'Coût total · depuis le début' : 'Total cost · since the start'}</div>
           <div className="tile-num">{usd(usage.total_cost_usd)}</div>
-          <div className="tile-foot">{L ? 'tous appels enregistrés' : 'all recorded calls'}</div>
+          <div className="tile-foot">{L ? `tous usages · ${nf(totalTokens)} tokens` : `every use · ${nf(totalTokens)} tokens`}</div>
         </div>
         <div className="card tile">
-          <div className="tile-label">{L ? 'Appels' : 'Calls'}</div>
+          <div className="tile-label">{L ? 'Appels · depuis le début' : 'Calls · since the start'}</div>
           <div className="tile-num tnum">{nf(usage.total_calls)}</div>
-          <div className="tile-foot">{L ? 'plan + génération de pool' : 'plan + pool generation'}</div>
-        </div>
-        <div className="card tile">
-          <div className="tile-label">Tokens</div>
-          <div className="tile-num tnum">{nf(totalTokens)}</div>
-          <div className="tile-foot">{L ? 'entrée + sortie' : 'input + output'}</div>
+          <div className="tile-foot">
+            {failures > 0
+              ? L
+                ? `dont ${nf(failures)} sans résultat utilisable`
+                : `${nf(failures)} without a usable result`
+              : L
+                ? 'tous aboutis'
+                : 'all succeeded'}
+          </div>
         </div>
       </div>
 
+      {usage.by_task.length > 0 && (
+        <div className="card tbl-wrap mt16">
+          <div className="card-head">
+            <h3 id="ai-by-task">{L ? 'Par tâche, depuis le début' : 'By task, since the start'}</h3>
+            <span className="card-title-sub">
+              {L
+                ? 'Chaque tentative compte : échecs (erreur ou indisponibilité), réponses inutilisables (payées) et refus.'
+                : 'Every attempt counts: failures (error or outage), unusable answers (billed) and refusals.'}
+            </span>
+          </div>
+          <table className="tbl" aria-labelledby="ai-by-task">
+            <thead>
+              <tr>
+                <th>{L ? 'Tâche' : 'Task'}</th>
+                <th className="num">{L ? 'Appels' : 'Calls'}</th>
+                <th className="num">{L ? 'Échecs' : 'Failed'}</th>
+                <th className="num">{L ? 'Inutilisables' : 'Unusable'}</th>
+                <th className="num">{L ? 'Refus' : 'Refused'}</th>
+                <th className="num">{L ? 'Coût' : 'Cost'}</th>
+              </tr>
+            </thead>
+            {(['communication', 'authoring'] as const).map((g) => {
+              const lines = usage.by_task.filter((r) => r.group === g);
+              if (lines.length === 0) return null;
+              const tot = usage.groups[g];
+              return (
+                <tbody key={g}>
+                  <tr className="ai-group-row">
+                    <td className="t-main">{groupLabel(g)}</td>
+                    <td className="num t-mono t-main">{nf(tot.calls)}</td>
+                    <td className="num t-mono t-main">{nf(tot.failed)}</td>
+                    <td className="num t-mono t-main">{nf(tot.invalid_output)}</td>
+                    <td className="num t-mono t-main">{nf(tot.refused)}</td>
+                    <td className="num t-mono t-main">{usdPrecise(tot.cost_usd, lang)}</td>
+                  </tr>
+                  {lines.map((r) => (
+                    <tr key={`${g}-${r.key}`}>
+                      <td className="ai-task-cell">{purposeLabel(r.key)}</td>
+                      <td className="num t-mono">{nf(r.calls)}</td>
+                      <td className={'num t-mono' + (r.failed ? ' ai-bad' : '')}>{nf(r.failed)}</td>
+                      <td className={'num t-mono' + (r.invalid_output ? ' ai-bad' : '')}>{nf(r.invalid_output)}</td>
+                      <td className={'num t-mono' + (r.refused ? ' ai-bad' : '')}>{nf(r.refused)}</td>
+                      <td className="num t-mono">{usdPrecise(r.cost_usd, lang)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              );
+            })}
+          </table>
+        </div>
+      )}
+
       <div className="card tbl-wrap mt16">
         <div className="card-head">
-          <h3>{L ? 'Par modèle' : 'By model'}</h3>
+          <h3>{L ? 'Par modèle, depuis le début' : 'By model, since the start'}</h3>
         </div>
         {usage.rows.length === 0 ? (
           <div className="empty-state">
@@ -66,8 +139,8 @@ export default async function AiUsagePage() {
             <h3>{L ? 'Aucun usage IA pour l’instant' : 'No AI usage yet'}</h3>
             <p>
               {L
-                ? 'Les appels de génération de plans et de questions apparaîtront ici une fois la couche IA active.'
-                : 'Plan- and question-generation calls will appear here once the AI layer runs.'}
+                ? 'Les appels à l’IA (studio Communication, génération de plans et de questions) apparaîtront ici.'
+                : 'AI calls (Communication studio, plan and question generation) will appear here.'}
             </p>
           </div>
         ) : (

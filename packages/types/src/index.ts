@@ -22,3 +22,4 @@ export * from './api/messages-health';
 export * from './api/sub-modes';
 export * from './api/publish';
 export * from './api/gifts';
+export * from './content-studio';

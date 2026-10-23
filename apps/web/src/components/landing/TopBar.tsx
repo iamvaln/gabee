@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { AttributedLink } from './AttributedLink';
 import { parentLoginHref, parentSignupHref } from './parent-app-links';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
@@ -53,9 +54,9 @@ export function TopBar() {
           <Link href={parentLoginHref()} className="lbtn lbtn-text ltop-signin">
             {t('signin')}
           </Link>
-          <Link href={parentSignupHref()} className="lbtn lbtn-primary">
+          <AttributedLink href={parentSignupHref()} className="lbtn lbtn-primary">
             {t('signup')}
-          </Link>
+          </AttributedLink>
           <button
             type="button"
             className={'ltop-burger' + (menuOpen ? ' open' : '')}

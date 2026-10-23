@@ -162,39 +162,39 @@ enum FeedbackStatus {
 // (changes-v1 §4.1, parent spec §8.2 / §10.1). Defaults to first part of email; the
 // parent can customise it in Settings → Profile.
 model ParentAccount {
-  id                 String              @id @default(uuid()) @db.Uuid
-  email              String              @unique
+  id                   String                @id @default(uuid()) @db.Uuid
+  email                String                @unique
   /// E.164 phone number (e.g. +33612345678). Optional today; collected at
   /// signup behind a country picker, validated client- and server-side via
   /// libphonenumber-js. Reserved for SMS recovery + future account-recovery
   /// flows where email alone isn't safe (compromised mailbox).
-  phone              String?
+  phone                String?
   // Single auth system: admins are accounts with an elevated role (admin spec D1).
-  role               AccountRole         @default(parent)
-  displayNameForKids String              @default("") @map("display_name_for_kids") @db.VarChar(50)
-  createdAt          DateTime            @default(now()) @map("created_at")
-  lastLoginAt        DateTime?           @map("last_login_at")
-  children           ChildProfile[]
-  credentials        ParentCredential[]
-  feedback           Feedback[]
-  sentMessages       KidMessage[]
-  childLinks         ParentChildLink[]   @relation("ParentChildLinkParent")
-  sentInvites        CoparentInvite[]    @relation("CoparentInviteInviter")
-  deviceLinks        DeviceLink[]
-  notificationPrefs  NotificationPrefs?
-  familyActions      FamilyActivityLog[]
-  passwordResets     PasswordReset[]
-  emailConfirmations EmailConfirmation[]
-  authEvents         AuthEventLog[]
-  devices            Device[]
+  role                 AccountRole           @default(parent)
+  displayNameForKids   String                @default("") @map("display_name_for_kids") @db.VarChar(50)
+  createdAt            DateTime              @default(now()) @map("created_at")
+  lastLoginAt          DateTime?             @map("last_login_at")
+  children             ChildProfile[]
+  credentials          ParentCredential[]
+  feedback             Feedback[]
+  sentMessages         KidMessage[]
+  childLinks           ParentChildLink[]     @relation("ParentChildLinkParent")
+  sentInvites          CoparentInvite[]      @relation("CoparentInviteInviter")
+  deviceLinks          DeviceLink[]
+  notificationPrefs    NotificationPrefs?
+  familyActions        FamilyActivityLog[]
+  passwordResets       PasswordReset[]
+  emailConfirmations   EmailConfirmation[]
+  authEvents           AuthEventLog[]
+  devices              Device[]
   featureFlagOverrides FeatureFlagOverride[]
-  consents           ConsentRecord[]
+  consents             ConsentRecord[]
   /// Timestamp set when the email confirmation link is opened. While null,
   /// the account exists but the email is "unverified" — some flows (e.g.
   /// sending kid messages) will gate on this in a future iteration. Today
   /// everything works pre-confirmation; the field exists to enable the gate
   /// without another migration.
-  emailConfirmedAt   DateTime?           @map("email_confirmed_at")
+  emailConfirmedAt     DateTime?             @map("email_confirmed_at")
 
   /// Activation funnel milestones (admin analytics §funnels). Each column
   /// is set ONCE — the first time the parent performs the action — so a
@@ -207,6 +207,12 @@ model ParentAccount {
   firstKidAddedAt       DateTime? @map("first_kid_added_at")
   firstClassificationAt DateTime? @map("first_classification_at")
   firstMessageSentAt    DateTime? @map("first_message_sent_at")
+
+  /// Sign-up attribution (Content Studio measurement), captured once at
+  /// signup: `{ source, medium?, campaign?, content?, referrer_host? }` —
+  /// `source` is utm_source, else the referrer host, else `direct`. No IP,
+  /// no cookie id.
+  signupSource Json? @map("signup_source")
 
   @@map("parent_accounts")
 }
@@ -231,13 +237,14 @@ model EmailConfirmation {
 /// Append-only proof of consent: who accepted which version, when. History is
 /// kept (never overwritten) so we can show what a parent agreed to at any point.
 model ConsentRecord {
-  id         String      @id @default(uuid()) @db.Uuid
-  parentId   String      @map("parent_id") @db.Uuid
-  type       ConsentType @default(terms)
+  id         String        @id @default(uuid()) @db.Uuid
+  parentId   String        @map("parent_id") @db.Uuid
+  type       ConsentType   @default(terms)
   /// The version string that was in force when accepted (server-authoritative).
   version    String
-  acceptedAt DateTime    @default(now()) @map("accepted_at")
-  parent ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  acceptedAt DateTime      @default(now()) @map("accepted_at")
+  parent     ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+
   @@index([parentId, type, acceptedAt])
   @@map("consent_records")
 }
@@ -601,10 +608,10 @@ model AuditLog {
 // account (whole family). Read precedence: override > enabledDefault > code
 // fallback. Keys must be `@gabee/types` FLAG_KEYS members (app-enforced).
 model FeatureFlag {
-  key            String               @id
-  enabledDefault Boolean              @map("enabled_default")
-  description    String               @default("")
-  updatedAt      DateTime             @updatedAt @map("updated_at")
+  key            String                @id
+  enabledDefault Boolean               @map("enabled_default")
+  description    String                @default("")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
   overrides      FeatureFlagOverride[]
 
   @@map("feature_flags")
@@ -616,8 +623,8 @@ model FeatureFlagOverride {
   enabled    Boolean
   notifiedAt DateTime?     @map("notified_at")
   createdAt  DateTime      @default(now()) @map("created_at")
-  flag      FeatureFlag   @relation(fields: [flagKey], references: [key], onDelete: Cascade)
-  parent    ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  flag       FeatureFlag   @relation(fields: [flagKey], references: [key], onDelete: Cascade)
+  parent     ParentAccount @relation(fields: [parentId], references: [id], onDelete: Cascade)
 
   @@id([flagKey, parentId])
   @@map("feature_flag_overrides")
@@ -680,18 +687,32 @@ model Feedback {
 
 // One row per AI generation call — powers the AI usage metric (admin spec §11.3).
 model AiUsage {
-  id           String   @id @default(uuid()) @db.Uuid
+  id           String    @id @default(uuid()) @db.Uuid
   provider     String
   model        String
   purpose      String
-  inputTokens  Int      @default(0) @map("input_tokens")
-  outputTokens Int      @default(0) @map("output_tokens")
-  costUsd      Float?   @map("cost_usd")
-  actorId      String?  @map("actor_id") @db.Uuid
-  createdAt    DateTime @default(now()) @map("created_at")
+  inputTokens  Int       @default(0) @map("input_tokens")
+  outputTokens Int       @default(0) @map("output_tokens")
+  costUsd      Float?    @map("cost_usd")
+  actorId      String?   @map("actor_id") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at")
+  /// Content Studio metering. `task` is an `AI_TASKS` key (@gabee/types) and is
+  /// set only for Communication calls — the studio budget sums rows where it is
+  /// not null; question authoring leaves it null. `origin` is
+  /// `scheduled_job` | `user_action` | `trial`.
+  task         String?
+  origin       String?
+  agentRunId   String?   @map("agent_run_id") @db.Uuid
+  latencyMs    Int?      @map("latency_ms")
+  errorCode    String?   @map("error_code")
+  /// Outcome of the provider call; failed calls are metered too.
+  status       String    @default("succeeded")
+  agentRun     AgentRun? @relation(fields: [agentRunId], references: [id], onDelete: SetNull)
 
   @@index([provider, model, createdAt])
   @@index([purpose, createdAt])
+  @@index([task, createdAt])
+  @@index([agentRunId])
   @@map("ai_usage")
 }
 
@@ -1019,4 +1040,390 @@ model AdminDigestState {
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
   @@map("admin_digest_state")
+}
+
+// ─── Content Studio (Communication) — spec 2026-10-20 ───────────────────────
+//
+// AI-assisted editorial loop: weekly directions → daily titles → per-platform
+// drafts the owner posts by hand. Status / key columns are plain strings whose
+// allowed values live in `@gabee/types` (content-studio.ts) — one source of
+// truth, enforced by the services, not by Prisma enums.
+
+/// Singleton (id `default`): studio-wide settings. Times are studio-local in
+/// `timezone`. `budgetAlertSentFor` = the `YYYY-MM` month whose budget alert
+/// was already emailed (idempotence of `budget.check`).
+model StudioSettings {
+  id                 String   @id @default("default")
+  timezone           String   @default("Africa/Douala")
+  recipients         String[]
+  enabledPlatforms   String[] @default(["linkedin", "tiktok"]) @map("enabled_platforms")
+  monthlyBudgetUsd   Float    @default(50) @map("monthly_budget_usd")
+  budgetAlertRatio   Float    @default(0.8) @map("budget_alert_ratio")
+  budgetAlertSentFor String?  @map("budget_alert_sent_for")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("studio_settings")
+}
+
+/// One objective per month (`YYYY-MM`). `type` ∈ OBJECTIVE_TYPES.
+model ContentObjective {
+  id        String        @id @default(uuid()) @db.Uuid
+  month     String        @unique
+  type      String
+  statement String
+  targets   Json?
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  weeks     ContentWeek[]
+
+  @@map("content_objectives")
+}
+
+/// Versioned editorial line (markdown body + the structured product facts the
+/// agents may state). The current line is the published row with the highest
+/// version. Rows are never edited once published — a change is a new version.
+model EditorialLineVersion {
+  id           String    @id @default(uuid()) @db.Uuid
+  version      Int       @unique
+  body         String
+  productFacts Json      @map("product_facts")
+  publishedAt  DateTime? @map("published_at")
+  createdById  String?   @map("created_by_id") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@map("editorial_line_versions")
+}
+
+/// Per-platform profile. `rules` = `{ max_chars, hashtags_min, hashtags_max,
+/// link_policy, emoji_policy }`; `mediaAspect` ∈ `16:9` | `1:1` | `9:16`.
+/// `bioLink` is the tracked profile link (TikTok: links only work in the bio).
+model PlatformProfile {
+  platform    String   @id
+  objective   String
+  tone        String
+  rules       Json
+  mediaAspect String   @map("media_aspect")
+  bioLink     String?  @map("bio_link")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_profiles")
+}
+
+/// A week of the loop, keyed by its Monday (`startsOn`). `firstDay` is the
+/// first day actually planned (later than `startsOn` for a week started
+/// mid-way). `proposals` holds the Strategist's 3 directions
+/// (DirectionProposalsSchema); `chosenIndex` + `refinement` the owner's pick;
+/// `platformAngles` the optional `{ <platform>: angle }` overrides.
+model ContentWeek {
+  id             String            @id @default(uuid()) @db.Uuid
+  startsOn       DateTime          @unique @map("starts_on") @db.Date
+  firstDay       DateTime          @map("first_day") @db.Date
+  status         String            @default("proposing")
+  objectiveId    String?           @map("objective_id") @db.Uuid
+  proposals      Json?
+  chosenIndex    Int?              @map("chosen_index")
+  refinement     String?
+  platformAngles Json?             @map("platform_angles")
+  validatedAt    DateTime?         @map("validated_at")
+  validatedById  String?           @map("validated_by_id") @db.Uuid
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  objective      ContentObjective? @relation(fields: [objectiveId], references: [id], onDelete: SetNull)
+  slots          ContentSlot[]
+
+  @@index([status])
+  @@map("content_weeks")
+}
+
+/// One day of a week: the shared topic, and per platform the post language
+/// (`platforms` = `[{ platform, language }]`). `sources` = `[{ title, url }]`
+/// third-party references (shown to the owner, linked — never copied).
+model ContentSlot {
+  id         String         @id @default(uuid()) @db.Uuid
+  weekId     String         @map("week_id") @db.Uuid
+  date       DateTime       @db.Date
+  topic      String
+  angle      String         @default("")
+  format     String
+  platforms  Json
+  sources    Json           @default("[]")
+  status     String         @default("proposed")
+  skipReason String?        @map("skip_reason")
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+  week       ContentWeek    @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  drafts     ContentDraft[]
+
+  @@unique([weekId, date])
+  @@index([date])
+  @@map("content_slots")
+}
+
+/// One post per (slot, platform). Every generation or owner edit appends a
+/// ContentDraftVersion; `currentVersionId` is what the card shows,
+/// `approvedVersionId` the version pinned by "Valider". `generationLockUntil`
+/// guards against two concurrent generations of the same draft.
+model ContentDraft {
+  id                  String                @id @default(uuid()) @db.Uuid
+  slotId              String                @map("slot_id") @db.Uuid
+  platform            String
+  language            String
+  status              String                @default("generating")
+  currentVersionId    String?               @map("current_version_id") @db.Uuid
+  approvedVersionId   String?               @map("approved_version_id") @db.Uuid
+  mediaAssetId        String?               @map("media_asset_id") @db.Uuid
+  trackedUrl          String                @map("tracked_url")
+  generationLockUntil DateTime?             @map("generation_lock_until")
+  error               String?
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime              @updatedAt @map("updated_at")
+  slot                ContentSlot           @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  versions            ContentDraftVersion[] @relation("DraftVersions")
+  currentVersion      ContentDraftVersion?  @relation("DraftCurrentVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
+  approvedVersion     ContentDraftVersion?  @relation("DraftApprovedVersion", fields: [approvedVersionId], references: [id], onDelete: SetNull)
+  // Restrict: a media file in use by a draft cannot be deleted from the library.
+  mediaAsset          MediaAsset?           @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+  publication         ContentPublication?
+
+  @@unique([slotId, platform])
+  @@index([status])
+  @@index([mediaAssetId])
+  @@map("content_drafts")
+}
+
+/// Immutable history of a draft. `source` = `agent` | `owner`; `payload` is the
+/// platform post (LinkedInPostSchema / TikTokPostSchema). `n` counts from 1.
+model ContentDraftVersion {
+  id             String         @id @default(uuid()) @db.Uuid
+  draftId        String         @map("draft_id") @db.Uuid
+  n              Int
+  source         String
+  agentVersionId String?        @map("agent_version_id") @db.Uuid
+  payload        Json
+  editedById     String?        @map("edited_by_id") @db.Uuid
+  createdAt      DateTime       @default(now()) @map("created_at")
+  draft          ContentDraft   @relation("DraftVersions", fields: [draftId], references: [id], onDelete: Cascade)
+  agentVersion   AgentVersion?  @relation(fields: [agentVersionId], references: [id], onDelete: SetNull)
+  currentOf      ContentDraft[] @relation("DraftCurrentVersion")
+  approvedOf     ContentDraft[] @relation("DraftApprovedVersion")
+
+  @@unique([draftId, n])
+  @@map("content_draft_versions")
+}
+
+/// Recorded when the owner marks a draft published: the live post URL and the
+/// owner's optional 1–5 rating + comment (fed back to the agents).
+model ContentPublication {
+  id           String       @id @default(uuid()) @db.Uuid
+  draftId      String       @unique @map("draft_id") @db.Uuid
+  postUrl      String       @map("post_url")
+  publishedAt  DateTime     @map("published_at")
+  rating       Int?
+  comment      String?
+  recordedById String       @map("recorded_by_id") @db.Uuid
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  draft        ContentDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([publishedAt])
+  @@map("content_publications")
+}
+
+/// A file of the media library, stored in the private R2 bucket under the
+/// random `objectKey`. `kind` = `image` | `video`; `origin` = `upload` |
+/// `imported` | `generated` | `captured`; `status` = `pending` (presigned PUT
+/// issued, not verified yet) | `verifying` (claimed by one in-flight completion;
+/// never listed or downloadable) | `ready` | `rejected`. Only `cleared` assets may
+/// be attached by the Art director or approved on a draft.
+model MediaAsset {
+  id            String         @id @default(uuid()) @db.Uuid
+  kind          String
+  objectKey     String         @unique @map("object_key")
+  fileName      String         @map("file_name")
+  mime          String
+  sizeBytes     Int            @map("size_bytes")
+  width         Int?
+  height        Int?
+  durationS     Float?         @map("duration_s")
+  aspect        String?
+  language      String?
+  tags          String[]
+  origin        String         @default("upload")
+  checksum      String?
+  status        String         @default("pending")
+  rejectReason  String?        @map("reject_reason")
+  cleared       Boolean        @default(false)
+  clearanceNote String?        @map("clearance_note")
+  uploadedById  String         @map("uploaded_by_id") @db.Uuid
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  drafts        ContentDraft[]
+
+  @@index([status, cleared, kind])
+  @@map("media_assets")
+}
+
+/// AI model catalogue (seeded, editable by super-admins). `key` is the
+/// provider model id; `capabilities` ⊆ AI_CAPABILITIES. Prices are USD per
+/// million tokens. `consecutiveFailures` / `unhealthyUntil` feed the circuit
+/// breaker. No model id or price is hard-coded in business code.
+model AiModel {
+  key                 String        @id
+  provider            String
+  capabilities        String[]
+  inputUsdPerMTok     Float         @map("input_usd_per_mtok")
+  outputUsdPerMTok    Float         @map("output_usd_per_mtok")
+  enabled             Boolean       @default(true)
+  consecutiveFailures Int           @default(0) @map("consecutive_failures")
+  unhealthyUntil      DateTime?     @map("unhealthy_until")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+  routes              AiTaskRoute[]
+
+  @@map("ai_models")
+}
+
+/// Ranked model chain per AI task (rank 1 first). `effort` ∈ low | medium |
+/// high | xhigh | max; `maxTokens` caps one call.
+model AiTaskRoute {
+  id        String   @id @default(uuid()) @db.Uuid
+  task      String
+  rank      Int
+  modelKey  String   @map("model_key")
+  effort    String
+  maxTokens Int      @map("max_tokens")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  // Restrict: a routed model must be unrouted before it can be removed.
+  model     AiModel  @relation(fields: [modelKey], references: [key], onDelete: Restrict)
+
+  @@unique([task, rank])
+  @@map("ai_task_routes")
+}
+
+/// A creative role (AGENT_KEYS). Behaviour = its published AgentVersion.
+model Agent {
+  key                String         @id
+  publishedVersionId String?        @unique @map("published_version_id") @db.Uuid
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+  publishedVersion   AgentVersion?  @relation("AgentPublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
+  versions           AgentVersion[] @relation("AgentVersions")
+  runs               AgentRun[]
+
+  @@map("agents")
+}
+
+/// Versioned agent instructions (system prompt) + structured settings.
+/// Immutable once published; an edit creates a new version.
+model AgentVersion {
+  id            String                @id @default(uuid()) @db.Uuid
+  agentKey      String                @map("agent_key")
+  version       Int
+  instructions  String
+  settings      Json                  @default("{}")
+  publishedAt   DateTime?             @map("published_at")
+  createdById   String?               @map("created_by_id") @db.Uuid
+  createdAt     DateTime              @default(now()) @map("created_at")
+  agent         Agent                 @relation("AgentVersions", fields: [agentKey], references: [key], onDelete: Cascade)
+  publishedFor  Agent?                @relation("AgentPublishedVersion")
+  runs          AgentRun[]
+  draftVersions ContentDraftVersion[]
+
+  @@unique([agentKey, version])
+  @@map("agent_versions")
+}
+
+/// Run journal: one row per agent run. `origin` = `scheduled_job` |
+/// `user_action` | `trial`; `status` = `running` | `succeeded` |
+/// `invalid_output` | `failed`. Model, tokens and cost of each provider call
+/// are on the linked `ai_usage` rows.
+model AgentRun {
+  id             String       @id @default(uuid()) @db.Uuid
+  agentKey       String       @map("agent_key")
+  agentVersionId String       @map("agent_version_id") @db.Uuid
+  origin         String
+  subjectKind    String       @map("subject_kind")
+  subjectId      String       @map("subject_id")
+  inputHash      String       @map("input_hash")
+  input          Json
+  output         Json?
+  status         String       @default("running")
+  errorCode      String?      @map("error_code")
+  errorMessage   String?      @map("error_message")
+  latencyMs      Int?         @map("latency_ms")
+  startedAt      DateTime     @default(now()) @map("started_at")
+  finishedAt     DateTime?    @map("finished_at")
+  agent          Agent        @relation(fields: [agentKey], references: [key], onDelete: Cascade)
+  agentVersion   AgentVersion @relation(fields: [agentVersionId], references: [id], onDelete: Cascade)
+  aiUsage        AiUsage[]
+
+  @@index([subjectKind, subjectId])
+  @@index([agentKey, startedAt])
+  @@map("agent_runs")
+}
+
+/// Scheduled job executions, unique per (job, period) → each job runs at most
+/// once per period key (e.g. `week:2026-10-26`, `day:2026-10-27@09`,
+/// `hour:2026-10-27T05`). `status` = `running` (claimed by a tick; taken over
+/// after 15 min) | `waiting` (could not act yet — re-run next tick, no attempt
+/// counted) | `succeeded` | `failed` (retried from `nextAttemptAt` while the
+/// job is still due) | `abandoned` (terminal after the 4th failed attempt,
+/// `nextAttemptAt` null, never retried automatically; the owner is alerted).
+model JobRun {
+  id            String    @id @default(uuid()) @db.Uuid
+  jobKey        String    @map("job_key")
+  periodKey     String    @map("period_key")
+  status        String    @default("running")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime? @map("next_attempt_at")
+  error         String?
+  startedAt     DateTime  @default(now()) @map("started_at")
+  finishedAt    DateTime? @map("finished_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@unique([jobKey, periodKey])
+  @@index([status, nextAttemptAt])
+  @@map("job_runs")
+}
+
+/// Every studio email sent, unique per (kind, period, recipient) so a retried
+/// job never emails the same person twice. `status` = `sent` | `failed`.
+model StudioNotification {
+  id         String   @id @default(uuid()) @db.Uuid
+  kind       String
+  periodKey  String   @map("period_key")
+  recipient  String
+  providerId String?  @map("provider_id")
+  status     String
+  error      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([kind, periodKey, recipient])
+  @@map("studio_notifications")
+}
+
+/// Cookie-less page visit on the public site (measurement for the studio).
+/// No IP, no cookie, no cross-site id. `source` = utm_source, else the
+/// referrer host, else `direct`; `deviceClass` = mobile | tablet | desktop.
+model WebVisit {
+  id           String   @id @default(uuid()) @db.Uuid
+  occurredAt   DateTime @default(now()) @map("occurred_at")
+  day          DateTime @db.Date
+  path         String
+  lang         String?
+  deviceClass  String   @map("device_class")
+  source       String
+  medium       String?
+  campaign     String?
+  content      String?
+  referrerHost String?  @map("referrer_host")
+
+  @@index([day, source])
+  @@index([content])
+  @@map("web_visits")
 }

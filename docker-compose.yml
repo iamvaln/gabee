@@ -4,6 +4,21 @@
 #   docker compose --env-file .env.production up -d --build
 name: gabee
 
+# CERT_RESOLVER — which ACME resolver requests the certificates.
+#
+# Defaults to `le-dns` (DNS-01 via Cloudflare) because THESE HOSTNAMES SIT
+# BEHIND CLOUDFLARE'S PROXY. Cloudflare terminates TLS itself, so the TLS-ALPN
+# challenge never reaches Traefik:
+#
+#   Cannot negotiate ALPN protocol "acme-tls/1" for tls-alpn-01 challenge
+#
+# Renewal has been failing on every attempt, silently — the certificates kept
+# serving, so nothing looked wrong. The origin certificate expires 26 Oct 2026;
+# with SSL mode "Full (strict)" the site goes down that day.
+#
+# Set to `le` to go back to TLS-ALPN — only correct if the hostnames leave the
+# proxy (grey cloud).
+
 services:
   # ── PostgreSQL ──────────────────────────────────────────────────────────────
   db:
@@ -22,14 +37,19 @@ services:
       retries: 12
     networks: [internal]
 
-  # ── One-shot: apply Prisma migrations, then exit. ───────────────────────────
+  # ── One-shot: apply Prisma migrations, ensure the Content Studio defaults, ──
+  # ── then exit. The studio seed is create-only (never overwrites an edit), so ─
+  # ── it runs on every deploy; a failure fails the deploy before web starts. ──
   migrate:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
     image: ${REGISTRY:-ghcr.io/iamvaln}/gabee-web:${IMAGE_TAG:-latest}
     env_file: ${ENV_FILE:-.env.production}
-    command: ['pnpm', '--filter', '@gabee/db', 'exec', 'prisma', 'migrate', 'deploy']
+    command:
+      - sh
+      - -c
+      - pnpm --filter @gabee/db exec prisma migrate deploy && pnpm --filter @gabee/db run db:seed:content-studio
     restart: 'no'
     depends_on:
       db:
@@ -73,7 +93,7 @@ services:
       # gates each path by host so cross-surface URLs 404 cleanly.
       - traefik.http.routers.${STACK:-gabee}-web.rule=Host(`${WEB_DOMAIN}`) || Host(`www.${WEB_DOMAIN}`) || Host(`parents.${WEB_DOMAIN}`) || Host(`admin.${WEB_DOMAIN}`) || Host(`api.${WEB_DOMAIN}`)
       - traefik.http.routers.${STACK:-gabee}-web.entrypoints=websecure
-      - traefik.http.routers.${STACK:-gabee}-web.tls.certresolver=le
+      - traefik.http.routers.${STACK:-gabee}-web.tls.certresolver=${CERT_RESOLVER:-le-dns}
       - traefik.http.services.${STACK:-gabee}-web.loadbalancer.server.port=3000
 
   # ── DB backup sidecar: nightly pg_dump → Cloudflare R2 ──────────────────────
@@ -123,10 +143,28 @@ services:
       # Secondary daily poke — the weekly admin digest (self-gates to 1×/week).
       ADMIN_DIGEST_URL: http://web:3000/api/cron/admin-digest
       # Secondary daily poke — purge raw device IPs past the 90-day retention
-      # window (privacy). Idempotent; a no-op on days with nothing expired.
+      # window and web_visits rows older than 25 months (privacy). Idempotent;
+      # a no-op on days with nothing expired.
       PURGE_IPS_URL: http://web:3000/api/cron/purge-device-ips
       CRON_SECRET: ${CRON_SECRET}
       CRON_DIGEST_HOUR_UTC: ${CRON_DIGEST_HOUR_UTC:-9}
+    depends_on:
+      web:
+        condition: service_healthy
+    networks: [internal]
+
+  # ── Content Studio tick: POST /api/cron/content-tick every 10 min ───────────
+  # Same image as cron-digest (built and pushed by release.yml), started in its
+  # `tick-loop` mode. The web service decides which Communication jobs are due
+  # (studio-local time) and runs each once per period, so a late or extra poke
+  # is harmless. Internal network only.
+  cron-content:
+    image: ${REGISTRY:-ghcr.io/iamvaln}/gabee-cron-digest:${IMAGE_TAG:-latest}
+    command: ["tick-loop"]
+    restart: unless-stopped
+    environment:
+      CONTENT_TICK_URL: http://web:3000/api/cron/content-tick
+      CRON_SECRET: ${CRON_SECRET}
     depends_on:
       web:
         condition: service_healthy
@@ -147,7 +185,7 @@ services:
       - traefik.docker.network=web
       - traefik.http.routers.${STACK:-gabee}-kid.rule=Host(`${KID_DOMAIN}`)
       - traefik.http.routers.${STACK:-gabee}-kid.entrypoints=websecure
-      - traefik.http.routers.${STACK:-gabee}-kid.tls.certresolver=le
+      - traefik.http.routers.${STACK:-gabee}-kid.tls.certresolver=${CERT_RESOLVER:-le-dns}
       - traefik.http.services.${STACK:-gabee}-kid.loadbalancer.server.port=80
 
 volumes:

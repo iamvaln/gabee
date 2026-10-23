@@ -30,7 +30,33 @@ services:
       - --certificatesresolvers.le.acme.email=${ACME_EMAIL}
       - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
       - --certificatesresolvers.le.acme.tlschallenge=true
+      # A SECOND resolver, DNS-01 via Cloudflare — for hostnames that sit
+      # BEHIND Cloudflare's proxy (the orange cloud).
+      #
+      # Why a second one rather than changing `le`: the TLS-ALPN challenge above
+      # needs the ACME server to reach *this* Traefik over TLS. Behind the orange
+      # cloud, Cloudflare terminates TLS itself, so the challenge never arrives
+      # and renewal fails — silently, sixty days later, on a hostname that had
+      # been serving for weeks. DNS-01 proves ownership through a TXT record
+      # instead, so nothing has to reach the origin at all.
+      #
+      # Separate storage file: `le` keeps its own acme.json untouched, and
+      # removing these four lines and the environment entry restores the
+      # previous state exactly.
+      #
+      # OPT-IN PER SERVICE. A container uses this only by asking for
+      # `certresolver=le-dns` in its labels. Every hostname served today keeps
+      # TLS-ALPN and is unaffected — including all of gabee's.
+      - --certificatesresolvers.le-dns.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.le-dns.acme.storage=/letsencrypt/acme-dns.json
+      - --certificatesresolvers.le-dns.acme.dnschallenge=true
+      - --certificatesresolvers.le-dns.acme.dnschallenge.provider=cloudflare
       # - --api.dashboard=true   # uncomment + add a router if you want the dashboard
+    environment:
+      # Read only by `le-dns`. Absent or empty, `le` keeps working exactly as
+      # before — only a service that asked for `le-dns` would fail, and none
+      # does today. Scope the token to Zone:DNS:Edit on the zones that use it.
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN:-}
     ports:
       - '80:80'
       - '443:443'

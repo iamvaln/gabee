@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AttributedLink } from './AttributedLink';
 import { parentSignupHref, kidAppHref, kidInstallHref } from './parent-app-links';
 import { SUPPORT_WHATSAPP_URL } from '@/lib/support';
 import { getTranslations, getLocale } from 'next-intl/server';
@@ -28,22 +29,22 @@ export async function Footer() {
               <a href="#how">{t('howLink')}</a>
             </li>
             <li>
-              <Link href={parentSignupHref()}>{t('signupLink')}</Link>
+              <AttributedLink href={parentSignupHref()}>{t('signupLink')}</AttributedLink>
             </li>
             <li>
               {/* Discreet entry point for an already-installed kid PWA — not a
                   primary CTA (the real onboarding is device pairing). Opens the
                   kid app (separate origin) in a new tab. */}
-              <a href={kidAppHref()} target="_blank" rel="noopener noreferrer">
+              <AttributedLink href={kidAppHref()} target="_blank" rel="noopener noreferrer">
                 {locale === 'fr' ? 'Espace enfant' : 'Kids app'}
-              </a>
+              </AttributedLink>
             </li>
             <li>
               {/* Install reminder — deep-links to the kid app with ?install=1
                   so the PWA banner force-opens there. New tab (separate app). */}
-              <a href={kidInstallHref()} target="_blank" rel="noopener noreferrer">
+              <AttributedLink href={kidInstallHref()} target="_blank" rel="noopener noreferrer">
                 {locale === 'fr' ? "Installer l'app enfant" : 'Install the kids app'}
-              </a>
+              </AttributedLink>
             </li>
           </ul>
         </nav>

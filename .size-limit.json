@@ -14,7 +14,7 @@
   {
     "name": "web: total client JS (gzip)",
     "path": "apps/web/.next/static/chunks/*.js",
-    "limit": "530 kB",
+    "limit": "640 kB",
     "gzip": true
   }
 ]

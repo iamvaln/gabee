@@ -91,6 +91,15 @@ const envSchema = z.object({
   // separate so the single-project build source-map config isn't affected.
   SENTRY_LOG_PROJECTS: z.string().optional(),
   SENTRY_API_BASE: z.string().optional(),
+
+  // ── Content Studio media storage (private Cloudflare R2 bucket) ───────────
+  // Uploads go browser → presigned PUT; downloads via short-lived presigned GET.
+  // STORAGE_DRIVER=memory selects an in-memory adapter for e2e (refused in prod).
+  MEDIA_R2_ACCOUNT_ID: z.string().optional(),
+  MEDIA_R2_ACCESS_KEY_ID: z.string().optional(),
+  MEDIA_R2_SECRET_ACCESS_KEY: z.string().optional(),
+  MEDIA_R2_BUCKET: z.string().optional(),
+  STORAGE_DRIVER: z.enum(['r2', 'memory']).optional(),
 });
 
 type RawEnv = z.infer<typeof envSchema>;
