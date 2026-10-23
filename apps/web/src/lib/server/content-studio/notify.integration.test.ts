@@ -94,3 +94,25 @@ test('pendingCounts feeds the nav badge', async () => {
   await d(sFuture.id, 'linkedin', 'ready');
   assert.deepEqual(await pendingCounts('2026-10-28'), { proposals: 1, titles: 1, approve: 3, publish: 1 });
 });
+
+test('pendingCounts ignores drafts before yesterday and weeks before the current one', async () => {
+  // An abandoned week from two weeks ago, never moved on.
+  const old = await createContentWeek(prisma, { startsOn: new Date('2026-10-12'), firstDay: new Date('2026-10-12'), status: 'proposals_ready' });
+  await createContentWeek(prisma, { startsOn: new Date('2026-10-19'), firstDay: new Date('2026-10-19'), status: 'titles_ready' });
+  const cur = await createContentWeek(prisma, { startsOn: new Date('2026-10-26'), firstDay: new Date('2026-10-26'), status: 'validated' });
+  const d = (slotId: string, platform: string, status: string) => createContentDraft(prisma, slotId, { platform, language: 'fr', status, trackedUrl: 'https://gabee.app' });
+  const oldSlot = await createContentSlot(prisma, old.id, { date: new Date('2026-10-14'), status: 'drafted' });
+  await d(oldSlot.id, 'linkedin', 'ready');
+  await d(oldSlot.id, 'tiktok', 'approved');
+  // Two days ago in the current week: no longer on Aujourd'hui.
+  const monday = await createContentSlot(prisma, cur.id, { date: new Date('2026-10-26'), status: 'drafted' });
+  await d(monday.id, 'linkedin', 'failed');
+  await d(monday.id, 'tiktok', 'approved');
+  const tuesday = await createContentSlot(prisma, cur.id, { date: new Date('2026-10-27'), status: 'drafted' });
+  await d(tuesday.id, 'linkedin', 'ready');
+
+  assert.deepEqual(await pendingCounts('2026-10-28'), { proposals: 0, titles: 0, approve: 1, publish: 0 });
+  // Sunday: the week being planned (next Monday) counts; the current one is still >= its Monday.
+  await createContentWeek(prisma, { startsOn: new Date('2026-11-02'), firstDay: new Date('2026-11-02'), status: 'proposals_ready' });
+  assert.deepEqual(await pendingCounts('2026-11-01'), { proposals: 1, titles: 0, approve: 0, publish: 0 });
+});

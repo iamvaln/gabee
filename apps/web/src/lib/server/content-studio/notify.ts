@@ -3,7 +3,7 @@ import { prisma } from '../db';
 import { sendEmail, type EmailMessage, type EmailSendResult } from '../email';
 import { ADMIN_APP_URL, ADMIN_DIGEST_TO } from '../env';
 import { reportError } from '../report-error';
-import { dateOf } from './state';
+import { addDaysYmd, dateOf, weekdayOf } from './state';
 import type { EmailContent } from './emails';
 
 /**
@@ -114,12 +114,20 @@ export function requireDelivered(res: NotifyResult, what: string): void {
   if (res.failed > 0) throw new ReportedUpstreamError(`${what} could not be sent to ${res.failed} recipient(s); the next attempt resends it.`);
 }
 
-/** What waits for the owner on studio-local `day` (`YYYY-MM-DD`); also the admin nav badge. */
+/**
+ * What waits for the owner on studio-local `day` (`YYYY-MM-DD`); also the admin
+ * nav badge and the day reminders. Counts only what the screens show, so an
+ * old item never keeps the badge lit forever: drafts of `day` and yesterday
+ * (Aujourd'hui), and weeks starting on or after the current studio Monday
+ * (on a Sunday that includes the week being planned).
+ */
 export async function pendingCounts(day: string): Promise<{ proposals: number; titles: number; approve: number; publish: number }> {
-  const slot = { date: { lte: dateOf(day) }, status: { not: 'skipped' } };
+  const slot = { date: { gte: dateOf(addDaysYmd(day, -1)), lte: dateOf(day) }, status: { not: 'skipped' } };
+  const dow = weekdayOf(day);
+  const currentMonday = dateOf(addDaysYmd(day, dow === 0 ? -6 : 1 - dow));
   const [proposals, titles, approve, publish] = await Promise.all([
-    prisma.contentWeek.count({ where: { status: 'proposals_ready' } }),
-    prisma.contentWeek.count({ where: { status: 'titles_ready' } }),
+    prisma.contentWeek.count({ where: { status: 'proposals_ready', startsOn: { gte: currentMonday } } }),
+    prisma.contentWeek.count({ where: { status: 'titles_ready', startsOn: { gte: currentMonday } } }),
     prisma.contentDraft.count({ where: { status: { in: ['ready', 'stale', 'failed'] }, slot } }),
     prisma.contentDraft.count({ where: { status: 'approved', slot } }),
   ]);
