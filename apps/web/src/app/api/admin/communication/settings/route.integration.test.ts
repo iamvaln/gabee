@@ -66,7 +66,7 @@ test('objective PUT: a first-time race on the same month replaces instead of fai
   // Another first save of the month holds its row uncommitted: ours collides on the month.
   await prisma.$transaction(async (tx) => {
     await tx.contentObjective.create({ data: { month: month(), type: 'awareness', statement: 'Notoriété' } });
-    put = putObjective(req('PUT', '/objective', superC, body), undefined);
+    put = Promise.resolve(putObjective(req('PUT', '/objective', superC, body), undefined));
     await new Promise((r) => setTimeout(r, 750));
   });
   const res = await put;
