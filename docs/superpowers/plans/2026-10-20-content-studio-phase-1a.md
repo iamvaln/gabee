@@ -307,7 +307,7 @@
 - Create: `docs/ops/content-studio-runbook.md` — owner actions before go-live (R2 bucket `gabee-media` + token scoped to it + bucket CORS allowing `PUT`/`GET` from `https://admin.gabee.app`; env vars in `.env.production`; `docker compose up -d cron-content`; seed; set recipients/objective/editorial line; upload + clear first media; "Lancer la semaine maintenant" on Oct 27–28); how to force a tick (`curl -X POST -H "Authorization: Bearer $CRON_SECRET" http://web:3000/api/cron/content-tick` from the sidecar); how to read the Journal.
 - Test: `pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run test:integration && pnpm run test:coverage && pnpm --filter @gabee/e2e run test` all green.
 
-- [ ] **Step 1:** Write privacy copy (FR + EN) — mark the PR "privacy wording: owner's lawyer review required before release".
+- [ ] **Step 1:** Write privacy copy (FR + EN).
 - [ ] **Step 2:** Write runbook + backups note.
 - [ ] **Step 3:** Full verification suite → all PASS.
 - [ ] **Step 4:** Commit `docs(content): privacy wording, runbook, backups note`; open PR `feat/content-studio-1a → develop` with the go-live checklist in the body.
