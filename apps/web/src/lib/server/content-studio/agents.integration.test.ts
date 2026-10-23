@@ -152,8 +152,17 @@ test('runAgent rejects platform-rule violations twice as post_rules', async () =
   assert.equal(run.status, 'invalid_output');
   assert.equal(run.errorCode, 'post_rules');
   assert.match(run.errorMessage ?? '', /URL/);
-  // Every attempt was billed and stays visible on ai_usage.
-  assert.equal(await prisma.aiUsage.count({ where: { agentRunId: run.id } }), 2);
+  // Every attempt was billed and stays visible on ai_usage, as the invalid output it was.
+  const usage = await prisma.aiUsage.findMany({ where: { agentRunId: run.id } });
+  assert.equal(usage.length, 2);
+  assert.deepEqual(
+    usage.map((u) => [u.status, u.errorCode]),
+    [
+      ['invalid_output', 'post_rules'],
+      ['invalid_output', 'post_rules'],
+    ],
+  );
+  assert.ok(usage.every((u) => (u.costUsd ?? 0) > 0), 'the cost is kept');
 });
 
 test('runAgent succeeds on the retry after one invalid output', async () => {
@@ -164,6 +173,9 @@ test('runAgent succeeds on the retry after one invalid output', async () => {
   assert.equal(adapter.calls.length, 2);
   const run = await prisma.agentRun.findFirstOrThrow();
   assert.equal(run.status, 'succeeded');
+  // The rejected first answer is metered as invalid output, the accepted retry as succeeded.
+  const usage = await prisma.aiUsage.findMany({ where: { agentRunId: run.id } });
+  assert.deepEqual(usage.map((u) => u.status).sort(), ['invalid_output', 'succeeded']);
 
   const req = adapter.calls[0]!.req;
   assert.equal(req.task, 'post_linkedin');

@@ -669,6 +669,12 @@ export async function runAgent<K extends AgentKey>(
         } else {
           lastInvalid = new AgentRulesError(violations);
           feedback = retryFeedback(lastInvalid);
+          // The router metered the call as `succeeded` (valid JSON); our rules rejected it.
+          // Its row is this run's only `succeeded` one so far. The cost stays: it was billed.
+          await prisma.aiUsage.updateMany({
+            where: { agentRunId: run.id, status: 'succeeded' },
+            data: { status: 'invalid_output', errorCode: 'post_rules' },
+          });
         }
       } catch (err) {
         if (!(err instanceof AiInvalidOutputError)) throw err;
