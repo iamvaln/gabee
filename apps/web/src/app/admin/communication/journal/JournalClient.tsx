@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { Language } from '@gabee/types';
-import type { AgentRunEntry, JobRunEntry, StudioJournal } from '@/lib/server/content-studio/journal';
+import type { AgentRunEntry, AlertStatus, JobRunEntry, StudioJournal } from '@/lib/server/content-studio/journal';
 import { EmptyState, PageHead } from '../../_shell/primitives';
 import { AIcon } from '../../_shell/icons';
 import { agentLabel, usd } from '../../_shell/ai-labels';
@@ -69,8 +69,9 @@ const MISSED: Bi = {
   fr: 'Cette exécution n’a pas eu lieu (email ou contrôle manqué). Rien n’est bloqué : la période suivante se déroule normalement.',
   en: 'This run did not happen (missed email or check). Nothing is blocked: the next period runs normally.',
 };
-const ALERT: Record<'sent' | 'failed' | 'none', Bi> = {
+const ALERT: Record<AlertStatus, Bi> = {
   sent: { fr: 'Un email d’alerte a été envoyé.', en: 'An alert email was sent.' },
+  sending: { fr: 'L’email d’alerte est en cours d’envoi.', en: 'The alert email is being sent.' },
   failed: { fr: 'L’email d’alerte n’a pas pu partir.', en: 'The alert email could not be sent.' },
   none: { fr: 'Aucun email d’alerte n’a été enregistré.', en: 'No alert email was recorded.' },
 };
