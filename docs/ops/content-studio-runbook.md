@@ -186,39 +186,103 @@ What it creates when missing:
 
 ---
 
-## 3. First-run checklist (launch week, October 2026)
+## 3. Go-live: launch on Sunday 25 October 2026
 
-Weekdays: **Tue 27 Oct, Wed 28 Oct, Thu 29 Oct** 2026, **Sun 1 Nov**.
+**Target: deploy and finish the setup below before Sunday 25 Oct, 06:00
+Douala time (05:00 UTC).** The studio then starts by itself: the Sunday 06:00
+tick proposes the week of **Monday 26 Oct**, and the first posts are drafted
+on Monday morning. All times below are Douala time.
 
-1. **Réglages → Emails et horaires**: put the recipients (one per line, 10
-   max) and check the timezone.
-2. **Réglages → Objectif du mois**: set the **October 2026** objective. A
-   week takes the objective of the month of its **Monday**, and the launch week
-   starts Monday 26 Oct. Set **November** before Sunday 1 Nov 06:00, because the
-   week of 2 Nov uses it.
-3. **Réglages → Ligne éditoriale**: reread the text and the **Faits produit**
-   (ages, free offer, paid offer). Agents state only these facts. As long as
-   "Une offre payante existe" is off, they never mention a paid offer.
-4. **Réglages → Budget IA**: monthly budget and alert threshold.
-5. **Médiathèque → Téléverser un fichier**: upload a first file. **This is
-   the test of the bucket CORS and token** (the automated tests stub this step).
-   Expected: a progress bar, then "Vérification du fichier…", then the file in
-   the list. If it fails, see section 5.7. Then:
+### 3.1 Before Sunday 06:00
+
+1. **Infrastructure** (section 2): R2 bucket, token and CORS (2.1–2.3), the
+   `.env.production` variables (2.4), then the release (2.5).
+2. **Check the deploy**:
+   - `docker compose --env-file .env.production logs migrate | tail -5` ends
+     with `Content Studio defaults ensured` (2.6, automatic);
+   - `docker compose --env-file .env.production logs --tail 20 cron-content`
+     shows `[tick-loop] started …` then one `[tick] <time> {"ran":[…],…}`
+     line every 10 minutes. A `[tick] … FAILED` line: see 5.1.
+3. **Réglages → Emails et horaires**: the recipients (one per line, 10 max)
+   and the timezone (`Africa/Douala`).
+4. **Réglages → Objectif du mois**: the **October 2026** objective. A week
+   takes the objective of the month of its **Monday**, so the week of Mon 26
+   Oct uses October.
+5. **Réglages → Ligne éditoriale**: reread the text and the **Faits produit**
+   (ages, free offer, **paid offer**). Agents state only these facts. As long
+   as "Une offre payante existe" is off, they never mention a paid offer.
+6. **Réglages → Budget IA**: monthly budget and alert threshold.
+7. **Médiathèque → Téléverser un fichier**: upload a first file. **This is the
+   first real test of the bucket CORS, the token and the signed upload** (the
+   automated tests stub this step). Expected: a progress bar, then
+   "Vérification du fichier…", then the file in the list. If it fails, see
+   section 5.7. Then:
    - **Autoriser** the file (only cleared media can be attached or approved);
    - upload and clear at least one **vertical (9:16) video**, because a TikTok
      post is a video;
    - click **Télécharger** once to test the signed download link.
-6. **Launch the first week**: on **Wednesday 28 Oct**, click **Lancer la
-   semaine maintenant** (Aujourd'hui or Semaine). Started Monday to Saturday,
-   a week covers **tomorrow to Sunday**: launched on the 28th, the first post is
-   on **Thursday 29 Oct** (4 days, at least 1 English post per platform).
-   Launched on Tue 27th, it would start Wed 28th instead. Then, in Semaine:
-   pick a direction → **Arrêter cette direction** → review the titles →
-   **Valider la semaine**.
-7. On the first draft (Thu 29 Oct, Aujourd'hui), try **Copier le texte** once
-   on a **real iPhone with Safari**. If copying is refused, the card says to
-   select the text by hand. Note it for a fix.
-8. **Sunday 1 Nov** runs by itself: proposals at 06:00, email at 07:00.
+
+Do **not** click **Lancer la semaine maintenant** before Sunday: on Monday to
+Saturday it starts the **current** week from tomorrow (on Saturday 24, a
+one-day week for Sunday 25), not the week of the 26th.
+
+### 3.2 Sunday 25 and Monday 26
+
+| When | What happens | What you do |
+|---|---|---|
+| Sun 06:00 | Gabee proposes 3 directions for the week of Mon 26 | nothing |
+| Sun 07:00 | Sunday email with the 3 directions | open **Semaine** from the email |
+| Sunday, during the day | | pick a direction → **Arrêter cette direction** → review the titles → **Valider la semaine** |
+| Sun 15:00, 20:00 | Reminder if the week is not validated | |
+| Mon 26, 04:00 | The day's drafts are written | |
+| Mon 26, 05:00 | Email with the day's drafts | review, **Valider**, post by hand, **Marquer comme publié** (section 4) |
+
+If the week is validated after Monday 04:00, the day's drafts arrive within
+about 10 minutes, and their email on the following tick.
+
+On the first draft, try **Copier le texte** once on a **real iPhone with
+Safari**. If copying is refused, the card says to select the text by hand.
+Note it for a fix.
+
+### 3.3 If the deploy slips past Sunday 06:00
+
+The Sunday proposal job stays due until **Sunday 23:59**, and `cron-content`
+pokes the app as soon as it starts. So a deploy later on Sunday proposes the
+week **at once**, before you can do the setup of 3.1. To keep the setup first:
+
+1. Right after the deploy, stop the tick:
+   `docker compose --env-file .env.production stop cron-content`.
+2. Do steps 3–7 of 3.1.
+3. Start the tick again:
+   `docker compose --env-file .env.production up -d cron-content`. Its
+   startup poke proposes the week of Mon 26 (still Sunday). Or click
+   **Lancer la semaine maintenant** (on a Sunday it starts next Monday's
+   week); either way, keep `cron-content` running for Monday 04:00.
+
+If the deploy happens **on Monday 26 or later**, the Sunday job no longer
+runs: once the setup is done, click **Lancer la semaine maintenant**
+(Aujourd'hui or Semaine). It plans the current week **from tomorrow** (for
+example, launched Tue 27: Wed 28 to Sun 1 Nov, at least 1 English post per
+platform when the week has 4 days or fewer).
+
+If the week of Mon 26 **already exists** (for example it was proposed before
+the setup was complete), open it in **Semaine**:
+
+- still preparing proposals and nothing moves for 20 minutes, or it failed:
+  **Relancer les propositions**;
+- proposals ready but made before the objective or the editorial line was
+  set: pick the closest direction and steer it with **Votre précision** before
+  **Arrêter cette direction**. The titles are written with the settings as
+  they are at that moment.
+
+### 3.4 After launch
+
+- **Set the November 2026 objective before Sunday 1 Nov, 06:00**: the week of
+  Mon 2 Nov uses it.
+- Sunday 1 Nov runs by itself: proposals at 06:00, email at 07:00.
+- Check the tick from time to time:
+  `docker compose --env-file .env.production logs --tail 20 cron-content`
+  (one `[tick]` line every 10 minutes).
 
 ---
 
