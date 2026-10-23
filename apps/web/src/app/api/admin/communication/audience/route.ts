@@ -8,7 +8,12 @@ import { addDaysYmd } from '@/lib/server/content-studio/state';
 
 export const runtime = 'nodejs';
 
-const Day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((d) => !Number.isNaN(Date.parse(`${d}T00:00:00Z`)));
+/** A real calendar day: `Date.parse` rolls 2026-02-30 over to 2 March, so the parsed date must print back the same. */
+const isCalendarDay = (d: string) => {
+  const t = Date.parse(`${d}T00:00:00Z`);
+  return !Number.isNaN(t) && new Date(t).toISOString().slice(0, 10) === d;
+};
+const Day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(isCalendarDay);
 const QuerySchema = z.object({ from: Day.optional(), to: Day.optional() });
 const MAX_DAYS = 366;
 

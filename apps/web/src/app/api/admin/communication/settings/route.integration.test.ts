@@ -143,6 +143,13 @@ test('audience GET reports visits by post with the draft it came from', async ()
 
   assert.equal((await audience(req('GET', '/audience?from=2026-10-30&to=2026-10-01', adminC), undefined)).status, 422);
   assert.equal((await audience(req('GET', '/audience?from=hier', adminC), undefined)).status, 422);
+  // Not calendar days (Date.parse would roll them over to the next month).
+  for (const bad of ['2026-02-30', '2026-02-29', '2026-04-31', '2026-13-01', '2026-00-10']) {
+    const res = await audience(req('GET', `/audience?from=${bad}&to=2026-05-01`, adminC), undefined);
+    assert.equal(res.status, 422, bad);
+    assert.match((await res.json()).error.message, /AAAA-MM-JJ/);
+  }
+  assert.equal((await audience(req('GET', '/audience?from=2028-02-29&to=2028-03-01', adminC), undefined)).status, 200, 'leap day');
 });
 
 test('every mutation writes an audit row', async () => {
