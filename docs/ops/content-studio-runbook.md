@@ -376,7 +376,10 @@ SQL
 A week-level AI operation (proposals, direction → titles, regenerating a day)
 on that week started less than **20 minutes** ago and is still running. Wait,
 then reload. If that run crashed, the same action works again once the 20
-minutes are up.
+minutes are up: the crashed run then shows in the Journal as failed
+(`abandoned`). The database holds at most one running Strategist run per
+week, so two clicks (or two tabs) at the same moment still start only one
+paid run.
 
 ### 5.5 "La connexion a été coupée ; Gabee continue peut-être"
 
