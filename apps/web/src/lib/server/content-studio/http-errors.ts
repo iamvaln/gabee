@@ -4,7 +4,7 @@ import { prisma } from '../db';
 import { HttpError, requireAdmin, requireSuperAdmin, route } from '../http';
 import { reportError } from '../report-error';
 import { AiInvalidOutputError, AiRefusedError, AiUnavailableError } from '../ai/router';
-import type { Actor } from './state';
+import { UUID_RE, type Actor } from './state';
 
 /**
  * The Communication admin API's shared route kit: the error mapping every
@@ -99,8 +99,6 @@ export async function superAdminActor(req: NextRequest): Promise<Actor> {
   const session = await requireSuperAdmin(req);
   return { id: session.parentId, role: 'super_admin' };
 }
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The `[id]` path parameter; 404 when it cannot be a row id (instead of a database 500). */
 export async function idParam(ctx: { params: Promise<{ id: string }> }): Promise<string> {
