@@ -34,6 +34,12 @@ async function recipients(): Promise<string[]> {
 
 const warnedNoRecipients = new Set<string>();
 
+/** `a…@example.com`: enough to tell recipients apart in Sentry and logs without the address. */
+export function maskEmail(address: string): string {
+  const at = address.lastIndexOf('@');
+  return at > 0 ? `${address.charAt(0)}…${address.slice(at)}` : '…';
+}
+
 const isUniqueViolation = (e: unknown) => e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
 
 /** Take the right to send to `recipient`: a fresh row, or a failed / abandoned one. */
@@ -89,11 +95,21 @@ export async function notifyOnce(kind: string, periodKey: string, build: () => E
       result.sent++;
     } else {
       const error = outcome.error ?? 'The email provider refused the message.';
-      await prisma.studioNotification.update({
+      const row = await prisma.studioNotification.update({
         where: { kind_periodKey_recipient: { kind, periodKey, recipient } },
         data: { status: 'failed', error },
+        select: { id: true },
       });
-      reportError(new Error(`Studio email ${kind} (${periodKey}) to ${recipient} failed: ${error}`), { scope: 'content.notify', kind, periodKey, recipient });
+      // The full address stays on the row (Journal); Sentry and logs get a masked one.
+      const masked = maskEmail(recipient);
+      const safeError = error.split(recipient).join(masked);
+      reportError(new Error(`Studio email ${kind} (${periodKey}) to ${masked} failed: ${safeError}`), {
+        scope: 'content.notify',
+        kind,
+        periodKey,
+        recipient: masked,
+        notification_id: row.id,
+      });
       result.failed++;
     }
   }

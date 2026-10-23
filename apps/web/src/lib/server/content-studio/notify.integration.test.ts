@@ -116,3 +116,19 @@ test('pendingCounts ignores drafts before yesterday and weeks before the current
   await createContentWeek(prisma, { startsOn: new Date('2026-11-02'), firstDay: new Date('2026-11-02'), status: 'proposals_ready' });
   assert.deepEqual(await pendingCounts('2026-11-01'), { proposals: 1, titles: 0, approve: 0, publish: 0 });
 });
+
+test('a failed send reports a masked recipient and the notification row, never the address', async () => {
+  const hints: Array<{ err: unknown; extra: Record<string, unknown> }> = [];
+  setErrorReporterForTests((err, hint) => hints.push({ err, extra: hint.extra }));
+  const bad = async (m: EmailMessage): Promise<EmailSendResult> =>
+    m.to === 'a@x.test' ? { ok: false, error: `Mailbox a@x.test does not exist` } : ok(m);
+  assert.equal((await notifyOnce('day.drafts', '2026-10-29', build, bad)).failed, 1);
+
+  assert.equal(hints.length, 1);
+  const row = await prisma.studioNotification.findFirstOrThrow({ where: { recipient: 'a@x.test' } });
+  const { err, extra } = hints[0]!;
+  const text = `${(err as Error).message} ${JSON.stringify(extra)}`;
+  assert.ok(!text.includes('a@x.test'), text);
+  assert.equal(extra.recipient, 'a…@x.test');
+  assert.equal(extra.notification_id, row.id);
+});
