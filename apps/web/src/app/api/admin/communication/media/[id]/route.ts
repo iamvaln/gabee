@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { MediaClearanceSchema, MediaTagsSchema } from '@gabee/types';
-import { route, json, readJson, requireAdmin } from '@/lib/server/http';
+import { json, readJson, requireAdmin } from '@/lib/server/http';
+import { idParam, studioRoute } from '@/lib/server/content-studio/http-errors';
 import { auditMedia, setClearance, setTags } from '@/lib/server/content-studio/media';
 
 export const runtime = 'nodejs';
@@ -14,9 +15,9 @@ const PatchSchema = z.object({
 });
 
 // Clearance and tags: the owner and admins both clear media.
-export const PATCH = route<Ctx>(async (req, ctx) => {
+export const PATCH = studioRoute<Ctx>(async (req, ctx) => {
   const session = await requireAdmin(req);
-  const { id } = await ctx.params;
+  const id = await idParam(ctx);
   const patch = await readJson(req, PatchSchema);
   let asset;
   if (patch.cleared !== undefined) {

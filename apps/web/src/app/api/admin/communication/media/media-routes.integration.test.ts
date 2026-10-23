@@ -6,6 +6,8 @@ import { createLoginableParent } from '@/test/factories';
 import { parentToken, adminCookie, parentCookie, webRequest } from '@/test/auth';
 import { MemoryStorage } from '@/lib/server/storage/memory';
 import { setStorage, resetStorage } from '@/lib/server/storage';
+import { S3ServiceException } from '@aws-sdk/client-s3';
+import { setErrorReporterForTests } from '@/lib/server/report-error';
 import { GET as list, POST as init } from './route';
 import { PATCH as patch } from './[id]/route';
 import { POST as complete } from './[id]/complete/route';
@@ -23,7 +25,10 @@ beforeEach(async () => {
   const { parent } = await createLoginableParent(prisma, { role: 'admin' });
   cookie = adminCookie(await parentToken(parent.id, parent.email));
 });
-afterEach(() => resetStorage());
+afterEach(() => {
+  resetStorage();
+  setErrorReporterForTests(null);
+});
 after(() => prisma.$disconnect());
 
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
@@ -112,4 +117,51 @@ test('clearing keeps its note; removing the clearance records why', async () => 
   const off = await patch(webRequest(`${U}/${a.id}`, { method: 'PATCH', cookie, body: { cleared: false, note: 'Un enfant reconnaissable' } }), ctx(a.id));
   const row = (await off.json()).asset;
   assert.deepEqual([row.cleared, row.clearanceNote], [false, 'Un enfant reconnaissable']);
+});
+
+/** R2 refusing every call (wrong account id, revoked token, bucket typo). */
+class RefusingStorage extends MemoryStorage {
+  private refuse(): never {
+    throw new S3ServiceException({ name: 'AccessDenied', $fault: 'client', $metadata: { httpStatusCode: 403 }, message: 'Access Denied' });
+  }
+  override presignPut(): Promise<string> {
+    return this.refuse();
+  }
+  override presignGet(): Promise<string> {
+    return this.refuse();
+  }
+  override head(): Promise<{ sizeBytes: number; mime: string | null } | null> {
+    return this.refuse();
+  }
+}
+
+test('an R2 refusal answers 503 storage_unavailable in French, reported once', async () => {
+  const reported: unknown[] = [];
+  setErrorReporterForTests((err) => reported.push(err));
+  setStorage(new RefusingStorage());
+  const isStorage = async (res: Response) => {
+    assert.equal(res.status, 503);
+    const { error } = await res.json();
+    assert.equal(error.code, 'storage_unavailable');
+    assert.match(error.message, /Le stockage des médias/);
+  };
+
+  await isStorage(await init(webRequest(U, { cookie, body: { file_name: 'a.png', mime: 'image/png', size_bytes: 16 } }), undefined));
+  const pending = await createMediaAsset(prisma, { status: 'pending' });
+  await isStorage(await complete(webRequest(`${U}/${pending.id}/complete`, { cookie }), ctx(pending.id)));
+  const ready = await createMediaAsset(prisma, { fileName: 'hero.png' });
+  await isStorage(await download(webRequest(`${U}/${ready.id}/download`, { method: 'GET', cookie }), ctx(ready.id)));
+  assert.equal(reported.length, 3);
+});
+
+test('a malformed media id is a 404, not a database error', async () => {
+  const bad = 'not-a-uuid';
+  for (const res of [
+    await patch(webRequest(`${U}/${bad}`, { method: 'PATCH', cookie, body: { cleared: true } }), ctx(bad)),
+    await complete(webRequest(`${U}/${bad}/complete`, { cookie }), ctx(bad)),
+    await download(webRequest(`${U}/${bad}/download`, { method: 'GET', cookie }), ctx(bad)),
+  ]) {
+    assert.equal(res.status, 404);
+    assert.equal((await res.json()).error.code, 'not_found');
+  }
 });

@@ -1,10 +1,11 @@
 import { MediaUploadInitSchema } from '@gabee/types';
-import { route, json, readJson, requireAdmin } from '@/lib/server/http';
+import { json, readJson, requireAdmin } from '@/lib/server/http';
+import { studioRoute } from '@/lib/server/content-studio/http-errors';
 import { auditMedia, initUpload, listLibrary } from '@/lib/server/content-studio/media';
 
 export const runtime = 'nodejs';
 
-export const GET = route(async (req) => {
+export const GET = studioRoute(async (req) => {
   await requireAdmin(req);
   const q = req.nextUrl.searchParams;
   const cleared = q.get('cleared');
@@ -17,7 +18,7 @@ export const GET = route(async (req) => {
   return json({ assets });
 });
 
-export const POST = route(async (req) => {
+export const POST = studioRoute(async (req) => {
   const session = await requireAdmin(req);
   const input = await readJson(req, MediaUploadInitSchema);
   const out = await initUpload(input, session.parentId);
