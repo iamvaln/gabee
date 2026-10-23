@@ -603,14 +603,20 @@ export async function approveDraft(draftId: string, actor: Actor): Promise<Draft
 export async function markPublished(draftId: string, req: MarkPublishedRequest, actor: Actor): Promise<DraftDto> {
   const draft = await loadDraft(draftId);
   assertTransition('draft', draft.status, 'published');
+  // A platform disabled mid-week gets no post: the day is done once every platform still enabled is out.
+  const enabled = await enabledPlatforms();
 
   const slotDone = await prisma.$transaction(async (tx) => {
+    // Serialise sibling publications of the day: the last one to commit sees all the others.
+    await lockSlotContent(tx, draft.slotId);
     const res = await tx.contentDraft.updateMany({ where: { id: draftId, status: 'approved' }, data: { status: 'published' } });
     if (res.count !== 1) throw new HttpError(409, 'invalid_transition', 'Ce brouillon vient de changer. Rechargez la page.');
     await tx.contentPublication.create({
       data: { draftId, postUrl: req.post_url, publishedAt: new Date(), rating: req.rating ?? null, comment: req.comment ?? null, recordedById: actor.id },
     });
-    const planned = parseSlotPlatforms(draft.slot.platforms).map((p) => p.platform);
+    const planned = parseSlotPlatforms(draft.slot.platforms)
+      .map((p) => p.platform)
+      .filter((p) => enabled.includes(p));
     const drafts = await tx.contentDraft.findMany({ where: { slotId: draft.slotId }, select: { platform: true, status: true } });
     const allPublished = planned.every((p) => drafts.some((d) => d.platform === p && d.status === 'published'));
     if (!allPublished || !canTransition('slot', draft.slot.status, 'done')) return false;

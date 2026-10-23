@@ -359,6 +359,29 @@ test('markPublished closes the slot when every draft is published', async () => 
   assert.equal(await prisma.auditLog.count({ where: { kind: 'content.draft.publish' } }), 2);
 });
 
+test('markPublished closes the slot once every still-enabled platform is out', async () => {
+  const { slot } = await fixture();
+  await prisma.contentSlot.update({ where: { id: slot.id }, data: { status: 'drafted' } });
+  const li = await readyDraft(slot.id, 'linkedin', { status: 'approved' });
+  // TikTok was planned for the day, then disabled in the settings mid-week.
+  await prisma.studioSettings.upsert({ where: { id: 'default' }, create: { id: 'default', recipients: [], enabledPlatforms: ['linkedin'] }, update: { enabledPlatforms: ['linkedin'] } });
+
+  await markPublished(li.id, { post_url: 'https://www.linkedin.com/feed/1' }, actor);
+  assert.equal((await prisma.contentSlot.findUniqueOrThrow({ where: { id: slot.id } })).status, 'done');
+});
+
+test('markPublished: the day closes when both posts are marked published at once', async () => {
+  const { slot } = await fixture();
+  await prisma.contentSlot.update({ where: { id: slot.id }, data: { status: 'drafted' } });
+  const li = await readyDraft(slot.id, 'linkedin', { status: 'approved' });
+  const tt = await readyDraft(slot.id, 'tiktok', { status: 'approved' });
+  await Promise.all([
+    markPublished(li.id, { post_url: 'https://www.linkedin.com/feed/1' }, actor),
+    markPublished(tt.id, { post_url: 'https://www.tiktok.com/@gabee/video/1' }, actor),
+  ]);
+  assert.equal((await prisma.contentSlot.findUniqueOrThrow({ where: { id: slot.id } })).status, 'done');
+});
+
 test('a draft generated while its slot is edited lands stale', async () => {
   const { slot } = await fixture();
   const adapter = byTask({ post_linkedin: [{ json: linkedinPost }], post_tiktok: [{ json: tiktokPlan }], art_direction: [{ json: art }, { json: art }] });
