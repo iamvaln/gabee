@@ -7,12 +7,11 @@ need a human to reason about intent, semantics, or context. Each item:
 
 ## 1. Device-metadata privacy / retention / policy review
 
-**The privacy-policy launch gate is still open.** Device metadata (`tz`,
-`uaFull`, `osVersion`, `deviceModel`, screen/locale) sits on `Device`, and raw IP
-history on `DeviceIpSighting`. Retention is **settled: 90 days** (decided
-2026-07-14 — `device-ip-retention.ts` + the daily `/api/cron/purge-device-ips`),
-but this must still not ship without an updated privacy policy + a documented
-legal basis. Draft: `docs/privacy-device-metadata-disclosure-draft.md`.
+Device metadata (`tz`, `uaFull`, `osVersion`, `deviceModel`, screen/locale)
+sits on `Device`, and raw IP history on `DeviceIpSighting`. Retention is
+**90 days** (`device-ip-retention.ts` + the daily `/api/cron/purge-device-ips`).
+The published privacy policy (privacy section of `apps/web/messages/{fr,en}.json`)
+must keep describing every field captured and its retention.
 
 - What:
   - Privacy policy covers every PII-shaped field captured, and states the
@@ -36,7 +35,7 @@ legal basis. Draft: `docs/privacy-device-metadata-disclosure-draft.md`.
 - Where: `packages/db/prisma/schema.prisma` (`Device`, `DeviceIpSighting`);
   `apps/web/src/lib/server/services/device-ip-retention.ts`;
   `apps/web/src/lib/server/request-meta.ts`; threat-model vectors
-  `app-pii-exposure` + `plat-r2-scope`; `docs/privacy-device-metadata-disclosure-draft.md`.
+  `app-pii-exposure` + `plat-r2-scope`; privacy section of `apps/web/messages/{fr,en}.json`.
 - Cadence: before any release that touches metadata capture, and quarterly.
 
 ## 1b. Consent provability (T&C)

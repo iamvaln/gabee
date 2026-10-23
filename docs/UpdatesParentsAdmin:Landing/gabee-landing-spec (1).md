@@ -6,7 +6,7 @@ The public-facing surface on `gabee.app` — landing page, Terms & Conditions, a
 - Same state vocabulary as other specs.
 - Flows numbered `L#`; screens numbered per-section (LP1, LP2…).
 - The landing is **fully bilingual FR / EN** from day one. Sample copy in this spec is shown in both languages; final wording is a copywriter decision, not a spec one.
-- T&C and Privacy sections (§8, §9) define **structure and intent**, not binding legal text. Final wording requires a lawyer — particularly because **Cameroon's law 2024/017** on data protection applies (compliance deadline June 2026) and minors' data is involved.
+- T&C and Privacy sections (§8, §9) define **structure and intent**, not binding legal text. **Cameroon's law 2024/017** on data protection applies and minors' data is involved.
 
 ---
 
@@ -325,7 +325,7 @@ No newsletter is planned at this stage; if it ever becomes a feature, its data m
 
 ## 8. Terms & Conditions — structure
 
-> **Not legal text.** What follows is the structure and intent of each section. The actual binding wording must be drafted (or reviewed) by a qualified lawyer.
+> What follows is the structure and intent of each section.
 >
 > **Legal framework Gabee operates under** (verified May 2026):
 > - **Loi n° 2024/017 du 23 décembre 2024** relative à la protection des données à caractère personnel — applies to any processing on Cameroonian territory *or* concerning residents of Cameroon (so Proxia Digital is doubly within scope). **Compliance deadline: 23 juin 2026.** Sanctions under Article 54+ go up to **100 millions FCFA** (administrative), plus civil and penal liabilities.
@@ -351,7 +351,7 @@ URL: `gabee.app/{locale}/terms`. Linked from the footer and from the signup form
 12. **Limitation of liability** — Standard cap; force majeure carve-out.
 13. **Termination** — Either party (parent can delete account anytime; Proxia Digital may suspend or terminate for material breach with notice).
 14. **Modifications to the terms** — Notice via email to active accounts; material changes require renewed consent (re-acceptance on next sign-in — aligns with loi 2024/017 "consentement spécifique et univoque").
-15. **Governing law & jurisdiction** — Cameroon law; competent courts in Cameroon (to specify with lawyer — likely tribunal de première instance de Douala if Proxia Digital is registered there).
+15. **Governing law & jurisdiction** — Cameroon law; competent courts in Cameroon (tribunal de première instance de Douala).
 16. **Contact** — Proxia Digital registered address (Douala), email for legal notices.
 
 **Page screen** (LP9): single long-scroll legal page in the user's locale, with sticky table of contents at wide widths, anchors per section, print-friendly stylesheet.
@@ -360,7 +360,7 @@ URL: `gabee.app/{locale}/terms`. Linked from the footer and from the signup form
 
 ## 9. Privacy Policy — structure
 
-> **Not legal text.** Structure and intent only; lawyer review required.
+> Structure and intent of each section.
 >
 > **Anchored in Cameroon law** (verified May 2026):
 > - **Loi n° 2024/017 du 23 décembre 2024** is the primary framework. **Article 5** defines personal data. **Article 6 et suivants** lay out the principles of lawful processing (« consentement préalable, libre, éclairé, spécifique et univoque »). The minors' provision in Art. 6+ is the cornerstone for Gabee: *« Le consentement d'une personne mineure de moins de 18 ans est valable uniquement s'il est appuyé par celui de ses parents ou de son représentant légal. »*
@@ -389,7 +389,7 @@ URL: `gabee.app/{locale}/privacy`. Linked from the footer, T&C, signup form, and
      - **Supabase** (database + authentication) — **EU region**.
      - **Mailgun** (transactional + parent email delivery) — **US**.
    - **Not shared with**: advertisers, data brokers, social platforms, anyone outside the named sub-processors.
-   - **International transfers**: Mailgun entails a US transfer; documented safeguards (contractual clauses, sub-processor commitments) per loi 2024/017 cross-border requirements. To be finalised with the lawyer.
+   - **International transfers**: Mailgun entails a US transfer; documented safeguards (contractual clauses, sub-processor commitments) per loi 2024/017 cross-border requirements.
 6. **Co-parents**: when a parent invites a co-parent, the invited parent receives access to the shared kids' data per `gabee-parent-spec.md §8`. Each parent provides their own consent at signup; the inviting parent is responsible for choosing whom to invite.
 7. **Data retention**:
    - Active accounts: data retained while the account is active.
@@ -404,7 +404,7 @@ URL: `gabee.app/{locale}/privacy`. Linked from the footer, T&C, signup form, and
    - **Droit d'opposition / limitation** — restrict processing.
    - **Droit de plainte** — right to lodge a complaint with the Cameroon supervisory authority (« Autorité de protection des données personnelles »). Proxia Digital will register with the authority and submit to audits as soon as the presidential decree establishes its operational modalities.
    - For minors, these rights are exercised by the parent / legal representative.
-9. **Security**: HTTPS everywhere (enforced by `.app` HSTS preload — product spec §11); passwords hashed (Supabase Auth); database encryption at rest (Supabase managed); access controls; structured logging; incident response plan; **data-breach notification** per loi 2024/017 (timeline to specify with lawyer; the supervisory authority's notification format pending the decree).
+9. **Security**: HTTPS everywhere (enforced by `.app` HSTS preload — product spec §11); passwords hashed (Supabase Auth); database encryption at rest (Supabase managed); access controls; structured logging; incident response plan; **data-breach notification** per loi 2024/017.
 10. **International transfers**: Supabase is hosted in the **EU**; Mailgun entails a **US transfer**; safeguards (contractual clauses, sub-processor commitments) per loi 2024/017 cross-border requirements documented in the published policy.
 11. **Cookies & similar**: only essential cookies (`NEXT_LOCALE` for language, session cookie for auth). **No consent banner** — no non-essential cookies set.
 12. **Changes to this policy**: how parents are notified (email + in-app banner on next sign-in for material changes); aligned with loi 2024/017 « consentement spécifique » — material changes trigger re-consent.

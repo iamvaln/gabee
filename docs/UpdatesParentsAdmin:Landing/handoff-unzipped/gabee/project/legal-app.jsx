@@ -36,16 +36,6 @@ function LegalPage({ page, tt, lang }) {
         <p className="legal-updated">{tt.updated}</p>
       </header>
 
-      <div className="legal-disclaimer" role="note">
-        <span className="legal-disc-ic" aria-hidden>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l9 16H3z" /><path d="M12 10v4M12 17h.01" /></svg>
-        </span>
-        <div>
-          <strong>{tt.disclaimer.title}</strong>
-          <p>{tt.disclaimer.body}</p>
-        </div>
-      </div>
-
       <div className="legal-framework">
         <h2>{page.framework.title}</h2>
         <ul>{page.framework.items.map((it, i) => <li key={i}>{it}</li>)}</ul>

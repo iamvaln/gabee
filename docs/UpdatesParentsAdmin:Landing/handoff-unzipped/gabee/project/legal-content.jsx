@@ -1,16 +1,11 @@
 // legal-content.jsx — Gabee Terms & Privacy content, FR + EN.
 // Source: gabee-landing-spec §8 (Terms) and §9 (Privacy).
-// NOT binding legal text — structure and intent only; lawyer review required (per spec).
 
 const LEGAL = {
   fr: {
     backHome: '← Retour à l’accueil',
     toc: 'Sur cette page',
     updated: 'Dernière mise à jour : 30 mai 2026 · v0.1',
-    disclaimer: {
-      title: 'Ceci n’est pas un texte juridique définitif.',
-      body: 'Ce document décrit la structure et l’intention de chaque section. La rédaction contraignante finale doit être établie ou revue par un juriste qualifié — notamment parce que la loi camerounaise 2024/017 sur la protection des données s’applique (échéance de conformité : 23 juin 2026) et que des données de mineurs sont concernées.',
-    },
     terms: {
       kicker: 'Légal',
       title: 'Conditions générales',
@@ -39,7 +34,7 @@ const LEGAL = {
         { id: 't-liability', h: 'Limitation de responsabilité', b: 'Plafond standard ; exception de force majeure.' },
         { id: 't-termination', h: 'Résiliation', b: 'Le parent peut supprimer son compte à tout moment ; Proxia Digital peut suspendre ou résilier en cas de manquement grave, avec préavis.' },
         { id: 't-modifications', h: 'Modifications des conditions', b: 'Notification par email aux comptes actifs ; les changements substantiels exigent un nouveau consentement (réacceptation à la prochaine connexion).' },
-        { id: 't-law', h: 'Droit applicable et juridiction', b: 'Droit camerounais ; tribunaux compétents au Cameroun (à préciser avec le juriste).' },
+        { id: 't-law', h: 'Droit applicable et juridiction', b: 'Droit camerounais ; tribunaux compétents au Cameroun.' },
         { id: 't-contact', h: 'Contact', b: 'Adresse d’enregistrement de Proxia Digital (Douala) et email pour les notifications légales.' },
       ],
     },
@@ -79,10 +74,6 @@ const LEGAL = {
     backHome: '← Back to home',
     toc: 'On this page',
     updated: 'Last updated: 30 May 2026 · v0.1',
-    disclaimer: {
-      title: 'This is not final legal text.',
-      body: 'This document describes the structure and intent of each section. The actual binding wording must be drafted or reviewed by a qualified lawyer — particularly because Cameroon’s data-protection law 2024/017 applies (compliance deadline: 23 June 2026) and minors’ data is involved.',
-    },
     terms: {
       kicker: 'Legal',
       title: 'Terms & Conditions',
@@ -111,7 +102,7 @@ const LEGAL = {
         { id: 't-liability', h: 'Limitation of liability', b: 'Standard cap; force-majeure carve-out.' },
         { id: 't-termination', h: 'Termination', b: 'The parent can delete the account anytime; Proxia Digital may suspend or terminate for material breach with notice.' },
         { id: 't-modifications', h: 'Modifications to the terms', b: 'Notice via email to active accounts; material changes require renewed consent (re-acceptance on next sign-in).' },
-        { id: 't-law', h: 'Governing law & jurisdiction', b: 'Cameroon law; competent courts in Cameroon (to specify with the lawyer).' },
+        { id: 't-law', h: 'Governing law & jurisdiction', b: 'Cameroon law; competent courts in Cameroon.' },
         { id: 't-contact', h: 'Contact', b: 'Proxia Digital registered address (Douala) and email for legal notices.' },
       ],
     },
