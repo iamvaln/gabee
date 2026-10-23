@@ -52,6 +52,10 @@ const AGENT_ERROR: Record<string, Bi> = {
   authentication_error: { fr: "La clé du service d'IA est refusée : vérifiez la configuration.", en: 'The AI service key is refused: check the configuration.' },
   context_error: { fr: "Les informations à donner à l'agent n'ont pas pu être rassemblées.", en: 'The information for the agent could not be gathered.' },
   agent_error: { fr: "Une erreur inattendue s'est produite pendant l'appel.", en: 'An unexpected error happened during the call.' },
+  abandoned: {
+    fr: 'Cet appel s’est interrompu sans fin enregistrée (redémarrage du serveur). Il a été clos pour que la semaine puisse être relancée.',
+    en: 'This call stopped without a recorded end (server restart). It was closed so the week can run again.',
+  },
 };
 
 /** What to do once a job gave up (no automatic retry): by job kind. */
