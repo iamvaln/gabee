@@ -176,6 +176,69 @@ test('an unavailable AI maps to 503 ai_unavailable, reported once (by the router
   assert.equal(reported.length, 1);
 });
 
+test('an unusable AI answer (twice) maps to 422 ai_invalid_output, reported once by the API', async () => {
+  const week = await createContentWeek(prisma, { status: 'proposing' });
+  const adapter = fake([{ json: { proposals: [] } }, { json: { nope: true } }]);
+  const res = await propose(post(`/weeks/${week.id}/propose`), ctx(week.id));
+  assert.equal(res.status, 422);
+  const { error } = await res.json();
+  assert.equal(error.code, 'ai_invalid_output');
+  assert.match(error.message, /résultat inutilisable/);
+  assert.equal(adapter.calls.length, 2, 'runAgent retried once');
+  assert.equal(reported.length, 1, 'invalid output is reported once, by the API');
+  assert.equal((await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id } })).status, 'proposing');
+});
+
+test('slot regenerate on a validated day due today writes its drafts, audited as the acting admin', async () => {
+  const p = studioToday();
+  const week = await createContentWeek(prisma, {
+    startsOn: new Date(mondayOf(p)),
+    firstDay: new Date(p.date),
+    status: 'validated',
+    proposals,
+    chosenIndex: 0,
+    refinement: '',
+  });
+  const slot = await createContentSlot(prisma, week.id, {
+    date: new Date(p.date),
+    topic: 'Compter les courses',
+    platforms: [{ platform: 'linkedin', language: 'fr' }],
+    status: 'validated',
+  });
+  const dates = Array.from({ length: 7 - ((p.weekday + 6) % 7) }, (_, i) => addDaysYmd(p.date, i));
+  byTask({
+    content_titles: [{ json: titlesFor(dates) }],
+    post_linkedin: [{ json: { body: 'Votre enfant compte en jouant.', hashtags: ['#Gabee', '#Parents', '#Maths'], link_target: 'landing' } }],
+    post_tiktok: [
+      {
+        json: {
+          caption: 'Une minute de calcul. Lien en bio !',
+          hashtags: ['#Gabee', '#Parents', '#Maths'],
+          on_screen_text: ['3 + 4 ?'],
+          mode: 'filming_plan',
+          filming_plan: { hook: "L'écran du jeu", shots: ['Écran du module Nombres'], duration_s: 20 },
+        },
+      },
+    ],
+    art_direction: [{ json: { media_asset_id: null, visual_brief: 'Un enfant' } }, { json: { media_asset_id: null, visual_brief: 'Un enfant' } }],
+  });
+
+  const res = await regenerateSlot(post(`/slots/${slot.id}/regenerate`), ctx(slot.id));
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.slot.topic, `Sujet ${p.date}`);
+  const byPlatform = Object.fromEntries(body.slot.drafts.map((d: { platform: string; status: string }) => [d.platform, d.status]));
+  assert.deepEqual(byPlatform, { linkedin: 'ready', tiktok: 'ready' }, 'afterSlotChange wrote the day');
+
+  const rows = await prisma.auditLog.findMany({ orderBy: { createdAt: 'asc' } });
+  assert.deepEqual(rows.map((r) => r.kind).sort(), ['content.day.generate', 'content.slot.regenerate']);
+  const generated = rows.find((r) => r.kind === 'content.day.generate')!;
+  assert.equal(generated.actorId, adminId);
+  assert.equal(generated.actorRole, 'admin');
+  assert.equal(generated.targetId, slot.id);
+  assert.deepEqual(generated.diff, { day: p.date, created: 2, failed: 0 });
+});
+
 test('invalid ids answer 404, unknown ids 404 week_not_found', async () => {
   const bad = await getWeek(get('/weeks/nope'), ctx('nope'));
   assert.equal(bad.status, 404);

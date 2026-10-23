@@ -95,6 +95,23 @@ test('objective PUT (super_admin) creates then replaces the month objective', as
   assert.equal((await putObjective(req('PUT', '/objective', superC, { ...body, month: '2026-13' }), undefined)).status, 422);
 });
 
+test('editorial-line POST: a version published meanwhile answers 409 conflict', async () => {
+  let res!: Promise<Response>;
+  // Another publication holds version 2 uncommitted: ours computes 2 too and collides on it.
+  await prisma.$transaction(async (tx) => {
+    await tx.editorialLineVersion.create({ data: { version: 2, body: 'Ligne concurrente', productFacts: {}, publishedAt: new Date(), createdById: superId } });
+    res = Promise.resolve(publishLine(req('POST', '/editorial-line', superC, { body: 'Ma ligne', product_facts: {} }), undefined));
+    await new Promise((r) => setTimeout(r, 750));
+  });
+  const out = await res;
+  assert.equal(out.status, 409);
+  const { error } = await out.json();
+  assert.equal(error.code, 'conflict');
+  assert.match(error.message, /Rechargez la page/);
+  assert.equal(await prisma.editorialLineVersion.count(), 2);
+  assert.equal(await prisma.auditLog.count({ where: { kind: 'content.editorial_line.publish' } }), 0);
+});
+
 test('editorial-line POST publishes version n+1 and keeps the previous one', async () => {
   const body = { body: '# Gabee\nUne app de maths pour les 4–8 ans.', product_facts: { modules: ['Nombres'] } };
   assert.equal((await publishLine(req('POST', '/editorial-line', adminC, body), undefined)).status, 403);
