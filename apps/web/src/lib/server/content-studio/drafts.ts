@@ -35,8 +35,12 @@ import { addDaysYmd, canTransition, dateOf, sourcesOf, ymdOf, type Actor, type S
  * agents never write a URL); TikTok uses the profile's bio link.
  */
 
-/** A generation holds the draft this long at most (single-flight lock). */
-const LOCK_MS = 10 * 60_000;
+/**
+ * A generation holds the draft this long at most (single-flight lock, Ruling
+ * 18): writer + art director, each up to 180 s × 2 SDK attempts, and the
+ * runAgent retry on invalid output.
+ */
+const LOCK_MS = 20 * 60_000;
 
 // ── DTOs (snake_case wire shapes for the Aujourd'hui / Semaine screens) ──
 

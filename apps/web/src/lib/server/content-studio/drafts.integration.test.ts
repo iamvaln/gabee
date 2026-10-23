@@ -186,6 +186,23 @@ test('an unavailable AI marks the draft failed without a second report', async (
   assert.equal(reported.filter((r) => r.scope === 'ai.router').length, 1);
 });
 
+test('a generation holds its draft for 20 minutes (180 s × 2 SDK attempts, + the runAgent retry)', async () => {
+  const { slot } = await fixture();
+  const adapter = byTask({ post_linkedin: [{ json: linkedinPost }], post_tiktok: [{ json: tiktokPlan }], art_direction: [{ json: art }, { json: art }] });
+  const heldFor: number[] = [];
+  const inner = adapter.call.bind(adapter);
+  adapter.call = async (...args: Parameters<AiAdapter['call']>) => {
+    if (args[2].task === 'post_linkedin') {
+      const d = await prisma.contentDraft.findFirstOrThrow({ where: { slotId: slot.id, platform: 'linkedin' } });
+      heldFor.push(d.generationLockUntil!.getTime() - Date.now());
+    }
+    return inner(...args);
+  };
+  assert.deepEqual(await generateDraftsForDay(DAY, 'scheduled_job'), { created: 2, failed: 0 });
+  assert.equal(heldFor.length, 1);
+  assert.ok(heldFor[0]! > 19 * 60_000 && heldFor[0]! <= 20 * 60_000, `lock held ${heldFor[0]} ms`);
+});
+
 test('regenerateDraft refuses while a generation holds the lock, then regenerates', async () => {
   const { slot } = await fixture();
   const draft = await readyDraft(slot.id, 'linkedin', { generationLockUntil: new Date(Date.now() + 60_000) });

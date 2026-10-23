@@ -62,7 +62,7 @@ export const PROPOSALS = [
 /**
  * A week left in `proposing` (Strategist running, or its run died), last
  * touched `minutesAgo` minutes ago: the screen offers to relaunch only once
- * it looks stuck (10 min).
+ * it looks stuck (20 min).
  */
 export async function seedProposingWeek(startsOn: string, minutesAgo: number): Promise<{ weekId: string }> {
   const week = await prisma.contentWeek.create({ data: { startsOn: dateOf(startsOn), firstDay: dateOf(startsOn), status: 'proposing' } });

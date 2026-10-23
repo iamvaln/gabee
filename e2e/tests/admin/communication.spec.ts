@@ -287,7 +287,7 @@ test('a proposing week offers to relaunch only once it looks stuck', async ({ pa
   await expect(page.getByText('Gabee prépare 3 directions pour la semaine…')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Relancer les propositions' })).toHaveCount(0);
 
-  await ageWeek(weekId, 11); // nothing for 11 minutes: no run can be live any more
+  await ageWeek(weekId, 21); // nothing for 21 minutes: no run can be live any more
   await page.reload();
   await expect(page.getByRole('button', { name: 'Relancer les propositions' })).toBeVisible();
   await expect(page.getByText('Les propositions de cette semaine n’ont pas abouti.', { exact: false })).toBeVisible();

@@ -310,8 +310,8 @@ SQL
 ### 5.4 "Gabee travaille déjà dessus" (`generation_in_progress`)
 
 A week-level AI operation (proposals, direction → titles, regenerating a day)
-on that week started less than **10 minutes** ago and is still running. Wait,
-then reload. If that run crashed, the same action works again once the 10
+on that week started less than **20 minutes** ago and is still running. Wait,
+then reload. If that run crashed, the same action works again once the 20
 minutes are up.
 
 ### 5.5 "La connexion a été coupée ; Gabee continue peut-être"
@@ -320,7 +320,7 @@ An AI step (proposals, titles) can take longer than Cloudflare waits for an
 answer (100 seconds). The browser then gets no answer, but the server keeps
 working. **Wait**: Aujourd'hui and Semaine re-read the week every 15–20
 seconds and update by themselves when the step is done. Do not click again.
-If nothing changes for 10 minutes, the run died: Semaine then offers
+If nothing changes for 20 minutes, the run died: Semaine then offers
 **Relancer les propositions**.
 
 ### 5.6 Budget alert

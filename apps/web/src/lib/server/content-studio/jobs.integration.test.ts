@@ -349,10 +349,12 @@ test('a job failing on an error reported upstream is not reported again', async 
   assert.ok(reported.filter((r) => r.scope === 'content.notify').length >= 4);
 });
 
-test('a running job abandoned for 15 minutes is taken over', async () => {
+test('a running job abandoned for 25 minutes is taken over', async () => {
   await prisma.jobRun.create({ data: { jobKey: 'budget.check', periodKey: 'hour:2026-10-28T10', status: 'running', startedAt: at('2026-10-28T10:00') } });
   assert.equal(statusOf(await tick('2026-10-28T10:10'), 'budget.check'), undefined, 'still running');
-  assert.equal(statusOf(await tick('2026-10-28T10:20'), 'budget.check'), 'succeeded');
+  // A slow day.generate (several AI calls of up to 180 s × 2 attempts) may still be live at 20 min.
+  assert.equal(statusOf(await tick('2026-10-28T10:20'), 'budget.check'), undefined, 'still running at 20 min');
+  assert.equal(statusOf(await tick('2026-10-28T10:30'), 'budget.check'), 'succeeded');
 });
 
 test('day.remind only when drafts wait for approval or publication', async () => {

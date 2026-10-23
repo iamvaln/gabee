@@ -138,15 +138,20 @@ export async function getSlot(slotId: string): Promise<SlotDto> {
   return toSlotDto(row);
 }
 
-/** A Strategist run younger than this is taken as live (the router gives up long before: 5 min max per call). */
-export const WEEK_RUN_WINDOW_MS = 10 * 60_000;
+/**
+ * A Strategist run younger than this is taken as live (Ruling 18). Worst case
+ * for one run: the SDK waits up to 180 s per attempt with one SDK retry
+ * (6 min), and runAgent retries once on invalid output (12 min), plus the
+ * database work around it.
+ */
+export const WEEK_RUN_WINDOW_MS = 20 * 60_000;
 
 /**
  * Ruling 15 (cost): one paid Strategist run per week at a time. Refuses with
  * 409 `generation_in_progress` while a `running` Strategist run on this week
- * (proposals or titles) started less than 10 minutes ago — a second tab, a
+ * (proposals or titles) started less than 20 minutes ago — a second tab, a
  * retry while the first call is still waiting, or the scheduler racing the
- * owner. A crashed run stops counting after 10 minutes.
+ * owner. A crashed run stops counting after 20 minutes.
  */
 export async function assertNoLiveWeekRun(weekId: string, now: Date = new Date()): Promise<void> {
   const live = await prisma.agentRun.findFirst({
@@ -166,7 +171,7 @@ export async function assertNoLiveWeekRun(weekId: string, now: Date = new Date()
   throw new HttpError(
     409,
     'generation_in_progress',
-    `Gabee travaille déjà sur cette semaine (lancé ${since}). Attendez la fin, puis rechargez la page ; si rien ne bouge, réessayez dans 10 minutes.`,
+    `Gabee travaille déjà sur cette semaine (lancé ${since}). Attendez la fin, puis rechargez la page ; si rien ne bouge, réessayez dans 20 minutes.`,
     { started_at: live.startedAt.toISOString() },
   );
 }

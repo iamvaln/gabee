@@ -237,10 +237,11 @@ test('propose, direction and slot regenerate refuse while a strategist run on th
   const titled = await titledWeek((i) => (i < 2 ? ['en', 'en'] : ['fr', 'fr']));
   await strategistRun(proposing.id, 'week_proposals', 2);
   await strategistRun(ready.id, 'week_titles', 0);
-  await strategistRun(titled.id, 'week_titles', 9);
+  await strategistRun(titled.id, 'week_titles', 19); // a slow call (180 s × 2 SDK attempts, + runAgent retry) is still live
   const adapter = fake([]);
 
-  const inProgress = (err: unknown) => isHttp(409, 'generation_in_progress')(err) && /Attendez la fin/.test((err as HttpError).message);
+  const inProgress = (err: unknown) =>
+    isHttp(409, 'generation_in_progress')(err) && /Attendez la fin/.test((err as HttpError).message) && /dans 20 minutes/.test((err as HttpError).message);
   await assert.rejects(proposeDirections(proposing.id, 'user_action', actor), inProgress);
   await assert.rejects(chooseDirection(ready.id, { proposal_index: 1, refinement: '', platform_angles: {} }, actor), inProgress);
   await assert.rejects(regenerateSlot(titled.slots[2]!.id, actor), inProgress);
@@ -255,9 +256,9 @@ test('propose, direction and slot regenerate refuse while a strategist run on th
   assert.equal((await audits('content.week.direction')).length, 1); // titledWeek's own choice only
 });
 
-test('a crashed (over 10 min) or finished strategist run does not block the week', async () => {
+test('a crashed (over 20 min) or finished strategist run does not block the week', async () => {
   const week = await createContentWeek(prisma, { status: 'proposing' });
-  await strategistRun(week.id, 'week_proposals', 11); // crashed: still "running" but too old
+  await strategistRun(week.id, 'week_proposals', 21); // crashed: still "running" but too old
   await strategistRun(week.id, 'week_proposals', 1, 'failed');
   const other = await createContentWeek(prisma, { status: 'proposing' });
   await strategistRun(other.id, 'week_proposals', 1); // another week's live run

@@ -19,7 +19,7 @@ export type WeeksResponse = { today: string; current: WeekDto | null; next: Week
 export type Failure = { message: string; ended: boolean };
 
 /** A `proposing` / `direction_set` week untouched this long has no live AI run (the server guard uses the same window). */
-export const STUCK_MS = 10 * 60_000;
+export const STUCK_MS = 20 * 60_000;
 
 export const weekLooksStuck = (week: WeekDto) => Date.now() - Date.parse(week.updated_at) >= STUCK_MS;
 

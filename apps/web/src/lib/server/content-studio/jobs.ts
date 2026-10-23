@@ -48,8 +48,12 @@ type Outcome = 'done' | 'waiting';
 type Ctx = { now: Date; tz: string; send: Sender | undefined };
 type Handler = (job: DueJob, ctx: Ctx) => Promise<Outcome>;
 
-/** A `running` row older than this belongs to a crashed tick and may be taken over. */
-const RUNNING_STALE_MS = 15 * 60_000;
+/**
+ * A `running` row older than this belongs to a crashed tick and may be taken
+ * over (Ruling 18: longer than a draft's 20-minute generation lock, so a slow
+ * live run is never doubled).
+ */
+const RUNNING_STALE_MS = 25 * 60_000;
 const BACKOFF_BASE_MS = 5 * 60_000;
 const BACKOFF_CAP_MS = 60 * 60_000;
 /** A job gets at most this many attempts per period, then is `abandoned` and the owner alerted. */
