@@ -1,6 +1,7 @@
 import '../../../../../test/setup-integration';
 import test, { after, afterEach, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { NextRequest } from 'next/server';
 import { createContentDraft, createContentSlot, createContentWeek, createTestClient, resetDb, seedContentStudio } from '@gabee/db/testing';
 import type { AiTask } from '@gabee/types';
 import { createLoginableParent } from '@/test/factories';
@@ -194,6 +195,39 @@ test('validate refuses below the English minimum, then validates with override_q
   assert.equal(error.details.length, 2);
 
   const ok = await validate(post(`/weeks/${week.id}/validate`, { override_quota: true }), ctx(week.id));
+  assert.equal(ok.status, 200);
+  assert.equal((await ok.json()).week.status, 'validated');
+});
+
+test('validate reads the body whatever its content type: empty = no override, bad JSON = 400', async () => {
+  const week = await createContentWeek(prisma, { status: 'titles_ready' });
+  await createContentSlot(prisma, week.id, { status: 'proposed' });
+  // A raw body (webRequest always sends JSON with its content type).
+  const raw = (body: string | undefined, contentType?: string) =>
+    validate(
+      new NextRequest(`${U}/weeks/${week.id}/validate`, {
+        method: 'POST',
+        headers: { cookie: `${cookie.name}=${cookie.value}`, ...(contentType ? { 'content-type': contentType } : {}) },
+        ...(body === undefined ? {} : { body }),
+      }),
+      ctx(week.id),
+    );
+
+  const empty = await raw(undefined);
+  assert.equal(empty.status, 409, 'no body = no override');
+  assert.equal((await empty.json()).error.code, 'language_quota');
+
+  const bad = await raw('{not json', 'application/json');
+  assert.equal(bad.status, 400);
+  const { error } = await bad.json();
+  assert.equal(error.code, 'invalid_json');
+  assert.match(error.message, /JSON invalide/);
+
+  const wrongShape = await raw('{"override_quota":"yes"}', 'text/plain');
+  assert.equal(wrongShape.status, 422);
+
+  // A JSON body sent as text/plain (no JSON content type) is still honoured.
+  const ok = await raw('{"override_quota":true}', 'text/plain;charset=UTF-8');
   assert.equal(ok.status, 200);
   assert.equal((await ok.json()).week.status, 'validated');
 });
