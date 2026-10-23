@@ -37,14 +37,19 @@ services:
       retries: 12
     networks: [internal]
 
-  # ── One-shot: apply Prisma migrations, then exit. ───────────────────────────
+  # ── One-shot: apply Prisma migrations, ensure the Content Studio defaults, ──
+  # ── then exit. The studio seed is create-only (never overwrites an edit), so ─
+  # ── it runs on every deploy; a failure fails the deploy before web starts. ──
   migrate:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
     image: ${REGISTRY:-ghcr.io/iamvaln}/gabee-web:${IMAGE_TAG:-latest}
     env_file: ${ENV_FILE:-.env.production}
-    command: ['pnpm', '--filter', '@gabee/db', 'exec', 'prisma', 'migrate', 'deploy']
+    command:
+      - sh
+      - -c
+      - pnpm --filter @gabee/db exec prisma migrate deploy && pnpm --filter @gabee/db run db:seed:content-studio
     restart: 'no'
     depends_on:
       db:

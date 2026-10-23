@@ -125,8 +125,9 @@ docker compose --env-file .env.production up -d --no-deps --force-recreate web
 
 Ship as usual (tag from `main`, see the release workflow). The deploy runs:
 
-- the one-shot `migrate` service (`prisma migrate deploy`), which creates the
-  studio tables (migration `20261020182222_content_studio`);
+- the one-shot `migrate` service: `prisma migrate deploy`, which creates the
+  studio tables (migration `20261020182222_content_studio`), then
+  `db:seed:content-studio`, which creates the studio defaults (2.6);
 - `docker compose --env-file .env.production up -d`, which also starts the new
   `cron-content` service (same `gabee-cron-digest` image, `tick-loop` mode).
 
@@ -141,24 +142,37 @@ Expected: `[tick-loop] started — every 600s, target http://web:3000/api/cron/c
 then one `[tick] <time> {"ran":[…],"skipped":…}` line per tick. If it ever
 stops: `docker compose --env-file .env.production up -d cron-content`.
 
-### 2.6 Seed the studio defaults (once)
+### 2.6 Studio defaults (automatic on every deploy)
 
 The studio needs its defaults: settings, model catalogue and routes, platform
 profiles, editorial line v1, and the five agents (strategist, writer_linkedin,
 writer_tiktok, art_director, analyst). Without them, no AI step can run.
 
-Do **not** use `db:seed` just for this. `db:seed` also **wipes and reloads the
-question tables** (see the content step of the prod release process). Run only
-the studio part, which is create-only: it never overwrites what you changed,
-and running it twice is harmless.
+**The deploy creates them for you.** The `migrate` service runs
+`pnpm --filter @gabee/db run db:seed:content-studio` right after
+`prisma migrate deploy`, before `web` and `cron-content` start. It is
+create-only: it never overwrites what you changed in Réglages or in the
+database, so running it on every deploy is harmless. If it fails, `migrate`
+fails, the deploy job fails and the new `web` does not start: read
+`docker compose --env-file .env.production logs migrate`.
+
+Check after the deploy:
+
+```bash
+docker compose --env-file .env.production logs migrate | tail -5
+```
+
+Expected last line: `Content Studio defaults ensured`.
+
+Manual fallback (same script, for example after restoring a backup taken
+before the studio existed). Do **not** use `db:seed` for this: it also **wipes
+and reloads the question tables** (see the content step of the prod release
+process).
 
 ```bash
 docker compose --env-file .env.production run --rm migrate \
-  pnpm --filter @gabee/db exec tsx -e 'import "dotenv/config"; import { createPrismaClient } from "./src/client"; import { seedContentStudio } from "./prisma/seed-content-studio"; const p = createPrismaClient(); seedContentStudio(p).then(() => console.log("Content Studio defaults ensured")).finally(() => p.$disconnect());'
+  pnpm --filter @gabee/db run db:seed:content-studio
 ```
-
-Expected output: `Content Studio defaults ensured`. (A full content release
-with `db:seed` also runs this step at the end.)
 
 What it creates when missing:
 
