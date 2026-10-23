@@ -260,6 +260,14 @@ test('today screen fits a 360px viewport', async ({ page }) => {
   await expect(nav.getByRole('link', { name: 'Semaine' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(nav).toBeHidden();
+  // Focus returns to the menu button (not <body>) once the page behind is reachable again.
+  await expect(page.getByRole('button', { name: 'Ouvrir le menu' })).toBeFocused();
+
+  // Same through the drawer's own close button.
+  await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
+  await page.locator('#admin-side').getByRole('button', { name: 'Fermer le menu' }).click();
+  await expect(nav).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Ouvrir le menu' })).toBeFocused();
 });
 
 test('an interrupted draft offers Réessayer instead of waiting forever', async ({ page }) => {

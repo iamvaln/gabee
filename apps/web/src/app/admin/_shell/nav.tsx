@@ -116,10 +116,20 @@ export function AdminShell({
   const [navOpen, setNavOpen] = useState(false);
   const menuBtn = useRef<HTMLButtonElement>(null);
   const sideRef = useRef<HTMLElement>(null);
+  // Focus returns to the menu button once the drawer has closed: while it is open
+  // the button sits inside the `inert` main, so focusing it in the same tick is a
+  // no-op (focus would land on <body>). The effect below runs after the commit
+  // that drops `inert`.
+  const refocusMenu = useRef(false);
   const closeNav = useCallback((refocus: boolean) => {
+    refocusMenu.current = refocus;
     setNavOpen(false);
-    if (refocus) menuBtn.current?.focus();
   }, []);
+  useEffect(() => {
+    if (navOpen || !refocusMenu.current) return;
+    refocusMenu.current = false;
+    menuBtn.current?.focus();
+  }, [navOpen]);
   useEffect(() => setNavOpen(false), [pathname]);
   useEffect(() => {
     // Back to the desktop layout (rotation, resize): the drawer state no longer applies.
