@@ -142,6 +142,8 @@ const SERVER_FR = new Set([
   'generation_in_progress',
   // Per route: only the direction route (the owner's own precision) asks to rephrase.
   'ai_refused',
+  // Says what changed meanwhile (a draft, the editorial line).
+  'conflict',
   'week_not_found',
   'slot_not_found',
   'draft_not_found',

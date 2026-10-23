@@ -202,6 +202,14 @@ export async function enabledPlatforms(): Promise<ContentPlatform[]> {
 const inProgress = () =>
   new HttpError(409, 'generation_in_progress', 'Une génération de ce brouillon est déjà en cours. Attendez quelques instants puis rechargez.');
 
+/** Two edits saved at once both took version n + 1 (unique per draft): the later one is refused, not a 500. */
+function asDraftChanged(err: unknown): never {
+  if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+    throw new HttpError(409, 'conflict', 'Ce brouillon vient de changer. Rechargez la page.');
+  }
+  throw err;
+}
+
 // ── Tracked link in the LinkedIn body ──
 
 function withLink(text: string, url: string): string {
@@ -536,7 +544,7 @@ export async function editDraft(draftId: string, patch: UpdateDraftRequest, acto
     });
     if (res.count !== 1) throw inProgress();
     return version.n;
-  });
+  }).catch(asDraftChanged);
 
   await auditContent(actor, 'content.draft.edit', 'content_draft', draftId, {
     version: n,

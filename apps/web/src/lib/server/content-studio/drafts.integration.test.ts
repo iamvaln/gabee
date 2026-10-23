@@ -240,6 +240,24 @@ test('editDraft re-validates the post without the tracked link, then re-appends 
   assert.equal(await prisma.auditLog.count({ where: { kind: 'content.draft.edit' } }), 1);
 });
 
+test('editDraft: an edit racing another for the same version number is a 409, not a 500', async () => {
+  const { slot } = await fixture();
+  const draft = await readyDraft(slot.id, 'linkedin');
+  let edit!: Promise<unknown>;
+  // Another edit holds version 2 uncommitted: ours computes n = 2 too and waits on the unique index.
+  await prisma.$transaction(async (tx) => {
+    await tx.contentDraftVersion.create({ data: { draftId: draft.id, n: 2, source: 'owner', editedById: actor.id, payload: linkedinPost } });
+    edit = editDraft(draft.id, { body: 'Texte du propriétaire.' }, actor).catch((e: unknown) => e);
+    await new Promise((r) => setTimeout(r, 750));
+  });
+  const err = await edit;
+  assert.ok(err instanceof HttpError, `expected an HttpError, got ${String(err)}`);
+  assert.equal(err.status, 409);
+  assert.equal(err.code, 'conflict');
+  assert.equal(err.message, 'Ce brouillon vient de changer. Rechargez la page.');
+  assert.equal(await prisma.contentDraftVersion.count({ where: { draftId: draft.id } }), 2);
+});
+
 test('tiktok approval requires a cleared video', async () => {
   const { slot } = await fixture();
   const draft = await readyDraft(slot.id, 'tiktok');
