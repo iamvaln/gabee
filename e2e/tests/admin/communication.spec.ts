@@ -234,6 +234,30 @@ test('tiktok card shows the filming plan when no video', async ({ page }) => {
   await expect(card(page, 'LinkedIn').getByText('Aucun média autorisé — le post partira en texte seul')).toBeVisible();
 });
 
+test('a cut-off direction call stops warning once polling shows the titles', async ({ page }) => {
+  const nextMonday = addDays(mondayOf(studioToday()), 7);
+  const { weekId } = await seedProposalsWeek(nextMonday);
+  await page.clock.install(); // the 20 s wait poll is fast-forwarded below
+  // The request reached the server (the week moved to direction_set) but its answer never arrived.
+  await page.route('**/api/admin/communication/weeks/*/direction', async (route) => {
+    await prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'direction_set', chosenIndex: 0 } });
+    await route.abort('connectionreset');
+  });
+
+  await page.goto('/admin/communication/semaine');
+  await page.getByText(PROPOSALS[0].title).click();
+  await page.getByRole('button', { name: 'Arrêter cette direction' }).click();
+  const cut = page.getByText(/La connexion a été coupée/);
+  await expect(cut).toBeVisible();
+  await expect(page.getByText('Gabee rédige les titres de la semaine…')).toBeVisible();
+
+  // The run finished after all: the next poll shows the titles and the warning is gone.
+  await seedTitles(weekId, 0);
+  await page.clock.fastForward(21_000);
+  await expect(page.getByRole('button', { name: 'Valider la semaine' })).toBeVisible();
+  await expect(cut).toHaveCount(0);
+});
+
 test('today screen fits a 360px viewport', async ({ page }) => {
   await seedTodayBoard({ longTokens: true, linkedinImage: true });
   await page.setViewportSize({ width: 360, height: 740 });
