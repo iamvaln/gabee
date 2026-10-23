@@ -6,7 +6,8 @@ import { createContentDraft, createContentSlot, createContentWeek, createTestCli
 import type { ContentLanguage } from '@gabee/types';
 import { setErrorReporterForTests } from '../report-error';
 import { HttpError } from '../http';
-import { FakeAiAdapter, resetAiAdapters, setAiAdapters, type FakeAiStep } from '../ai/router';
+import { resetAiAdapters, setAiAdapters } from '../ai/router';
+import { FakeAiAdapter, type FakeAiStep } from '../ai/router/fake-adapter';
 import type { Actor } from './state';
 import { chooseDirection, getWeek, proposeDirections, regenerateSlot, skipDay, startWeek, updateSlot, validateWeek } from './weeks';
 

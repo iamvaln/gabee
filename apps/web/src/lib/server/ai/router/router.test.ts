@@ -342,3 +342,8 @@ test('a usage-row write failure on a refused or invalid answer keeps that error 
   setAiAdapters([new FakeAiAdapter([{ json: { headline: 42 } }])]);
   await assert.rejects(runAiTask(request()), (err: unknown) => err instanceof AiUsageRecordError && err.cause instanceof AiInvalidOutputError);
 });
+
+test('the router barrel does not ship the fake adapter', async () => {
+  const barrel = await import('./index');
+  assert.equal('FakeAiAdapter' in barrel, false);
+});

@@ -11,8 +11,9 @@ import {
   seedContentStudio,
 } from '@gabee/db/testing';
 import { setErrorReporterForTests } from '../report-error';
-import { AiInvalidOutputError, AiRefusedError, AiUnavailableError, FakeAiAdapter, resetAiAdapters, setAiAdapters } from '../ai/router';
-import type { AiInputBlock, FakeAiStep } from '../ai/router';
+import { AiInvalidOutputError, AiRefusedError, AiUnavailableError, resetAiAdapters, setAiAdapters } from '../ai/router';
+import type { AiInputBlock } from '../ai/router';
+import { FakeAiAdapter, type FakeAiStep } from '../ai/router/fake-adapter';
 import { runAgent } from './agents';
 
 const prisma = createTestClient();

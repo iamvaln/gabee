@@ -5,7 +5,8 @@ import { createContentDraft, createContentSlot, createContentWeek, createTestCli
 import type { AiTask } from '@gabee/types';
 import { setErrorReporterForTests } from '../report-error';
 import type { EmailMessage, EmailSendResult } from '../email';
-import { FakeAiAdapter, resetAiAdapters, setAiAdapters, type AiAdapter, type FakeAiStep } from '../ai/router';
+import { resetAiAdapters, setAiAdapters, type AiAdapter } from '../ai/router';
+import { FakeAiAdapter, type FakeAiStep } from '../ai/router/fake-adapter';
 import { checkBudget, monthSpendUsd } from './budget';
 import { runTick, type TickSummary } from './jobs';
 
