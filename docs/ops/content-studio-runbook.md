@@ -411,6 +411,12 @@ model (section 6).
 - **"Vérification du fichier…" rejects the file**: the server checked the
   stored object (size, real file type) and it did not match. Allowed: PNG,
   JPEG, WebP up to 15 MB, MP4 up to 300 MB.
+- **Abandoned uploads clean themselves up**: an upload cancelled, failed or
+  left in a closed tab stays an invisible `pending` row. The daily purge
+  (`/api/cron/purge-device-ips`) deletes `pending` rows untouched for 24 h
+  with their R2 object, and puts a `verifying` row stuck for over an hour (a
+  crash mid-check) back to `pending`. Its log line counts them under
+  `media_uploads`.
 
 ### 5.8 AI unavailable (`ai_unavailable`)
 

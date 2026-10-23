@@ -188,6 +188,64 @@ async function verify(row: Row): Promise<MediaAssetDto> {
   return toMediaDto(updated);
 }
 
+/** A `pending` upload untouched for this long was abandoned (cancelled, failed or closed tab). */
+export const PENDING_UPLOAD_TTL_MS = 24 * 60 * 60 * 1000;
+/** A `verifying` claim this old outlived any real verification (a crash between claim and release). */
+export const VERIFYING_STALE_MS = 60 * 60 * 1000;
+
+export type AbandonedUploadsSummary = { pending_deleted: number; verifying_reset: number; failed: number };
+
+/**
+ * Daily housekeeping of uploads that never completed (run by the purge cron).
+ *
+ * - `verifying` rows older than 1 h go back to `pending`: the claim was left by
+ *   a crash, and `pending` is exactly the state `completeUpload`'s own failure
+ *   path releases to — the owner can still retry, and the row is reaped below
+ *   if nobody does. (Failing them would reject a file that may be fine.)
+ * - `pending` rows untouched for 24 h are deleted with their storage object
+ *   (the PUT may have landed). A missing object is fine; a storage error keeps
+ *   the row for the next run and is reported. Rows a draft points at are kept
+ *   (cannot happen today — drafts refuse non-ready media — but the FK restricts).
+ *
+ * `updatedAt` is the clock for both, so a row just reset from `verifying` gets
+ * a full day before it is reaped. `now` is injectable for tests.
+ */
+export async function reapAbandonedUploads(now: Date = new Date()): Promise<AbandonedUploadsSummary> {
+  const reset = await prisma.mediaAsset.updateMany({
+    where: { status: 'verifying', updatedAt: { lt: new Date(now.getTime() - VERIFYING_STALE_MS) } },
+    data: { status: 'pending' },
+  });
+  const stale = await prisma.mediaAsset.findMany({
+    where: {
+      status: 'pending',
+      updatedAt: { lt: new Date(now.getTime() - PENDING_UPLOAD_TTL_MS) },
+      drafts: { none: {} },
+    },
+    select: { id: true, objectKey: true },
+  });
+  const summary: AbandonedUploadsSummary = { pending_deleted: 0, verifying_reset: reset.count, failed: 0 };
+  if (stale.length === 0) return summary;
+  let storage;
+  try {
+    storage = getStorage();
+  } catch (err) {
+    reportError(err, { scope: 'content.media', step: 'reap-abandoned', count: stale.length });
+    return { ...summary, failed: stale.length };
+  }
+  for (const row of stale) {
+    try {
+      await storage.delete(row.objectKey);
+      // Re-check the status: a late `complete` may have claimed the row meanwhile.
+      const del = await prisma.mediaAsset.deleteMany({ where: { id: row.id, status: 'pending' } });
+      summary.pending_deleted += del.count;
+    } catch (err) {
+      summary.failed += 1;
+      reportError(err, { scope: 'content.media', step: 'reap-abandoned', assetId: row.id });
+    }
+  }
+  return summary;
+}
+
 export async function setClearance(
   assetId: string,
   input: MediaClearance,
