@@ -31,6 +31,12 @@ export class R2Storage implements StoragePort {
       region: 'auto',
       endpoint: `https://${cfg.accountId}.r2.cloudflarestorage.com`,
       credentials: { accessKeyId: cfg.accessKeyId, secretAccessKey: cfg.secretAccessKey },
+      // SDK ≥ 3.729 defaults to WHEN_SUPPORTED, which bakes an x-amz-checksum-crc32
+      // of the (empty) signing body into presigned PUT URLs: the browser then
+      // uploads the real file and R2 rejects it (checksum mismatch). Only add a
+      // checksum when an operation requires one.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     });
   }
 

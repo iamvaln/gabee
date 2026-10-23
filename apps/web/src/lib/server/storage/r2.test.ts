@@ -11,3 +11,14 @@ test('presignPut signs content-type and content-length (no network)', async () =
   assert.ok(signed.includes('content-length'), `signed: ${signed}`);
   assert.equal(url.searchParams.get('X-Amz-Expires'), '900');
 });
+
+test('presignPut carries no checksum params (browser PUT body differs from the empty signing body)', async () => {
+  const s = new R2Storage({ accountId: 'acc', accessKeyId: 'AKID', secretAccessKey: 'secret', bucket: 'b' });
+  const url = new URL(await s.presignPut('media/2026/10/x.mp4', 'video/mp4', 5_000_000, 900));
+  const names = [...url.searchParams.keys()].map((k) => k.toLowerCase());
+  const checksum = names.filter((k) => k.startsWith('x-amz-checksum') || k.startsWith('x-amz-sdk-checksum'));
+  assert.deepEqual(checksum, [], `unexpected checksum params: ${url.search}`);
+  const signed = (url.searchParams.get('X-Amz-SignedHeaders') ?? '').split(';');
+  assert.ok(signed.includes('content-type'), `signed: ${signed}`);
+  assert.ok(!signed.some((h) => h.startsWith('x-amz-checksum') || h.startsWith('x-amz-sdk-checksum')), `signed: ${signed}`);
+});
