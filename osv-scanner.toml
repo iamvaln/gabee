@@ -1,0 +1,15 @@
+# Advisories accepted on purpose. Each entry needs a reason and an expiry:
+# when it passes, the release gate fails again and the entry must be re-checked.
+
+# extract-zip 2.0.1 — no fixed release exists. Reached only through
+# @lhci/cli → lighthouse → puppeteer (root devDependency, CI Lighthouse step);
+# never installed in a production image.
+[[IgnoredVulns]]
+id = "GHSA-7pqw-9j4j-h8q3"
+ignoreUntil = 2027-01-31
+reason = "extract-zip has no fix; dev-only via @lhci/cli (Lighthouse CI), not shipped"
+
+[[IgnoredVulns]]
+id = "GHSA-jmr9-qjv8-65gv"
+ignoreUntil = 2027-01-31
+reason = "extract-zip has no fix; dev-only via @lhci/cli (Lighthouse CI), not shipped"
