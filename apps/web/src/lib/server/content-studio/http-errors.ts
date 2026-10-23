@@ -18,7 +18,10 @@ import type { Actor } from './state';
  * Anything unmapped is rethrown to `route()`'s 500 path.
  */
 
-const AI_REFUSED =
+/** Most AI routes take no free text from the owner: nothing to rephrase, so no rephrasing hint. */
+const AI_REFUSED = "L'IA a refusé cette demande. Réessayez ; si cela se répète, voyez le Journal.";
+/** The direction route carries the owner's own precision: that is what to rephrase. */
+export const AI_REFUSED_DIRECTION =
   "L'IA a refusé de traiter cette demande. Reformulez votre précision (ou choisissez une autre direction) puis réessayez.";
 const AI_INVALID =
   "L'IA a répondu avec un résultat inutilisable, même après une nouvelle tentative. Réessayez dans un instant ; si cela se répète, consultez le Journal.";
@@ -27,19 +30,22 @@ const AI_UNAVAILABLE =
 const STORAGE_UNAVAILABLE =
   "Le stockage des médias ne répond pas ou n'est pas configuré. Réessayez dans quelques minutes ; si cela se répète, prévenez l'équipe technique.";
 
+/** Per-route copy: `refused` replaces the generic AI-refusal message (the route knows what the owner can change). */
+export type StudioRouteOptions = { refused?: string };
+
 /**
  * The API error for `err`: existing `HttpError`s pass through (the storage
  * one gets its French message), AI and storage failures get their code;
  * anything else is returned unchanged for the 500 path.
  */
-export function toHttpError(err: unknown, context: Record<string, unknown> = {}): unknown {
+export function toHttpError(err: unknown, context: Record<string, unknown> = {}, opts: StudioRouteOptions = {}): unknown {
   if (err instanceof HttpError) {
     if (err.code === 'storage_unavailable') return new HttpError(503, 'storage_unavailable', STORAGE_UNAVAILABLE);
     return err;
   }
   if (err instanceof AiRefusedError) {
     reportError(err, { scope: 'content.api', ...context });
-    return new HttpError(422, 'ai_refused', AI_REFUSED, { category: err.category });
+    return new HttpError(422, 'ai_refused', opts.refused ?? AI_REFUSED, { category: err.category });
   }
   if (err instanceof AiInvalidOutputError) {
     reportError(err, { scope: 'content.api', ...context });
@@ -56,12 +62,12 @@ export function toHttpError(err: unknown, context: Record<string, unknown> = {})
 type Handler<Ctx> = (req: NextRequest, ctx: Ctx) => Promise<NextResponse>;
 
 /** `route()` with the studio error mapping applied to whatever the handler throws. */
-export function studioRoute<Ctx = unknown>(fn: Handler<Ctx>) {
+export function studioRoute<Ctx = unknown>(fn: Handler<Ctx>, opts: StudioRouteOptions = {}) {
   return route<Ctx>(async (req, ctx) => {
     try {
       return await fn(req, ctx);
     } catch (err) {
-      throw toHttpError(err, { method: req.method, path: req.nextUrl.pathname });
+      throw toHttpError(err, { method: req.method, path: req.nextUrl.pathname }, opts);
     }
   });
 }

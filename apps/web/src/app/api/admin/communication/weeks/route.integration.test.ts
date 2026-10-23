@@ -151,8 +151,19 @@ test('direction POST maps AiRefusedError to 422 ai_refused', async () => {
   const { error } = await res.json();
   assert.equal(error.code, 'ai_refused');
   assert.match(error.message, /L'IA a refusé/);
+  assert.match(error.message, /précision/, 'the direction route asks to rephrase the precision');
   assert.equal(reported.length, 1, 'a refusal is reported once, by the API');
   assert.equal((await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id } })).status, 'direction_set');
+});
+
+test('a refusal on a route without owner text gets the generic copy (no precision hint)', async () => {
+  const week = await createContentWeek(prisma, { status: 'proposing' });
+  fake([{ error: 'refusal', refusalCategory: 'cyber' }]);
+  const res = await propose(post(`/weeks/${week.id}/propose`), ctx(week.id));
+  assert.equal(res.status, 422);
+  const { error } = await res.json();
+  assert.equal(error.code, 'ai_refused');
+  assert.equal(error.message, "L'IA a refusé cette demande. Réessayez ; si cela se répète, voyez le Journal.");
 });
 
 test('an unavailable AI maps to 503 ai_unavailable, reported once (by the router)', async () => {
