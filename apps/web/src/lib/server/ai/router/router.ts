@@ -8,6 +8,7 @@ import {
   AiInvalidOutputError,
   AiRefusedError,
   AiUnavailableError,
+  AiUsageRecordError,
   aiErrorCode,
   classifyAiError,
 } from './errors';
@@ -89,6 +90,19 @@ async function recordOutage(cat: AiCatalogue, modelKey: string): Promise<void> {
 }
 
 /**
+ * Write a usage row for a call that failed with `callError`. If the write
+ * itself fails, throw both (`AiUsageRecordError`, caused by `callError`) so a
+ * database outage cannot hide what the provider did.
+ */
+async function recordFailure(cat: AiCatalogue, row: AiUsageRecord, callError: unknown): Promise<void> {
+  try {
+    await cat.recordUsage(row);
+  } catch (recordError) {
+    throw new AiUsageRecordError(recordError, callError);
+  }
+}
+
+/**
  * Run one AI task through its DB-configured chain.
  *
  * Walks the task's routes by rank, skipping disabled, incapable, unhealthy and
@@ -141,7 +155,7 @@ export async function runAiTask<S extends z.ZodType>(req: AiRequest<S>): Promise
         status: kind === 'refusal' ? 'refused' : 'failed',
         errorCode,
       };
-      await cat.recordUsage(record);
+      await recordFailure(cat, record, err);
       if (kind === 'outage') {
         // Metered on the usage row only: a 429/529 burst must not flood Sentry.
         // Chain exhaustion is reported below.
@@ -158,38 +172,38 @@ export async function runAiTask<S extends z.ZodType>(req: AiRequest<S>): Promise
     // The provider answered: it is up, whatever the content.
     await cat.markHealthy(model.key);
     const cost = costUsd(model, res.inputTokens, res.outputTokens);
-    const usage = (status: AiUsageRecord['status'], errorCode: string | null) =>
-      cat.recordUsage({
-        ...base,
-        inputTokens: res.inputTokens,
-        outputTokens: res.outputTokens,
-        costUsd: cost,
-        latencyMs,
-        status,
-        errorCode,
-      });
+    const row = (status: AiUsageRecord['status'], errorCode: string | null): AiUsageRecord => ({
+      ...base,
+      inputTokens: res.inputTokens,
+      outputTokens: res.outputTokens,
+      costUsd: cost,
+      latencyMs,
+      status,
+      errorCode,
+    });
+    /** Record the failed answer, then throw `err` (or both, if the record fails). */
+    const fail = async (status: AiUsageRecord['status'], errorCode: string | null, err: Error): Promise<never> => {
+      await recordFailure(cat, row(status, errorCode), err);
+      throw err;
+    };
 
     if (res.stopReason === 'refusal') {
       const category = res.refusalCategory ?? null;
-      await usage('refused', category ? `refusal_${category}` : 'refusal');
-      throw new AiRefusedError(category);
+      return fail('refused', category ? `refusal_${category}` : 'refusal', new AiRefusedError(category));
     }
     if (res.stopReason !== 'end_turn') {
       // `max_tokens` = truncated JSON; any other stop leaves no usable answer.
-      await usage('invalid_output', res.stopReason);
-      throw new AiInvalidOutputError(`The AI answer was cut short (${res.stopReason}).`, { stopReason: res.stopReason });
+      return fail('invalid_output', res.stopReason, new AiInvalidOutputError(`The AI answer was cut short (${res.stopReason}).`, { stopReason: res.stopReason }));
     }
     if (res.parseError !== undefined) {
-      await usage('invalid_output', 'invalid_json');
-      throw new AiInvalidOutputError('The AI answer was not valid JSON.', { parseError: res.parseError });
+      return fail('invalid_output', 'invalid_json', new AiInvalidOutputError('The AI answer was not valid JSON.', { parseError: res.parseError }));
     }
     const parsed = req.schema.safeParse(res.rawJson);
     if (!parsed.success) {
-      await usage('invalid_output', 'schema_mismatch');
-      throw new AiInvalidOutputError('The AI answer did not match the expected format.', parsed.error.issues);
+      return fail('invalid_output', 'schema_mismatch', new AiInvalidOutputError('The AI answer did not match the expected format.', parsed.error.issues));
     }
 
-    await usage('succeeded', null);
+    await cat.recordUsage(row('succeeded', null));
     return {
       output: parsed.data,
       modelKey: model.key,

@@ -9,6 +9,7 @@ export {
   AiInvalidOutputError,
   AiUnavailableError,
   AiProviderError,
+  AiUsageRecordError,
   classifyAiError,
   aiErrorCode,
   type AiErrorKind,
