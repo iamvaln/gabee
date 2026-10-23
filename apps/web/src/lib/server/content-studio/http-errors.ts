@@ -14,7 +14,8 @@ import type { Actor } from './state';
  * Sentry (Ruling 7): the router already reported an unavailable AI (chain
  * exhausted), so it is only mapped here. A refusal or an invalid output is
  * recorded on its AgentRun but reported by no one upstream: it is reported
- * here, once, as the request ends. A storage failure is reported here too.
+ * here, once, as the request ends. A storage failure is reported here too
+ * (unconfigured storage once per process: every media request would hit it).
  * Anything unmapped is rethrown to `route()`'s 500 path.
  */
 
@@ -30,6 +31,13 @@ const AI_UNAVAILABLE =
 const STORAGE_UNAVAILABLE =
   "Le stockage des médias ne répond pas ou n'est pas configuré. Réessayez dans quelques minutes ; si cela se répète, prévenez l'équipe technique.";
 
+let storageUnavailableReported = false;
+
+/** Test seam: forget that the missing-storage error was reported. */
+export function resetStorageUnavailableReportForTests(): void {
+  storageUnavailableReported = false;
+}
+
 /** Per-route copy: `refused` replaces the generic AI-refusal message (the route knows what the owner can change). */
 export type StudioRouteOptions = { refused?: string };
 
@@ -40,7 +48,15 @@ export type StudioRouteOptions = { refused?: string };
  */
 export function toHttpError(err: unknown, context: Record<string, unknown> = {}, opts: StudioRouteOptions = {}): unknown {
   if (err instanceof HttpError) {
-    if (err.code === 'storage_unavailable') return new HttpError(503, 'storage_unavailable', STORAGE_UNAVAILABLE);
+    if (err.code === 'storage_unavailable') {
+      // Missing MEDIA_R2_* (or memory storage in production): a deploy problem no request can fix.
+      // Report it once per process so Sentry hears of it without one event per media request.
+      if (!storageUnavailableReported) {
+        storageUnavailableReported = true;
+        reportError(err, { scope: 'content.api', ...context });
+      }
+      return new HttpError(503, 'storage_unavailable', STORAGE_UNAVAILABLE);
+    }
     return err;
   }
   if (err instanceof AiRefusedError) {
