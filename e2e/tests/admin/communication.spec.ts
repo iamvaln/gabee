@@ -309,15 +309,20 @@ test('a launch cut off by the proxy keeps Aujourd\'hui updating until the propos
     weekId = week.id;
     await route.fulfill({ status: 524, contentType: 'text/html', body: '<html><body>error code: 524</body></html>' });
   });
+  const isWeeksGet = (url: string, method: string) => method === 'GET' && url.endsWith('/api/admin/communication/weeks');
 
   await page.goto('/admin/communication');
+  // The board re-read that follows the failure: it must land (week still proposing)
+  // before the week moves on, or the test would not prove any polling.
+  const reread = page.waitForResponse((r) => weekId !== '' && isWeeksGet(r.url(), r.request().method()));
   await page.getByRole('button', { name: 'Lancer la semaine maintenant' }).click();
+  await reread;
   const cut = page.getByText('La connexion a été coupée', { exact: false });
   await expect(cut.first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Relancer les propositions' })).toHaveCount(0);
 
   // The Strategist finishes on the server: the page notices on its own, no reload.
-  const polled = page.waitForRequest((r) => r.method() === 'GET' && r.url().endsWith('/api/admin/communication/weeks'), { timeout: 30_000 });
+  const polled = page.waitForRequest((r) => isWeeksGet(r.url(), r.method()), { timeout: 30_000 });
   await prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'proposals_ready', proposals: { proposals: PROPOSALS } } });
   await polled;
   await expect(cut).toHaveCount(0, { timeout: 30_000 });
