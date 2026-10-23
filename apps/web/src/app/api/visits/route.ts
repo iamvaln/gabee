@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { VisitBeaconSchema } from '@gabee/types';
 import { route, readJson, HttpError } from '@/lib/server/http';
-import { rateLimit, clientIpFrom } from '@/lib/server/rate-limit';
+import { rateLimit, visitorIpFrom } from '@/lib/server/rate-limit';
 import { getStudioTimezone, ownHostsFromEnv, recordVisit } from '@/lib/server/services/web-visits';
 
 export const runtime = 'nodejs';
@@ -13,7 +13,8 @@ export const runtime = 'nodejs';
  * (client side) Do-Not-Track alike.
  */
 export const POST = route(async (req) => {
-  rateLimit(clientIpFrom(req), { scope: 'visits', limit: 120, windowMs: 60_000 });
+  // Behind Cloudflare: the visitor's own address, not the shared edge (see visitorIpFrom).
+  rateLimit(visitorIpFrom(req), { scope: 'visits', limit: 120, windowMs: 60_000 });
 
   const ownHosts = ownHostsFromEnv();
   // sendBeacon from the same origin may omit Origin on some browsers; a present

@@ -59,6 +59,24 @@ export function clientIpFrom(req: NextRequest): string {
 }
 
 /**
+ * Client IP for the anonymous visit beacon (`/api/visits`) ONLY.
+ *
+ * gabee.app is now proxied by Cloudflare (orange cloud), so the last
+ * `X-Forwarded-For` hop Traefik sees is a Cloudflare edge: every visitor behind
+ * the same edge would share one limiter bucket. Cloudflare sends the visitor's
+ * address in `CF-Connecting-IP`; prefer it when present, else `clientIpFrom`.
+ *
+ * Deliberately not used elsewhere: a request that reaches the origin without
+ * Cloudflare can set this header itself. For the visit counter that only lets a
+ * caller pick its own bucket on a non-sensitive, write-only endpoint; the login
+ * and security limiters (and the security-log IP) keep `clientIpFrom`.
+ */
+export function visitorIpFrom(req: NextRequest): string {
+  const cf = req.headers.get('cf-connecting-ip')?.trim();
+  return cf || clientIpFrom(req);
+}
+
+/**
  * Consume one token. Throws `RateLimitError` (HTTP 429) when the bucket is empty.
  * Sweeps expired buckets opportunistically (cheap; called from hot paths).
  */
