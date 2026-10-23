@@ -57,8 +57,7 @@ post unmeasurable forever, so a **minimal, privacy-respecting measurement** ship
 3. **Admin view**: visits per day and per source, sign-ups per source, and per post
    (via `utm_content` = draft id) — the raw numbers the Phase 2 report builds on.
 
-The privacy policy must mention this audience measurement and the sign-up source;
-the owner has the new wording reviewed by their lawyer before go-live.
+The privacy policy mentions this audience measurement and the sign-up source.
 
 Bot traffic is filtered (user-agent rules); the endpoint is rate-limited and accepts
 only first-party origins.
@@ -471,8 +470,8 @@ Match the repo's established layers (see `project_test_strategy`):
 - Risk: 1a is about a week of work for a large surface. If something has to slip, it
   is 1b (then the in-admin badge — email alone is enough at first), never quality
   inside 1a and never measurement.
-- Owner actions before go-live: create the R2 bucket + scoped token; have the
-  privacy-policy wording reviewed; upload and clear a few media in the library.
+- Owner actions before go-live: create the R2 bucket + scoped token;
+  upload and clear a few media in the library.
 - Staging: the `cron-digest` sidecar does not run on staging; the tick endpoint and
   "Lancer la semaine maintenant" let the loop be exercised there by hand.
 
