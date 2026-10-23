@@ -2,7 +2,7 @@ import { json, requireAdmin } from '@/lib/server/http';
 import { getStudioTimezone } from '@/lib/server/services/web-visits';
 import { localParts } from '@/lib/server/content-studio/clock';
 import { pendingCounts } from '@/lib/server/content-studio/notify';
-import { studioRoute } from '@/lib/server/content-studio/http-errors';
+import { studioRoute } from '@/lib/server/content-studio/studio-http';
 
 export const runtime = 'nodejs';
 

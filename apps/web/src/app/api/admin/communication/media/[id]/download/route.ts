@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin, HttpError } from '@/lib/server/http';
-import { idParam, studioRoute } from '@/lib/server/content-studio/http-errors';
+import { idParam, studioRoute } from '@/lib/server/content-studio/studio-http';
 import { downloadUrl } from '@/lib/server/content-studio/media';
 import { prisma } from '@/lib/server/db';
 

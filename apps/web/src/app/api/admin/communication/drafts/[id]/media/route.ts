@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/http';
 import { draftMediaDownloadUrl } from '@/lib/server/content-studio/drafts';
-import { idParam, studioRoute } from '@/lib/server/content-studio/http-errors';
+import { idParam, studioRoute } from '@/lib/server/content-studio/studio-http';
 
 export const runtime = 'nodejs';
 

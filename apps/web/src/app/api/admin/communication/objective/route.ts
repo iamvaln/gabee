@@ -1,7 +1,7 @@
 import { ObjectiveUpsertSchema } from '@gabee/types';
 import { json, readJson } from '@/lib/server/http';
 import { upsertObjective } from '@/lib/server/content-studio/settings';
-import { studioRoute, superAdminActor } from '@/lib/server/content-studio/http-errors';
+import { studioRoute, superAdminActor } from '@/lib/server/content-studio/studio-http';
 
 export const runtime = 'nodejs';
 

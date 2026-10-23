@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { MediaClearanceSchema, MediaTagsSchema } from '@gabee/types';
 import { json, readJson, requireAdmin } from '@/lib/server/http';
-import { idParam, studioRoute } from '@/lib/server/content-studio/http-errors';
+import { idParam, studioRoute } from '@/lib/server/content-studio/studio-http';
 import { auditMedia, setClearance, setTags } from '@/lib/server/content-studio/media';
 
 export const runtime = 'nodejs';

@@ -1,7 +1,7 @@
 import { ChooseDirectionRequestSchema } from '@gabee/types';
 import { json, readJson } from '@/lib/server/http';
 import { chooseDirection } from '@/lib/server/content-studio/weeks';
-import { AI_REFUSED_DIRECTION, adminActor, idParam, studioRoute } from '@/lib/server/content-studio/http-errors';
+import { AI_REFUSED_DIRECTION, adminActor, idParam, studioRoute } from '@/lib/server/content-studio/studio-http';
 
 export const runtime = 'nodejs';
 // Waits for the Strategist to write the week's titles.

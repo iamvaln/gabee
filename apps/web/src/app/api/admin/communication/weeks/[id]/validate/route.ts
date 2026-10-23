@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { HttpError, json } from '@/lib/server/http';
 import { validateWeek } from '@/lib/server/content-studio/weeks';
-import { adminActor, idParam, studioRoute } from '@/lib/server/content-studio/http-errors';
+import { adminActor, idParam, studioRoute } from '@/lib/server/content-studio/studio-http';
 
 export const runtime = 'nodejs';
 

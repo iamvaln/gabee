@@ -3,7 +3,7 @@ import { HttpError, json, requireAdmin } from '@/lib/server/http';
 import { getStudioTimezone } from '@/lib/server/services/web-visits';
 import { localParts } from '@/lib/server/content-studio/clock';
 import { studioAudience } from '@/lib/server/content-studio/audience';
-import { studioRoute } from '@/lib/server/content-studio/http-errors';
+import { studioRoute } from '@/lib/server/content-studio/studio-http';
 import { addDaysYmd } from '@/lib/server/content-studio/state';
 
 export const runtime = 'nodejs';

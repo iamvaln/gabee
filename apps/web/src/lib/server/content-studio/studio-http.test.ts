@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 // The route kit imports the Prisma singleton, which validates env at import: load it after DATABASE_URL is set.
 const { HttpError } = await import('../http');
 const { setErrorReporterForTests } = await import('../report-error');
-const { resetStorageUnavailableReportForTests, toHttpError } = await import('./http-errors');
+const { resetStorageUnavailableReportForTests, toHttpError } = await import('./studio-http');
 
 afterEach(() => {
   setErrorReporterForTests(null);
