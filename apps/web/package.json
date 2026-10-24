@@ -27,7 +27,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "ua-parser-js": "^2.0.10",
-    "zod": "^4.4.3"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.0",

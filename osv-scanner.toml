@@ -13,3 +13,12 @@ reason = "extract-zip has no fix; dev-only via @lhci/cli (Lighthouse CI), not sh
 id = "GHSA-jmr9-qjv8-65gv"
 ignoreUntil = 2027-01-31
 reason = "extract-zip has no fix; dev-only via @lhci/cli (Lighthouse CI), not shipped"
+
+# zod 3.25.76 — the fix exists only in zod 4. Reached only through
+# @lhci/cli → lighthouse → puppeteer-core → chromium-bidi (root devDependency,
+# CI Lighthouse step), which needs the v3 API; never installed in a production
+# image. The app's own zod is on the fixed 4.x line.
+[[IgnoredVulns]]
+id = "GHSA-mrhx-c7xc-m3w5"
+ignoreUntil = 2027-01-31
+reason = "zod 3 fix only in v4; dev-only via @lhci/cli (Lighthouse CI) → chromium-bidi, not shipped; app zod is >= 4.6.7"
