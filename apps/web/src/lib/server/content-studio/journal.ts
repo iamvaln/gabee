@@ -1,5 +1,6 @@
 import { prisma } from '../db';
 import { getStudioTimezone } from '../services/web-visits';
+import { SENDING_STALE_MS } from './notify';
 import { ymdOf } from './state';
 
 /**
@@ -27,11 +28,14 @@ export type JobRunEntry = {
   next_attempt_at: string | null;
   /**
    * Abandoned jobs only: did the "job failed" email leave? `sent` (to at least
-   * one recipient), `failed` (every attempt failed), `none` (no email
+   * one recipient), `sending` (still being sent, none sent yet), `failed`
+   * (every attempt failed, or a send that crashed mid-way), `none` (no email
    * recorded). null for any other status.
    */
-  alert: 'sent' | 'failed' | 'none' | null;
+  alert: AlertStatus | null;
 };
+
+export type AlertStatus = 'sent' | 'sending' | 'failed' | 'none';
 
 export type AgentRunEntry = {
   id: string;
@@ -89,11 +93,17 @@ export async function studioJournal(limit = JOURNAL_LIMIT): Promise<StudioJourna
   // The abandon alert is notifyOnce('job.failed', `${jobKey}|${periodKey}`) (jobs.ts).
   const alertKeys = jobs.filter((j) => j.status === 'abandoned').map((j) => `${j.jobKey}|${j.periodKey}`);
   const alerts = alertKeys.length
-    ? await prisma.studioNotification.findMany({ where: { kind: 'job.failed', periodKey: { in: alertKeys } }, select: { periodKey: true, status: true } })
+    ? await prisma.studioNotification.findMany({
+        where: { kind: 'job.failed', periodKey: { in: alertKeys } },
+        select: { periodKey: true, status: true, updatedAt: true },
+      })
     : [];
-  const alertOf = (key: string): 'sent' | 'failed' | 'none' => {
+  // A `sending` row is in flight only while fresh: past the takeover window its tick crashed (notify.ts).
+  const sendingSince = Date.now() - SENDING_STALE_MS;
+  const alertOf = (key: string): AlertStatus => {
     const rows = alerts.filter((a) => a.periodKey === key);
     if (rows.some((a) => a.status === 'sent')) return 'sent';
+    if (rows.some((a) => a.status === 'sending' && a.updatedAt.getTime() >= sendingSince)) return 'sending';
     return rows.length ? 'failed' : 'none';
   };
 

@@ -1,5 +1,5 @@
 import { json, requireAdmin } from '@/lib/server/http';
-import { idParam, studioRoute } from '@/lib/server/content-studio/http-errors';
+import { idParam, studioRoute } from '@/lib/server/content-studio/studio-http';
 import { auditMedia, completeUpload } from '@/lib/server/content-studio/media';
 
 export const runtime = 'nodejs';

@@ -1,7 +1,7 @@
 import { StudioSettingsUpdateSchema } from '@gabee/types';
 import { json, readJson } from '@/lib/server/http';
 import { getSettings, updateSettings } from '@/lib/server/content-studio/settings';
-import { adminActor, studioRoute, superAdminActor } from '@/lib/server/content-studio/http-errors';
+import { adminActor, studioRoute, superAdminActor } from '@/lib/server/content-studio/studio-http';
 
 export const runtime = 'nodejs';
 

@@ -9,7 +9,8 @@ import { setErrorReporterForTests } from '../report-error';
 import { HttpError } from '../http';
 import { setStorage, resetStorage } from '../storage';
 import { MemoryStorage } from '../storage/memory';
-import { FakeAiAdapter, resetAiAdapters, setAiAdapters, type AiAdapter, type FakeAiStep } from '../ai/router';
+import { resetAiAdapters, setAiAdapters, type AiAdapter } from '../ai/router';
+import { FakeAiAdapter, type FakeAiStep } from '../ai/router/fake-adapter';
 import type { Actor } from './state';
 import { approveDraft, editDraft, generateDraftsForDay, markPublished, regenerateDraft, todayBoard } from './drafts';
 import { updateSlot } from './weeks';
@@ -240,6 +241,24 @@ test('editDraft re-validates the post without the tracked link, then re-appends 
   assert.equal(await prisma.auditLog.count({ where: { kind: 'content.draft.edit' } }), 1);
 });
 
+test('editDraft: an edit racing another for the same version number is a 409, not a 500', async () => {
+  const { slot } = await fixture();
+  const draft = await readyDraft(slot.id, 'linkedin');
+  let edit!: Promise<unknown>;
+  // Another edit holds version 2 uncommitted: ours computes n = 2 too and waits on the unique index.
+  await prisma.$transaction(async (tx) => {
+    await tx.contentDraftVersion.create({ data: { draftId: draft.id, n: 2, source: 'owner', editedById: actor.id, payload: linkedinPost } });
+    edit = editDraft(draft.id, { body: 'Texte du propriétaire.' }, actor).catch((e: unknown) => e);
+    await new Promise((r) => setTimeout(r, 750));
+  });
+  const err = await edit;
+  assert.ok(err instanceof HttpError, `expected an HttpError, got ${String(err)}`);
+  assert.equal(err.status, 409);
+  assert.equal(err.code, 'conflict');
+  assert.equal(err.message, 'Ce brouillon vient de changer. Rechargez la page.');
+  assert.equal(await prisma.contentDraftVersion.count({ where: { draftId: draft.id } }), 2);
+});
+
 test('tiktok approval requires a cleared video', async () => {
   const { slot } = await fixture();
   const draft = await readyDraft(slot.id, 'tiktok');
@@ -339,6 +358,29 @@ test('markPublished closes the slot when every draft is published', async () => 
   assert.equal((await prisma.contentSlot.findUniqueOrThrow({ where: { id: slot.id } })).status, 'done');
   assert.equal(await prisma.contentPublication.count(), 2);
   assert.equal(await prisma.auditLog.count({ where: { kind: 'content.draft.publish' } }), 2);
+});
+
+test('markPublished closes the slot once every still-enabled platform is out', async () => {
+  const { slot } = await fixture();
+  await prisma.contentSlot.update({ where: { id: slot.id }, data: { status: 'drafted' } });
+  const li = await readyDraft(slot.id, 'linkedin', { status: 'approved' });
+  // TikTok was planned for the day, then disabled in the settings mid-week.
+  await prisma.studioSettings.upsert({ where: { id: 'default' }, create: { id: 'default', recipients: [], enabledPlatforms: ['linkedin'] }, update: { enabledPlatforms: ['linkedin'] } });
+
+  await markPublished(li.id, { post_url: 'https://www.linkedin.com/feed/1' }, actor);
+  assert.equal((await prisma.contentSlot.findUniqueOrThrow({ where: { id: slot.id } })).status, 'done');
+});
+
+test('markPublished: the day closes when both posts are marked published at once', async () => {
+  const { slot } = await fixture();
+  await prisma.contentSlot.update({ where: { id: slot.id }, data: { status: 'drafted' } });
+  const li = await readyDraft(slot.id, 'linkedin', { status: 'approved' });
+  const tt = await readyDraft(slot.id, 'tiktok', { status: 'approved' });
+  await Promise.all([
+    markPublished(li.id, { post_url: 'https://www.linkedin.com/feed/1' }, actor),
+    markPublished(tt.id, { post_url: 'https://www.tiktok.com/@gabee/video/1' }, actor),
+  ]);
+  assert.equal((await prisma.contentSlot.findUniqueOrThrow({ where: { id: slot.id } })).status, 'done');
 });
 
 test('a draft generated while its slot is edited lands stale', async () => {

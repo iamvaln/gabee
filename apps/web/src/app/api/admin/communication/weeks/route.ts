@@ -1,6 +1,6 @@
 import { json, requireAdmin } from '@/lib/server/http';
 import { findWeeks, startWeek } from '@/lib/server/content-studio/weeks';
-import { adminActor, studioRoute } from '@/lib/server/content-studio/http-errors';
+import { adminActor, studioRoute } from '@/lib/server/content-studio/studio-http';
 
 export const runtime = 'nodejs';
 // "Lancer la semaine maintenant" waits for the Strategist's 3 directions.

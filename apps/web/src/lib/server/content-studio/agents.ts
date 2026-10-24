@@ -111,6 +111,18 @@ export class AgentRulesError extends AiInvalidOutputError {
   }
 }
 
+/**
+ * The database refused a second `running` run on a subject that allows only
+ * one at a time (week-level Strategist runs: partial unique index on
+ * `agent_runs`). Nothing was called or billed; the caller maps it to 409.
+ */
+export class AgentRunInProgressError extends Error {
+  override name = 'AgentRunInProgressError';
+  constructor(public readonly subject: AgentSubject) {
+    super(`An agent run is already in progress on ${subject.kind} ${subject.id}.`);
+  }
+}
+
 // ── Small helpers ──
 
 const DAY_MS = 86_400_000;
@@ -629,6 +641,8 @@ export async function runAgent<K extends AgentKey>(
       },
     })
     .catch((err: unknown) => {
+      // Another run holds the subject (single-flight index): an expected refusal, not an incident.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') throw new AgentRunInProgressError(subject);
       reportError(err, scope);
       throw err;
     });
@@ -669,6 +683,12 @@ export async function runAgent<K extends AgentKey>(
         } else {
           lastInvalid = new AgentRulesError(violations);
           feedback = retryFeedback(lastInvalid);
+          // The router metered the call as `succeeded` (valid JSON); our rules rejected it.
+          // Its row is this run's only `succeeded` one so far. The cost stays: it was billed.
+          await prisma.aiUsage.updateMany({
+            where: { agentRunId: run.id, status: 'succeeded' },
+            data: { status: 'invalid_output', errorCode: 'post_rules' },
+          });
         }
       } catch (err) {
         if (!(err instanceof AiInvalidOutputError)) throw err;

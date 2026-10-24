@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { AiTask } from '@gabee/types';
 import { setErrorReporterForTests } from '../../report-error';
 import type { AiCatalogue, CatalogueRoute } from './catalogue';
-import { AiInvalidOutputError, AiRefusedError, AiUnavailableError } from './errors';
+import { AiInvalidOutputError, AiProviderError, AiRefusedError, AiUnavailableError, AiUsageRecordError } from './errors';
 import { FakeAiAdapter } from './fake-adapter';
 import { createAnthropicAdapter } from './anthropic-adapter';
 import { resetAiAdapters, resetAiCatalogue, runAiTask, setAiAdapters, setAiCatalogue } from './router';
@@ -315,4 +315,35 @@ test('an all-no_key chain is reported once to Sentry', async () => {
   } finally {
     if (saved !== undefined) process.env.ANTHROPIC_API_KEY = saved;
   }
+});
+
+test('a usage-row write failure after a provider error surfaces both (provider error as cause)', async () => {
+  setAiAdapters([new FakeAiAdapter([{ error: 'invalid_request' }])]);
+  catalogue.recordUsage = async () => {
+    throw new Error('database is down');
+  };
+  await assert.rejects(runAiTask(request()), (err: unknown) => {
+    assert.ok(err instanceof AiUsageRecordError);
+    assert.match(err.message, /database is down/);
+    assert.match(err.message, /Fake invalid request/);
+    assert.ok(err.cause instanceof AiProviderError, 'the provider error is kept as cause');
+    assert.equal((err.cause as AiProviderError).code, 'invalid_request_error');
+    assert.equal((err.recordError as Error).message, 'database is down');
+    return true;
+  });
+});
+
+test('a usage-row write failure on a refused or invalid answer keeps that error as cause', async () => {
+  catalogue.recordUsage = async () => {
+    throw new Error('database is down');
+  };
+  setAiAdapters([new FakeAiAdapter([{ error: 'refusal', refusalCategory: 'cyber' }])]);
+  await assert.rejects(runAiTask(request()), (err: unknown) => err instanceof AiUsageRecordError && err.cause instanceof AiRefusedError);
+  setAiAdapters([new FakeAiAdapter([{ json: { headline: 42 } }])]);
+  await assert.rejects(runAiTask(request()), (err: unknown) => err instanceof AiUsageRecordError && err.cause instanceof AiInvalidOutputError);
+});
+
+test('the router barrel does not ship the fake adapter', async () => {
+  const barrel = await import('./index');
+  assert.equal('FakeAiAdapter' in barrel, false);
 });

@@ -6,7 +6,8 @@ import { createContentDraft, createContentSlot, createContentWeek, createTestCli
 import type { ContentLanguage } from '@gabee/types';
 import { setErrorReporterForTests } from '../report-error';
 import { HttpError } from '../http';
-import { FakeAiAdapter, resetAiAdapters, setAiAdapters, type FakeAiStep } from '../ai/router';
+import { resetAiAdapters, setAiAdapters } from '../ai/router';
+import { FakeAiAdapter, type FakeAiStep } from '../ai/router/fake-adapter';
 import type { Actor } from './state';
 import { chooseDirection, getWeek, proposeDirections, regenerateSlot, skipDay, startWeek, updateSlot, validateWeek } from './weeks';
 
@@ -265,4 +266,53 @@ test('a crashed (over 20 min) or finished strategist run does not block the week
   fake([{ json: proposals }]);
   const out = await proposeDirections(week.id, 'user_action', actor);
   assert.equal(out.status, 'proposals_ready');
+  // The crashed run was closed so it no longer holds the week.
+  const runs = await prisma.agentRun.findMany({ where: { subjectId: week.id }, orderBy: { startedAt: 'asc' } });
+  assert.deepEqual(
+    runs.map((r) => [r.status, r.errorCode]),
+    [
+      ['failed', 'abandoned'],
+      ['failed', null],
+      ['succeeded', null],
+    ],
+  );
+  assert.ok(runs[0]!.finishedAt);
+});
+
+test('two concurrent proposal runs on a week: the database lets exactly one call the AI', async () => {
+  const week = await createContentWeek(prisma, { status: 'proposing' });
+  // Hold the AI call so both requests are in flight at once (both pass the early check).
+  let release!: () => void;
+  const gate = new Promise<void>((r) => (release = r));
+  const adapter = fake([{ json: proposals }, { json: proposals }]);
+  const call = adapter.call.bind(adapter);
+  adapter.call = async (...args) => {
+    await gate;
+    return call(...args);
+  };
+  const runs = [proposeDirections(week.id, 'user_action', actor), proposeDirections(week.id, 'user_action', actor)];
+  // Let both reach run creation; the loser is refused there, before any AI call.
+  const settled = Promise.allSettled(runs);
+  await new Promise((r) => setTimeout(r, 300));
+  release();
+  const results = await settled;
+
+  assert.equal(adapter.calls.length, 1, 'exactly one paid call');
+  const ok = results.filter((r) => r.status === 'fulfilled');
+  const refused = results.filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
+  assert.equal(ok.length, 1);
+  assert.equal(refused.length, 1);
+  assert.ok(isHttp(409, 'generation_in_progress')(refused[0]!.reason), String(refused[0]!.reason));
+  assert.equal(await prisma.agentRun.count({ where: { subjectId: week.id } }), 1);
+  assert.equal(reported.length, 0, 'the refusal is not an incident');
+});
+
+test('the database refuses a second running row for the same week, across both week kinds', async () => {
+  const week = await createContentWeek(prisma, { status: 'proposing' });
+  await strategistRun(week.id, 'week_proposals', 0);
+  await assert.rejects(strategistRun(week.id, 'week_titles', 0), (err: unknown) => (err as { code?: string }).code === 'P2002');
+  // Finished runs do not count, nor do other subject kinds.
+  await strategistRun(week.id, 'week_titles', 0, 'succeeded');
+  const other = await createContentWeek(prisma, { status: 'proposing' });
+  await strategistRun(other.id, 'week_proposals', 0);
 });

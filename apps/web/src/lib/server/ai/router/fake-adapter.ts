@@ -14,7 +14,8 @@ export interface FakeAiStep {
 }
 
 /**
- * Deterministic adapter for tests — no network. Each call consumes the next
+ * Deterministic adapter for tests — no network. Test-only: it is not exported
+ * from the router barrel (`./index`), import it from this file. Each call consumes the next
  * step of the script, whatever model the router picked, and is recorded in
  * `calls`. Inject with `setAiAdapters([new FakeAiAdapter(script)])` and restore
  * with `resetAiAdapters()`.

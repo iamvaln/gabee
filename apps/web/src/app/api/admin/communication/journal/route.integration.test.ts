@@ -176,3 +176,28 @@ test('journal says whether the abandoned job’s alert email really left', async
   assert.equal(alertOf('day.generate'), 'sent');
   assert.equal(alertOf('week.propose'), 'failed');
 });
+
+test('journal shows an alert email still being sent as in flight, a crashed send as failed', async () => {
+  const at2 = (iso: string) => new Date(iso);
+  await prisma.jobRun.createMany({
+    data: [
+      { jobKey: 'day.generate', periodKey: 'day:2026-10-28', status: 'abandoned', attempts: 4, error: 'x', startedAt: at2('2026-10-28T03:00:00Z'), finishedAt: at2('2026-10-28T03:01:00Z') },
+      { jobKey: 'week.propose', periodKey: 'week:2026-10-26', status: 'abandoned', attempts: 4, error: 'y', startedAt: at2('2026-10-25T05:00:00Z'), finishedAt: at2('2026-10-25T05:01:00Z') },
+    ],
+  });
+  await prisma.studioNotification.createMany({
+    data: [
+      // One recipient's send is in flight, the other's failed: not a failure yet.
+      { kind: 'job.failed', periodKey: 'day.generate|day:2026-10-28', recipient: 'a@gabee.app', status: 'sending' },
+      { kind: 'job.failed', periodKey: 'day.generate|day:2026-10-28', recipient: 'b@gabee.app', status: 'failed', error: 'Mailgun 502' },
+      { kind: 'job.failed', periodKey: 'week.propose|week:2026-10-26', recipient: 'a@gabee.app', status: 'sending' },
+    ],
+  });
+  // The second send started 11 minutes ago: past the takeover window, its tick crashed.
+  const crashedAt = new Date(Date.now() - 11 * 60_000);
+  await prisma.$executeRaw`UPDATE studio_notifications SET updated_at = ${crashedAt} WHERE period_key = 'week.propose|week:2026-10-26'`;
+  const body = await (await journal(webRequest(U, { method: 'GET', cookie }), undefined)).json();
+  const alertOf = (key: string) => body.jobs.find((j: { job_key: string }) => j.job_key === key).alert;
+  assert.equal(alertOf('day.generate'), 'sending');
+  assert.equal(alertOf('week.propose'), 'failed');
+});

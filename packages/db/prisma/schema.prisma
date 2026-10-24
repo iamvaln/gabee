@@ -1339,7 +1339,10 @@ model AgentVersion {
 /// Run journal: one row per agent run. `origin` = `scheduled_job` |
 /// `user_action` | `trial`; `status` = `running` | `succeeded` |
 /// `invalid_output` | `failed`. Model, tokens and cost of each provider call
-/// are on the linked `ai_usage` rows.
+/// are on the linked `ai_usage` rows. At most one `running` row per week for
+/// the `week_proposals` / `week_titles` subject kinds: a partial unique index
+/// on `subject_id` (see migration 20261023120000_agent_runs_week_single_flight;
+/// Prisma cannot express it here).
 model AgentRun {
   id             String       @id @default(uuid()) @db.Uuid
   agentKey       String       @map("agent_key")

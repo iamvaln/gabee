@@ -12,7 +12,7 @@ import { enabledPlatforms, generateDraftsForDay, parseSlotPlatforms, todayBoard 
 import { dailyDraftsEmail, dayReminderEmail, jobFailedEmail, summariseAudience, weekProposalsEmail, weekReminderEmail } from './emails';
 import { notifyOnce, pendingCounts, ReportedUpstreamError, requireDelivered, studioLink, type Sender } from './notify';
 import { dueJobs, type DueJob, type JobKey } from './schedule';
-import { addDaysYmd, dateOf } from './state';
+import { addDaysYmd, dateOf, ymdOf } from './state';
 import { getWeek, proposeDirections, startWeek } from './weeks';
 
 /**
@@ -173,7 +173,8 @@ async function weekReport(monday: string, periodKey: string): Promise<ReportNarr
   }
 }
 
-const findWeek = (startsOn: string) => prisma.contentWeek.findUnique({ where: { startsOn: dateOf(startsOn) }, select: { id: true, status: true } });
+const findWeek = (startsOn: string) =>
+  prisma.contentWeek.findUnique({ where: { startsOn: dateOf(startsOn) }, select: { id: true, status: true, firstDay: true } });
 
 const HANDLERS: Record<JobKey, Handler> = {
   /** Next week's 3 directions; retries a week left `proposing` by a failed Strategist run. */
@@ -223,7 +224,8 @@ const HANDLERS: Record<JobKey, Handler> = {
   'week.remind': async ({ periodKey }, ctx) => {
     const week = await findWeek(periodDate(periodKey));
     if (!week || ['proposing', 'validated', 'skipped'].includes(week.status)) return 'done';
-    const res = await notifyOnce('week.remind', periodKey, () => weekReminderEmail({ link: studioLink('/semaine') }), ctx.send);
+    const email = () => weekReminderEmail({ status: week.status, firstDay: ymdOf(week.firstDay), link: studioLink('/semaine') });
+    const res = await notifyOnce('week.remind', periodKey, email, ctx.send);
     requireDelivered(res, `The week reminder (${periodKey})`);
     return 'done';
   },

@@ -1,6 +1,6 @@
 import { json, requireAdmin } from '@/lib/server/http';
 import { studioJournal } from '@/lib/server/content-studio/journal';
-import { studioRoute } from '@/lib/server/content-studio/http-errors';
+import { studioRoute } from '@/lib/server/content-studio/studio-http';
 
 export const runtime = 'nodejs';
 
