@@ -202,6 +202,14 @@ export async function enabledPlatforms(): Promise<ContentPlatform[]> {
 const inProgress = () =>
   new HttpError(409, 'generation_in_progress', 'Une génération de ce brouillon est déjà en cours. Attendez quelques instants puis rechargez.');
 
+/** Two edits saved at once both took version n + 1 (unique per draft): the later one is refused, not a 500. */
+function asDraftChanged(err: unknown): never {
+  if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+    throw new HttpError(409, 'conflict', 'Ce brouillon vient de changer. Rechargez la page.');
+  }
+  throw err;
+}
+
 // ── Tracked link in the LinkedIn body ──
 
 function withLink(text: string, url: string): string {
@@ -536,7 +544,7 @@ export async function editDraft(draftId: string, patch: UpdateDraftRequest, acto
     });
     if (res.count !== 1) throw inProgress();
     return version.n;
-  });
+  }).catch(asDraftChanged);
 
   await auditContent(actor, 'content.draft.edit', 'content_draft', draftId, {
     version: n,
@@ -595,14 +603,20 @@ export async function approveDraft(draftId: string, actor: Actor): Promise<Draft
 export async function markPublished(draftId: string, req: MarkPublishedRequest, actor: Actor): Promise<DraftDto> {
   const draft = await loadDraft(draftId);
   assertTransition('draft', draft.status, 'published');
+  // A platform disabled mid-week gets no post: the day is done once every platform still enabled is out.
+  const enabled = await enabledPlatforms();
 
   const slotDone = await prisma.$transaction(async (tx) => {
+    // Serialise sibling publications of the day: the last one to commit sees all the others.
+    await lockSlotContent(tx, draft.slotId);
     const res = await tx.contentDraft.updateMany({ where: { id: draftId, status: 'approved' }, data: { status: 'published' } });
     if (res.count !== 1) throw new HttpError(409, 'invalid_transition', 'Ce brouillon vient de changer. Rechargez la page.');
     await tx.contentPublication.create({
       data: { draftId, postUrl: req.post_url, publishedAt: new Date(), rating: req.rating ?? null, comment: req.comment ?? null, recordedById: actor.id },
     });
-    const planned = parseSlotPlatforms(draft.slot.platforms).map((p) => p.platform);
+    const planned = parseSlotPlatforms(draft.slot.platforms)
+      .map((p) => p.platform)
+      .filter((p) => enabled.includes(p));
     const drafts = await tx.contentDraft.findMany({ where: { slotId: draft.slotId }, select: { platform: true, status: true } });
     const allPublished = planned.every((p) => drafts.some((d) => d.platform === p && d.status === 'published'));
     if (!allPublished || !canTransition('slot', draft.slot.status, 'done')) return false;

@@ -3,13 +3,13 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { BilingualText, Language } from '@gabee/types';
+import type { Language } from '@gabee/types';
 import type { AdminRole } from '@/lib/server/auth';
+import type { Bi } from '../communication/_components/format';
 import { AIcon, type AdminIconName } from './icons';
 import { BeeLogo } from './bee';
 import { STUDIO_CHANGED } from './studio-events';
 
-type Bi = BilingualText;
 interface NavItem {
   id: string;
   icon: AdminIconName;
@@ -116,10 +116,20 @@ export function AdminShell({
   const [navOpen, setNavOpen] = useState(false);
   const menuBtn = useRef<HTMLButtonElement>(null);
   const sideRef = useRef<HTMLElement>(null);
+  // Focus returns to the menu button once the drawer has closed: while it is open
+  // the button sits inside the `inert` main, so focusing it in the same tick is a
+  // no-op (focus would land on <body>). The effect below runs after the commit
+  // that drops `inert`.
+  const refocusMenu = useRef(false);
   const closeNav = useCallback((refocus: boolean) => {
+    refocusMenu.current = refocus;
     setNavOpen(false);
-    if (refocus) menuBtn.current?.focus();
   }, []);
+  useEffect(() => {
+    if (navOpen || !refocusMenu.current) return;
+    refocusMenu.current = false;
+    menuBtn.current?.focus();
+  }, [navOpen]);
   useEffect(() => setNavOpen(false), [pathname]);
   useEffect(() => {
     // Back to the desktop layout (rotation, resize): the drawer state no longer applies.

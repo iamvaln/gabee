@@ -268,6 +268,17 @@ function WeekView({
   const [pending, setPending] = useState<ChooseDirectionRequest | null>(null);
   const { reviewed, toggle } = useReviewed(week);
 
+  // A failure that did not prove the run ended ("connexion coupée") only describes the
+  // week as it was: once polling shows the week moved on (status or last change), it is
+  // stale. Changes seen while an operation is still in hand (its own post-failure reload)
+  // keep it.
+  const stamp = `${week.status}@${week.updated_at}`;
+  const [seenStamp, setSeenStamp] = useState(stamp);
+  if (stamp !== seenStamp) {
+    setSeenStamp(stamp);
+    if (op === null && opError && !opError.ended) setOpError(null);
+  }
+
   // Lock the whole screen (week switch, launch) while anything here runs.
   const busy = op !== null || linesBusy;
   useEffect(() => onBusyChange(busy), [busy, onBusyChange]);

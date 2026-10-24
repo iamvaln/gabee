@@ -1,6 +1,6 @@
 import { json } from '@/lib/server/http';
 import { approveDraft } from '@/lib/server/content-studio/drafts';
-import { adminActor, idParam, studioRoute } from '@/lib/server/content-studio/http-errors';
+import { adminActor, idParam, studioRoute } from '@/lib/server/content-studio/studio-http';
 
 export const runtime = 'nodejs';
 

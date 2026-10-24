@@ -9,6 +9,7 @@ export {
   AiInvalidOutputError,
   AiUnavailableError,
   AiProviderError,
+  AiUsageRecordError,
   classifyAiError,
   aiErrorCode,
   type AiErrorKind,
@@ -16,7 +17,6 @@ export {
 export { costUsd } from './cost';
 export { createAnthropicAdapter } from './anthropic-adapter';
 export { createPrismaCatalogue, type AiCatalogue } from './catalogue';
-export { FakeAiAdapter, type FakeAiStep } from './fake-adapter';
 export {
   AI_EFFORTS,
   AI_ORIGINS,

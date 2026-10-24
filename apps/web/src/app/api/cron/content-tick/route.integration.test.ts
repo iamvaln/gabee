@@ -10,7 +10,8 @@ process.env.CRON_SECRET = SECRET;
 const { POST } = await import('./route');
 const { webRequest } = await import('../../../../test/auth');
 const { setErrorReporterForTests } = await import('@/lib/server/report-error');
-const { FakeAiAdapter, resetAiAdapters, setAiAdapters } = await import('@/lib/server/ai/router');
+const { resetAiAdapters, setAiAdapters } = await import('@/lib/server/ai/router');
+const { FakeAiAdapter } = await import('@/lib/server/ai/router/fake-adapter');
 
 const prisma = createTestClient();
 beforeEach(async () => {

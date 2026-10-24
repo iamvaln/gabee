@@ -1,7 +1,7 @@
 import '../../../../test/setup-integration';
 import test, { after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { createTestClient, resetDb } from '@gabee/db/testing';
+import { createTestClient, createMediaAsset, resetDb } from '@gabee/db/testing';
 
 // env.ts reads CRON_SECRET at import time: set it before loading the route.
 const SECRET = 'test-cron-secret-0123456789abcdef0123456789';
@@ -42,4 +42,28 @@ test('purge route returns both the device-IP and the web-visits summaries', asyn
   assert.equal(body.summary.web_visits.retention_months, 25);
   assert.equal(body.summary.web_visits.visits_deleted, 1);
   assert.equal(await prisma.webVisit.count(), 1);
+  assert.deepEqual(body.summary.media_uploads, { pending_deleted: 0, verifying_reset: 0, failed: 0 });
+});
+
+test('purge route reaps abandoned uploads (memory storage)', async () => {
+  const { MemoryStorage } = await import('@/lib/server/storage/memory');
+  const { setStorage, resetStorage } = await import('@/lib/server/storage');
+  const store = new MemoryStorage();
+  setStorage(store);
+  try {
+    const stale = await createMediaAsset(prisma, { status: 'pending' });
+    store.putObject(stale.objectKey, new Uint8Array(4), 'image/png');
+    const crashed = await createMediaAsset(prisma, { status: 'verifying' });
+    const old = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    await prisma.$executeRaw`UPDATE media_assets SET updated_at = ${old} WHERE id IN (${stale.id}::uuid, ${crashed.id}::uuid)`;
+    const res = await call(SECRET);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.deepEqual(body.summary.media_uploads, { pending_deleted: 1, verifying_reset: 1, failed: 0 });
+    assert.equal(await prisma.mediaAsset.count({ where: { id: stale.id } }), 0);
+    assert.equal(await store.head(stale.objectKey), null);
+    assert.equal((await prisma.mediaAsset.findUniqueOrThrow({ where: { id: crashed.id } })).status, 'pending');
+  } finally {
+    resetStorage();
+  }
 });

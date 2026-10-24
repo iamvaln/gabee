@@ -2,7 +2,7 @@ import '../../../test/setup-integration';
 import test, { after, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { createTestClient, resetDb, createMediaAsset } from '@gabee/db/testing';
-import { initUpload, completeUpload, setClearance, listMedia, downloadUrl } from './media';
+import { initUpload, completeUpload, setClearance, listMedia, downloadUrl, reapAbandonedUploads } from './media';
 import { MemoryStorage } from '../storage/memory';
 import { setStorage, resetStorage } from '../storage';
 import { HttpError } from '../http';
@@ -171,4 +171,53 @@ test('verifying assets are neither listed nor downloadable', async () => {
   const a = await createMediaAsset(prisma, { status: 'verifying' });
   assert.equal((await listMedia({})).length, 0);
   await rejects(downloadUrl(a.id, 'x.png'), 409);
+});
+
+/** Backdate a row's `updated_at` (Prisma would overwrite it on a client update). */
+async function age(id: string, ms: number, now: Date) {
+  await prisma.$executeRaw`UPDATE media_assets SET updated_at = ${new Date(now.getTime() - ms)} WHERE id = ${id}::uuid`;
+}
+const HOUR = 60 * 60 * 1000;
+
+test('reapAbandonedUploads deletes stale pending rows and their objects, resets stale verifying claims', async () => {
+  const now = new Date();
+  const landed = await initUpload({ file_name: 'a.png', mime: 'image/png', size_bytes: PNG.length }, actor);
+  const landedRow = await prisma.mediaAsset.findUniqueOrThrow({ where: { id: landed.assetId } });
+  store.putObject(landedRow.objectKey, PNG, 'image/png');
+  await age(landed.assetId, 25 * HOUR, now);
+  const neverPut = await initUpload({ file_name: 'b.png', mime: 'image/png', size_bytes: PNG.length }, actor);
+  await age(neverPut.assetId, 25 * HOUR, now);
+  const fresh = await initUpload({ file_name: 'c.png', mime: 'image/png', size_bytes: PNG.length }, actor);
+  await age(fresh.assetId, 23 * HOUR, now);
+  const crashed = await createMediaAsset(prisma, { status: 'verifying' });
+  await age(crashed.id, 2 * HOUR, now);
+  const verifying = await createMediaAsset(prisma, { status: 'verifying' });
+  const ready = await createMediaAsset(prisma, { status: 'ready' });
+  await age(ready.id, 100 * HOUR, now);
+
+  const summary = await reapAbandonedUploads(now);
+  assert.deepEqual(summary, { pending_deleted: 2, verifying_reset: 1, failed: 0 });
+  assert.equal(await prisma.mediaAsset.count({ where: { id: { in: [landed.assetId, neverPut.assetId] } } }), 0);
+  assert.equal(await store.head(landedRow.objectKey), null, 'landed object deleted');
+  assert.equal((await prisma.mediaAsset.findUniqueOrThrow({ where: { id: fresh.assetId } })).status, 'pending');
+  assert.equal((await prisma.mediaAsset.findUniqueOrThrow({ where: { id: crashed.id } })).status, 'pending');
+  assert.equal((await prisma.mediaAsset.findUniqueOrThrow({ where: { id: verifying.id } })).status, 'verifying');
+  assert.equal((await prisma.mediaAsset.findUniqueOrThrow({ where: { id: ready.id } })).status, 'ready');
+
+  // The reset claim gets a full day before it is reaped; a second run is a no-op.
+  assert.deepEqual(await reapAbandonedUploads(now), { pending_deleted: 0, verifying_reset: 0, failed: 0 });
+});
+
+test('reapAbandonedUploads keeps the row and reports when the object delete fails', async () => {
+  const reported: unknown[] = [];
+  setErrorReporterForTests((e) => reported.push(e));
+  const now = new Date();
+  const a = await initUpload({ file_name: 'a.png', mime: 'image/png', size_bytes: PNG.length }, actor);
+  await age(a.assetId, 25 * HOUR, now);
+  store.delete = async () => {
+    throw new Error('r2 down');
+  };
+  assert.deepEqual(await reapAbandonedUploads(now), { pending_deleted: 0, verifying_reset: 0, failed: 1 });
+  assert.equal(reported.length, 1);
+  assert.equal(await prisma.mediaAsset.count({ where: { id: a.assetId } }), 1, 'retried next run');
 });

@@ -7,6 +7,9 @@ import type { AccountRole } from '@gabee/types';
  * database — so the services and their unit tests share one source of truth.
  */
 
+/** A row id as Prisma mints it (`@default(uuid())`): any RFC 4122 shape, case-insensitive. */
+export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Who performs an owner mutation (audited). Scheduled runs have no actor. */
 export type Actor = { id: string; role: AccountRole };
 

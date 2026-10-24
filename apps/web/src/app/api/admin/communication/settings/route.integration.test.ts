@@ -60,6 +60,21 @@ test('settings PATCH requires super_admin', async () => {
   assert.equal(row.timezone, 'Europe/Paris');
 });
 
+test('objective PUT: a first-time race on the same month replaces instead of failing', async () => {
+  const body = { month: month(), type: 'signups', statement: 'Faire connaître Gabee aux parents' };
+  let put!: Promise<Response>;
+  // Another first save of the month holds its row uncommitted: ours collides on the month.
+  await prisma.$transaction(async (tx) => {
+    await tx.contentObjective.create({ data: { month: month(), type: 'awareness', statement: 'Notoriété' } });
+    put = Promise.resolve(putObjective(req('PUT', '/objective', superC, body), undefined));
+    await new Promise((r) => setTimeout(r, 750));
+  });
+  const res = await put;
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).objective.statement, 'Faire connaître Gabee aux parents');
+  assert.equal(await prisma.contentObjective.count(), 1);
+});
+
 test('objective PUT (super_admin) creates then replaces the month objective', async () => {
   const body = { month: month(), type: 'signups', statement: 'Faire connaître Gabee aux parents', targets: { signups: 50 } };
   assert.equal((await putObjective(req('PUT', '/objective', adminC, body), undefined)).status, 403);
@@ -78,6 +93,23 @@ test('objective PUT (super_admin) creates then replaces the month objective', as
   assert.equal(view.objectives.length, 1);
   assert.equal(view.objectives[0].type, 'awareness');
   assert.equal((await putObjective(req('PUT', '/objective', superC, { ...body, month: '2026-13' }), undefined)).status, 422);
+});
+
+test('editorial-line POST: a version published meanwhile answers 409 conflict', async () => {
+  let res!: Promise<Response>;
+  // Another publication holds version 2 uncommitted: ours computes 2 too and collides on it.
+  await prisma.$transaction(async (tx) => {
+    await tx.editorialLineVersion.create({ data: { version: 2, body: 'Ligne concurrente', productFacts: {}, publishedAt: new Date(), createdById: superId } });
+    res = Promise.resolve(publishLine(req('POST', '/editorial-line', superC, { body: 'Ma ligne', product_facts: {} }), undefined));
+    await new Promise((r) => setTimeout(r, 750));
+  });
+  const out = await res;
+  assert.equal(out.status, 409);
+  const { error } = await out.json();
+  assert.equal(error.code, 'conflict');
+  assert.match(error.message, /Rechargez la page/);
+  assert.equal(await prisma.editorialLineVersion.count(), 2);
+  assert.equal(await prisma.auditLog.count({ where: { kind: 'content.editorial_line.publish' } }), 0);
 });
 
 test('editorial-line POST publishes version n+1 and keeps the previous one', async () => {
@@ -128,6 +160,13 @@ test('audience GET reports visits by post with the draft it came from', async ()
 
   assert.equal((await audience(req('GET', '/audience?from=2026-10-30&to=2026-10-01', adminC), undefined)).status, 422);
   assert.equal((await audience(req('GET', '/audience?from=hier', adminC), undefined)).status, 422);
+  // Not calendar days (Date.parse would roll them over to the next month).
+  for (const bad of ['2026-02-30', '2026-02-29', '2026-04-31', '2026-13-01', '2026-00-10']) {
+    const res = await audience(req('GET', `/audience?from=${bad}&to=2026-05-01`, adminC), undefined);
+    assert.equal(res.status, 422, bad);
+    assert.match((await res.json()).error.message, /AAAA-MM-JJ/);
+  }
+  assert.equal((await audience(req('GET', '/audience?from=2028-02-29&to=2028-03-01', adminC), undefined)).status, 200, 'leap day');
 });
 
 test('every mutation writes an audit row', async () => {

@@ -1,7 +1,7 @@
 import { prisma } from '../db';
 import { getAudience } from '../services/web-visits';
 import { zonedTime } from './clock';
-import { ymdOf } from './state';
+import { UUID_RE, ymdOf } from './state';
 
 /**
  * The Audience screen: visits and sign-ups over studio-local days `from` …
@@ -22,8 +22,6 @@ export type AudienceReport = {
     draft: { id: string; date: string; platform: string; topic: string } | null;
   }[];
 };
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function studioAudience(from: string, to: string, tz: string): Promise<AudienceReport> {
   // `to` is inclusive: up to (not including) the next local midnight.
