@@ -62,3 +62,10 @@ test('visitorIpFrom falls back to clientIpFrom without CF-Connecting-IP', () => 
   assert.equal(visitorIpFrom(req({ 'cf-connecting-ip': '  ', 'x-real-ip': '203.0.113.9' })), '203.0.113.9');
   assert.equal(visitorIpFrom(req({})), 'unknown');
 });
+
+test('visitorIpFrom ignores a CF-Connecting-IP that is not an IP address', () => {
+  const xff = { 'x-forwarded-for': '1.2.3.4, 10.0.0.1' };
+  assert.equal(visitorIpFrom(req({ ...xff, 'cf-connecting-ip': 'x'.repeat(5000) })), '10.0.0.1');
+  assert.equal(visitorIpFrom(req({ ...xff, 'cf-connecting-ip': '203.0.113.7; drop' })), '10.0.0.1');
+  assert.equal(visitorIpFrom(req({ ...xff, 'cf-connecting-ip': '2001:db8::1' })), '2001:db8::1');
+});

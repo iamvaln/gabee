@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { VisitBeaconSchema } from '@gabee/types';
 import { route, readJson, HttpError } from '@/lib/server/http';
-import { rateLimit, visitorIpFrom } from '@/lib/server/rate-limit';
+import { clientIpFrom, rateLimit, visitorIpFrom } from '@/lib/server/rate-limit';
 import { getStudioTimezone, ownHostsFromEnv, recordVisit } from '@/lib/server/services/web-visits';
 
 export const runtime = 'nodejs';
@@ -15,6 +15,9 @@ export const runtime = 'nodejs';
 export const POST = route(async (req) => {
   // Behind Cloudflare: the visitor's own address, not the shared edge (see visitorIpFrom).
   rateLimit(visitorIpFrom(req), { scope: 'visits', limit: 120, windowMs: 60_000 });
+  // CF-Connecting-IP can be forged by a caller that skips Cloudflare: also cap
+  // the connecting address itself (every visitor behind one edge shares it, hence the high limit).
+  rateLimit(clientIpFrom(req), { scope: 'visits-origin', limit: 2000, windowMs: 60_000 });
 
   const ownHosts = ownHostsFromEnv();
   // sendBeacon from the same origin may omit Origin on some browsers; a present
