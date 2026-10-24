@@ -52,8 +52,8 @@ const COPY: Record<string, Bi> = {
     en: 'The AI service is unavailable right now. Nothing was lost: try again in a few minutes.',
   },
   ai_refused: {
-    fr: "L'IA a refusé de traiter cette demande. Reformulez le sujet ou la précision, puis réessayez.",
-    en: 'The AI refused this request. Rephrase the topic or the note, then try again.',
+    fr: "L'IA a refusé cette demande. Réessayez ; si cela se répète, voyez le Journal.",
+    en: 'The AI refused this request. Try again; if it keeps happening, see the Log.',
   },
   ai_invalid_output: {
     fr: "L'IA a répondu avec un résultat inutilisable, même après une nouvelle tentative. Réessayez dans un instant.",
@@ -140,6 +140,10 @@ const SERVER_FR = new Set([
   'week_exists',
   'language_quota',
   'generation_in_progress',
+  // Per route: only the direction route (the owner's own precision) asks to rephrase.
+  'ai_refused',
+  // Says what changed meanwhile (a draft, the editorial line).
+  'conflict',
   'week_not_found',
   'slot_not_found',
   'draft_not_found',

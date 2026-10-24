@@ -51,6 +51,23 @@ export class AiUnavailableError extends Error {
   }
 }
 
+const messageOf = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+/**
+ * The `ai_usage` row of a failed call could not be written. Both failures
+ * surface: the database error in the message, the call's own error (the one
+ * the caller would otherwise have seen) as `cause`.
+ */
+export class AiUsageRecordError extends Error {
+  override name = 'AiUsageRecordError';
+  constructor(
+    public readonly recordError: unknown,
+    cause: unknown,
+  ) {
+    super(`Could not record the AI usage (${messageOf(recordError)}) of a call that failed: ${messageOf(cause)}`, { cause });
+  }
+}
+
 /**
  * A provider-neutral failure raised by adapters that are not the Anthropic SDK
  * (the fake adapter, a missing key, a future backup provider).

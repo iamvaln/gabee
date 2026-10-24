@@ -1,6 +1,6 @@
 import { json } from '@/lib/server/http';
 import { afterSlotChange, regenerateSlot } from '@/lib/server/content-studio/weeks';
-import { adminActor, idParam, studioRoute } from '@/lib/server/content-studio/http-errors';
+import { adminActor, idParam, studioRoute } from '@/lib/server/content-studio/studio-http';
 
 export const runtime = 'nodejs';
 // Waits for the Strategist (and, on a due validated day, the writers).

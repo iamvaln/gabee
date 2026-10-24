@@ -5,7 +5,8 @@ import { createContentDraft, createContentSlot, createContentWeek, createTestCli
 import type { AiTask } from '@gabee/types';
 import { setErrorReporterForTests } from '../report-error';
 import type { EmailMessage, EmailSendResult } from '../email';
-import { FakeAiAdapter, resetAiAdapters, setAiAdapters, type AiAdapter, type FakeAiStep } from '../ai/router';
+import { resetAiAdapters, setAiAdapters, type AiAdapter } from '../ai/router';
+import { FakeAiAdapter, type FakeAiStep } from '../ai/router/fake-adapter';
 import { checkBudget, monthSpendUsd } from './budget';
 import { runTick, type TickSummary } from './jobs';
 
@@ -111,7 +112,7 @@ test('runTick runs each job once per period across two ticks', async () => {
   assert.deepEqual(drafts.map((d) => `${d.platform}:${d.status}`).sort(), ['linkedin:ready', 'tiktok:ready']);
   assert.equal((await notifications('day.drafts')).length, 1);
   assert.equal(sent.length, 1);
-  assert.match(sent[0]!.subject, /Brouillons/);
+  assert.match(sent[0]!.subject, /Les brouillons du/);
 
   const second = await tick('2026-10-28T05:20');
   assert.deepEqual(second.ran, []);
@@ -233,6 +234,7 @@ test('Sunday: propose, email with the report, remind until validated', async () 
   const afternoon = await tick('2026-10-25T15:05');
   assert.equal(statusOf(afternoon, 'week.remind'), 'succeeded');
   assert.equal((await notifications('week.remind')).map((n) => n.periodKey).join(), 'week:2026-10-26@15');
+  assert.match(sent[1]!.text, /aucun brouillon ne sera écrit à partir du lundi 26 oct\./, 'names the first planned day');
 
   await prisma.contentWeek.update({ where: { id: w.id }, data: { status: 'validated', validatedAt: new Date() } });
   const evening = await tick('2026-10-25T20:05');
@@ -394,7 +396,7 @@ test('budget alert sent once per month at 80%', async () => {
   const s = await tick('2026-10-28T10:05');
   assert.equal(statusOf(s, 'budget.check'), 'succeeded');
   assert.equal((await notifications('budget.alert')).length, 1);
-  assert.match(sent[0]!.subject, /Budget IA de 2026-10 à 81 %/);
+  assert.match(sent[0]!.subject, /Budget IA d’octobre 2026 à 81\u00a0%/);
   assert.equal((await prisma.studioSettings.findUniqueOrThrow({ where: { id: 'default' } })).budgetAlertSentFor, '2026-10');
 
   await usage(5, 'content_strategy', at('2026-10-28T10:30'));

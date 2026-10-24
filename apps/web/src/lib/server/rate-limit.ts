@@ -7,6 +7,7 @@
 // share state across processes, so each pod gets its own quota and the effective
 // limit multiplies by the replica count.
 
+import { isIP } from 'node:net';
 import { type NextRequest } from 'next/server';
 import { HttpError } from './http';
 
@@ -56,6 +57,25 @@ export function clientIpFrom(req: NextRequest): string {
   // fall back to a constant so a header-less request still gets bucketed (instead
   // of going unlimited under a falsy key).
   return 'unknown';
+}
+
+/**
+ * Client IP for the anonymous visit beacon (`/api/visits`) ONLY.
+ *
+ * gabee.app is now proxied by Cloudflare (orange cloud), so the last
+ * `X-Forwarded-For` hop Traefik sees is a Cloudflare edge: every visitor behind
+ * the same edge would share one limiter bucket. Cloudflare sends the visitor's
+ * address in `CF-Connecting-IP`; prefer it when present, else `clientIpFrom`.
+ *
+ * Deliberately not used elsewhere: a request that reaches the origin without
+ * Cloudflare can set this header itself, so only a well-formed IP is accepted
+ * and the visits route also applies a looser limiter on `clientIpFrom` (the
+ * caller's real address), which a forged header cannot escape. The login and
+ * security limiters (and the security-log IP) keep `clientIpFrom`.
+ */
+export function visitorIpFrom(req: NextRequest): string {
+  const cf = req.headers.get('cf-connecting-ip')?.trim();
+  return cf && isIP(cf) ? cf : clientIpFrom(req);
 }
 
 /**

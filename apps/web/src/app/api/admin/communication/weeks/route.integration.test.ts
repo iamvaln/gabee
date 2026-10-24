@@ -1,12 +1,14 @@
 import '../../../../../test/setup-integration';
 import test, { after, afterEach, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { NextRequest } from 'next/server';
 import { createContentDraft, createContentSlot, createContentWeek, createTestClient, resetDb, seedContentStudio } from '@gabee/db/testing';
 import type { AiTask } from '@gabee/types';
 import { createLoginableParent } from '@/test/factories';
 import { adminCookie, parentCookie, parentToken, webRequest } from '@/test/auth';
 import { setErrorReporterForTests } from '@/lib/server/report-error';
-import { FakeAiAdapter, resetAiAdapters, setAiAdapters, type AiAdapter, type FakeAiStep } from '@/lib/server/ai/router';
+import { resetAiAdapters, setAiAdapters, type AiAdapter } from '@/lib/server/ai/router';
+import { FakeAiAdapter, type FakeAiStep } from '@/lib/server/ai/router/fake-adapter';
 import { localParts } from '@/lib/server/content-studio/clock';
 import { addDaysYmd } from '@/lib/server/content-studio/state';
 import { GET as listWeeks, POST as startNow } from './route';
@@ -151,8 +153,19 @@ test('direction POST maps AiRefusedError to 422 ai_refused', async () => {
   const { error } = await res.json();
   assert.equal(error.code, 'ai_refused');
   assert.match(error.message, /L'IA a refusé/);
+  assert.match(error.message, /précision/, 'the direction route asks to rephrase the precision');
   assert.equal(reported.length, 1, 'a refusal is reported once, by the API');
   assert.equal((await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id } })).status, 'direction_set');
+});
+
+test('a refusal on a route without owner text gets the generic copy (no precision hint)', async () => {
+  const week = await createContentWeek(prisma, { status: 'proposing' });
+  fake([{ error: 'refusal', refusalCategory: 'cyber' }]);
+  const res = await propose(post(`/weeks/${week.id}/propose`), ctx(week.id));
+  assert.equal(res.status, 422);
+  const { error } = await res.json();
+  assert.equal(error.code, 'ai_refused');
+  assert.equal(error.message, "L'IA a refusé cette demande. Réessayez ; si cela se répète, voyez le Journal.");
 });
 
 test('an unavailable AI maps to 503 ai_unavailable, reported once (by the router)', async () => {
@@ -162,6 +175,69 @@ test('an unavailable AI maps to 503 ai_unavailable, reported once (by the router
   assert.equal(res.status, 503);
   assert.equal((await res.json()).error.code, 'ai_unavailable');
   assert.equal(reported.length, 1);
+});
+
+test('an unusable AI answer (twice) maps to 422 ai_invalid_output, reported once by the API', async () => {
+  const week = await createContentWeek(prisma, { status: 'proposing' });
+  const adapter = fake([{ json: { proposals: [] } }, { json: { nope: true } }]);
+  const res = await propose(post(`/weeks/${week.id}/propose`), ctx(week.id));
+  assert.equal(res.status, 422);
+  const { error } = await res.json();
+  assert.equal(error.code, 'ai_invalid_output');
+  assert.match(error.message, /résultat inutilisable/);
+  assert.equal(adapter.calls.length, 2, 'runAgent retried once');
+  assert.equal(reported.length, 1, 'invalid output is reported once, by the API');
+  assert.equal((await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id } })).status, 'proposing');
+});
+
+test('slot regenerate on a validated day due today writes its drafts, audited as the acting admin', async () => {
+  const p = studioToday();
+  const week = await createContentWeek(prisma, {
+    startsOn: new Date(mondayOf(p)),
+    firstDay: new Date(p.date),
+    status: 'validated',
+    proposals,
+    chosenIndex: 0,
+    refinement: '',
+  });
+  const slot = await createContentSlot(prisma, week.id, {
+    date: new Date(p.date),
+    topic: 'Compter les courses',
+    platforms: [{ platform: 'linkedin', language: 'fr' }],
+    status: 'validated',
+  });
+  const dates = Array.from({ length: 7 - ((p.weekday + 6) % 7) }, (_, i) => addDaysYmd(p.date, i));
+  byTask({
+    content_titles: [{ json: titlesFor(dates) }],
+    post_linkedin: [{ json: { body: 'Votre enfant compte en jouant.', hashtags: ['#Gabee', '#Parents', '#Maths'], link_target: 'landing' } }],
+    post_tiktok: [
+      {
+        json: {
+          caption: 'Une minute de calcul. Lien en bio !',
+          hashtags: ['#Gabee', '#Parents', '#Maths'],
+          on_screen_text: ['3 + 4 ?'],
+          mode: 'filming_plan',
+          filming_plan: { hook: "L'écran du jeu", shots: ['Écran du module Nombres'], duration_s: 20 },
+        },
+      },
+    ],
+    art_direction: [{ json: { media_asset_id: null, visual_brief: 'Un enfant' } }, { json: { media_asset_id: null, visual_brief: 'Un enfant' } }],
+  });
+
+  const res = await regenerateSlot(post(`/slots/${slot.id}/regenerate`), ctx(slot.id));
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.slot.topic, `Sujet ${p.date}`);
+  const byPlatform = Object.fromEntries(body.slot.drafts.map((d: { platform: string; status: string }) => [d.platform, d.status]));
+  assert.deepEqual(byPlatform, { linkedin: 'ready', tiktok: 'ready' }, 'afterSlotChange wrote the day');
+
+  const rows = await prisma.auditLog.findMany({ orderBy: { createdAt: 'asc' } });
+  assert.deepEqual(rows.map((r) => r.kind).sort(), ['content.day.generate', 'content.slot.regenerate']);
+  const generated = rows.find((r) => r.kind === 'content.day.generate')!;
+  assert.equal(generated.actorId, adminId);
+  assert.equal(generated.actorRole, 'admin');
+  assert.equal(generated.targetId, slot.id);
+  assert.deepEqual(generated.diff, { day: p.date, created: 2, failed: 0 });
 });
 
 test('invalid ids answer 404, unknown ids 404 week_not_found', async () => {
@@ -183,6 +259,39 @@ test('validate refuses below the English minimum, then validates with override_q
   assert.equal(error.details.length, 2);
 
   const ok = await validate(post(`/weeks/${week.id}/validate`, { override_quota: true }), ctx(week.id));
+  assert.equal(ok.status, 200);
+  assert.equal((await ok.json()).week.status, 'validated');
+});
+
+test('validate reads the body whatever its content type: empty = no override, bad JSON = 400', async () => {
+  const week = await createContentWeek(prisma, { status: 'titles_ready' });
+  await createContentSlot(prisma, week.id, { status: 'proposed' });
+  // A raw body (webRequest always sends JSON with its content type).
+  const raw = (body: string | undefined, contentType?: string) =>
+    validate(
+      new NextRequest(`${U}/weeks/${week.id}/validate`, {
+        method: 'POST',
+        headers: { cookie: `${cookie.name}=${cookie.value}`, ...(contentType ? { 'content-type': contentType } : {}) },
+        ...(body === undefined ? {} : { body }),
+      }),
+      ctx(week.id),
+    );
+
+  const empty = await raw(undefined);
+  assert.equal(empty.status, 409, 'no body = no override');
+  assert.equal((await empty.json()).error.code, 'language_quota');
+
+  const bad = await raw('{not json', 'application/json');
+  assert.equal(bad.status, 400);
+  const { error } = await bad.json();
+  assert.equal(error.code, 'invalid_json');
+  assert.match(error.message, /JSON invalide/);
+
+  const wrongShape = await raw('{"override_quota":"yes"}', 'text/plain');
+  assert.equal(wrongShape.status, 422);
+
+  // A JSON body sent as text/plain (no JSON content type) is still honoured.
+  const ok = await raw('{"override_quota":true}', 'text/plain;charset=UTF-8');
   assert.equal(ok.status, 200);
   assert.equal((await ok.json()).week.status, 'validated');
 });

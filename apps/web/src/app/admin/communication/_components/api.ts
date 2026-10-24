@@ -2,9 +2,8 @@ import * as Sentry from '@sentry/nextjs';
 
 /**
  * Client side of the Communication admin API (Task 10 routes). Every call
- * sends `Content-Type: application/json` (the validate route ignores a body
- * without it) and turns any failure into an `ApiError` the screens map to
- * plain words with `errorText`.
+ * sends `Content-Type: application/json` and turns any failure into an
+ * `ApiError` the screens map to plain words with `errorText`.
  */
 
 export const API = '/api/admin/communication';

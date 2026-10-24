@@ -19,7 +19,7 @@ export type NotifyResult = { sent: number; skipped: number; failed: number; no_r
 export type Sender = (msg: EmailMessage) => Promise<EmailSendResult>;
 
 /** A `sending` row older than this belongs to a crashed tick and may be taken over. */
-const SENDING_STALE_MS = 10 * 60_000;
+export const SENDING_STALE_MS = 10 * 60_000;
 
 /** Admin Communication page URL (`path` is '' or starts with `/`). */
 export const studioLink = (path = '') => `${ADMIN_APP_URL.replace(/\/$/, '')}/admin/communication${path}`;

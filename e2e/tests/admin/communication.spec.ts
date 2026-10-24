@@ -234,6 +234,30 @@ test('tiktok card shows the filming plan when no video', async ({ page }) => {
   await expect(card(page, 'LinkedIn').getByText('Aucun média autorisé — le post partira en texte seul')).toBeVisible();
 });
 
+test('a cut-off direction call stops warning once polling shows the titles', async ({ page }) => {
+  const nextMonday = addDays(mondayOf(studioToday()), 7);
+  const { weekId } = await seedProposalsWeek(nextMonday);
+  await page.clock.install(); // the 20 s wait poll is fast-forwarded below
+  // The request reached the server (the week moved to direction_set) but its answer never arrived.
+  await page.route('**/api/admin/communication/weeks/*/direction', async (route) => {
+    await prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'direction_set', chosenIndex: 0 } });
+    await route.abort('connectionreset');
+  });
+
+  await page.goto('/admin/communication/semaine');
+  await page.getByText(PROPOSALS[0].title).click();
+  await page.getByRole('button', { name: 'Arrêter cette direction' }).click();
+  const cut = page.getByText(/La connexion a été coupée/);
+  await expect(cut).toBeVisible();
+  await expect(page.getByText('Gabee rédige les titres de la semaine…')).toBeVisible();
+
+  // The run finished after all: the next poll shows the titles and the warning is gone.
+  await seedTitles(weekId, 0);
+  await page.clock.fastForward(21_000);
+  await expect(page.getByRole('button', { name: 'Valider la semaine' })).toBeVisible();
+  await expect(cut).toHaveCount(0);
+});
+
 test('today screen fits a 360px viewport', async ({ page }) => {
   await seedTodayBoard({ longTokens: true, linkedinImage: true });
   await page.setViewportSize({ width: 360, height: 740 });
@@ -260,6 +284,14 @@ test('today screen fits a 360px viewport', async ({ page }) => {
   await expect(nav.getByRole('link', { name: 'Semaine' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(nav).toBeHidden();
+  // Focus returns to the menu button (not <body>) once the page behind is reachable again.
+  await expect(page.getByRole('button', { name: 'Ouvrir le menu' })).toBeFocused();
+
+  // Same through the drawer's own close button.
+  await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
+  await page.locator('#admin-side').getByRole('button', { name: 'Fermer le menu' }).click();
+  await expect(nav).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Ouvrir le menu' })).toBeFocused();
 });
 
 test('an interrupted draft offers Réessayer instead of waiting forever', async ({ page }) => {
@@ -474,6 +506,64 @@ test('audience shows visits and sign-ups by source and by post', async ({ page }
   await expect(byPost.getByRole('row').filter({ hasText: 'Lien de la bio TikTok' })).toContainText('2');
 });
 
+test('audience and médiathèque ignore an answer that arrives after a newer one', async ({ page }) => {
+  const { linkedinDraftId } = await seedTodayBoard();
+  await seedAudience(linkedinDraftId); // 8 visits today
+  const old = addDays(studioToday(), -20);
+  await prisma.webVisit.create({
+    data: { occurredAt: new Date(Date.now() - 20 * 86_400_000), day: new Date(`${old}T00:00:00Z`), path: '/fr', deviceClass: 'desktop', source: 'direct' },
+  });
+
+  // The 30-day answer (9 visits) is held until the 7-day one (8) is on screen.
+  let release!: () => void;
+  const held = new Promise<void>((r) => (release = r));
+  let delivered!: () => void;
+  const late = new Promise<void>((r) => (delivered = r));
+  await page.route('**/api/admin/communication/audience?from=*', async (route) => {
+    const response = await route.fetch();
+    await held;
+    await route.fulfill({ response });
+    delivered();
+  });
+  await page.goto('/admin/communication/audience');
+  const visits = page.getByRole('group', { name: 'Visites' }).locator('.tile-num');
+  await expect(visits).toHaveText('8');
+  await page.getByRole('button', { name: '30 derniers jours' }).click();
+  await page.getByRole('button', { name: '7 derniers jours' }).click();
+  await expect(visits).toHaveText('8');
+  release();
+  await late;
+  await page.waitForTimeout(300); // let the late answer be handled
+  await expect(visits).toHaveText('8');
+  await expect(page.getByRole('button', { name: '7 derniers jours' })).toHaveAttribute('aria-pressed', 'true');
+
+  // Médiathèque: the "Images" answer is held, "Vidéos" answers first and stays.
+  await seedMediaAsset({ kind: 'image', fileName: 'une-image.png' });
+  await seedMediaAsset({ kind: 'video', fileName: 'une-video.mp4' });
+  let releaseImages!: () => void;
+  const imagesHeld = new Promise<void>((r) => (releaseImages = r));
+  let imagesDelivered!: () => void;
+  const imagesLate = new Promise<void>((r) => (imagesDelivered = r));
+  await page.route('**/api/admin/communication/media?kind=image*', async (route) => {
+    const response = await route.fetch();
+    await imagesHeld;
+    await route.fulfill({ response });
+    imagesDelivered();
+  });
+  await page.goto('/admin/communication/medias');
+  await expect(page.getByText('une-image.png')).toBeVisible();
+  const kind = page.getByRole('group', { name: 'Type' });
+  await kind.getByRole('button', { name: 'Images' }).click();
+  await kind.getByRole('button', { name: 'Vidéos' }).click();
+  await expect(page.getByText('une-video.mp4')).toBeVisible();
+  await expect(page.getByText('une-image.png')).toHaveCount(0);
+  releaseImages();
+  await imagesLate;
+  await page.waitForTimeout(300);
+  await expect(page.getByText('une-video.mp4')).toBeVisible();
+  await expect(page.getByText('une-image.png')).toHaveCount(0);
+});
+
 test.describe('as a super-admin', () => {
   test('owner sets the paid offer and publishes a new editorial line version', async ({ page }) => {
     // This month's Communication spend (question authoring and other months do not count).
@@ -527,6 +617,55 @@ test.describe('as a super-admin', () => {
     await expect(month).toContainText('1,50');
     await expect(month).toContainText(/sur 80,00\s\$ \(budget du studio\)/);
     await expect(page.getByText('Coût total · depuis le début')).toBeVisible();
+  });
+
+  test('emails and schedule: recipient hints, the time-zone confirm, and the leave prompt only while dirty', async ({ page }) => {
+    const before = await prisma.studioSettings.findUniqueOrThrow({ where: { id: 'default' } });
+    await prisma.studioSettings.update({ where: { id: 'default' }, data: { recipients: ['owner@gabee.app'] } });
+    try {
+      await page.goto('/admin/communication/reglages');
+      const card = page.getByRole('region', { name: 'Emails et horaires' });
+      const recipients = card.getByLabel('Destinataires (une adresse par ligne)');
+      await expect(recipients).toHaveValue('owner@gabee.app');
+      // Whether leaving the page would ask first (the beforeunload listener cancels the event).
+      const leaveIsGuarded = () =>
+        page.evaluate(() => {
+          const e = new Event('beforeunload', { cancelable: true });
+          window.dispatchEvent(e);
+          return e.defaultPrevented;
+        });
+      expect(await leaveIsGuarded()).toBe(false);
+
+      // Emptying the list: a hint first, then the rule once the owner tries to save.
+      await recipients.fill('');
+      await expect(card.getByText('Sans destinataire, les emails partent à l’adresse admin par défaut.')).toBeVisible();
+      expect(await leaveIsGuarded()).toBe(true);
+      await card.getByRole('button', { name: 'Enregistrer' }).click();
+      await expect(card.getByText(/Gardez au moins une adresse/)).toBeVisible();
+      await recipients.fill('owner@gabee.app\npas-une-adresse');
+      await expect(card.getByText('Adresse invalide : pas-une-adresse')).toBeVisible();
+      await recipients.fill('owner@gabee.app');
+      await expect(card.getByText('10 adresses au plus.')).toBeVisible();
+      expect(await leaveIsGuarded()).toBe(false);
+
+      // A new time zone asks first; cancelling saves nothing.
+      await card.getByLabel('Fuseau horaire').selectOption('Europe/Paris');
+      expect(await leaveIsGuarded()).toBe(true);
+      await card.getByRole('button', { name: 'Enregistrer' }).click();
+      const confirmTz = page.getByRole('dialog', { name: 'Changer le fuseau horaire ?' });
+      await expect(confirmTz).toContainText('Le studio passe de Africa/Douala à Europe/Paris.');
+      await confirmTz.getByRole('button', { name: 'Annuler' }).click();
+      await expect(confirmTz).toHaveCount(0);
+      expect((await prisma.studioSettings.findUniqueOrThrow({ where: { id: 'default' } })).timezone).toBe('Africa/Douala');
+
+      await card.getByRole('button', { name: 'Enregistrer' }).click();
+      await confirmTz.getByRole('button', { name: 'Changer le fuseau' }).click();
+      await expect(card.getByText('Enregistré')).toBeVisible();
+      expect((await prisma.studioSettings.findUniqueOrThrow({ where: { id: 'default' } })).timezone).toBe('Europe/Paris');
+      expect(await leaveIsGuarded()).toBe(false);
+    } finally {
+      await prisma.studioSettings.update({ where: { id: 'default' }, data: { recipients: before.recipients } });
+    }
   });
 });
 

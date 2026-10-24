@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { addDaysYmd, canTransition, daysInWeek, planWeek, weekdayOf } from './state';
+import { UUID_RE, addDaysYmd, canTransition, daysInWeek, planWeek, weekdayOf } from './state';
 
 test('canTransition forbids published → ready', () => {
   assert.equal(canTransition('draft', 'published', 'ready'), false);
@@ -50,4 +50,10 @@ test('planWeek: Sunday → next full week; Monday–Saturday → current week fr
   assert.equal(addDaysYmd('2026-12-31', 1), '2027-01-01');
   assert.equal(daysInWeek('2026-10-26', '2026-10-26'), 7);
   assert.equal(daysInWeek('2026-10-19', '2026-10-22'), 4);
+});
+
+test('UUID_RE accepts row ids only', () => {
+  assert.ok(UUID_RE.test('3f2b8c4e-1a2b-4c3d-8e9f-0a1b2c3d4e5f'));
+  assert.ok(UUID_RE.test('3F2B8C4E-1A2B-4C3D-8E9F-0A1B2C3D4E5F'));
+  for (const bad of ['nope', 'bio', '3f2b8c4e-1a2b-4c3d-8e9f-0a1b2c3d4e5', ' 3f2b8c4e-1a2b-4c3d-8e9f-0a1b2c3d4e5f']) assert.equal(UUID_RE.test(bad), false, bad);
 });

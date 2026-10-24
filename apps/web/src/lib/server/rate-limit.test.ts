@@ -7,7 +7,7 @@ import type { NextRequest } from 'next/server';
 // load. Stub the one required var and import dynamically so this stays a genuine
 // unit test — runnable without a database, not just under CI's env block.
 process.env.DATABASE_URL ??= 'postgresql://user:pass@127.0.0.1:5432/gabee_test';
-const { clientIpFrom } = await import('./rate-limit');
+const { clientIpFrom, visitorIpFrom } = await import('./rate-limit');
 
 function req(h: Record<string, string>) {
   return { headers: new Headers(h) } as unknown as NextRequest;
@@ -43,4 +43,29 @@ test('falls back to x-real-ip, then to a constant bucket', () => {
 
 test('ignores empty/whitespace hops', () => {
   assert.equal(clientIpFrom(req({ 'x-forwarded-for': '1.2.3.4, 10.0.0.1, ' })), '10.0.0.1');
+});
+
+// /api/visits only: behind Cloudflare the last hop is a Cloudflare edge shared by
+// many visitors, so the beacon limiter buckets on CF-Connecting-IP when present.
+test('visitorIpFrom prefers CF-Connecting-IP over the (Cloudflare edge) last hop', () => {
+  const edge = '172.70.1.1';
+  const a = visitorIpFrom(req({ 'cf-connecting-ip': '203.0.113.7', 'x-forwarded-for': `203.0.113.7, ${edge}` }));
+  const b = visitorIpFrom(req({ 'cf-connecting-ip': '198.51.100.9', 'x-forwarded-for': `198.51.100.9, ${edge}` }));
+  assert.equal(a, '203.0.113.7');
+  assert.equal(b, '198.51.100.9');
+  // The shared limiters still see the edge.
+  assert.equal(clientIpFrom(req({ 'cf-connecting-ip': '203.0.113.7', 'x-forwarded-for': `203.0.113.7, ${edge}` })), edge);
+});
+
+test('visitorIpFrom falls back to clientIpFrom without CF-Connecting-IP', () => {
+  assert.equal(visitorIpFrom(req({ 'x-forwarded-for': '1.2.3.4, 10.0.0.1' })), '10.0.0.1');
+  assert.equal(visitorIpFrom(req({ 'cf-connecting-ip': '  ', 'x-real-ip': '203.0.113.9' })), '203.0.113.9');
+  assert.equal(visitorIpFrom(req({})), 'unknown');
+});
+
+test('visitorIpFrom ignores a CF-Connecting-IP that is not an IP address', () => {
+  const xff = { 'x-forwarded-for': '1.2.3.4, 10.0.0.1' };
+  assert.equal(visitorIpFrom(req({ ...xff, 'cf-connecting-ip': 'x'.repeat(5000) })), '10.0.0.1');
+  assert.equal(visitorIpFrom(req({ ...xff, 'cf-connecting-ip': '203.0.113.7; drop' })), '10.0.0.1');
+  assert.equal(visitorIpFrom(req({ ...xff, 'cf-connecting-ip': '2001:db8::1' })), '2001:db8::1');
 });

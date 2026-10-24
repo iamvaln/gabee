@@ -1,6 +1,6 @@
 import { MediaUploadInitSchema } from '@gabee/types';
 import { json, readJson, requireAdmin } from '@/lib/server/http';
-import { studioRoute } from '@/lib/server/content-studio/http-errors';
+import { studioRoute } from '@/lib/server/content-studio/studio-http';
 import { auditMedia, initUpload, listLibrary } from '@/lib/server/content-studio/media';
 
 export const runtime = 'nodejs';

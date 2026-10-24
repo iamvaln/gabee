@@ -9,6 +9,7 @@ import {
   jobFailedEmail,
   summariseAudience,
   weekProposalsEmail,
+  frenchSpacing,
   weekReminderEmail,
   type EmailContent,
 } from './emails';
@@ -52,7 +53,7 @@ function all(): EmailContent[] {
       ],
       link: 'https://admin.gabee.app/admin/communication',
     }),
-    weekReminderEmail({ link: 'https://admin.gabee.app/admin/communication/semaine' }),
+    weekReminderEmail({ status: 'proposals_ready', firstDay: '2026-11-03', link: 'https://admin.gabee.app/admin/communication/semaine' }),
     dayReminderEmail({ pending: { approve: 2, publish: 1 }, link: 'https://admin.gabee.app/admin/communication' }),
     budgetAlertEmail({ spentUsd: 41.5, budgetUsd: 50, month: '2026-10', link: 'https://admin.gabee.app/admin/communication/reglages' }),
     jobFailedEmail({ jobKey: 'day.generate', periodKey: '2026-10-30', error: EVIL, link: 'https://admin.gabee.app/admin/communication/journal' }),
@@ -103,4 +104,54 @@ test('summariseAudience totals visits and signups and keeps top sources', () => 
     ],
   });
   assert.deepEqual(s, { visits: 16, signups: 3, top_sources: [{ source: 'b', visits: 9 }, { source: 'a', visits: 5 }, { source: 'c', visits: 1 }] });
+});
+
+const NBSP = '\u00a0';
+const NNBSP = '\u202f';
+
+test('frenchSpacing puts no-break spaces before : ; ! ? % » and after «, never inside URLs', () => {
+  assert.equal(
+    frenchSpacing('Sujet : « Lire » ; vite ! Prêt ? 80 %'),
+    `Sujet${NBSP}: «${NBSP}Lire${NBSP}»${NNBSP}; vite${NNBSP}! Prêt${NNBSP}? 80${NBSP}%`,
+  );
+  assert.equal(frenchSpacing('https://gabee.app/fr?utm_source=x'), 'https://gabee.app/fr?utm_source=x');
+});
+
+test('every email uses French spacing in its subject, text and html', () => {
+  for (const e of all()) {
+    for (const part of [e.subject, e.text, e.html]) {
+      assert.ok(!/ [:;!?%»]/.test(part.replace(/https?:\/\/\S+/g, '')), `${e.subject}: ${part.slice(0, 120)}`);
+    }
+  }
+  assert.match(all()[1]!.text, new RegExp(`Relire et approuver${NBSP}: https://`));
+});
+
+test('the daily email subject reads « Les brouillons du … sont prêts »', () => {
+  assert.match(all()[1]!.subject, /^Gabee · Les brouillons du vendredi 30 oct\. sont prêts$/);
+});
+
+test('the week reminder names the first planned day, not always Monday', () => {
+  const partial = weekReminderEmail({ status: 'proposals_ready', firstDay: '2026-10-29', link: LINK });
+  assert.match(partial.text, /aucun brouillon ne sera écrit à partir du jeudi 29 oct\./);
+  assert.ok(!/lundi/.test(partial.text));
+  const titles = weekReminderEmail({ status: 'titles_ready', firstDay: '2026-11-02', link: LINK });
+  assert.match(titles.subject, /titres de la semaine attendent votre validation/);
+  assert.match(titles.text, /Sans validation, aucun brouillon ne sera écrit à partir du lundi 2 nov\./);
+  assert.match(titles.html, /Valider la semaine/);
+});
+
+test('the budget email names the month instead of its ISO key', () => {
+  const e = budgetAlertEmail({ spentUsd: 41.5, budgetUsd: 50, month: '2026-10', link: LINK });
+  assert.equal(e.subject, `Gabee · Budget IA d’octobre 2026 à 83${NBSP}%`);
+  assert.ok(!e.text.includes('2026-10'));
+  assert.match(e.text, /41\.50/);
+  assert.match(budgetAlertEmail({ spentUsd: 40, budgetUsd: 50, month: '2026-11', link: LINK }).subject, /Budget IA de novembre 2026/);
+});
+
+test('a reminder with nothing pending renders no empty block', () => {
+  const e = dayReminderEmail({ pending: { approve: 0, publish: 0 }, link: LINK });
+  assert.ok(!e.html.includes('<table'), 'no empty table');
+  const one = dayReminderEmail({ pending: { approve: 1, publish: 0 }, link: LINK });
+  assert.match(one.text, /1 brouillon à relire et approuver/);
+  assert.ok(!/publier/.test(one.text));
 });
