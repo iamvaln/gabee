@@ -19,7 +19,7 @@
     "test:coverage": "c8 --check-coverage --lines 99 --statements 99 --functions 99 --branches 90 -r text -r lcov -r html -x 'test/**' node --import tsx --test test/contracts.test.ts"
   },
   "dependencies": {
-    "zod": "^4.4.3"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "c8": "^11.0.0",
