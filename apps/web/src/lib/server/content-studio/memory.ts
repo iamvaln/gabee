@@ -120,6 +120,8 @@ export interface MediaIndexEntry {
 export interface WriterContext {
   editorialLine: EditorialLineData;
   profile: ProfileData;
+  /** The week's month objective as it is now (null: none set). */
+  objective: ObjectiveData | null;
   direction: { title: string; rationale: string; refinement: string; platformAngle: string | null } | null;
   slot: SlotData;
   pastPublications: { publishedAt: string; topic: string; text: string; hashtags: string[]; rating: number | null; comment: string | null }[];
@@ -293,6 +295,7 @@ export function writerMemory(platform: ContentPlatform, ctx: WriterContext): AiI
   const blocks: AiInputBlock[] = [
     editorialLineBlock(ctx.editorialLine),
     trustedBlock('platform_profile', json(profileJson(ctx.profile))),
+    objectiveBlock(ctx.objective),
     trustedBlock(
       'week_direction',
       ctx.direction

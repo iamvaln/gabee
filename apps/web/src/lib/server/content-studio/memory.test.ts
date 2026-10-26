@@ -116,6 +116,7 @@ test('titlesMemory adds the dates to plan and the chosen direction', () => {
 const writerCtx = (over: Partial<WriterContext> = {}): WriterContext => ({
   editorialLine,
   profile: linkedinProfile,
+  objective: { month: '2026-10', type: 'signups', statement: '50 inscriptions', targets: { signups: 50 } },
   direction: { title: 'Le calcul du quotidien', rationale: 'r', refinement: 'concret', platformAngle: 'Pour les enseignants' },
   slot: {
     date: '2026-10-28',
@@ -132,7 +133,11 @@ const writerCtx = (over: Partial<WriterContext> = {}): WriterContext => ({
 
 test('writerMemory marks third-party sources as untrusted blocks', () => {
   const blocks = writerMemory('linkedin', writerCtx());
-  assert.deepEqual(labels(blocks), ['editorial_line', 'platform_profile', 'week_direction', 'slot', 'sources', 'past_publications', 'owner_edits']);
+  assert.deepEqual(labels(blocks), ['editorial_line', 'platform_profile', 'objective', 'week_direction', 'slot', 'sources', 'past_publications', 'owner_edits']);
+  // The month objective is owner-curated: trusted, like the direction.
+  assert.equal(block(blocks, 'objective').trusted, true);
+  assert.match(block(blocks, 'objective').text, /50 inscriptions/);
+  assert.match(block(writerMemory('linkedin', writerCtx({ objective: null })), 'objective').text, /no objective is set/);
   const sources = block(blocks, 'sources');
   assert.equal(sources.trusted, false);
   assert.match(sources.text, /unesco\.example/);

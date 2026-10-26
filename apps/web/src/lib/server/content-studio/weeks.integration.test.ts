@@ -201,6 +201,40 @@ test('regenerateSlot replaces the line with the strategist output for that day a
   assert.equal((await audits('content.slot.regenerate')).length, 1);
 });
 
+const objectiveText = (adapter: FakeAiAdapter, call: number) => {
+  const b = adapter.calls[call]!.req.blocks.find((x) => x.kind === 'text' && x.label === 'objective');
+  return b && b.kind === 'text' ? b.text : assert.fail(`call ${call} has no objective block`);
+};
+
+test('titles and slot regenerate read the month objective set after the week started, and re-link the week', async () => {
+  const dates = ['2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01'];
+  const adapter = fake([{ json: proposals }, { json: titlesFor(dates) }]);
+  // The Sunday run for the week of Mon 26 Oct, before any October objective existed.
+  const started = await startWeek({ now: new Date('2026-10-25T05:00:00Z'), origin: 'scheduled_job' });
+  assert.equal(started.objective_id, null);
+  assert.match(objectiveText(adapter, 0), /no objective is set/);
+
+  // The owner sets October's objective afterwards, then picks a direction.
+  const objective = await prisma.contentObjective.create({ data: { month: '2026-10', type: 'signups', statement: 'Cinquante familles' } });
+  const titled = await chooseDirection(started.id, { proposal_index: 0, refinement: '', platform_angles: {} }, actor);
+  assert.match(objectiveText(adapter, 1), /Cinquante familles/);
+  assert.equal(titled.objective_id, objective.id, 'the week now points at the objective its titles used');
+
+  // A later edit of the objective is what a day regenerate (after validation) reads.
+  await validateWeek(titled.id, actor);
+  await prisma.contentObjective.update({ where: { id: objective.id }, data: { statement: 'Soixante familles' } });
+  const again = fake([{ json: titlesFor(dates) }]);
+  await regenerateSlot(titled.slots[4]!.id, actor);
+  assert.match(objectiveText(again, 0), /Soixante familles/);
+
+  // The objective is removed: the next week-level run reads none and the week follows.
+  await prisma.contentObjective.delete({ where: { id: objective.id } });
+  const third = fake([{ json: titlesFor(dates) }]);
+  await regenerateSlot(titled.slots[5]!.id, actor);
+  assert.match(objectiveText(third, 0), /no objective is set/);
+  assert.equal((await getWeek(titled.id)).objective_id, null);
+});
+
 test('skipDay records the reason and refuses a done slot', async () => {
   const week = await createContentWeek(prisma, { startsOn: new Date('2026-10-26'), status: 'validated' });
   const slot = await createContentSlot(prisma, week.id, { status: 'validated' });

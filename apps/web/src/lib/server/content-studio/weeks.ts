@@ -11,7 +11,7 @@ import { prisma } from '../db';
 import { HttpError } from '../http';
 import type { AiOrigin } from '../ai/router';
 import { getStudioTimezone, localDay } from '../services/web-visits';
-import { AgentRunInProgressError, runAgent } from './agents';
+import { AgentRunInProgressError, runAgent, weekMonth } from './agents';
 import {
   assertTransition,
   auditContent,
@@ -192,12 +192,33 @@ export async function assertNoLiveWeekRun(weekId: string, now: Date = new Date()
   if (live) throw weekRunInProgress(live.startedAt, now);
 }
 
+/** The id of the objective of the week's month as it is now (null while none is set). */
+async function currentObjectiveId(startsOn: Date): Promise<string | null> {
+  const row = await prisma.contentObjective.findUnique({ where: { month: weekMonth(startsOn) }, select: { id: true } });
+  return row?.id ?? null;
+}
+
 /**
- * Run the Strategist on a week subject. A concurrent run that slipped past
+ * Point the week at its month's current objective: the one the run about to
+ * start reads (the agents always load the month's objective as it is now). A
+ * week planned before the owner set the objective so says what its latest
+ * week-level run aimed at.
+ */
+async function relinkObjective(weekId: string): Promise<void> {
+  const week = await prisma.contentWeek.findUnique({ where: { id: weekId }, select: { startsOn: true, objectiveId: true } });
+  if (!week) throw weekNotFound();
+  const objectiveId = await currentObjectiveId(week.startsOn);
+  if (objectiveId !== week.objectiveId) await prisma.contentWeek.updateMany({ where: { id: weekId }, data: { objectiveId } });
+}
+
+/**
+ * Run the Strategist on a week subject, after re-linking the week to the
+ * objective the run reads. A concurrent run that slipped past
  * `assertNoLiveWeekRun` is refused by the database before any AI call and
  * answers the same 409.
  */
 async function runStrategist(kind: 'week_proposals' | 'week_titles', weekId: string, origin: AiOrigin, actorId?: string): Promise<unknown> {
+  await relinkObjective(weekId);
   try {
     return await runAgent('strategist', { kind, id: weekId }, origin, actorId);
   } catch (err) {
@@ -227,11 +248,10 @@ export async function startWeek(opts: { now: Date; origin: AiOrigin; actor?: Act
   const { startsOn, firstDay } = planWeek(localDay(opts.now, tz));
   if (await prisma.contentWeek.findUnique({ where: { startsOn: dateOf(startsOn) }, select: { id: true } })) throw weekExists(startsOn);
 
-  const objective = await prisma.contentObjective.findUnique({ where: { month: startsOn.slice(0, 7) }, select: { id: true } });
   let weekId: string;
   try {
     const week = await prisma.contentWeek.create({
-      data: { startsOn: dateOf(startsOn), firstDay: dateOf(firstDay), status: 'proposing', objectiveId: objective?.id ?? null },
+      data: { startsOn: dateOf(startsOn), firstDay: dateOf(firstDay), status: 'proposing', objectiveId: await currentObjectiveId(dateOf(startsOn)) },
     });
     weekId = week.id;
   } catch (err) {

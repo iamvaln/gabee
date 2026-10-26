@@ -181,7 +181,7 @@ test('runAgent succeeds on the retry after one invalid output', async () => {
   const req = adapter.calls[0]!.req;
   assert.equal(req.task, 'post_linkedin');
   assert.equal(req.webSearch, undefined);
-  assert.deepEqual(labelsOf(req.blocks), ['editorial_line', 'platform_profile', 'week_direction', 'slot', 'sources', 'past_publications', 'owner_edits']);
+  assert.deepEqual(labelsOf(req.blocks), ['editorial_line', 'platform_profile', 'objective', 'week_direction', 'slot', 'sources', 'past_publications', 'owner_edits']);
   const text = (label: string) => {
     const b = req.blocks.find((x) => x.kind === 'text' && x.label === label);
     return b && b.kind === 'text' ? b : assert.fail(`missing ${label}`);
@@ -191,6 +191,31 @@ test('runAgent succeeds on the retry after one invalid output', async () => {
   assert.doesNotMatch(text('week_direction').text, /Montrer le jeu/); // TikTok-only angle
   assert.match(text('slot').text, /"language": "en"/);
   assert.equal(text('sources').trusted, false);
+});
+
+test('writers read the month objective as it is now, not the one the week was created with', async () => {
+  // The week was planned before any objective existed for October.
+  const { week, draft } = await draftFixture('linkedin');
+  assert.equal(week.objectiveId, null);
+  await prisma.contentObjective.create({ data: { month: '2026-10', type: 'signups', statement: 'Cinquante familles inscrites', targets: { signups: 50 } } });
+  // Another month's objective never leaks in.
+  await prisma.contentObjective.create({ data: { month: '2026-11', type: 'awareness', statement: 'Objectif de novembre' } });
+
+  const adapter = fake([{ json: linkedinPost }]);
+  await runAgent('writer_linkedin', { kind: 'draft', id: draft.id }, 'scheduled_job');
+  const objective = adapter.calls[0]!.req.blocks.find((b) => b.kind === 'text' && b.label === 'objective');
+  assert.ok(objective && objective.kind === 'text' && objective.trusted);
+  assert.match(objective.text, /Cinquante familles inscrites/);
+  assert.doesNotMatch(objective.text, /novembre/);
+
+  // No objective for the week's month: the block says so.
+  await prisma.contentObjective.deleteMany({ where: { month: '2026-10' } });
+  await prisma.contentDraft.update({ where: { id: draft.id }, data: { status: 'generating' } });
+  const again = fake([{ json: linkedinPost }]);
+  await runAgent('writer_linkedin', { kind: 'draft', id: draft.id }, 'scheduled_job');
+  const none = again.calls[0]!.req.blocks.find((b) => b.kind === 'text' && b.label === 'objective');
+  assert.ok(none && none.kind === 'text');
+  assert.match(none.text, /no objective is set/);
 });
 
 test('writer memory learns from past publications and owner edits on its platform', async () => {
