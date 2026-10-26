@@ -17,6 +17,7 @@ import { POST as regenerate } from './[id]/regenerate/route';
 import { POST as approve } from './[id]/approve/route';
 import { POST as publish } from './[id]/publish/route';
 import { GET as media } from './[id]/media/route';
+import { PUT as externalMedia } from './[id]/external-media/route';
 
 const prisma = createTestClient();
 const U = 'http://localhost/api/admin/communication/drafts';
@@ -203,4 +204,27 @@ test('every mutation writes an audit row', async () => {
     assert.equal(r.actorRole, 'admin');
     assert.equal(r.targetId, draft.id);
   }
+});
+
+test('own media (PUT external-media): admins only, a note of 200 characters at most, then approve and publish a TikTok post', async () => {
+  const slot = await fixture([{ platform: 'tiktok', language: 'fr' }]);
+  const draft = await readyDraft(slot.id, 'tiktok');
+  const put = (body: unknown, c = cookie) => webRequest(`${U}/${draft.id}/external-media`, { method: 'PUT', cookie: c, body });
+  const { parent } = await createLoginableParent(prisma, { role: 'parent' });
+  const pc = parentCookie(await parentToken(parent.id, parent.email));
+
+  assert.equal((await externalMedia(put({ enabled: true }, pc), ctx(draft.id))).status, 403);
+  assert.equal((await externalMedia(put({ enabled: true, note: 'x'.repeat(201) }), ctx(draft.id))).status, 422);
+  assert.equal((await externalMedia(put({ enabled: true }), ctx('pas-un-id'))).status, 404);
+
+  const on = await externalMedia(put({ enabled: true, note: 'cuisine.mp4' }), ctx(draft.id));
+  assert.equal(on.status, 200);
+  assert.deepEqual((await on.json()).draft.external_media, { note: 'cuisine.mp4' });
+  assert.equal((await approve(post(`/${draft.id}/approve`), ctx(draft.id))).status, 200);
+  const published = await publish(post(`/${draft.id}/publish`, { post_url: 'https://www.tiktok.com/@gabee/video/7' }), ctx(draft.id));
+  assert.equal(published.status, 200);
+  assert.equal((await published.json()).draft.status, 'published');
+  const audit = await prisma.auditLog.findFirstOrThrow({ where: { kind: 'content.draft.external_media' } });
+  assert.equal(audit.actorId, adminId);
+  assert.equal(audit.targetId, draft.id);
 });

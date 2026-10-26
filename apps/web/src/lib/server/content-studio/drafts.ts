@@ -60,6 +60,8 @@ export type DraftDto = {
   payload: LinkedInPost | TikTokPost | null;
   approved_version_id: string | null;
   media: MediaSummary | null;
+  /** The owner posts with their own file, outside the library (optional note: its name, where it is). */
+  external_media: { note: string | null } | null;
   tracked_url: string;
   /** Plain-French reason of the last failed generation. */
   error: string | null;
@@ -146,6 +148,7 @@ export function toDraftDto(row: DraftRow, now: Date = new Date()): DraftDto {
     payload: v ? (v.payload as unknown as LinkedInPost | TikTokPost) : null,
     approved_version_id: row.approvedVersionId,
     media: m ? { id: m.id, kind: m.kind, file_name: m.fileName, cleared: m.cleared, aspect: m.aspect } : null,
+    external_media: row.externalMedia ? { note: row.externalMediaNote } : null,
     tracked_url: row.trackedUrl,
     error: row.error,
     generating: row.generationLockUntil !== null && row.generationLockUntil > now,
@@ -531,6 +534,8 @@ export async function editDraft(draftId: string, patch: UpdateDraftRequest, acto
     }
     mediaAssetId = patch.media_asset_id;
   }
+  // A library file attached replaces the owner's own media.
+  const clearsExternal = draft.externalMedia && mediaAssetId !== null && mediaAssetId !== draft.mediaAssetId;
 
   const stored = platform === 'linkedin' ? { ...(parsed.data as LinkedInPost), body: withLink(text, url) } : parsed.data;
   const n = await prisma.$transaction(async (tx) => {
@@ -540,7 +545,14 @@ export async function editDraft(draftId: string, patch: UpdateDraftRequest, acto
     // Conditional on the status read above: a generation started meanwhile wins.
     const res = await tx.contentDraft.updateMany({
       where: { id: draftId, status: draft.status, OR: [{ generationLockUntil: null }, { generationLockUntil: { lt: new Date() } }] },
-      data: { status: 'ready', currentVersionId: version.id, approvedVersionId: null, mediaAssetId, error: null },
+      data: {
+        status: 'ready',
+        currentVersionId: version.id,
+        approvedVersionId: null,
+        mediaAssetId,
+        error: null,
+        ...(clearsExternal ? { externalMedia: false, externalMediaNote: null } : {}),
+      },
     });
     if (res.count !== 1) throw inProgress();
     return version.n;
@@ -552,6 +564,7 @@ export async function editDraft(draftId: string, patch: UpdateDraftRequest, acto
     text_diff: unifiedDiff(beforeText, text) || null,
     hashtags: patch.hashtags !== undefined ? { before: before.hashtags, after: hashtags } : undefined,
     media_asset_id: patch.media_asset_id !== undefined ? { before: draft.mediaAssetId, after: mediaAssetId } : undefined,
+    external_media: clearsExternal ? { before: { enabled: true, note: draft.externalMediaNote }, after: { enabled: false, note: null } } : undefined,
   });
   return getDraft(draftId);
 }
@@ -559,7 +572,8 @@ export async function editDraft(draftId: string, patch: UpdateDraftRequest, acto
 /**
  * Pin the current version. LinkedIn may be text only, but an attached media
  * must be cleared and ready (409 `media_not_cleared`); TikTok needs an
- * attached cleared, ready video in either mode (409 `video_required`).
+ * attached cleared, ready video in either mode (409 `video_required`) unless
+ * the owner posts with their own video (`externalMedia`).
  */
 export async function approveDraft(draftId: string, actor: Actor): Promise<DraftDto> {
   const draft = await loadDraft(draftId);
@@ -576,7 +590,10 @@ export async function approveDraft(draftId: string, actor: Actor): Promise<Draft
     if (!fit.ok) throw mediaFitError(409, fit.code, platform);
   }
   if (platform === 'tiktok') {
-    if (!m || m.kind !== 'video' || !usable) {
+    if (draft.externalMedia) {
+      // The owner's own video; a library file still attached must be usable.
+      if (m && !usable) throw new HttpError(409, 'media_not_cleared', "Le fichier joint n'est pas autorisé à la publication. Autorisez-le dans la médiathèque ou retirez-le.");
+    } else if (!m || m.kind !== 'video' || !usable) {
       throw new HttpError(
         409,
         'video_required',
@@ -592,7 +609,52 @@ export async function approveDraft(draftId: string, actor: Actor): Promise<Draft
     data: { status: 'approved', approvedVersionId: draft.currentVersionId },
   });
   if (res.count !== 1) throw new HttpError(409, 'invalid_transition', 'Ce brouillon vient de changer. Rechargez la page puis validez à nouveau.');
-  await auditContent(actor, 'content.draft.approve', 'content_draft', draftId, { version_id: draft.currentVersionId, media_asset_id: draft.mediaAssetId });
+  await auditContent(actor, 'content.draft.approve', 'content_draft', draftId, {
+    version_id: draft.currentVersionId,
+    media_asset_id: draft.mediaAssetId,
+    ...(draft.externalMedia ? { external_media: true } : {}),
+  });
+  return getDraft(draftId);
+}
+
+/** Statuses whose media source the owner may change (not while written, not once published). */
+const EXTERNAL_MEDIA_FROM = ['ready', 'approved', 'stale', 'failed'];
+
+/**
+ * « J'utilise ma propre vidéo / mon propre média »: the owner posts with their
+ * own file, outside the library, with an optional note. Turning it on detaches
+ * a library file; changing it keeps an approval unless the draft no longer
+ * meets the approval rule (a TikTok draft left without a usable library
+ * video goes back to `ready`). The Art director only ever sets library media.
+ */
+export async function setExternalMedia(draftId: string, req: { enabled: boolean; note?: string | null }, actor: Actor): Promise<DraftDto> {
+  const draft = await loadDraft(draftId);
+  if (draft.status === 'generating' || lockHeld(draft, new Date())) throw inProgress();
+  if (!EXTERNAL_MEDIA_FROM.includes(draft.status)) {
+    throw new HttpError(409, 'invalid_transition', `Ce brouillon est « ${draft.status} » : son média ne peut plus changer. Rechargez la page.`);
+  }
+  const note = req.enabled ? req.note?.trim() || null : null;
+  const detached = req.enabled ? draft.mediaAssetId : null;
+  const m = req.enabled ? null : draft.mediaAsset;
+  const videoOk = m !== null && m.kind === 'video' && m.cleared && m.status === 'ready';
+  const unapproved = draft.status === 'approved' && !req.enabled && draft.platform === 'tiktok' && !videoOk;
+
+  const res = await prisma.contentDraft.updateMany({
+    where: { id: draftId, status: draft.status, OR: [{ generationLockUntil: null }, { generationLockUntil: { lt: new Date() } }] },
+    data: {
+      externalMedia: req.enabled,
+      externalMediaNote: note,
+      ...(req.enabled ? { mediaAssetId: null } : {}),
+      ...(unapproved ? { status: 'ready', approvedVersionId: null } : {}),
+    },
+  });
+  if (res.count !== 1) throw new HttpError(409, 'invalid_transition', 'Ce brouillon vient de changer. Rechargez la page.');
+  await auditContent(actor, 'content.draft.external_media', 'content_draft', draftId, {
+    before: { enabled: draft.externalMedia, note: draft.externalMediaNote },
+    after: { enabled: req.enabled, note },
+    media_asset_id: detached,
+    unapproved,
+  });
   return getDraft(draftId);
 }
 
