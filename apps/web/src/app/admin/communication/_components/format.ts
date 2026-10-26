@@ -64,6 +64,11 @@ export function dayParts(ymd: string, lang: Language): { weekday: string; day: s
   };
 }
 
+/** "octobre 2026" (French, inside a sentence) / "October 2026" for `YYYY-MM`. */
+export function monthName(ym: string, lang: Language): string {
+  return new Intl.DateTimeFormat(locale(lang), { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(utc(`${ym}-01`));
+}
+
 /** "21 oct. à 14:02" in the viewer's clock (an instant, not a studio day). */
 export function dateTime(iso: string, lang: Language): string {
   return new Intl.DateTimeFormat(locale(lang), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));

@@ -205,12 +205,18 @@ async function loadProfile(platform: ContentPlatform): Promise<ProfileData> {
   return toProfile(row);
 }
 
-async function loadObjective(month: string, objectiveId?: string | null): Promise<ObjectiveData | null> {
-  const row = objectiveId
-    ? await prisma.contentObjective.findUnique({ where: { id: objectiveId } })
-    : await prisma.contentObjective.findUnique({ where: { month } });
+/**
+ * The objective of `month` (`YYYY-MM`) as it is now. Never the one a week
+ * was created with: the owner may set or change it after the Sunday run, and
+ * every later run must aim at it.
+ */
+async function loadObjective(month: string): Promise<ObjectiveData | null> {
+  const row = await prisma.contentObjective.findUnique({ where: { month } });
   return row ? { month: row.month, type: row.type, statement: row.statement, targets: row.targets } : null;
 }
+
+/** A week's objective month: the month of its Monday (`YYYY-MM`). */
+export const weekMonth = (startsOn: Date) => ymd(startsOn).slice(0, 7);
 
 function chosenProposal(week: { proposals: Prisma.JsonValue; chosenIndex: number | null }) {
   if (week.proposals === null || week.chosenIndex === null) return null;
@@ -282,11 +288,11 @@ async function loadMetrics(from: Date, to: Date): Promise<MetricsSummary> {
 }
 
 /** Strategist memory for the week starting `weekStart` (a Monday): last 7 days of signals, last 4 weeks of the loop. */
-export async function loadStrategistContext(weekStart: Date, now: Date = new Date(), objectiveId?: string | null): Promise<StrategistContext> {
+export async function loadStrategistContext(weekStart: Date, now: Date = new Date()): Promise<StrategistContext> {
   const tz = await getStudioTimezone();
   const from = addDays(now, -7);
   const [objective, editorialLine, profiles, recentWeeks, audience, metrics] = await Promise.all([
-    loadObjective(ymd(weekStart).slice(0, 7), objectiveId),
+    loadObjective(weekMonth(weekStart)),
     loadEditorialLine(),
     loadProfiles(),
     loadRecentWeeks(weekStart),
@@ -307,7 +313,7 @@ export async function loadTitlesContext(weekId: string, now: Date = new Date()):
   const week = await loadWeek(weekId);
   const proposal = chosenProposal(week);
   if (!proposal) throw new Error('No direction has been chosen for this week yet.');
-  const base = await loadStrategistContext(week.startsOn, now, week.objectiveId);
+  const base = await loadStrategistContext(week.startsOn, now);
   const dates: string[] = [];
   for (let d = week.firstDay; d <= addDays(week.startsOn, 6); d = addDays(d, 1)) dates.push(ymd(d));
   return {
@@ -375,9 +381,10 @@ export async function loadWriterContext(draftId: string): Promise<{ platform: Co
   const angles = (week.platformAngles ?? {}) as Record<string, unknown>;
   const angle = angles[platform];
 
-  const [editorialLine, profile, publications, ownerVersions, media] = await Promise.all([
+  const [editorialLine, profile, objective, publications, ownerVersions, media] = await Promise.all([
     loadEditorialLine(),
     loadProfile(platform),
+    loadObjective(weekMonth(week.startsOn)),
     prisma.contentPublication.findMany({
       where: { draft: { platform } },
       orderBy: { publishedAt: 'desc' },
@@ -404,6 +411,7 @@ export async function loadWriterContext(draftId: string): Promise<{ platform: Co
   const ctx: WriterContext = {
     editorialLine,
     profile,
+    objective,
     direction: proposal
       ? { title: proposal.title, rationale: proposal.rationale, refinement: week.refinement ?? '', platformAngle: typeof angle === 'string' && angle.trim() ? angle : null }
       : null,
@@ -493,7 +501,7 @@ async function prepare(key: AgentKey, subject: AgentSubject, opts: RunAgentOptio
     case 'strategist': {
       if (subject.kind === 'week_proposals') {
         const week = await loadWeek(subject.id);
-        const ctx = await loadStrategistContext(week.startsOn, new Date(), week.objectiveId);
+        const ctx = await loadStrategistContext(week.startsOn, new Date());
         return {
           task: AGENT_TASK.strategist,
           schema: DirectionProposalsSchema,

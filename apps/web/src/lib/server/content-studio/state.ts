@@ -18,11 +18,13 @@ export type StateKind = 'week' | 'slot' | 'draft';
 const GRAPHS: Record<StateKind, Record<string, readonly string[]>> = {
   // proposing → proposals_ready → direction_set → titles_ready → validated (+ skipped).
   // titles_ready → direction_set: the owner picks another direction before validating.
+  // proposals_ready | direction_set | titles_ready → proposing: "Régénérer les
+  // propositions" starts the week over (new directions) before validation.
   week: {
     proposing: ['proposals_ready', 'skipped'],
-    proposals_ready: ['direction_set', 'skipped'],
-    direction_set: ['titles_ready', 'skipped'],
-    titles_ready: ['direction_set', 'validated', 'skipped'],
+    proposals_ready: ['direction_set', 'proposing', 'skipped'],
+    direction_set: ['titles_ready', 'proposing', 'skipped'],
+    titles_ready: ['direction_set', 'validated', 'proposing', 'skipped'],
     validated: [],
     skipped: [],
   },
