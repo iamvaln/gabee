@@ -129,21 +129,43 @@ test('checkArtDirection follows the shared platform rule (Ruling 16)', () => {
   assert.match(pick(3, 'tiktok')[0] ?? '', /vertical \(9:16\) video/);
 });
 
-test('checkWeekTitles requires exactly the planned dates and platforms', () => {
-  const day = (date: string) => ({
-    date,
-    topic: 't',
-    angle: 'a',
-    format: 'story' as const,
-    platforms: [
-      { platform: 'linkedin' as const, language: 'fr' as const },
-      { platform: 'tiktok' as const, language: 'en' as const },
-    ],
-    sources: [],
+test('checkWeekTitles requires exactly the planned days, each with the platforms posting that day', () => {
+  const both = [
+    { platform: 'linkedin' as const, language: 'fr' as const },
+    { platform: 'tiktok' as const, language: 'en' as const },
+  ];
+  const day = (date: string, pillar: 'gabee' | 'light' | 'value', platforms = both) => ({ date, topic: 't', angle: 'a', format: 'story' as const, pillar, platforms, sources: [] });
+  const planned = [
+    { date: '2026-10-27', platforms: ['linkedin' as const] },
+    { date: '2026-10-28', platforms: ['linkedin' as const, 'tiktok' as const] },
+  ];
+  const linkedinOnly = [both[0]!];
+  const ok = { days: [day('2026-10-27', 'light', linkedinOnly), day('2026-10-28', 'gabee')] };
+  assert.deepEqual(checkWeekTitles(ok, planned), []);
+  // A missing day, days out of order, a day nothing posts on.
+  assert.equal(checkWeekTitles({ days: [ok.days[0]!] }, planned).length, 1);
+  assert.equal(checkWeekTitles({ days: [ok.days[1]!, ok.days[0]!] }, planned).length, 1);
+  assert.match(checkWeekTitles({ days: [...ok.days, day('2026-10-31', 'value')] }, planned)[0]!, /2026-10-27, 2026-10-28/);
+  // Wrong platforms for the day (TikTok does not post on Tuesday; Wednesday needs both).
+  const wrong = checkWeekTitles({ days: [day('2026-10-27', 'light'), day('2026-10-28', 'gabee', linkedinOnly)] }, planned);
+  assert.deepEqual(wrong, [
+    '2026-10-27: platforms must be exactly linkedin; got linkedin,tiktok.',
+    '2026-10-28: platforms must be exactly linkedin,tiktok; got linkedin.',
+  ]);
+});
+
+test('checkWeekTitles enforces the mix: at most 3 days on Gabee, at least one light day', () => {
+  const dates = ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06'];
+  const planned = dates.map((date) => ({ date, platforms: ['tiktok' as const] }));
+  const plan = (...pillars: Array<'gabee' | 'light' | 'value'>) => ({
+    days: dates.map((date, i) => ({ date, topic: 't', angle: 'a', format: 'story' as const, pillar: pillars[i]!, platforms: [{ platform: 'tiktok' as const, language: 'fr' as const }], sources: [] })),
   });
-  const dates = ['2026-10-27', '2026-10-28'];
-  assert.deepEqual(checkWeekTitles({ days: dates.map(day) }, dates, ['linkedin', 'tiktok']), []);
-  assert.equal(checkWeekTitles({ days: [day('2026-10-27')] }, dates, ['linkedin', 'tiktok']).length, 1);
-  assert.equal(checkWeekTitles({ days: [day('2026-10-28'), day('2026-10-27')] }, dates, ['linkedin', 'tiktok']).length, 1);
-  assert.equal(checkWeekTitles({ days: dates.map(day) }, dates, ['linkedin']).length, 2);
+  assert.deepEqual(checkWeekTitles(plan('gabee', 'gabee', 'gabee', 'light', 'value'), planned), []);
+  const tooMuch = checkWeekTitles(plan('gabee', 'gabee', 'gabee', 'gabee', 'light'), planned);
+  assert.equal(tooMuch.length, 1);
+  assert.match(tooMuch[0]!, /4 days have pillar "gabee": at most 3/);
+  const noLight = checkWeekTitles(plan('gabee', 'value', 'value', 'value', 'value'), planned);
+  assert.equal(noLight.length, 1);
+  assert.match(noLight[0]!, /No day has pillar "light"/);
+  assert.equal(checkWeekTitles(plan('gabee', 'gabee', 'gabee', 'gabee', 'value'), planned).length, 2);
 });

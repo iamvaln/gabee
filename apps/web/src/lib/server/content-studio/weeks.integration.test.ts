@@ -3,13 +3,14 @@ import test, { after, afterEach, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { createContentDraft, createContentSlot, createContentWeek, createTestClient, resetDb, seedContentStudio } from '@gabee/db/testing';
-import type { ContentLanguage } from '@gabee/types';
+import { DEFAULT_POSTING_DAYS, type ContentPillar, type ContentPlatform } from '@gabee/types';
 import { setErrorReporterForTests } from '../report-error';
 import { HttpError } from '../http';
 import { resetAiAdapters, setAiAdapters } from '../ai/router';
 import { FakeAiAdapter, type FakeAiStep } from '../ai/router/fake-adapter';
+import { plannedDays, type PlannedDay } from './cadence';
 import type { Actor } from './state';
-import { chooseDirection, getWeek, proposeDirections, regenerateProposals, regenerateSlot, skipDay, startWeek, updateSlot, validateWeek } from './weeks';
+import { chooseDirection, getWeek, proposeDirections, regenerateProposals, regenerateSlot, skipDay, startWeek, updateSlot, validateWeek, type WeekDto } from './weeks';
 
 const prisma = createTestClient();
 const actor: Actor = { id: randomUUID(), role: 'admin' };
@@ -39,17 +40,32 @@ const proposals = {
   proposals: [0, 1, 2].map((i) => ({ title: `Direction ${i}`, rationale: 'r', evidence: ['e'], sample_angles: ['a'] })),
 };
 
-function titlesFor(dates: string[], lang: (i: number) => [ContentLanguage, ContentLanguage] = (i) => (i < 2 ? ['en', 'en'] : ['fr', 'fr'])) {
+const BOTH: ContentPlatform[] = ['linkedin', 'tiktok'];
+/** The default cadence's days from `firstDay` to Sunday (LinkedIn Tue–Thu, TikTok Mon/Wed/Fri/Sun). */
+const cadence = (startsOn: string, firstDay = startsOn) => plannedDays(startsOn, firstDay, DEFAULT_POSTING_DAYS, BOTH);
+/** The days a week's lines already plan (what a day regenerate re-plans). */
+const linesOf = (week: WeekDto): PlannedDay[] => week.slots.map((s) => ({ date: s.date, platforms: s.platforms.map((p) => p.platform) }));
+/** The mix a valid plan keeps: day 1 light, day 2 about Gabee, the rest useful content. */
+const defaultPillar = (i: number): ContentPillar => (i === 0 ? 'light' : i === 1 ? 'gabee' : 'value');
+
+/**
+ * A titles answer for `plan`: each day with exactly its platforms. By default
+ * the first two days are in English (so each platform of the default cadence
+ * gets one English post: TikTok on Monday, LinkedIn on Tuesday).
+ */
+function titlesFor(
+  plan: PlannedDay[],
+  en: (i: number, platform: ContentPlatform) => boolean = (i) => i < 2,
+  pillar: (i: number) => ContentPillar = defaultPillar,
+) {
   return {
-    days: dates.map((date, i) => ({
+    days: plan.map(({ date, platforms }, i) => ({
       date,
       topic: `Sujet ${date}`,
       angle: `Angle ${i}`,
       format: 'text',
-      platforms: [
-        { platform: 'linkedin', language: lang(i)[0] },
-        { platform: 'tiktok', language: lang(i)[1] },
-      ],
+      pillar: pillar(i),
+      platforms: platforms.map((platform) => ({ platform, language: en(i, platform) ? 'en' : 'fr' })),
       sources: [],
     })),
   };
@@ -100,9 +116,27 @@ test('startWeek keeps the week proposing when the strategist fails', async () =>
   assert.equal(row.status, 'proposing');
 });
 
-test('chooseDirection plans one slot per day from firstDay to Sunday', async () => {
-  const dates = ['2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25'];
-  const adapter = fake([{ json: proposals }, { json: titlesFor(dates) }]);
+/** The task block a titles call received, parsed. */
+function titlesTask(adapter: FakeAiAdapter, call: number) {
+  const b = adapter.calls[call]!.req.blocks.find((x) => x.kind === 'text' && x.label === 'task');
+  if (!b || b.kind !== 'text') return assert.fail(`call ${call} has no task block`);
+  return JSON.parse(b.text.replace(/^<block label="task">\n/, '').replace(/\n<\/block>$/, '')) as {
+    dates: string[];
+    days: { date: string; weekday: string; platforms: string[] }[];
+    english_min_per_platform: Record<string, number>;
+    pillar_mix: { gabee_max: number; light_min: number };
+  };
+}
+
+test('chooseDirection plans a partial week on the posting days from firstDay to Sunday', async () => {
+  // Launched on Wednesday 21 Oct: Thursday (LinkedIn), Friday and Sunday (TikTok); nothing posts on Saturday.
+  const plan = cadence('2026-10-19', '2026-10-22');
+  assert.deepEqual(plan, [
+    { date: '2026-10-22', platforms: ['linkedin'] },
+    { date: '2026-10-23', platforms: ['tiktok'] },
+    { date: '2026-10-25', platforms: ['tiktok'] },
+  ]);
+  const adapter = fake([{ json: proposals }, { json: titlesFor(plan) }]);
   const started = await startWeek({ now: new Date('2026-10-21T09:00:00Z'), origin: 'user_action', actor });
   const week = await chooseDirection(started.id, { proposal_index: 2, refinement: 'Plus concret', platform_angles: { tiktok: 'Le jeu en vrai' } }, actor);
   assert.equal(week.status, 'titles_ready');
@@ -110,40 +144,153 @@ test('chooseDirection plans one slot per day from firstDay to Sunday', async () 
   assert.equal(week.refinement, 'Plus concret');
   assert.deepEqual(week.platform_angles, { tiktok: 'Le jeu en vrai' });
   assert.deepEqual(
-    week.slots.map((s) => [s.date, s.status]),
-    dates.map((d) => [d, 'proposed']),
+    week.slots.map((s) => [s.date, s.status, s.pillar, s.platforms]),
+    [
+      ['2026-10-22', 'proposed', 'light', [{ platform: 'linkedin', language: 'en' }]],
+      ['2026-10-23', 'proposed', 'gabee', [{ platform: 'tiktok', language: 'en' }]],
+      ['2026-10-25', 'proposed', 'value', [{ platform: 'tiktok', language: 'fr' }]],
+    ],
   );
-  assert.deepEqual(week.slots[0]!.platforms, [
-    { platform: 'linkedin', language: 'en' },
-    { platform: 'tiktok', language: 'en' },
-  ]);
+  assert.deepEqual(week.mix, { gabee: 1, light: 1, value: 1, ok: true, problems: [] });
   assert.equal(adapter.calls[1]!.req.task, 'content_titles');
+  const task = titlesTask(adapter, 1);
+  assert.deepEqual(task.dates, ['2026-10-22', '2026-10-23', '2026-10-25']);
+  assert.deepEqual(task.days.map((d) => [d.weekday, d.platforms]), [
+    ['thursday', ['linkedin']],
+    ['friday', ['tiktok']],
+    ['sunday', ['tiktok']],
+  ]);
+  // Partial week: one LinkedIn post needs no English post; TikTok's two need one.
+  assert.deepEqual(task.english_min_per_platform, { linkedin: 0, tiktok: 1 });
+  assert.deepEqual(task.pillar_mix, { gabee_max: 3, light_min: 1 });
   assert.equal((await audits('content.week.direction')).length, 1);
 });
 
-async function titledWeek(lang: (i: number) => [ContentLanguage, ContentLanguage]) {
-  const dates = ['2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01'];
-  fake([{ json: proposals }, { json: titlesFor(dates, lang) }]);
+test('the Sunday run plans the full week on the posting days in Réglages', async () => {
+  await prisma.studioSettings.update({ where: { id: 'default' }, data: { postingDays: { linkedin: [1, 4], tiktok: [4, 6] } } });
+  const plan = cadence('2026-10-26');
+  const custom = plannedDays('2026-10-26', '2026-10-26', { linkedin: [1, 4], tiktok: [4, 6] }, BOTH);
+  assert.notDeepEqual(custom, plan);
+  const adapter = fake([{ json: proposals }, { json: titlesFor(custom) }]);
+  // Sunday 25 Oct 07:00 in Douala plans the week of Monday 26.
+  const started = await startWeek({ now: new Date('2026-10-25T06:00:00Z'), origin: 'scheduled_job' });
+  assert.equal(started.days_in_week, 7);
+  const week = await chooseDirection(started.id, { proposal_index: 0, refinement: '', platform_angles: {} }, actor);
+  assert.deepEqual(
+    week.slots.map((s) => [s.date, s.platforms.map((p) => p.platform)]),
+    [
+      ['2026-10-26', ['linkedin']],
+      ['2026-10-29', ['linkedin', 'tiktok']],
+      ['2026-10-31', ['tiktok']],
+    ],
+  );
+  assert.deepEqual(titlesTask(adapter, 1).english_min_per_platform, { linkedin: 1, tiktok: 1 });
+});
+
+test('a disabled platform plans no day of its own', async () => {
+  await prisma.studioSettings.update({ where: { id: 'default' }, data: { enabledPlatforms: ['tiktok'] } });
+  const plan = plannedDays('2026-10-26', '2026-10-26', DEFAULT_POSTING_DAYS, ['tiktok']);
+  assert.deepEqual(plan.map((d) => d.date), ['2026-10-26', '2026-10-28', '2026-10-30', '2026-11-01']);
+  const adapter = fake([{ json: proposals }, { json: titlesFor(plan) }]);
+  const started = await startWeek({ now: new Date('2026-10-25T06:00:00Z'), origin: 'scheduled_job' });
+  const week = await chooseDirection(started.id, { proposal_index: 0, refinement: '', platform_angles: {} }, actor);
+  assert.equal(week.slots.length, 4);
+  assert.deepEqual(titlesTask(adapter, 1).english_min_per_platform, { tiktok: 1 });
+});
+
+test('startWeek refuses a partial week in which no platform posts any more, before any AI call', async () => {
+  await prisma.studioSettings.update({ where: { id: 'default' }, data: { postingDays: { linkedin: [1], tiktok: [2] } } });
+  const adapter = fake([]);
+  // Wednesday 21 Oct: Thursday to Sunday have no posting day.
+  await assert.rejects(startWeek({ now: new Date('2026-10-21T09:00:00Z'), origin: 'user_action', actor }), isHttp(409, 'no_posting_days'));
+  assert.equal(await prisma.contentWeek.count(), 0);
+  assert.equal(adapter.calls.length, 0);
+});
+
+test('a titles plan on the wrong days or platforms is invalid: retried once with feedback, then refused', async () => {
+  const plan = cadence('2026-10-26');
+  const sevenDays = ['2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01'].map((date) => ({ date, platforms: BOTH }));
+  const adapter = fake([{ json: proposals }, { json: titlesFor(sevenDays) }, { json: titlesFor(plan) }]);
+  const started = await startWeek({ now: new Date('2026-10-25T06:00:00Z'), origin: 'scheduled_job' });
+  const week = await chooseDirection(started.id, { proposal_index: 0, refinement: '', platform_angles: {} }, actor);
+  assert.equal(week.slots.length, 6, 'the retry planned the posting days');
+  const feedback = adapter.calls[2]!.req.blocks.find((b) => b.kind === 'text' && b.label === 'retry_feedback');
+  assert.ok(feedback && feedback.kind === 'text');
+  assert.match(feedback.text, /days must cover exactly 2026-10-26, 2026-10-27, 2026-10-28, 2026-10-29, 2026-10-30, 2026-11-01/);
+
+  // Both answers put both platforms on every day: the run is refused and the week waits for another choice.
+  const other = await createContentWeek(prisma, { startsOn: new Date('2026-11-02'), status: 'proposals_ready', proposals });
+  const wrong = titlesFor(cadence('2026-11-02').map((d) => ({ ...d, platforms: BOTH })));
+  const refused = fake([{ json: wrong }, { json: wrong }]);
+  await assert.rejects(chooseDirection(other.id, { proposal_index: 0, refinement: '', platform_angles: {} }, actor), (err: unknown) => (err as Error).name === 'AgentRulesError');
+  assert.equal(refused.calls.length, 2);
+  assert.equal((await prisma.contentWeek.findUniqueOrThrow({ where: { id: other.id } })).status, 'direction_set');
+  assert.equal(await prisma.contentSlot.count({ where: { weekId: other.id } }), 0);
+});
+
+test('a titles plan that breaks the mix (over 3 days on Gabee, or no light day) is retried, then refused', async () => {
+  const plan = cadence('2026-10-26');
+  const allGabee = titlesFor(plan, undefined, (i) => (i < 4 ? 'gabee' : 'light'));
+  const noLight = titlesFor(plan, undefined, (i) => (i === 0 ? 'gabee' : 'value'));
+  const adapter = fake([{ json: proposals }, { json: allGabee }, { json: titlesFor(plan) }]);
+  const started = await startWeek({ now: new Date('2026-10-25T06:00:00Z'), origin: 'scheduled_job' });
+  const week = await chooseDirection(started.id, { proposal_index: 0, refinement: '', platform_angles: {} }, actor);
+  assert.deepEqual(week.mix, { gabee: 1, light: 1, value: 4, ok: true, problems: [] });
+  const feedback = adapter.calls[2]!.req.blocks.find((b) => b.kind === 'text' && b.label === 'retry_feedback');
+  assert.ok(feedback && feedback.kind === 'text' && /4 days have pillar "gabee": at most 3/.test(feedback.text));
+
+  // Twice without a light day: refused, nothing stored.
+  const again = fake([{ json: noLight }, { json: noLight }]);
+  await assert.rejects(chooseDirection(week.id, { proposal_index: 1, refinement: '', platform_angles: {} }, actor), (err: unknown) => (err as Error).name === 'AgentRulesError');
+  assert.equal(again.calls.length, 2);
+  const row = await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id }, include: { slots: true } });
+  assert.equal(row.status, 'direction_set');
+  assert.equal(row.slots.length, 0);
+});
+
+async function titledWeek(en: (i: number, platform: ContentPlatform) => boolean = (i) => i < 2) {
+  fake([{ json: proposals }, { json: titlesFor(cadence('2026-10-26'), en) }]);
   const started = await startWeek({ now: new Date('2026-10-25T07:00:00Z'), origin: 'scheduled_job' });
   return chooseDirection(started.id, { proposal_index: 0, refinement: '', platform_angles: {} }, actor);
 }
 
-test('validateWeek blocks when tiktok has one english post', async () => {
-  // LinkedIn: 2 English days; TikTok: only day 0 in English.
-  const week = await titledWeek((i) => [i < 2 ? 'en' : 'fr', i === 0 ? 'en' : 'fr']);
+test('validateWeek needs one English post per platform on a full week', async () => {
+  // LinkedIn posts Tue–Thu in English twice; TikTok (Mon/Wed/Fri/Sun) never.
+  const week = await titledWeek((i, p) => p === 'linkedin' && i >= 2);
   await assert.rejects(validateWeek(week.id, actor), (err: unknown) => {
     assert.ok(isHttp(409, 'language_quota')(err));
     assert.deepEqual((err as HttpError).details, [
-      { platform: 'linkedin', english: 2, required: 2, ok: true },
-      { platform: 'tiktok', english: 1, required: 2, ok: false },
+      { platform: 'linkedin', posts: 3, english: 2, required: 1, ok: true },
+      { platform: 'tiktok', posts: 4, english: 0, required: 1, ok: false },
     ]);
     return true;
   });
   assert.equal((await getWeek(week.id)).status, 'titles_ready');
+
+  // One English TikTok post is enough (it was two before 26 Oct).
+  const wed = week.slots.find((s) => s.date === '2026-10-28')!;
+  await updateSlot(wed.id, { platforms: [{ platform: 'linkedin', language: 'en' }, { platform: 'tiktok', language: 'en' }] }, actor);
+  assert.equal((await validateWeek(week.id, actor)).status, 'validated');
+});
+
+test('validateWeek on a partial week asks English only of a platform with 2 posts or more', async () => {
+  const week = await createContentWeek(prisma, { startsOn: new Date('2026-10-26'), firstDay: new Date('2026-10-29'), status: 'titles_ready' });
+  await createContentSlot(prisma, week.id, { date: new Date('2026-10-29'), platforms: [{ platform: 'linkedin', language: 'fr' }], status: 'proposed' });
+  await createContentSlot(prisma, week.id, { date: new Date('2026-10-30'), platforms: [{ platform: 'tiktok', language: 'fr' }], status: 'proposed' });
+  const sunday = await createContentSlot(prisma, week.id, { date: new Date('2026-11-01'), platforms: [{ platform: 'tiktok', language: 'fr' }], status: 'proposed' });
+  await assert.rejects(validateWeek(week.id, actor), (err: unknown) => {
+    assert.deepEqual((err as HttpError).details, [
+      { platform: 'linkedin', posts: 1, english: 0, required: 0, ok: true },
+      { platform: 'tiktok', posts: 2, english: 0, required: 1, ok: false },
+    ]);
+    return true;
+  });
+  await updateSlot(sunday.id, { platforms: [{ platform: 'tiktok', language: 'en' }] }, actor);
+  assert.equal((await validateWeek(week.id, actor)).status, 'validated');
 });
 
 test('validateWeek passes with overrideQuota', async () => {
-  const week = await titledWeek((i) => [i < 2 ? 'en' : 'fr', i === 0 ? 'en' : 'fr']);
+  const week = await titledWeek(() => false);
   const validated = await validateWeek(week.id, actor, { overrideQuota: true });
   assert.equal(validated.status, 'validated');
   assert.ok(validated.slots.every((s) => s.status === 'validated'));
@@ -153,9 +300,32 @@ test('validateWeek passes with overrideQuota', async () => {
 });
 
 test('validateWeek ignores skipped slots for the quota', async () => {
-  const week = await titledWeek((i) => (i < 2 ? ['en', 'en'] : ['fr', 'fr']));
+  // TikTok's only English post is Monday's.
+  const week = await titledWeek();
   await skipDay(week.slots[0]!.id, 'Jour férié', actor);
   await assert.rejects(validateWeek(week.id, actor), isHttp(409, 'language_quota'));
+});
+
+test('an owner pillar edit is saved, marks the drafts stale, and the week flags a broken mix without blocking', async () => {
+  const week = await titledWeek();
+  assert.deepEqual(week.mix, { gabee: 1, light: 1, value: 4, ok: true, problems: [] });
+  const light = week.slots.find((s) => s.pillar === 'light')!;
+  const updated = await updateSlot(light.id, { pillar: 'gabee' }, actor);
+  assert.equal(updated.pillar, 'gabee');
+  const after = await getWeek(week.id);
+  assert.deepEqual(after.mix, { gabee: 2, light: 0, value: 4, ok: false, problems: ['no_light'] });
+  const [audit] = await audits('content.slot.update');
+  assert.deepEqual((audit!.diff as { before: { pillar: string }; after: object }).before.pillar, 'light');
+  assert.deepEqual((audit!.diff as { after: object }).after, { pillar: 'gabee' });
+  // A broken mix is the owner's call: the week still validates.
+  assert.equal((await validateWeek(week.id, actor)).status, 'validated');
+
+  // On a validated day, the drafts written for the old pillar no longer match.
+  const day = after.slots[3]!;
+  const draft = await createContentDraft(prisma, day.id, { platform: day.platforms[0]!.platform, status: 'approved' });
+  await updateSlot(day.id, { pillar: 'light' }, actor);
+  assert.equal((await prisma.contentDraft.findUniqueOrThrow({ where: { id: draft.id } })).status, 'stale');
+  assert.equal((await getWeek(week.id)).mix.ok, true);
 });
 
 test('editing a slot marks its drafts stale', async () => {
@@ -182,18 +352,23 @@ test('editing a slot marks its drafts stale', async () => {
 });
 
 test('regenerateSlot replaces the line with the strategist output for that day and marks drafts stale', async () => {
-  const week = await titledWeek((i) => (i < 2 ? ['en', 'en'] : ['fr', 'fr']));
+  const week = await titledWeek();
   await validateWeek(week.id, actor);
   const target = week.slots[3]!;
   const draft = await createContentDraft(prisma, target.id, { platform: 'linkedin', status: 'ready' });
+  // The owner moved Thursday to TikTok: a regenerate re-plans the week's lines as they are now.
+  await updateSlot(target.id, { platforms: [{ platform: 'tiktok', language: 'fr' }] }, actor);
+  const lines = linesOf(await getWeek(week.id));
+  assert.deepEqual(lines[3], { date: '2026-10-29', platforms: ['tiktok'] });
 
-  const dates = week.slots.map((s) => s.date);
-  const fresh = titlesFor(dates);
+  const fresh = titlesFor(lines, undefined, (i) => (i === 3 ? 'light' : i === 0 ? 'gabee' : 'value'));
   fresh.days[3] = { ...fresh.days[3]!, topic: 'Sujet régénéré', angle: 'Nouvel angle' };
-  fake([{ json: fresh }]);
+  const adapter = fake([{ json: fresh }]);
   const slot = await regenerateSlot(target.id, actor);
+  assert.deepEqual(titlesTask(adapter, 0).days.map((d) => d.platforms), lines.map((d) => d.platforms));
   assert.equal(slot.topic, 'Sujet régénéré');
   assert.equal(slot.angle, 'Nouvel angle');
+  assert.equal(slot.pillar, 'light');
   assert.equal(slot.status, 'validated');
   assert.equal((await prisma.contentDraft.findUniqueOrThrow({ where: { id: draft.id } })).status, 'stale');
   // Other days are untouched.
@@ -207,8 +382,8 @@ const objectiveText = (adapter: FakeAiAdapter, call: number) => {
 };
 
 test('titles and slot regenerate read the month objective set after the week started, and re-link the week', async () => {
-  const dates = ['2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01'];
-  const adapter = fake([{ json: proposals }, { json: titlesFor(dates) }]);
+  const plan = cadence('2026-10-26');
+  const adapter = fake([{ json: proposals }, { json: titlesFor(plan) }]);
   // The Sunday run for the week of Mon 26 Oct, before any October objective existed.
   const started = await startWeek({ now: new Date('2026-10-25T05:00:00Z'), origin: 'scheduled_job' });
   assert.equal(started.objective_id, null);
@@ -223,13 +398,13 @@ test('titles and slot regenerate read the month objective set after the week sta
   // A later edit of the objective is what a day regenerate (after validation) reads.
   await validateWeek(titled.id, actor);
   await prisma.contentObjective.update({ where: { id: objective.id }, data: { statement: 'Soixante familles' } });
-  const again = fake([{ json: titlesFor(dates) }]);
+  const again = fake([{ json: titlesFor(plan) }]);
   await regenerateSlot(titled.slots[4]!.id, actor);
   assert.match(objectiveText(again, 0), /Soixante familles/);
 
   // The objective is removed: the next week-level run reads none and the week follows.
   await prisma.contentObjective.delete({ where: { id: objective.id } });
-  const third = fake([{ json: titlesFor(dates) }]);
+  const third = fake([{ json: titlesFor(plan) }]);
   await regenerateSlot(titled.slots[5]!.id, actor);
   assert.match(objectiveText(third, 0), /no objective is set/);
   assert.equal((await getWeek(titled.id)).objective_id, null);
@@ -269,7 +444,7 @@ async function strategistRun(weekId: string, subjectKind: 'week_proposals' | 'we
 test('propose, direction and slot regenerate refuse while a strategist run on the week is live', async () => {
   const proposing = await createContentWeek(prisma, { status: 'proposing' });
   const ready = await createContentWeek(prisma, { status: 'proposals_ready', proposals });
-  const titled = await titledWeek((i) => (i < 2 ? ['en', 'en'] : ['fr', 'fr']));
+  const titled = await titledWeek();
   await strategistRun(proposing.id, 'week_proposals', 2);
   await strategistRun(ready.id, 'week_titles', 0);
   await strategistRun(titled.id, 'week_titles', 19); // a slow call (180 s × 2 SDK attempts, + runAgent retry) is still live

@@ -69,6 +69,7 @@ async function draftFixture(platform: 'linkedin' | 'tiktok' = 'linkedin') {
     topic: 'Compter les courses',
     angle: 'Les maths au marché',
     format: 'gameplay_video',
+    pillar: 'light',
     platforms: [
       { platform: 'linkedin', language: 'en' },
       { platform: 'tiktok', language: 'fr' },
@@ -190,6 +191,7 @@ test('runAgent succeeds on the retry after one invalid output', async () => {
   assert.match(text('week_direction').text, /Plus concret/);
   assert.doesNotMatch(text('week_direction').text, /Montrer le jeu/); // TikTok-only angle
   assert.match(text('slot').text, /"language": "en"/);
+  assert.match(text('slot').text, /"pillar": "light"/, 'the writer knows the day is a light post');
   assert.equal(text('sources').trusted, false);
 });
 
@@ -307,7 +309,7 @@ test('art director picks from the cleared library and refuses invented ids', asy
   assert.ok(d2 && d2.kind === 'text' && d2.text.includes('Texte tout neuf'));
 });
 
-test('strategist titles run plans exactly the week dates without web search', async () => {
+test('strategist titles run plans exactly the posting days without web search', async () => {
   const week = await createContentWeek(prisma, {
     startsOn: new Date('2026-10-26'),
     firstDay: new Date('2026-10-29'),
@@ -316,21 +318,25 @@ test('strategist titles run plans exactly the week dates without web search', as
     chosenIndex: 2,
     refinement: 'Le marché',
   });
-  const dates = ['2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01'];
-  const day = (date: string) => ({
+  // Thursday (LinkedIn), Friday and Sunday (TikTok): the default cadence from Thursday.
+  const plan: Array<[string, 'linkedin' | 'tiktok', 'light' | 'value']> = [
+    ['2026-10-29', 'linkedin', 'value'],
+    ['2026-10-30', 'tiktok', 'light'],
+    ['2026-11-01', 'tiktok', 'value'],
+  ];
+  const dates = plan.map(([date]) => date);
+  const day = ([date, platform, pillar]: (typeof plan)[number]) => ({
     date,
     topic: `Sujet ${date}`,
     angle: 'a',
     format: 'story',
-    platforms: [
-      { platform: 'linkedin', language: 'fr' },
-      { platform: 'tiktok', language: 'en' },
-    ],
+    pillar,
+    platforms: [{ platform, language: 'en' }],
     sources: [],
   });
-  const adapter = fake([{ json: { days: [day('2026-10-26')] } }, { json: { days: dates.map(day) } }]);
+  const adapter = fake([{ json: { days: [day(['2026-10-26', 'tiktok', 'light'])] } }, { json: { days: plan.map(day) } }]);
   const out = await runAgent('strategist', { kind: 'week_titles', id: week.id }, 'user_action', '00000000-0000-4000-8000-000000000001');
-  assert.equal('days' in out && out.days.length, 4);
+  assert.equal('days' in out && out.days.length, 3);
   assert.equal(adapter.calls.length, 2);
   const req = adapter.calls[0]!.req;
   assert.equal(req.task, 'content_titles');
@@ -339,7 +345,9 @@ test('strategist titles run plans exactly the week dates without web search', as
   assert.equal(labelsOf(req.blocks).at(-1), 'week_direction');
   const task = req.blocks.find((b) => b.kind === 'text' && b.label === 'task');
   assert.ok(task && task.kind === 'text' && dates.every((d) => task.text.includes(d)));
-  assert.match(task.text, /"english_min_per_platform": 1/);
+  assert.doesNotMatch(task.text, /2026-10-31/, 'nothing posts on Saturday');
+  assert.match(task.text, /"linkedin": 0/, 'one LinkedIn post in a partial week needs no English');
+  assert.match(task.text, /"tiktok": 1/);
   const usage = await prisma.aiUsage.findMany();
   assert.ok(usage.every((u) => u.task === 'content_titles' && u.actorId === '00000000-0000-4000-8000-000000000001'));
 });

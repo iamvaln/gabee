@@ -3,7 +3,7 @@ import test, { after, afterEach, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { NextRequest } from 'next/server';
 import { createContentDraft, createContentSlot, createContentWeek, createTestClient, resetDb, seedContentStudio } from '@gabee/db/testing';
-import type { AiTask } from '@gabee/types';
+import { DEFAULT_POSTING_DAYS, type AiTask } from '@gabee/types';
 import { createLoginableParent } from '@/test/factories';
 import { adminCookie, parentCookie, parentToken, webRequest } from '@/test/auth';
 import { setErrorReporterForTests } from '@/lib/server/report-error';
@@ -11,6 +11,7 @@ import { resetAiAdapters, setAiAdapters, type AiAdapter } from '@/lib/server/ai/
 import { FakeAiAdapter, type FakeAiStep } from '@/lib/server/ai/router/fake-adapter';
 import { localParts } from '@/lib/server/content-studio/clock';
 import { addDaysYmd } from '@/lib/server/content-studio/state';
+import { plannedDays } from '@/lib/server/content-studio/cadence';
 import { GET as listWeeks, POST as startNow } from './route';
 import { GET as getWeek } from './[id]/route';
 import { POST as propose } from './[id]/propose/route';
@@ -76,6 +77,7 @@ const proposals = {
   proposals: [0, 1, 2].map((i) => ({ title: `Direction ${i}`, rationale: 'r', evidence: ['e'], sample_angles: ['a'] })),
 };
 
+/** A titles answer: each date with both platforms, the first one light. */
 function titlesFor(dates: string[]) {
   return {
     days: dates.map((date, i) => ({
@@ -83,6 +85,7 @@ function titlesFor(dates: string[]) {
       topic: `Sujet ${date}`,
       angle: `Angle ${i}`,
       format: 'text',
+      pillar: i === 0 ? 'light' : 'value',
       platforms: [
         { platform: 'linkedin', language: i < 2 ? 'en' : 'fr' },
         { platform: 'tiktok', language: i < 2 ? 'en' : 'fr' },
@@ -205,12 +208,11 @@ test('slot regenerate on a validated day due today writes its drafts, audited as
   const slot = await createContentSlot(prisma, week.id, {
     date: new Date(p.date),
     topic: 'Compter les courses',
-    platforms: [{ platform: 'linkedin', language: 'fr' }],
     status: 'validated',
   });
-  const dates = Array.from({ length: 7 - ((p.weekday + 6) % 7) }, (_, i) => addDaysYmd(p.date, i));
+  // The week's only line: a day regenerate re-plans the week's existing lines.
   byTask({
-    content_titles: [{ json: titlesFor(dates) }],
+    content_titles: [{ json: titlesFor([p.date]) }],
     post_linkedin: [{ json: { body: 'Votre enfant compte en jouant.', hashtags: ['#Gabee', '#Parents', '#Maths'], link_target: 'landing' } }],
     post_tiktok: [
       {
@@ -437,13 +439,25 @@ test('every mutation writes an audit row', async () => {
 
   // A week stuck in proposing, far from today: propose → direction → edit / regenerate / skip a day → validate.
   const week = await createContentWeek(prisma, { status: 'proposing' });
-  const dates = Array.from({ length: 7 }, (_, i) => addDaysYmd(week.startsOn.toISOString().slice(0, 10), i));
-  fake([{ json: proposals }, { json: titlesFor(dates) }, { json: titlesFor(dates) }]);
+  const monday = week.startsOn.toISOString().slice(0, 10);
+  const plan = plannedDays(monday, monday, DEFAULT_POSTING_DAYS, ['linkedin', 'tiktok']);
+  const titles = {
+    days: plan.map((d, i) => ({
+      date: d.date,
+      topic: `Sujet ${d.date}`,
+      angle: `Angle ${i}`,
+      format: 'text',
+      pillar: i === 0 ? 'light' : 'value',
+      platforms: d.platforms.map((platform) => ({ platform, language: i < 2 ? 'en' : 'fr' })),
+      sources: [],
+    })),
+  };
+  fake([{ json: proposals }, { json: titles }, { json: titles }]);
   assert.equal((await propose(post(`/weeks/${week.id}/propose`), ctx(week.id))).status, 200);
   const chosen = await direction(post(`/weeks/${week.id}/direction`, { proposal_index: 0, refinement: 'Plus concret', platform_angles: {} }), ctx(week.id));
   assert.equal(chosen.status, 200);
   const slots = (await chosen.json()).week.slots as Array<{ id: string }>;
-  assert.equal(slots.length, 7);
+  assert.equal(slots.length, 6, 'one line per posting day: nothing posts on Saturday');
   assert.equal((await patchSlot(patch(`/slots/${slots[3]!.id}`, { topic: 'Un autre sujet' }), ctx(slots[3]!.id))).status, 200);
   assert.equal((await regenerateSlot(post(`/slots/${slots[4]!.id}/regenerate`), ctx(slots[4]!.id))).status, 200);
   assert.equal((await skipSlot(post(`/slots/${slots[5]!.id}/skip`, { reason: 'Jour férié' }), ctx(slots[5]!.id))).status, 200);

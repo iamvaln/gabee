@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { fitsPlatform, type ArtDirection, type ContentPlatform, type LinkedInPost, type TikTokPost, type WeekTitles } from '@gabee/types';
+import { PILLAR_MIX, fitsPlatform, pillarMix, type ArtDirection, type ContentPlatform, type LinkedInPost, type TikTokPost, type WeekTitles } from '@gabee/types';
+import type { PlannedDay } from './cadence';
 
 /**
  * "Schema-valid but unusable" checks (Review Focus 3). The router already
@@ -161,17 +162,35 @@ export function checkArtDirection(
   return out;
 }
 
-/** The titles run must plan exactly the requested dates, in order, each for every enabled platform once. */
-export function checkWeekTitles(output: WeekTitles, dates: readonly string[], platforms: readonly ContentPlatform[]): string[] {
+/**
+ * The titles run must plan exactly the planned days, in order, each with
+ * exactly the platforms posting that day (the cadence), and keep the weekly
+ * mix: at most 3 days about Gabee, at least one light day.
+ */
+export function checkWeekTitles(output: WeekTitles, days: readonly PlannedDay[]): string[] {
   const out: string[] = [];
+  const dates = days.map((d) => d.date);
   const got = output.days.map((d) => d.date);
   if (got.join(',') !== dates.join(',')) {
-    out.push(`days must cover exactly ${dates.join(', ')} in this order; got ${got.join(', ') || 'none'}.`);
+    out.push(`days must cover exactly ${dates.join(', ') || 'no date'} in this order; got ${got.join(', ') || 'none'}.`);
   }
-  const want = [...platforms].sort().join(',');
   for (const day of output.days) {
+    const planned = days.find((d) => d.date === day.date);
+    if (!planned) continue;
+    const want = [...planned.platforms].sort().join(',');
     const have = day.platforms.map((p) => p.platform).sort().join(',');
     if (have !== want) out.push(`${day.date}: platforms must be exactly ${want}; got ${have || 'none'}.`);
+  }
+  const mix = pillarMix(output.days.map((d) => d.pillar));
+  if (mix.problems.includes('too_much_gabee')) {
+    out.push(
+      `${mix.gabee} days have pillar "gabee": at most ${PILLAR_MIX.gabee_max} days may be about Gabee itself. Make the others "value" (useful for parents) or "light".`,
+    );
+  }
+  if (mix.problems.includes('no_light')) {
+    out.push(
+      'No day has pillar "light": at least one day must be a light post (news, « Le saviez-vous ? », a game or quiz, an event in the kids\' games or education world, an observance day).',
+    );
   }
   return out;
 }
