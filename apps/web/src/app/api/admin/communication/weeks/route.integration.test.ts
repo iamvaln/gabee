@@ -18,6 +18,7 @@ import { POST as propose } from './[id]/propose/route';
 import { POST as regenerateProposals } from './[id]/regenerate-proposals/route';
 import { POST as direction } from './[id]/direction/route';
 import { POST as validate } from './[id]/validate/route';
+import { GET as previewRhythm, POST as applyRhythm } from './[id]/apply-rhythm/route';
 import { PATCH as patchSlot } from '../slots/[id]/route';
 import { POST as regenerateSlot } from '../slots/[id]/regenerate/route';
 import { POST as skipSlot } from '../slots/[id]/skip/route';
@@ -296,6 +297,48 @@ test('regenerate-proposals maps a live run to 409 and an unavailable AI to 503',
   assert.equal(down.status, 503);
   assert.equal((await down.json()).error.code, 'ai_unavailable');
   assert.equal((await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id } })).status, 'proposing', 'left for "Relancer"');
+});
+
+test('apply-rhythm: super-admin only, previews then applies to the future days, idempotent', async () => {
+  // Next week, validated on the default cadence: every day is in the future.
+  const monday = addDaysYmd(mondayOf(studioToday()), 7);
+  const week = await createContentWeek(prisma, { startsOn: new Date(monday), firstDay: new Date(monday), status: 'validated' });
+  for (const d of plannedDays(monday, monday, DEFAULT_POSTING_DAYS, ['linkedin', 'tiktok'])) {
+    await createContentSlot(prisma, week.id, { date: new Date(d.date), platforms: d.platforms.map((platform) => ({ platform, language: 'en' })) });
+  }
+  // TikTok stops on Sundays.
+  await prisma.studioSettings.update({ where: { id: 'default' }, data: { postingDays: { linkedin: [2, 3, 4], tiktok: [1, 3, 5] } } });
+
+  // A plain admin may neither preview nor apply.
+  assert.equal((await previewRhythm(get(`/weeks/${week.id}/apply-rhythm`), ctx(week.id))).status, 403);
+  assert.equal((await applyRhythm(post(`/weeks/${week.id}/apply-rhythm`), ctx(week.id))).status, 403);
+
+  const { parent: owner } = await createLoginableParent(prisma, { role: 'super_admin' });
+  const superC = adminCookie(await parentToken(owner.id, owner.email));
+  const preview = await previewRhythm(get(`/weeks/${week.id}/apply-rhythm`, superC), ctx(week.id));
+  assert.equal(preview.status, 200);
+  const { plan } = await preview.json();
+  assert.equal(plan.summary, '1 jour sauté');
+  assert.deepEqual(plan.changes.map((c: { date: string; kind: string }) => [c.date, c.kind]), [[addDaysYmd(monday, 6), 'skip']]);
+  assert.equal(await prisma.contentSlot.count({ where: { weekId: week.id, status: 'skipped' } }), 0, 'the preview changes nothing');
+
+  const applied = await applyRhythm(post(`/weeks/${week.id}/apply-rhythm`, undefined, superC), ctx(week.id));
+  assert.equal(applied.status, 200);
+  const body = await applied.json();
+  assert.equal(body.plan.summary, '1 jour sauté');
+  assert.equal(body.week.slots.find((s: { date: string }) => s.date === addDaysYmd(monday, 6)).skip_reason, 'Nouveau rythme');
+  const audit = await prisma.auditLog.findFirstOrThrow({ where: { kind: 'content.week.apply_rhythm' } });
+  assert.equal(audit.actorId, owner.id);
+  assert.equal(audit.actorRole, 'super_admin');
+
+  const again = await (await applyRhythm(post(`/weeks/${week.id}/apply-rhythm`, undefined, superC), ctx(week.id))).json();
+  assert.deepEqual(again.plan.changes, []);
+
+  // A week not validated yet is refused.
+  const draft = await createContentWeek(prisma, { status: 'titles_ready' });
+  const refused = await previewRhythm(get(`/weeks/${draft.id}/apply-rhythm`, superC), ctx(draft.id));
+  assert.equal(refused.status, 409);
+  assert.equal((await refused.json()).error.code, 'invalid_transition');
 });
 
 test('invalid ids answer 404, unknown ids 404 week_not_found', async () => {
