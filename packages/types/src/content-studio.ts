@@ -285,11 +285,15 @@ export const PUBLISH_URL_MAX = 500;
 
 export type PublishUrlProblem = 'not_url' | 'not_https' | 'wrong_host' | 'too_long';
 
+/** The WHATWG URL parser (browsers and Node), typed here: this package has no DOM or Node lib. */
+type ParsedUrl = { protocol: string; hostname: string; username: string; password: string; port: string };
+const WhatwgUrl = (globalThis as unknown as { URL: new (input: string) => ParsedUrl }).URL;
+
 /** Why `value` cannot be `platform`'s publish link, or null when it can. */
 export function publishUrlProblem(platform: ContentPlatform, value: string): PublishUrlProblem | null {
-  let url: URL;
+  let url: ParsedUrl;
   try {
-    url = new URL(value);
+    url = new WhatwgUrl(value);
   } catch {
     return 'not_url';
   }

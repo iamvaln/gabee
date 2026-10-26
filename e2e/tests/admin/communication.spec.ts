@@ -1,18 +1,20 @@
 import { randomUUID } from 'node:crypto';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { prisma, FIXTURES, pollUntil } from '../../helpers/db';
 import {
   LINKEDIN_BODY,
   LINKEDIN_URL,
   PROPOSALS,
+  PUBLISH_LINKS,
   addDays,
   ageWeek,
   mondayOf,
   resetAudience,
   resetContentStudio,
   resetJournal,
+  resetPublishLinks,
   resetStudioSettings,
   seedAudience,
   seedFailedJournal,
@@ -58,6 +60,7 @@ test.beforeEach(async () => {
   await resetJournal();
   await resetAudience();
   await resetStudioSettings();
+  await resetPublishLinks();
 });
 
 const card = (page: Page, platform: 'LinkedIn' | 'TikTok') => page.getByRole('article', { name: new RegExp(`^${platform}`) });
@@ -902,4 +905,124 @@ test('an upload can be cancelled, and a failed transfer says what to do', async 
   ).toBeVisible();
   await expect(send).toBeEnabled();
   expect(puts).toBe(2);
+});
+
+// ── « Copier et ouvrir » and the owner's own media ──
+
+/** No request leaves the test: the platforms' pages answer with a stub. */
+async function stubPlatforms(context: BrowserContext): Promise<void> {
+  for (const host of ['https://www.linkedin.com/**', 'https://www.tiktok.com/**']) {
+    await context.route(host, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>stub</title>' }));
+  }
+}
+
+test('« Copier et ouvrir LinkedIn » copies the post and opens the page composer, then points to Marquer comme publié', async ({ page, context }) => {
+  await stubPlatforms(context);
+  await seedTodayBoard();
+  await page.goto('/admin/communication');
+  const li = card(page, 'LinkedIn');
+  await li.getByRole('button', { name: 'Valider', exact: true }).click();
+  await expect(li.getByText('Validé', { exact: true })).toBeVisible();
+
+  const [tab] = await Promise.all([context.waitForEvent('page'), li.getByRole('link', { name: 'Copier et ouvrir LinkedIn' }).click()]);
+  await expect.poll(() => tab.url()).toBe(PUBLISH_LINKS.linkedin);
+  await tab.close();
+  await page.bringToFront();
+  await expect(li.getByText('Texte copié — collez-le dans LinkedIn')).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain(LINKEDIN_BODY);
+  expect(copied).toContain(LINKEDIN_URL);
+  // Back from LinkedIn: the next step is said, and « Marquer comme publié » is right there.
+  await expect(li.getByText(/revenez ici : « Marquer comme publié »/)).toBeVisible();
+  await expect(li.getByRole('button', { name: 'Marquer comme publié' })).toBeVisible();
+  // « Copier le texte » stays for other uses.
+  await expect(li.getByRole('button', { name: 'Copier le texte' })).toBeVisible();
+});
+
+test('a TikTok post with the owner’s own video: approve it, copy the caption and open TikTok, mark it published', async ({ page, context }) => {
+  await stubPlatforms(context);
+  const { tiktokDraftId } = await seedTodayBoard();
+  await page.goto('/admin/communication');
+  const tt = card(page, 'TikTok');
+  await expect(tt.getByRole('button', { name: 'Valider', exact: true })).toBeDisabled();
+
+  await tt.getByRole('button', { name: 'J’utilise ma propre vidéo' }).click();
+  const dialog = page.getByRole('dialog', { name: 'J’utilise ma propre vidéo' });
+  await dialog.getByLabel(/Nom du fichier ou note/).fill('tournage-cuisine.mp4');
+  await dialog.getByRole('button', { name: 'Utiliser ma vidéo' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(tt.getByText('Vidéo hors Médiathèque')).toBeVisible();
+  await expect(tt.getByText(/tournage-cuisine\.mp4/)).toBeVisible();
+  await expect(tt.getByText('Publiez avec votre vidéo, puis collez la légende')).toBeVisible();
+  await expect(tt.getByRole('button', { name: 'Choisir une vidéo' })).toBeVisible();
+
+  await tt.getByRole('button', { name: 'Valider', exact: true }).click();
+  await expect(tt.getByText('Validé', { exact: true })).toBeVisible();
+  const [tab] = await Promise.all([context.waitForEvent('page'), tt.getByRole('link', { name: 'Copier la légende et ouvrir TikTok' }).click()]);
+  await expect.poll(() => tab.url()).toBe(PUBLISH_LINKS.tiktok);
+  await tab.close();
+  await page.bringToFront();
+  await expect(tt.getByText('Légende copiée — collez-la dans TikTok')).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('Ten minutes of reading a day, the Gabee way.');
+
+  await tt.getByRole('button', { name: 'Marquer comme publié' }).click();
+  const publish = page.getByRole('dialog', { name: 'Marquer comme publié' });
+  await publish.getByLabel('Lien du post publié').fill('https://www.tiktok.com/@gabee/video/1');
+  await publish.getByRole('button', { name: 'Enregistrer la publication' }).click();
+  await expect(publish).toHaveCount(0);
+  await expect(tt.getByText('Publié', { exact: true })).toBeVisible();
+
+  const draft = await prisma.contentDraft.findUniqueOrThrow({ where: { id: tiktokDraftId } });
+  expect([draft.status, draft.externalMedia, draft.externalMediaNote, draft.mediaAssetId]).toEqual(['published', true, 'tournage-cuisine.mp4', null]);
+  expect(await prisma.auditLog.count({ where: { kind: 'content.draft.external_media', targetId: tiktokDraftId } })).toBe(1);
+});
+
+test('LinkedIn takes the owner’s own media too, and turning it off brings back the text-only notice', async ({ page }) => {
+  const { linkedinDraftId } = await seedTodayBoard();
+  await page.goto('/admin/communication');
+  const li = card(page, 'LinkedIn');
+  await expect(li.getByText('Aucun média autorisé — le post partira en texte seul')).toBeVisible();
+
+  await li.getByRole('button', { name: 'J’utilise mon propre média (image ou vidéo)' }).click();
+  const dialog = page.getByRole('dialog', { name: 'J’utilise mon propre média (image ou vidéo)' });
+  await dialog.getByRole('button', { name: 'Utiliser mon média' }).click();
+  await expect(li.getByText('Média hors Médiathèque')).toBeVisible();
+  await expect(li.getByText('Aucun média autorisé — le post partira en texte seul')).toHaveCount(0);
+  expect((await prisma.contentDraft.findUniqueOrThrow({ where: { id: linkedinDraftId } })).externalMedia).toBe(true);
+
+  await li.getByRole('button', { name: 'Ne plus utiliser mon média' }).click();
+  await expect(li.getByText('Aucun média autorisé — le post partira en texte seul')).toBeVisible();
+  await expect(li.getByText('Média hors Médiathèque')).toHaveCount(0);
+});
+
+test('without a LinkedIn page link, the card points to Réglages, where the owner sets it', async ({ page, context }) => {
+  await stubPlatforms(context);
+  await resetPublishLinks({ linkedin: null });
+  await seedTodayBoard();
+  await page.goto('/admin/communication');
+  const li = card(page, 'LinkedIn');
+  await expect(li.getByRole('link', { name: 'Copier et ouvrir LinkedIn' })).toHaveCount(0);
+  await li.getByRole('link', { name: 'Ajoutez le lien de votre page dans Réglages' }).click();
+  await expect(page).toHaveURL(/\/admin\/communication\/reglages$/);
+
+  const links = page.getByRole('region', { name: 'Liens de publication' });
+  await expect(links.getByText(/Ouvrez votre page Gabee en tant qu’admin, cliquez sur « Créer un post », copiez l’adresse\./)).toBeVisible();
+  const field = links.getByLabel('Page LinkedIn (créer un post)');
+  await expect(field).toHaveValue('');
+  await expect(links.getByLabel('TikTok (envoyer une vidéo)')).toHaveValue(PUBLISH_LINKS.tiktok);
+  await field.fill('https://www.tiktok.com/upload');
+  await expect(links.getByText('L’adresse doit ouvrir www.linkedin.com.')).toBeVisible();
+  await expect(links.getByRole('button', { name: 'Enregistrer les liens' })).toBeEnabled();
+  await links.getByRole('button', { name: 'Enregistrer les liens' }).click();
+  expect((await prisma.platformProfile.findUniqueOrThrow({ where: { platform: 'linkedin' } })).publishUrl).toBeNull();
+
+  const mine = 'https://www.linkedin.com/company/109660238/admin/page-posts/published/?share=true';
+  await field.fill(mine);
+  await links.getByRole('button', { name: 'Enregistrer les liens' }).click();
+  await expect(links.getByText('Enregistré')).toBeVisible();
+  expect((await prisma.platformProfile.findUniqueOrThrow({ where: { platform: 'linkedin' } })).publishUrl).toBe(mine);
+
+  await page.goto('/admin/communication');
+  const [tab] = await Promise.all([context.waitForEvent('page'), card(page, 'LinkedIn').getByRole('link', { name: 'Copier et ouvrir LinkedIn' }).click()]);
+  await expect.poll(() => tab.url()).toBe(mine);
 });
