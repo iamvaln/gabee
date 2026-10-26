@@ -111,6 +111,10 @@ const COPY: Record<string, Bi> = {
     fr: "Ce fichier n'existe plus dans la Médiathèque. Choisissez-en un autre.",
     en: 'This file is no longer in the Media library. Pick another one.',
   },
+  invalid_publish_url: {
+    fr: 'Ce lien de publication ne convient pas : collez une adresse https:// de la plateforme (linkedin.com ou tiktok.com).',
+    en: "This publish link does not fit: paste an https:// address on the platform's own site (linkedin.com or tiktok.com).",
+  },
   not_pending: {
     fr: 'Ce fichier a déjà été traité. Rechargez la page pour voir la Médiathèque à jour.',
     en: 'This file was already processed. Reload the page to see the up-to-date Media library.',
@@ -157,6 +161,8 @@ const SERVER_FR = new Set([
   'draft_not_found',
   'not_found',
   'no_media',
+  // Names the platform and what is wrong with its link.
+  'invalid_publish_url',
   'platform_not_planned',
   // Names the platform left without a day.
   'invalid_posting_days',

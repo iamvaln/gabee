@@ -12,7 +12,7 @@ import { MemoryStorage } from '../storage/memory';
 import { resetAiAdapters, setAiAdapters, type AiAdapter } from '../ai/router';
 import { FakeAiAdapter, type FakeAiStep } from '../ai/router/fake-adapter';
 import type { Actor } from './state';
-import { approveDraft, editDraft, generateDraftsForDay, markPublished, regenerateDraft, todayBoard } from './drafts';
+import { approveDraft, editDraft, generateDraftsForDay, markPublished, regenerateDraft, setExternalMedia, todayBoard } from './drafts';
 import { updateSlot } from './weeks';
 
 const prisma = createTestClient();
@@ -433,4 +433,115 @@ test('todayBoard returns the day slot and yesterday’s unpublished drafts', asy
   const empty = await todayBoard('2026-12-01');
   assert.equal(empty.slot, null);
   assert.equal(empty.week_status, null);
+});
+
+// ── « J'utilise ma propre vidéo / mon propre média » ──
+
+const externalAudits = () => prisma.auditLog.findMany({ where: { kind: 'content.draft.external_media' }, orderBy: { createdAt: 'asc' } });
+
+test('tiktok: with the owner’s own video, the draft is approved without a library video, then published', async () => {
+  const { slot } = await fixture();
+  await prisma.contentSlot.update({ where: { id: slot.id }, data: { status: 'drafted' } });
+  const draft = await readyDraft(slot.id, 'tiktok');
+  // Neither a library video nor the owner's own: refused as before.
+  await assert.rejects(approveDraft(draft.id, actor), isHttp(409, 'video_required'));
+
+  const own = await setExternalMedia(draft.id, { enabled: true, note: '  tournage-cuisine.mp4  ' }, actor);
+  assert.deepEqual(own.external_media, { note: 'tournage-cuisine.mp4' });
+  assert.equal(own.status, 'ready');
+  assert.equal(own.media, null);
+
+  const approved = await approveDraft(draft.id, actor);
+  assert.equal(approved.status, 'approved');
+  const published = await markPublished(draft.id, { post_url: 'https://www.tiktok.com/@gabee/video/9' }, actor);
+  assert.equal(published.status, 'published');
+  assert.deepEqual(published.external_media, { note: 'tournage-cuisine.mp4' });
+
+  const rows = await externalAudits();
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0]!.actorId, actor.id);
+  assert.equal(rows[0]!.targetId, draft.id);
+  assert.deepEqual(rows[0]!.diff, {
+    before: { enabled: false, note: null },
+    after: { enabled: true, note: 'tournage-cuisine.mp4' },
+    media_asset_id: null,
+    unapproved: false,
+  });
+});
+
+test('turning the own video off restores the rule: an approved TikTok draft without a library video goes back to ready', async () => {
+  const { slot } = await fixture();
+  const draft = await readyDraft(slot.id, 'tiktok');
+  await setExternalMedia(draft.id, { enabled: true }, actor);
+  assert.equal((await approveDraft(draft.id, actor)).status, 'approved');
+
+  // Changing only the note keeps the approval.
+  const renamed = await setExternalMedia(draft.id, { enabled: true, note: 'version-courte.mp4' }, actor);
+  assert.equal(renamed.status, 'approved');
+  assert.deepEqual(renamed.external_media, { note: 'version-courte.mp4' });
+
+  const off = await setExternalMedia(draft.id, { enabled: false }, actor);
+  assert.equal(off.external_media, null);
+  assert.equal(off.status, 'ready');
+  assert.equal(off.approved_version_id, null);
+  await assert.rejects(approveDraft(draft.id, actor), isHttp(409, 'video_required'));
+  const last = (await externalAudits()).at(-1)!;
+  assert.deepEqual(last.diff, { before: { enabled: true, note: 'version-courte.mp4' }, after: { enabled: false, note: null }, media_asset_id: null, unapproved: true });
+});
+
+test('attaching a library file clears the own media; choosing the own media detaches the library file', async () => {
+  const { slot } = await fixture();
+  const draft = await readyDraft(slot.id, 'tiktok');
+  await setExternalMedia(draft.id, { enabled: true, note: 'ma-video.mp4' }, actor);
+
+  const video = await createMediaAsset(prisma, { kind: 'video', mime: 'video/mp4', aspect: '9:16', cleared: false });
+  const attached = await editDraft(draft.id, { media_asset_id: video.id }, actor);
+  assert.equal(attached.media?.id, video.id);
+  assert.equal(attached.external_media, null);
+  const row = await prisma.contentDraft.findUniqueOrThrow({ where: { id: draft.id } });
+  assert.equal(row.externalMediaNote, null);
+  const edit = await prisma.auditLog.findFirstOrThrow({ where: { kind: 'content.draft.edit' } });
+  assert.deepEqual((edit.diff as { external_media?: unknown }).external_media, { before: { enabled: true, note: 'ma-video.mp4' }, after: { enabled: false, note: null } });
+  // An uncleared library video blocks approval again.
+  await assert.rejects(approveDraft(draft.id, actor), isHttp(409, 'video_required'));
+
+  // Back to the own video: the uncleared library file is detached, and approval goes through.
+  const own = await setExternalMedia(draft.id, { enabled: true, note: '' }, actor);
+  assert.equal(own.media, null);
+  assert.deepEqual(own.external_media, { note: null });
+  assert.equal(((await externalAudits()).at(-1)!.diff as { media_asset_id: unknown }).media_asset_id, video.id, 'the detached file is audited');
+  assert.equal((await approveDraft(draft.id, actor)).status, 'approved');
+
+  // An edit that does not touch the media keeps the own media.
+  const text = await editDraft(draft.id, { body: 'Une minute de calcul, en vrai. Lien en bio !' }, actor);
+  assert.deepEqual(text.external_media, { note: null });
+});
+
+test('linkedin: the own media is recorded and audited, and approval stays as it was (text only is fine)', async () => {
+  const { slot } = await fixture();
+  const draft = await readyDraft(slot.id, 'linkedin');
+  const own = await setExternalMedia(draft.id, { enabled: true, note: 'photo-atelier.jpg' }, actor);
+  assert.deepEqual(own.external_media, { note: 'photo-atelier.jpg' });
+  assert.equal((await approveDraft(draft.id, actor)).status, 'approved');
+  const off = await setExternalMedia(draft.id, { enabled: false }, actor);
+  // Text only is approvable on LinkedIn: turning it off keeps the approval.
+  assert.equal(off.status, 'approved');
+  assert.equal(off.external_media, null);
+  assert.deepEqual(
+    (await externalAudits()).map((r) => (r.diff as { after: unknown }).after),
+    [
+      { enabled: true, note: 'photo-atelier.jpg' },
+      { enabled: false, note: null },
+    ],
+  );
+});
+
+test('the own media cannot change on a published draft, nor while a generation holds it', async () => {
+  const { slot } = await fixture();
+  const published = await readyDraft(slot.id, 'linkedin', { status: 'published' });
+  await assert.rejects(setExternalMedia(published.id, { enabled: true }, actor), isHttp(409, 'invalid_transition'));
+  const busy = await readyDraft(slot.id, 'tiktok', { status: 'generating', generationLockUntil: new Date(Date.now() + 60_000) });
+  await assert.rejects(setExternalMedia(busy.id, { enabled: true }, actor), isHttp(409, 'generation_in_progress'));
+  assert.equal(await prisma.contentDraft.count({ where: { externalMedia: true } }), 0);
+  assert.equal((await externalAudits()).length, 0);
 });

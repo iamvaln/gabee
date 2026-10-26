@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useId, useState } from 'react';
 import type { ContentLanguage, ContentPlatform, Language } from '@gabee/types';
 import type { DraftDto } from '@/lib/server/content-studio/drafts';
+import type { PublishContext } from '@/lib/server/content-studio/publish-links';
 import { AIcon } from '../../_shell/icons';
 import { ApiError, api, downloadDraftMedia, notifyStudioChanged, reportUnexpected } from './api';
 import { copyText } from './copy';
@@ -11,17 +12,23 @@ import { ConfirmDialog } from './Dialog';
 import { DraftEditor } from './DraftEditor';
 import { AiWorking, ErrorNotice, Notice } from './ErrorNotice';
 import { errorText } from './errors';
+import { ExternalMediaDialog, ownMediaLabel, saveOwnMedia } from './ExternalMediaDialog';
 import { DRAFT_STATUS, LANGUAGE_LABEL, PLATFORM_LABEL, dateTime, postText } from './format';
 import { Preview } from './PostPreview';
 import { PublishDialog } from './PublishDialog';
+import { MissingPublishLink, OpenPlatformLink } from './PublishLink';
 
 const MEDIA_LIBRARY = '/admin/communication/medias';
 const MEDIA_UPLOAD = '/admin/communication/medias?upload=1';
 
-type Busy = null | 'approve' | 'regenerate' | 'save' | 'download';
+type Busy = null | 'approve' | 'regenerate' | 'save' | 'download' | 'own';
 
-/** Draft card of the Aujourd'hui screen: preview, status, and the owner's actions on one platform's post. */
-export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Language; onChange: (d: DraftDto) => void }) {
+/**
+ * Draft card of the Aujourd'hui screen: preview, status, and the owner's
+ * actions on one platform's post. `publish`: the links « Copier et ouvrir »
+ * opens (absent: no such button).
+ */
+export function PostCard({ draft, lang, onChange, publish }: { draft: DraftDto; lang: Language; onChange: (d: DraftDto) => void; publish?: PublishContext }) {
   const L = lang === 'fr';
   const t = (fr: string, en: string) => (L ? fr : en);
   const titleId = useId();
@@ -32,11 +39,16 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
   const [pickFirst, setPickFirst] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [copied, setCopied] = useState<null | 'ok' | 'fail'>(null);
+  /** `publish`: copied by « Copier et ouvrir » (says where to paste). */
+  const [copied, setCopied] = useState<null | 'ok' | 'fail' | 'publish'>(null);
+  /** The platform's publish page was opened from this card: say what to do once the post is live. */
+  const [opened, setOpened] = useState(false);
+  const [ownDialog, setOwnDialog] = useState(false);
+  const [confirmOwnOff, setConfirmOwnOff] = useState(false);
 
   useEffect(() => {
     if (!copied) return;
-    const id = window.setTimeout(() => setCopied(null), 3000);
+    const id = window.setTimeout(() => setCopied(null), copied === 'publish' ? 6000 : 3000);
     return () => window.clearTimeout(id);
   }, [copied]);
 
@@ -48,7 +60,9 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
   const media = draft.media;
   const isTikTok = draft.platform === 'tiktok';
   const videoOk = media !== null && media.kind === 'video' && media.cleared;
-  const mediaOk = isTikTok ? videoOk : media === null || media.cleared;
+  /** The owner posts with their own file, outside the Médiathèque. */
+  const own = draft.external_media;
+  const mediaOk = isTikTok ? videoOk || own !== null : media === null || media.cleared;
   const status = generating ? 'generating' : crashed ? 'interrupted' : draft.status;
   const badge = DRAFT_STATUS[status] ?? { tone: 'neutral', label: { fr: status, en: status } };
   const locked = busy !== null || generating;
@@ -113,6 +127,17 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
   };
   const canRegenerate = ['ready', 'approved', 'stale'].includes(draft.status);
   const canApprove = hasText && ['ready', 'stale'].includes(draft.status);
+  const canOpen = hasText && !generating && !crashed && ['ready', 'approved'].includes(draft.status);
+  const publishUrl = publish?.publish_links[draft.platform] ?? null;
+
+  const ownOff = () =>
+    run('own', async () => {
+      setConfirmOwnOff(false);
+      onChange(await saveOwnMedia(draft.id, false));
+    });
+  // Turning it off on an approved TikTok post with no library video removes the approval: ask first.
+  const askOwnOff = () => (draft.status === 'approved' && isTikTok && !videoOk ? setConfirmOwnOff(true) : void ownOff());
+  const ownActions = canEdit && !locked ? { on: () => setOwnDialog(true), off: askOwnOff } : undefined;
 
   return (
     <article className={'card studio-post' + (draft.status === 'published' ? ' is-published' : '')} aria-labelledby={titleId}>
@@ -178,7 +203,34 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
         )}
 
         {hasText && !generating && !crashed && !editing && draft.status !== 'published' && (
-          <MediaNotices draft={draft} lang={lang} onPick={canEdit && !locked ? () => openEditor(true) : undefined} />
+          <MediaNotices draft={draft} lang={lang} onPick={canEdit && !locked ? () => openEditor(true) : undefined} own={ownActions} />
+        )}
+
+        {isTikTok && canOpen && !editing && (videoOk || own) && (
+          <p className="help studio-publish-hint">
+            {videoOk
+              ? t(
+                  '1. Téléchargez la vidéo · 2. Ouvrez TikTok et déposez-la · 3. Collez la légende',
+                  '1. Download the video · 2. Open TikTok and drop it in · 3. Paste the caption',
+                )
+              : t('Publiez avec votre vidéo, puis collez la légende', 'Post with your video, then paste the caption')}
+          </p>
+        )}
+
+        {opened && canOpen && !editing && (
+          <Notice tone="info">
+            <p>
+              {draft.status === 'approved'
+                ? t(
+                    `Une fois le post en ligne sur ${platform}, revenez ici : « Marquer comme publié », puis collez son adresse.`,
+                    `Once the post is live on ${platform}, come back here: “Mark as published”, then paste its address.`,
+                  )
+                : t(
+                    `Validez ce post, puis marquez-le comme publié une fois en ligne sur ${platform}.`,
+                    `Approve this post, then mark it as published once it is live on ${platform}.`,
+                  )}
+            </p>
+          </Notice>
         )}
 
         {draft.publication && <PublicationSummary publication={draft.publication} lang={lang} />}
@@ -195,7 +247,11 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
           {media?.cleared && (
             <button type="button" className="btn secondary" onClick={download} disabled={locked}>
               <AIcon name="download" />
-              {busy === 'download' ? t('Préparation…', 'Preparing…') : t('Télécharger le média', 'Download media')}
+              {busy === 'download'
+                ? t('Préparation…', 'Preparing…')
+                : media.kind === 'video'
+                  ? t('Télécharger la vidéo', 'Download the video')
+                  : t('Télécharger le média', 'Download media')}
             </button>
           )}
           {canEdit && (
@@ -210,6 +266,23 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
               {t('Régénérer', 'Regenerate')}
             </button>
           )}
+          {canOpen &&
+            publish &&
+            (publishUrl ? (
+              <OpenPlatformLink
+                platform={draft.platform}
+                url={publishUrl}
+                text={postText(draft)}
+                lang={lang}
+                primary={draft.status === 'approved'}
+                onCopied={(ok) => {
+                  setCopied(ok ? 'publish' : 'fail');
+                  setOpened(true);
+                }}
+              />
+            ) : (
+              <MissingPublishLink platform={draft.platform} lang={lang} canEdit={publish.can_edit_settings} />
+            ))}
           {canApprove && (
             <button type="button" className="btn studio-primary" onClick={approve} disabled={locked || !mediaOk}>
               <AIcon name="check" />
@@ -224,6 +297,8 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
           )}
           <span className="studio-live" aria-live="polite">
             {copied === 'ok' && t('Texte copié', 'Text copied')}
+            {copied === 'publish' &&
+              (isTikTok ? t('Légende copiée — collez-la dans TikTok', 'Caption copied — paste it in TikTok') : t('Texte copié — collez-le dans LinkedIn', 'Text copied — paste it in LinkedIn'))}
             {copied === 'fail' && t('Copie impossible : sélectionnez le texte puis copiez-le à la main.', 'Could not copy: select the text and copy it by hand.')}
           </span>
         </div>
@@ -244,6 +319,31 @@ export function PostCard({ draft, lang, onChange }: { draft: DraftDto; lang: Lan
           confirmLabel={t('Régénérer', 'Regenerate')}
           onConfirm={() => void regenerate()}
           onClose={() => setConfirmRegen(false)}
+        />
+      )}
+      {confirmOwnOff && (
+        <ConfirmDialog
+          lang={lang}
+          title={t('Ne plus utiliser votre vidéo ?', 'Stop using your own video?')}
+          body={t(
+            'Ce post n’a pas de vidéo de la Médiathèque : il ne sera plus validé, et il faudra joindre une vidéo autorisée pour le valider à nouveau.',
+            'This post has no Media library video: it will no longer be approved, and a cleared video must be attached to approve it again.',
+          )}
+          confirmLabel={t('Ne plus l’utiliser', 'Stop using it')}
+          danger
+          onConfirm={() => void ownOff()}
+          onClose={() => setConfirmOwnOff(false)}
+        />
+      )}
+      {ownDialog && (
+        <ExternalMediaDialog
+          draft={draft}
+          lang={lang}
+          onClose={() => setOwnDialog(false)}
+          onSaved={(d) => {
+            setOwnDialog(false);
+            onChange(d);
+          }}
         />
       )}
       {publishing && (
@@ -300,9 +400,11 @@ function PlatformMark({ platform }: { platform: ContentPlatform }) {
   );
 }
 
-function MediaNotices({ draft, lang, onPick }: { draft: DraftDto; lang: Language; onPick?: () => void }) {
+/** `own`: turn the owner's own media on (or edit its note) and off; absent when the draft cannot change now. */
+function MediaNotices({ draft, lang, onPick, own }: { draft: DraftDto; lang: Language; onPick?: () => void; own?: { on: () => void; off: () => void } }) {
   const L = lang === 'fr';
   const m = draft.media;
+  const isTikTok = draft.platform === 'tiktok';
   const link = (label: string, href = MEDIA_LIBRARY) => (
     <Link className="btn secondary sm" href={href}>
       {label}
@@ -314,6 +416,37 @@ function MediaNotices({ draft, lang, onPick }: { draft: DraftDto; lang: Language
         {label}
       </button>
     );
+  const ownButton = own && (
+    <button type="button" className="btn secondary sm" onClick={own.on}>
+      {ownMediaLabel(draft.platform, lang)}
+    </button>
+  );
+  /** The owner's own file: said plainly, with its note; the library stays one click away. */
+  const ownNotice = draft.external_media && (
+    <Notice
+      tone="info"
+      action={
+        <>
+          {pick(isTikTok ? (L ? 'Choisir une vidéo' : 'Choose a video') : L ? 'Choisir un média' : 'Choose media')}
+          {own && (
+            <button type="button" className="btn secondary sm" onClick={own.on}>
+              {L ? 'Modifier la note' : 'Edit the note'}
+            </button>
+          )}
+          {own && (
+            <button type="button" className="btn ghost sm" onClick={own.off}>
+              {isTikTok ? (L ? 'Ne plus utiliser ma vidéo' : 'Stop using my video') : L ? 'Ne plus utiliser mon média' : 'Stop using my media'}
+            </button>
+          )}
+        </>
+      }
+    >
+      <p>
+        <b>{isTikTok ? (L ? 'Vidéo hors Médiathèque' : 'Video outside the Media library') : L ? 'Média hors Médiathèque' : 'Media outside the Media library'}</b>
+        {draft.external_media.note && <span className="studio-own-note"> · {draft.external_media.note}</span>}
+      </p>
+    </Notice>
+  );
   const notCleared = (
     <Notice
       tone="warn"
@@ -321,6 +454,7 @@ function MediaNotices({ draft, lang, onPick }: { draft: DraftDto; lang: Language
         <>
           {link(L ? 'Ouvrir la Médiathèque' : 'Open the Media library')}
           {pick(L ? 'Changer de média' : 'Change media')}
+          {isTikTok && ownButton}
         </>
       }
     >
@@ -329,8 +463,9 @@ function MediaNotices({ draft, lang, onPick }: { draft: DraftDto; lang: Language
         : 'This media is not cleared for publication — clear it in the Media library.'}
     </Notice>
   );
-  if (draft.platform === 'tiktok') {
+  if (isTikTok) {
     if (m && m.kind === 'video' && m.cleared) return null;
+    if (ownNotice) return ownNotice;
     if (m && m.kind === 'video') return notCleared;
     return (
       <Notice
@@ -339,6 +474,7 @@ function MediaNotices({ draft, lang, onPick }: { draft: DraftDto; lang: Language
           <>
             {pick(L ? 'Choisir une vidéo' : 'Choose a video')}
             {link(L ? 'Téléverser une vidéo' : 'Upload a video', MEDIA_UPLOAD)}
+            {ownButton}
           </>
         }
       >
@@ -348,6 +484,7 @@ function MediaNotices({ draft, lang, onPick }: { draft: DraftDto; lang: Language
       </Notice>
     );
   }
+  if (!m && ownNotice) return ownNotice;
   if (!m) {
     return (
       <Notice
@@ -356,6 +493,7 @@ function MediaNotices({ draft, lang, onPick }: { draft: DraftDto; lang: Language
           <>
             {pick(L ? 'Choisir un média' : 'Choose media')}
             {link(L ? 'Téléverser un fichier' : 'Upload a file', MEDIA_UPLOAD)}
+            {ownButton}
           </>
         }
       >
