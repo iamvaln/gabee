@@ -16,6 +16,16 @@ export async function copyText(text: string): Promise<boolean> {
   return legacyCopy(text);
 }
 
+/**
+ * Copy `text` synchronously (hidden textarea + `execCommand('copy')`): done
+ * before the handler returns, for a tap that also opens a new tab (the async
+ * Clipboard API may only run once this tab has lost focus). False when the
+ * browser refuses; then fall back to `copyText`.
+ */
+export function copyTextNow(text: string): boolean {
+  return legacyCopy(text);
+}
+
 function legacyCopy(text: string): boolean {
   const ta = document.createElement('textarea');
   ta.value = text;

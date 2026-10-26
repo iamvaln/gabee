@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import type { Language } from '@gabee/types';
 import type { DraftDto, SlotDto, TodayBoard } from '@/lib/server/content-studio/drafts';
+import type { PublishContext } from '@/lib/server/content-studio/publish-links';
 import type { WeekDto } from '@/lib/server/content-studio/weeks';
 import { EmptyState, PageHead } from '../_shell/primitives';
 import { AIcon } from '../_shell/icons';
@@ -15,7 +16,8 @@ import { FORMAT_LABEL, PLATFORM_LABEL, SLOT_STATUS, longDay } from './_component
 import { PendingPostCard, PostCard } from './_components/PostCard';
 import { RelaunchProposals, StartWeekButton, launchTarget, weekLooksStuck, type Failure, type WeeksResponse } from './_components/StartWeek';
 
-type Data = { board: TodayBoard; weeks: WeeksResponse };
+type Board = TodayBoard & PublishContext;
+type Data = { board: Board; weeks: WeeksResponse };
 
 /** While the scheduler writes a draft, re-read the board this often (no faster: it is a 1–2 minute job). */
 const GENERATING_POLL_MS = 15_000;
@@ -38,7 +40,7 @@ export function TodayClient({ lang }: { lang: Language }) {
 
   const load = useCallback(async () => {
     try {
-      const [board, weeks] = await Promise.all([api<TodayBoard>('/today'), api<WeeksResponse>('/weeks')]);
+      const [board, weeks] = await Promise.all([api<Board>('/today'), api<WeeksResponse>('/weeks')]);
       setData({ board, weeks });
       setLoadError(null);
       // The launched week has moved on (proposals ready, or further): the launch's error is history.
@@ -133,7 +135,7 @@ export function TodayClient({ lang }: { lang: Language }) {
           <p className="studio-muted-text">{board.yesterday.topic}</p>
           <div className="studio-cards">
             {board.yesterday.drafts.map((d) => (
-              <PostCard key={d.id} draft={d} lang={lang} onChange={replaceDraft} />
+              <PostCard key={d.id} draft={d} lang={lang} onChange={replaceDraft} publish={board} />
             ))}
           </div>
         </section>
@@ -166,7 +168,7 @@ function TodayBody({
   onLaunchFailed,
   onReload,
 }: {
-  board: TodayBoard;
+  board: Board;
   weeks: WeeksResponse;
   lang: Language;
   launchFailure: Failure | null;
@@ -308,7 +310,7 @@ function TodayBody({
 
       <div className="studio-cards">
         {slot.drafts.map((d) => (
-          <PostCard key={d.id} draft={d} lang={lang} onChange={onDraft} />
+          <PostCard key={d.id} draft={d} lang={lang} onChange={onDraft} publish={board} />
         ))}
         {missing.map((p) => (
           <PendingPostCard key={p.platform} platform={p.platform} language={p.language} lang={lang} />
