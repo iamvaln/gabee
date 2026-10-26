@@ -289,7 +289,9 @@ function WeekView({
   if (stamp !== seenStamp) {
     setSeenStamp(stamp);
     if (op === null && opError && !opError.ended) setOpError(null);
-    if (op === null && reproposeError && !reproposeError.ended) setReproposeError(null);
+    // A regenerate failure that proved the run over stays until the week leaves `proposing`
+    // (Relancer succeeded, or another tab moved it on): then it no longer describes the week.
+    if (op === null && reproposeError && (!reproposeError.ended || week.status !== 'proposing')) setReproposeError(null);
   }
 
   // Lock the whole screen (week switch, launch) while anything here runs.
@@ -346,6 +348,9 @@ function WeekView({
     } catch (err) {
       reportUnexpected(err, { action: 'regenerate-proposals', weekId: week.id });
       setReproposeError(failureOf(err, lang));
+      // The direction being changed is gone or stale either way: no "Changer de direction ?" on old proposals.
+      setChanging(false);
+      setPending(null);
       notifyStudioChanged();
       // The week may now be `proposing` (the run failed or is still going): show its real state.
       await reload(null).catch((e: unknown) => reportUnexpected(e, { action: 'reload-week', weekId: week.id }));
@@ -406,7 +411,10 @@ function WeekView({
             lang={lang}
             failure={reproposeError?.ended ? reproposeError.message : failure?.message}
             onBusyChange={(b) => setOp(b ? 'propose' : null)}
-            onDone={onWeek}
+            onDone={(w) => {
+              setReproposeError(null);
+              onWeek(w);
+            }}
           />
         ) : (
           <>
@@ -451,6 +459,7 @@ function WeekView({
     >
       <p>
         {t(`Aucun objectif n’est fixé pour ${month} : les propositions ne visent rien de précis.`, `No objective is set for ${month}: the proposals aim at nothing in particular.`)}
+        {!canEditSettings && t(' Un super-admin peut le fixer dans Réglages.', ' A super-admin can set it in Settings.')}
       </p>
     </Notice>
   );
@@ -468,10 +477,18 @@ function WeekView({
         <ConfirmDialog
           lang={lang}
           title={t('Régénérer les propositions ?', 'Regenerate the proposals?')}
-          body={t(
-            'Gabee repart de zéro : trois nouvelles directions, avec l’objectif et la ligne éditoriale actuels. La direction choisie et les titres de la semaine seront remplacés.',
-            "Gabee starts over: three new directions, with the current objective and editorial line. The chosen direction and the week's titles will be replaced.",
-          )}
+          body={
+            t(
+              'Gabee repart de zéro : trois nouvelles directions, avec l’objectif et la ligne éditoriale actuels.',
+              'Gabee starts over: three new directions, with the current objective and editorial line.',
+            ) +
+            (week.status === 'proposals_ready'
+              ? ''
+              : t(
+                  ' La direction choisie, les titres de la semaine et vos modifications seront remplacés.',
+                  " The chosen direction, the week's titles and your edits will be replaced.",
+                ))
+          }
           confirmLabel={t('Régénérer', 'Regenerate')}
           onConfirm={() => void regenerateProposals()}
           onClose={() => setConfirmRepropose(false)}

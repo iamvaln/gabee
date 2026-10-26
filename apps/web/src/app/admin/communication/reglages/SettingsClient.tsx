@@ -18,6 +18,7 @@ import { useUnsavedGuard } from '../_components/useUnsavedGuard';
 import { usd } from '../../_shell/ai-labels';
 import { ProductFactsForm } from './ProductFactsForm';
 import { buildFacts, factsErrors, factsForm, type FactsForm } from './product-facts';
+import { objectiveMonths } from './objective-months';
 
 type View = StudioSettingsView & { can_edit: boolean };
 type OnDirty = (card: string, dirty: boolean) => void;
@@ -33,12 +34,8 @@ const OBJECTIVE_LABEL: Record<ObjectiveType, Bi> = {
 const MAX_TARGETS = 6;
 
 /** Studio-local `YYYY-MM` of now, and the month after. */
-function months(tz: string): [string, string] {
-  const now = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit' }).format(new Date()).slice(0, 7);
-  const [y, m] = now.split('-').map(Number) as [number, number];
-  const next = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
-  return [now, next];
-}
+/** Today (`YYYY-MM-DD`) on the studio's calendar. */
+const studioToday = (tz: string) => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
 function monthLabel(ym: string, lang: Language): string {
   const s = new Intl.DateTimeFormat(lang === 'fr' ? 'fr-FR' : 'en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${ym}-01T00:00:00Z`));
@@ -240,7 +237,7 @@ function ObjectiveCard({
   const L = lang === 'fr';
   const t = (fr: string, en: string) => (L ? fr : en);
   const id = useId();
-  const [thisMonth, nextMonth] = useMemo(() => months(tz), [tz]);
+  const { months, thisMonth } = useMemo(() => objectiveMonths(studioToday(tz)), [tz]);
   const [month, setMonth] = useState(thisMonth);
   const current = objectives.find((o) => o.month === month) ?? null;
   const [type, setType] = useState<ObjectiveType | ''>('');
@@ -304,7 +301,7 @@ function ObjectiveCard({
     >
       <form id={`${id}-form`} className="col gap16" onSubmit={save} noValidate>
         <div className="studio-filter" role="group" aria-label={t('Mois', 'Month')}>
-          {[thisMonth, nextMonth].map((m) => (
+          {months.map((m) => (
             <button
               key={m}
               type="button"

@@ -51,7 +51,7 @@ export type WeekDto = {
   first_day: string;
   days_in_week: number;
   status: string;
-  /** The objective the week's latest Strategist run aimed at (null: it ran without one). */
+  /** The objective the week's directions were made with (null: proposed without one). */
   objective_id: string | null;
   /** An objective exists now for the week's month (the month of its Monday). */
   month_objective_set: boolean;
@@ -224,10 +224,10 @@ async function currentObjectiveId(startsOn: Date): Promise<string | null> {
 }
 
 /**
- * Point the week at its month's current objective: the one the run about to
- * start reads (the agents always load the month's objective as it is now). A
- * week planned before the owner set the objective so says what its latest
- * week-level run aimed at.
+ * Point the week at its month's current objective: the one the proposals run
+ * about to start reads. Only the proposals run re-links, so `objectiveId`
+ * says what the week's directions were made with; titles, day regenerates and
+ * writers still read the month's objective as it is at their own run.
  */
 async function relinkObjective(weekId: string): Promise<void> {
   const week = await prisma.contentWeek.findUnique({ where: { id: weekId }, select: { startsOn: true, objectiveId: true } });
@@ -237,13 +237,13 @@ async function relinkObjective(weekId: string): Promise<void> {
 }
 
 /**
- * Run the Strategist on a week subject, after re-linking the week to the
- * objective the run reads. A concurrent run that slipped past
+ * Run the Strategist on a week subject (a proposals run first re-links the
+ * week to the objective it reads). A concurrent run that slipped past
  * `assertNoLiveWeekRun` is refused by the database before any AI call and
  * answers the same 409.
  */
 async function runStrategist(kind: 'week_proposals' | 'week_titles', weekId: string, origin: AiOrigin, actorId?: string): Promise<unknown> {
-  await relinkObjective(weekId);
+  if (kind === 'week_proposals') await relinkObjective(weekId);
   try {
     return await runAgent('strategist', { kind, id: weekId }, origin, actorId);
   } catch (err) {

@@ -11,6 +11,7 @@ import { PUT as putObjective } from '../objective/route';
 import { POST as publishLine } from '../editorial-line/route';
 import { GET as audience } from '../audience/route';
 import { studioBudget } from '@/lib/server/content-studio/budget';
+import { getSettings as settingsView } from '@/lib/server/content-studio/settings';
 
 const prisma = createTestClient();
 const U = 'http://localhost/api/admin/communication';
@@ -245,4 +246,16 @@ test('settings GET carries this studio-local month’s Communication spend', asy
   assert.deepEqual(view.budget, { month: thisMonth, spent_usd: 1.75 });
   // The Ops page reads the same figure against the settings' budget.
   assert.deepEqual(await studioBudget(now), { month: thisMonth, spentUsd: 1.75, budgetUsd: 50, alertRatio: 0.8 });
+});
+
+test('objectives are listed from the month of this week’s Monday (a week straddling two months)', async () => {
+  for (const m of ['2026-09', '2026-10', '2026-11', '2026-12']) {
+    await prisma.contentObjective.create({ data: { month: m, type: 'signups', statement: `Objectif ${m}` } });
+  }
+  // Sunday 1 Nov 2026, 11:00 in Douala: this week started Mon 26 Oct and takes October's objective.
+  const straddling = await settingsView(new Date('2026-11-01T10:00:00Z'));
+  assert.deepEqual(straddling.objectives.map((o) => o.month), ['2026-10', '2026-11', '2026-12']);
+  // Monday 2 Nov: a week of November only.
+  const plain = await settingsView(new Date('2026-11-02T10:00:00Z'));
+  assert.deepEqual(plain.objectives.map((o) => o.month), ['2026-11', '2026-12']);
 });

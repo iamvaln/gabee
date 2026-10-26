@@ -159,13 +159,21 @@ test('a reminder with nothing pending renders no empty block', () => {
 
 test('the Sunday email says when the week was proposed without an objective, and how to fix it', () => {
   // The week of Mon 26 Oct, proposed before October had an objective.
-  const late = { ...week, starts_on: '2026-10-26', first_day: '2026-10-26', objective_id: null } as WeekDto;
+  const late = { ...week, starts_on: '2026-10-26', first_day: '2026-10-26', objective_id: null, month_objective_set: false } as WeekDto;
   const mail = weekProposalsEmail({ week: late, proposals, report, audience, link: LINK });
-  const line = 'Aucun objectif n’était fixé pour octobre 2026 : fixe-le dans Réglages, puis régénère les propositions depuis l’écran Semaine.';
+  const line = 'Aucun objectif n’était fixé pour octobre 2026\u00a0: fixez-le dans Réglages, puis régénérez les propositions depuis l’écran Semaine.';
   assert.ok(mail.text.includes(line), mail.text);
   assert.ok(mail.html.includes(escapeHtml(line)));
   // Still one link: the line names the screens, it does not link them.
   assert.equal((mail.html.match(/<a /g) ?? []).length, 1);
+
+  // Set after the 06:00 run but before the email: say so, and that regenerating takes it into account.
+  const since = weekProposalsEmail({ week: { ...late, month_objective_set: true }, proposals, report, audience, link: LINK });
+  const sinceLine =
+    'Les propositions ont été préparées sans objectif\u202f; un objectif est maintenant fixé\u00a0: régénérez-les depuis l’écran Semaine pour en tenir compte.';
+  assert.ok(since.text.includes(sinceLine), since.text);
+  assert.ok(since.html.includes(escapeHtml(sinceLine)));
+  assert.doesNotMatch(since.text, /Aucun objectif/);
 
   const aimed = weekProposalsEmail({ week: { ...late, objective_id: '3f2b8c4e-1a2b-4c3d-8e9f-0a1b2c3d4e5f' }, proposals, report, audience, link: LINK });
   assert.doesNotMatch(aimed.text, /Aucun objectif/);
