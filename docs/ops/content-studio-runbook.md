@@ -331,6 +331,12 @@ step 1 with **Relancer les propositions**.
 the same as the Sunday run. Choosing a direction afterwards costs one titles
 run, as usual.
 
+**Emails meanwhile**: while the week waits for its new directions (during a
+regenerate, or after one that failed), the Sunday reminders are skipped and
+the Sunday email is held until directions exist (it is due until Sunday
+23:59). After a failed regenerate, **Relancer les propositions** so the email
+can go out.
+
 ---
 
 ## 5. Troubleshooting
