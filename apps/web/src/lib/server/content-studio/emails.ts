@@ -19,9 +19,11 @@ export const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ESCAPES[c]
 const dateFmt = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('fr-FR', { ...opts, timeZone: 'UTC' });
 const shortDay = (ymd: string) => dateFmt({ day: 'numeric', month: 'short' }).format(new Date(`${ymd}T00:00:00Z`));
 const longDay = (ymd: string) => dateFmt({ weekday: 'long', day: 'numeric', month: 'short' }).format(new Date(`${ymd}T00:00:00Z`));
+/** `2026-10` → `octobre 2026`. */
+const monthName = (yyyyMm: string) => dateFmt({ month: 'long', year: 'numeric' }).format(new Date(`${yyyyMm}-01T00:00:00Z`));
 /** `2026-10` → `d’octobre 2026`, `2026-11` → `de novembre 2026`. */
 function ofMonth(yyyyMm: string): string {
-  const name = dateFmt({ month: 'long', year: 'numeric' }).format(new Date(`${yyyyMm}-01T00:00:00Z`));
+  const name = monthName(yyyyMm);
   return /^[aeiouy]/i.test(name) ? `d’${name}` : `de ${name}`;
 }
 
@@ -110,6 +112,14 @@ export function weekProposalsEmail(input: {
       lines: proposals.map((p, i) => `${i + 1}. ${p.title} — ${p.rationale}`),
     },
   ];
+  // Proposed before the owner set the month's objective (the week's month is its Monday's).
+  if (!week.objective_id) {
+    blocks.push({
+      lines: [
+        `Aucun objectif n’était fixé pour ${monthName(week.starts_on.slice(0, 7))} : fixe-le dans Réglages, puis régénère les propositions depuis l’écran Semaine.`,
+      ],
+    });
+  }
   return render(
     `Gabee · Semaine du ${shortDay(week.starts_on)} — ${proposals.length} directions à choisir`,
     `Choisissez la direction de la semaine du ${shortDay(week.starts_on)}`,

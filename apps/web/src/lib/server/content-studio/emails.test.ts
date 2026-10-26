@@ -9,6 +9,7 @@ import {
   jobFailedEmail,
   summariseAudience,
   weekProposalsEmail,
+  escapeHtml,
   frenchSpacing,
   weekReminderEmail,
   type EmailContent,
@@ -154,4 +155,19 @@ test('a reminder with nothing pending renders no empty block', () => {
   const one = dayReminderEmail({ pending: { approve: 1, publish: 0 }, link: LINK });
   assert.match(one.text, /1 brouillon à relire et approuver/);
   assert.ok(!/publier/.test(one.text));
+});
+
+test('the Sunday email says when the week was proposed without an objective, and how to fix it', () => {
+  // The week of Mon 26 Oct, proposed before October had an objective.
+  const late = { ...week, starts_on: '2026-10-26', first_day: '2026-10-26', objective_id: null } as WeekDto;
+  const mail = weekProposalsEmail({ week: late, proposals, report, audience, link: LINK });
+  const line = 'Aucun objectif n’était fixé pour octobre 2026 : fixe-le dans Réglages, puis régénère les propositions depuis l’écran Semaine.';
+  assert.ok(mail.text.includes(line), mail.text);
+  assert.ok(mail.html.includes(escapeHtml(line)));
+  // Still one link: the line names the screens, it does not link them.
+  assert.equal((mail.html.match(/<a /g) ?? []).length, 1);
+
+  const aimed = weekProposalsEmail({ week: { ...late, objective_id: '3f2b8c4e-1a2b-4c3d-8e9f-0a1b2c3d4e5f' }, proposals, report, audience, link: LINK });
+  assert.doesNotMatch(aimed.text, /Aucun objectif/);
+  assert.doesNotMatch(aimed.html, /Aucun objectif/);
 });
