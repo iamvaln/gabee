@@ -45,7 +45,10 @@ export type WeekDto = {
   first_day: string;
   days_in_week: number;
   status: string;
+  /** The objective the week's latest Strategist run aimed at (null: it ran without one). */
   objective_id: string | null;
+  /** An objective exists now for the week's month (the month of its Monday). */
+  month_objective_set: boolean;
   proposals: DirectionProposals['proposals'] | null;
   chosen_index: number | null;
   refinement: string | null;
@@ -82,7 +85,14 @@ function quotaOf(slots: ReadonlyArray<{ status: string; platforms: Prisma.JsonVa
   );
 }
 
-function toWeekDto(row: WeekRow, platforms: ContentPlatform[]): WeekDto {
+/** The months (`YYYY-MM`) among the weeks' that have an objective now. */
+async function monthsWithObjective(rows: ReadonlyArray<{ startsOn: Date }>): Promise<Set<string>> {
+  if (rows.length === 0) return new Set();
+  const found = await prisma.contentObjective.findMany({ where: { month: { in: rows.map((r) => weekMonth(r.startsOn)) } }, select: { month: true } });
+  return new Set(found.map((o) => o.month));
+}
+
+function toWeekDto(row: WeekRow, platforms: ContentPlatform[], objectiveMonths: Set<string>): WeekDto {
   const days = daysInWeek(ymdOf(row.startsOn), ymdOf(row.firstDay));
   return {
     id: row.id,
@@ -91,6 +101,7 @@ function toWeekDto(row: WeekRow, platforms: ContentPlatform[]): WeekDto {
     days_in_week: days,
     status: row.status,
     objective_id: row.objectiveId,
+    month_objective_set: objectiveMonths.has(weekMonth(row.startsOn)),
     proposals: parseProposals(row.proposals),
     chosen_index: row.chosenIndex,
     refinement: row.refinement,
@@ -108,7 +119,8 @@ const slotNotFound = () => new HttpError(404, 'slot_not_found', "Ce jour n'exist
 export async function getWeek(weekId: string): Promise<WeekDto> {
   const row = await prisma.contentWeek.findUnique({ where: { id: weekId }, include: weekInclude });
   if (!row) throw weekNotFound();
-  return toWeekDto(row, await enabledPlatforms());
+  const [platforms, objectiveMonths] = await Promise.all([enabledPlatforms(), monthsWithObjective([row])]);
+  return toWeekDto(row, platforms, objectiveMonths);
 }
 
 /**
@@ -125,9 +137,10 @@ export async function findWeeks(now: Date): Promise<{ today: string; current: We
     prisma.contentWeek.findMany({ where: { startsOn: { in: [dateOf(monday), dateOf(nextMonday)] } }, include: weekInclude }),
     enabledPlatforms(),
   ]);
+  const objectiveMonths = await monthsWithObjective(rows);
   const dtoOf = (startsOn: string) => {
     const row = rows.find((w) => ymdOf(w.startsOn) === startsOn);
-    return row ? toWeekDto(row, platforms) : null;
+    return row ? toWeekDto(row, platforms, objectiveMonths) : null;
   };
   return { today, current: dtoOf(monday), next: dtoOf(nextMonday) };
 }
@@ -275,6 +288,44 @@ export async function proposeDirections(weekId: string, origin: AiOrigin, actor?
   });
   if (res.count !== 1) throw new HttpError(409, 'invalid_transition', 'La semaine vient de changer. Rechargez la page.');
   return getWeek(weekId);
+}
+
+/**
+ * "Régénérer les propositions": start a week over before validation
+ * (`proposals_ready`, `direction_set` or `titles_ready` → `proposing` →
+ * `proposals_ready`), e.g. when the Sunday run went out before the month's
+ * objective was set. Clears the proposals, the chosen direction, refinement
+ * and per-platform angles, deletes the day lines (refused if any has drafts:
+ * none should before validation), re-links the month's current objective,
+ * then runs the Strategist's proposals like "Relancer" (one paid run, same
+ * single-flight guard). A `proposing` week is "Relancer"'s; a validated week
+ * regenerates day by day. If the run fails the week stays `proposing`.
+ */
+export async function regenerateProposals(weekId: string, actor: Actor): Promise<WeekDto> {
+  const week = await prisma.contentWeek.findUnique({ where: { id: weekId }, select: { status: true, startsOn: true } });
+  if (!week) throw weekNotFound();
+  assertTransition('week', week.status, 'proposing');
+  // Before anything changes: a live run (another tab, the titles still being written) keeps the week as it is.
+  await assertNoLiveWeekRun(weekId);
+
+  const objectiveId = await currentObjectiveId(week.startsOn);
+  const slotsRemoved = await prisma.$transaction(async (tx) => {
+    if ((await tx.contentDraft.count({ where: { slot: { weekId } } })) > 0) {
+      throw new HttpError(
+        409,
+        'invalid_transition',
+        'Des brouillons existent déjà pour cette semaine : ses propositions ne peuvent plus être régénérées. Régénérez plutôt jour par jour.',
+      );
+    }
+    const res = await tx.contentWeek.updateMany({
+      where: { id: weekId, status: week.status },
+      data: { status: 'proposing', proposals: Prisma.DbNull, chosenIndex: null, refinement: null, platformAngles: Prisma.DbNull, objectiveId },
+    });
+    if (res.count !== 1) throw new HttpError(409, 'invalid_transition', 'La semaine vient de changer. Rechargez la page.');
+    return (await tx.contentSlot.deleteMany({ where: { weekId } })).count;
+  });
+  await auditContent(actor, 'content.week.repropose', 'content_week', weekId, { from: week.status, objective_id: objectiveId, slots_removed: slotsRemoved });
+  return proposeDirections(weekId, 'user_action', actor);
 }
 
 /**

@@ -9,7 +9,7 @@ import { HttpError } from '../http';
 import { resetAiAdapters, setAiAdapters } from '../ai/router';
 import { FakeAiAdapter, type FakeAiStep } from '../ai/router/fake-adapter';
 import type { Actor } from './state';
-import { chooseDirection, getWeek, proposeDirections, regenerateSlot, skipDay, startWeek, updateSlot, validateWeek } from './weeks';
+import { chooseDirection, getWeek, proposeDirections, regenerateProposals, regenerateSlot, skipDay, startWeek, updateSlot, validateWeek } from './weeks';
 
 const prisma = createTestClient();
 const actor: Actor = { id: randomUUID(), role: 'admin' };
@@ -349,4 +349,125 @@ test('the database refuses a second running row for the same week, across both w
   await strategistRun(week.id, 'week_titles', 0, 'succeeded');
   const other = await createContentWeek(prisma, { status: 'proposing' });
   await strategistRun(other.id, 'week_proposals', 0);
+});
+
+// ── "Régénérer les propositions": start a week over before validation ──
+
+const fresh = {
+  proposals: [0, 1, 2].map((i) => ({ title: `Nouvelle direction ${i}`, rationale: 'r', evidence: ['e'], sample_angles: ['a'] })),
+};
+
+/** A week planned without an objective, at `status`, with its direction and (from titles_ready) its day lines. */
+async function plannedWeek(startsOn: string, status: string) {
+  const week = await createContentWeek(prisma, {
+    startsOn: new Date(startsOn),
+    firstDay: new Date(startsOn),
+    status,
+    proposals,
+    ...(status === 'proposals_ready' ? {} : { chosenIndex: 1, refinement: 'Plus concret', platformAngles: { tiktok: 'Le jeu en vrai' } }),
+  });
+  if (status === 'titles_ready') for (let i = 0; i < 3; i++) await createContentSlot(prisma, week.id, { status: 'proposed' });
+  return week;
+}
+
+test('regenerateProposals starts the week over from each step before validation, with the current objective', async () => {
+  const objective = await prisma.contentObjective.create({ data: { month: '2026-10', type: 'signups', statement: 'Cinquante familles' } });
+  const statuses = ['proposals_ready', 'direction_set', 'titles_ready'];
+  for (const [i, status] of statuses.entries()) {
+    const week = await plannedWeek(`2026-10-${String(5 + 7 * i).padStart(2, '0')}`, status);
+    assert.equal(week.objectiveId, null);
+    const adapter = fake([{ json: fresh }]);
+
+    const out = await regenerateProposals(week.id, actor);
+    assert.equal(out.status, 'proposals_ready', status);
+    assert.deepEqual(out.proposals?.map((p) => p.title), fresh.proposals.map((p) => p.title));
+    assert.equal(out.chosen_index, null);
+    assert.equal(out.refinement, null);
+    assert.deepEqual(out.platform_angles, {});
+    assert.deepEqual(out.slots, []);
+    assert.equal(await prisma.contentSlot.count({ where: { weekId: week.id } }), 0);
+    assert.equal(out.objective_id, objective.id, 'the week now points at the objective its proposals used');
+    assert.equal(out.month_objective_set, true);
+    // One paid Strategist run, reading the objective set after the week was planned.
+    assert.equal(adapter.calls.length, 1);
+    assert.equal(adapter.calls[0]!.req.task, 'content_strategy');
+    assert.match(objectiveText(adapter, 0), /Cinquante familles/);
+
+    const [audit] = await prisma.auditLog.findMany({ where: { kind: 'content.week.repropose', targetId: week.id } });
+    assert.ok(audit, status);
+    assert.equal(audit.actorId, actor.id);
+    assert.equal(audit.actorRole, actor.role);
+    assert.deepEqual(audit.diff, { from: status, objective_id: objective.id, slots_removed: status === 'titles_ready' ? 3 : 0 });
+  }
+  assert.equal(reported.length, 0);
+});
+
+test('regenerateProposals without an objective re-links none and says the month has none', async () => {
+  const week = await plannedWeek('2026-10-26', 'titles_ready');
+  fake([{ json: fresh }]);
+  const out = await regenerateProposals(week.id, actor);
+  assert.equal(out.objective_id, null);
+  assert.equal(out.month_objective_set, false);
+});
+
+test('getWeek says whether the week month has an objective now, whatever the week points at', async () => {
+  const week = await plannedWeek('2026-10-26', 'proposals_ready');
+  assert.equal((await getWeek(week.id)).month_objective_set, false);
+  await prisma.contentObjective.create({ data: { month: '2026-11', type: 'signups', statement: 'Novembre' } });
+  assert.equal((await getWeek(week.id)).month_objective_set, false, 'the week of Mon 26 Oct belongs to October');
+  await prisma.contentObjective.create({ data: { month: '2026-10', type: 'signups', statement: 'Octobre' } });
+  const dto = await getWeek(week.id);
+  assert.equal(dto.month_objective_set, true);
+  assert.equal(dto.objective_id, null, 'its proposals were still made without one');
+});
+
+test('regenerateProposals refuses a proposing, validated or skipped week (409), paying nothing', async () => {
+  const adapter = fake([]);
+  for (const status of ['proposing', 'validated', 'skipped']) {
+    const week = await createContentWeek(prisma, { status, proposals });
+    await assert.rejects(regenerateProposals(week.id, actor), isHttp(409, 'invalid_transition'), status);
+    assert.equal((await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id } })).status, status);
+  }
+  await assert.rejects(regenerateProposals(randomUUID(), actor), isHttp(404, 'week_not_found'));
+  assert.equal(adapter.calls.length, 0);
+  assert.equal((await audits('content.week.repropose')).length, 0);
+});
+
+test('regenerateProposals refuses while a strategist run on the week is live, changing nothing', async () => {
+  const week = await plannedWeek('2026-10-26', 'titles_ready');
+  await strategistRun(week.id, 'week_titles', 3);
+  const adapter = fake([]);
+  await assert.rejects(regenerateProposals(week.id, actor), isHttp(409, 'generation_in_progress'));
+  const row = await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id }, include: { slots: true } });
+  assert.equal(row.status, 'titles_ready');
+  assert.equal(row.chosenIndex, 1);
+  assert.equal(row.slots.length, 3);
+  assert.equal(adapter.calls.length, 0);
+  assert.equal((await audits('content.week.repropose')).length, 0);
+});
+
+test('regenerateProposals refuses a week whose days already have drafts', async () => {
+  const week = await plannedWeek('2026-10-26', 'titles_ready');
+  const slot = await prisma.contentSlot.findFirstOrThrow({ where: { weekId: week.id } });
+  await createContentDraft(prisma, slot.id, { platform: 'linkedin', status: 'ready' });
+  const adapter = fake([]);
+  await assert.rejects(regenerateProposals(week.id, actor), (err: unknown) => isHttp(409, 'invalid_transition')(err) && /brouillons/.test((err as HttpError).message));
+  const row = await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id }, include: { slots: true } });
+  assert.equal(row.status, 'titles_ready');
+  assert.equal(row.slots.length, 3);
+  assert.equal(await prisma.contentDraft.count(), 1);
+  assert.equal(adapter.calls.length, 0);
+});
+
+test('a failed regenerate leaves the week proposing, to be relaunched', async () => {
+  const week = await plannedWeek('2026-10-26', 'direction_set');
+  fake([{ error: 'refusal' }]);
+  await assert.rejects(regenerateProposals(week.id, actor));
+  const row = await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id } });
+  assert.equal(row.status, 'proposing');
+  assert.equal(row.chosenIndex, null);
+  assert.equal(row.proposals, null);
+  // "Relancer les propositions" picks it up from there.
+  fake([{ json: fresh }]);
+  assert.equal((await proposeDirections(week.id, 'user_action', actor)).status, 'proposals_ready');
 });
