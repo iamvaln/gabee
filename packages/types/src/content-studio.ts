@@ -13,6 +13,36 @@ export type ContentLanguage = (typeof CONTENT_LANGUAGES)[number];
 export const SLOT_FORMATS = ['text', 'visual', 'gameplay_video', 'presentation_video', 'story'] as const;
 export type SlotFormat = (typeof SLOT_FORMATS)[number];
 
+/**
+ * Content pillars (editorial mix, owner decision 2026-10-26): `gabee` is about
+ * Gabee itself (product, features, offer); `light` animates the account (news,
+ * « Le saviez-vous ? », a game or riddle, an event in the kids' games /
+ * education world, an observance day); `value` is useful content for parents
+ * that does not sell. Each day of a week has one.
+ */
+export const CONTENT_PILLARS = ['gabee', 'light', 'value'] as const;
+export type ContentPillar = (typeof CONTENT_PILLARS)[number];
+
+/** The weekly mix: at most 3 days about Gabee, at least 1 light day; the rest is `value`. */
+export const PILLAR_MIX = { gabee_max: 3, light_min: 1 } as const;
+
+export type PillarMixProblem = 'too_much_gabee' | 'no_light';
+export type PillarMix = { gabee: number; light: number; value: number; ok: boolean; problems: PillarMixProblem[] };
+
+/**
+ * How a week's posted days split across the pillars, and whether that breaks
+ * the mix. A week with no day planned has nothing to balance. The Strategist's
+ * plan must respect it; an owner edit that breaks it is only flagged.
+ */
+export function pillarMix(pillars: readonly ContentPillar[]): PillarMix {
+  const count = (p: ContentPillar) => pillars.filter((x) => x === p).length;
+  const mix = { gabee: count('gabee'), light: count('light'), value: count('value') };
+  const problems: PillarMixProblem[] = [];
+  if (mix.gabee > PILLAR_MIX.gabee_max) problems.push('too_much_gabee');
+  if (pillars.length > 0 && mix.light < PILLAR_MIX.light_min) problems.push('no_light');
+  return { ...mix, ok: problems.length === 0, problems };
+}
+
 export const WEEK_STATUSES = ['proposing', 'proposals_ready', 'direction_set', 'titles_ready', 'validated', 'skipped'] as const;
 export const SLOT_STATUSES = ['proposed', 'validated', 'drafting', 'drafted', 'done', 'skipped'] as const;
 export const DRAFT_STATUSES = ['generating', 'ready', 'approved', 'published', 'failed', 'stale'] as const;
@@ -81,6 +111,7 @@ export const WeekTitlesSchema = z.object({
       topic: z.string(),
       angle: z.string(),
       format: z.enum(SLOT_FORMATS),
+      pillar: z.enum(CONTENT_PILLARS),
       platforms: z.array(z.object({ platform: ContentPlatformSchema, language: ContentLanguageSchema })),
       sources: z.array(z.object({ title: z.string(), url: z.url() })),
     }),
@@ -136,6 +167,7 @@ export const UpdateSlotRequestSchema = z
     topic: z.string().min(1).max(200).optional(),
     angle: z.string().max(500).optional(),
     format: z.enum(SLOT_FORMATS).optional(),
+    pillar: z.enum(CONTENT_PILLARS).optional(),
     platforms: z.array(z.object({ platform: ContentPlatformSchema, language: ContentLanguageSchema })).min(1).max(2).optional(),
   })
   .refine((v) => Object.values(v).some((x) => x !== undefined), { message: 'At least one field is required' });
@@ -167,11 +199,29 @@ const isTimeZone = (tz: string): boolean => {
   }
 };
 
+/**
+ * Posting cadence: the studio-local weekdays (0 = Sunday … 6 = Saturday) each
+ * platform posts on. A day no enabled platform posts on gets no line in the
+ * week. The server also requires at least one day per enabled platform.
+ */
+const WeekdaysSchema = z
+  .array(z.number().int().min(0).max(6))
+  .max(7)
+  .refine((days) => new Set(days).size === days.length, { message: 'Each weekday at most once' });
+export const PostingDaysSchema = z.object({ linkedin: WeekdaysSchema, tiktok: WeekdaysSchema }) satisfies z.ZodType<
+  Record<ContentPlatform, number[]>
+>;
+export type PostingDays = z.infer<typeof PostingDaysSchema>;
+
+/** LinkedIn Tue, Wed, Thu; TikTok Mon, Wed, Fri, Sun (owner decision 2026-10-26). */
+export const DEFAULT_POSTING_DAYS: PostingDays = { linkedin: [2, 3, 4], tiktok: [0, 1, 3, 5] };
+
 export const StudioSettingsUpdateSchema = z.object({
   timezone: z.string().refine(isTimeZone, { message: 'Unknown time zone' }).optional(),
   recipients: z.array(z.email()).min(1).max(10).optional(),
   monthly_budget_usd: z.number().positive().optional(),
   budget_alert_ratio: z.number().gt(0).max(1).optional(),
+  posting_days: PostingDaysSchema.optional(),
 });
 export type StudioSettingsUpdate = z.infer<typeof StudioSettingsUpdateSchema>;
 
