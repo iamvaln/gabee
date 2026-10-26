@@ -1288,6 +1288,9 @@ ol.studio-list { list-style: decimal; }
 .studio-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 .studio-tabs .chip { min-height: 36px; }
 .studio-stepper { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; padding: 0; list-style: none; }
+/* A step's header: the stepper, and the step-wide action (e.g. regenerate the proposals) on the right. */
+.studio-step-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 0 0 16px; }
+.studio-step-head .studio-stepper { margin: 0; }
 .studio-stepper li {
   display: flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-pill);

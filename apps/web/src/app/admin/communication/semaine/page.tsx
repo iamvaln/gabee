@@ -10,11 +10,12 @@ export const metadata: Metadata = { title: 'Communication — Semaine' };
 // Communication studio, Semaine (spec "Admin UX" 2): pick a direction, then
 // review and validate the week's day lines.
 export default async function CommunicationWeekPage() {
-  await requireAdminPage();
+  const session = await requireAdminPage();
   const lang: Language = (await cookies()).get('admin_lang')?.value === 'en' ? 'en' : 'fr';
   return (
     <div className="page studio">
-      <WeekClient lang={lang} />
+      {/* Only a super-admin can set the month's objective: the screen links to it for them only. */}
+      <WeekClient lang={lang} canEditSettings={session.role === 'super_admin'} />
     </div>
   );
 }

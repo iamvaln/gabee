@@ -146,6 +146,75 @@ test('owner chooses a direction and validates the week', async ({ page }) => {
   expect(audit).not.toBeNull();
 });
 
+test('a week proposed before the month objective was set is regenerated from the Semaine screen', async ({ page }) => {
+  const nextMonday = addDays(mondayOf(studioToday()), 7);
+  const month = nextMonday.slice(0, 7);
+  const { weekId } = await seedProposalsWeek(nextMonday); // proposed without an objective
+  await seedTitles(weekId, 1);
+
+  // No objective for the month yet: the screen says so, and a super-admin gets the way to Réglages.
+  await page.goto('/admin/communication/semaine');
+  await expect(page.getByText(/^Aucun objectif n’est fixé pour .+ : les propositions ne visent rien de précis\.$/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Fixer l’objectif' })).toHaveAttribute('href', '/admin/communication/reglages');
+  await expect(page.getByRole('button', { name: 'Régénérer les propositions' })).toBeVisible();
+
+  // The owner sets the objective afterwards.
+  await prisma.contentObjective.create({ data: { month, type: 'signups', statement: 'Cinquante familles inscrites' } });
+
+  // The Strategist (AI) stands behind the route: do what the server does (new directions,
+  // direction and titles cleared, the week re-linked to the objective), held until the
+  // working state has been checked.
+  const fresh = PROPOSALS.map((p, i) => ({ ...p, title: `Nouvelle direction ${i + 1}` }));
+  let calls = 0;
+  let release!: () => void;
+  const held = new Promise<void>((r) => (release = r));
+  await page.route('**/api/admin/communication/weeks/*/regenerate-proposals', async (route) => {
+    calls++;
+    await held;
+    const objective = await prisma.contentObjective.findUniqueOrThrow({ where: { month } });
+    await prisma.$transaction([
+      prisma.contentSlot.deleteMany({ where: { weekId } }),
+      prisma.contentWeek.update({
+        where: { id: weekId },
+        data: { status: 'proposals_ready', proposals: { proposals: fresh }, chosenIndex: null, refinement: null, objectiveId: objective.id },
+      }),
+    ]);
+    const response = await page.request.get(`/api/admin/communication/weeks/${weekId}`);
+    await route.fulfill({ response });
+  });
+
+  await page.reload();
+  const late = page.getByText('Ces propositions ont été préparées sans objectif du mois. Un objectif est maintenant fixé : régénérez-les pour en tenir compte.');
+  await expect(late).toBeVisible();
+  const regenerate = page.getByRole('button', { name: 'Régénérer les propositions' });
+  await expect(regenerate).toHaveCount(1); // offered by the notice, not twice
+
+  // It asks first; cancelling sends nothing.
+  await regenerate.click();
+  const dialog = page.getByRole('dialog', { name: 'Régénérer les propositions ?' });
+  await expect(dialog).toContainText(
+    'Gabee repart de zéro : trois nouvelles directions, avec l’objectif et la ligne éditoriale actuels. La direction choisie et les titres de la semaine seront remplacés.',
+  );
+  await dialog.getByRole('button', { name: 'Annuler' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(calls).toBe(0);
+
+  await regenerate.click();
+  await dialog.getByRole('button', { name: 'Régénérer', exact: true }).click();
+  await expect(page.getByText('Gabee prépare 3 nouvelles directions pour la semaine…')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Valider la semaine' })).toHaveCount(0);
+  release();
+
+  // Back to step 1 with the new directions; nothing left to warn about.
+  await expect(page.getByRole('radio')).toHaveCount(3);
+  await expect(page.getByText('Nouvelle direction 2')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Arrêter cette direction' })).toBeDisabled();
+  await expect(page.locator('.studio-stepper [aria-current="step"]')).toContainText('Direction');
+  await expect(late).toHaveCount(0);
+  await expect(page.getByText(/Aucun objectif/)).toHaveCount(0);
+  expect(calls).toBe(1);
+});
+
 test('owner approves a draft, copies it and marks it published', async ({ page }) => {
   const { linkedinDraftId } = await seedTodayBoard({ linkedinImage: true });
 
@@ -695,6 +764,23 @@ test.describe('as a plain admin', () => {
     const nextMonth = page.getByRole('group', { name: 'Mois' }).getByRole('button').nth(1);
     await nextMonth.click();
     await expect(nextMonth).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('admin (not super) is told the month has no objective, without the Réglages link', async ({ page }) => {
+    const nextMonday = addDays(mondayOf(studioToday()), 7);
+    const { weekId } = await seedProposalsWeek(nextMonday);
+    await seedTitles(weekId, 0);
+    await page.goto('/admin/login');
+    await page.locator('#ae').fill(FIXTURES.adminOnlyEmail);
+    await page.locator('#ap').fill(FIXTURES.adminOnlyPassword);
+    await page.getByRole('button', { name: 'Se connecter' }).click();
+    await expect(page).toHaveURL(/\/admin$/);
+
+    await page.goto('/admin/communication/semaine');
+    await expect(page.getByText(/^Aucun objectif n’est fixé pour .+ : les propositions ne visent rien de précis\.$/)).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Fixer l’objectif' })).toHaveCount(0);
+    // Regenerating is an admin action: the button is there.
+    await expect(page.getByRole('button', { name: 'Régénérer les propositions' })).toBeVisible();
   });
 });
 

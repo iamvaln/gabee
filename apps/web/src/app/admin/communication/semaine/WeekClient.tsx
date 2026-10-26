@@ -13,7 +13,7 @@ import { ConfirmDialog } from '../_components/Dialog';
 import { DirectionCards } from '../_components/DirectionCards';
 import { AiWorking, ErrorNotice, Notice } from '../_components/ErrorNotice';
 import { errorText } from '../_components/errors';
-import { PLATFORM_LABEL, addDaysYmd, dateTime, dayMonth, weekdayOf } from '../_components/format';
+import { PLATFORM_LABEL, addDaysYmd, dateTime, dayMonth, monthName, weekdayOf } from '../_components/format';
 import { RelaunchProposals, StartWeekButton, failureOf, launchTarget, weekLooksStuck, type Failure, type WeeksResponse } from '../_components/StartWeek';
 
 type Which = 'current' | 'next';
@@ -39,7 +39,7 @@ const mondayOf = (ymd: string) => addDaysYmd(ymd, -((weekdayOf(ymd) + 6) % 7));
  * that could start another one (including the week switch) is locked; the
  * server refuses a second Strategist run on the week anyway (Ruling 15).
  */
-export function WeekClient({ lang }: { lang: Language }) {
+export function WeekClient({ lang, canEditSettings }: { lang: Language; canEditSettings: boolean }) {
   const L = lang === 'fr';
   const t = (fr: string, en: string) => (L ? fr : en);
   const [weeks, setWeeks] = useState<WeeksResponse | null>(null);
@@ -175,6 +175,7 @@ export function WeekClient({ lang }: { lang: Language }) {
           week={week}
           today={weeks.today}
           lang={lang}
+          canEditSettings={canEditSettings}
           failure={failure}
           onBusyChange={setBusy}
           onReload={load}
@@ -243,6 +244,7 @@ function WeekView({
   week,
   today,
   lang,
+  canEditSettings,
   failure,
   onBusyChange,
   onReload,
@@ -251,6 +253,8 @@ function WeekView({
   week: WeekDto;
   today: string;
   lang: Language;
+  /** A super-admin: the objective notice links to Réglages. */
+  canEditSettings: boolean;
   /** A launch from this screen that failed, leaving this week behind. */
   failure: Failure | null;
   onBusyChange: (busy: boolean) => void;
@@ -259,8 +263,12 @@ function WeekView({
 }) {
   const L = lang === 'fr';
   const t = (fr: string, en: string) => (L ? fr : en);
-  const [op, setOp] = useState<null | 'direction' | 'validate' | 'propose'>(null);
+  const [op, setOp] = useState<null | 'direction' | 'validate' | 'propose' | 'repropose'>(null);
   const [opError, setOpError] = useState<Failure | null>(null);
+  /** "Régénérer les propositions" asks first (it replaces the direction and the titles). */
+  const [confirmRepropose, setConfirmRepropose] = useState(false);
+  /** Its failure: shown where the week lands (a `proposing` week offers "Relancer" once the run proved over). */
+  const [reproposeError, setReproposeError] = useState<Failure | null>(null);
   const [warning, setWarning] = useState<QuotaWarning | null>(null);
   const [linesBusy, setLinesBusy] = useState(false);
   const [override, setOverride] = useState(false);
@@ -277,6 +285,7 @@ function WeekView({
   if (stamp !== seenStamp) {
     setSeenStamp(stamp);
     if (op === null && opError && !opError.ended) setOpError(null);
+    if (op === null && reproposeError && !reproposeError.ended) setReproposeError(null);
   }
 
   // Lock the whole screen (week switch, launch) while anything here runs.
@@ -287,7 +296,7 @@ function WeekView({
   // A run whose end was not seen here (the scheduler's, or one whose answer was cut off):
   // poll until the week moves on, or until it looks stuck. A failure that proves the run
   // ended stops the polling — the screen then offers to run it again.
-  const runEnded = (failure?.ended ?? false) || (opError?.ended ?? false);
+  const runEnded = (failure?.ended ?? false) || (opError?.ended ?? false) || (reproposeError?.ended ?? false);
   const runMayBeLive = (week.status === 'proposing' || week.status === 'direction_set') && !weekLooksStuck(week) && !runEnded && op === null;
   useEffect(() => {
     if (!runMayBeLive) return;
@@ -314,6 +323,27 @@ function WeekView({
       reportUnexpected(err, { action: 'direction', weekId: week.id });
       setOpError(failureOf(err, lang));
       // The week may now be `direction_set` (titles failed or still running): show its real state.
+      await reload(null).catch((e: unknown) => reportUnexpected(e, { action: 'reload-week', weekId: week.id }));
+    } finally {
+      setOp(null);
+    }
+  }
+
+  async function regenerateProposals() {
+    setConfirmRepropose(false);
+    setOp('repropose');
+    setOpError(null);
+    setReproposeError(null);
+    try {
+      const res = await api<{ week: WeekDto }>(`/weeks/${week.id}/regenerate-proposals`, { method: 'POST' });
+      setChanging(false);
+      notifyStudioChanged();
+      onWeek(res.week);
+    } catch (err) {
+      reportUnexpected(err, { action: 'regenerate-proposals', weekId: week.id });
+      setReproposeError(failureOf(err, lang));
+      notifyStudioChanged();
+      // The week may now be `proposing` (the run failed or is still going): show its real state.
       await reload(null).catch((e: unknown) => reportUnexpected(e, { action: 'reload-week', weekId: week.id }));
     } finally {
       setOp(null);
@@ -351,8 +381,18 @@ function WeekView({
   }
 
   // ── Step 1 ──
+  if (op === 'repropose') {
+    return (
+      <>
+        <Stepper status="proposals_ready" lang={lang} />
+        <AiWorking lang={lang} title={t('Gabee prépare 3 nouvelles directions pour la semaine…', 'Gabee is preparing 3 new directions for the week…')} />
+      </>
+    );
+  }
+
   if (week.status === 'proposing') {
-    const canRelaunch = failure?.ended || weekLooksStuck(week);
+    const canRelaunch = failure?.ended || reproposeError?.ended || weekLooksStuck(week);
+    const shownFailure = reproposeError ?? failure;
     return (
       <>
         <Stepper status={week.status} lang={lang} />
@@ -360,13 +400,13 @@ function WeekView({
           <RelaunchProposals
             week={week}
             lang={lang}
-            failure={failure?.message}
+            failure={reproposeError?.ended ? reproposeError.message : failure?.message}
             onBusyChange={(b) => setOp(b ? 'propose' : null)}
             onDone={onWeek}
           />
         ) : (
           <>
-            {failure && <Notice tone="warn">{failure.message}</Notice>}
+            {shownFailure && <Notice tone="warn">{shownFailure.message}</Notice>}
             <AiWorking lang={lang} title={t('Gabee prépare 3 directions pour la semaine…', 'Gabee is preparing 3 directions for the week…')} sub={waitingSub} />
           </>
         )}
@@ -374,13 +414,77 @@ function WeekView({
     );
   }
 
+  // ── "Régénérer les propositions" (before validation) and what the proposals aimed at ──
+  const canRepropose = week.status === 'proposals_ready' || week.status === 'direction_set' || week.status === 'titles_ready';
+  const reproposeButton = (
+    <button type="button" className="btn secondary sm" onClick={() => setConfirmRepropose(true)} disabled={busy}>
+      <AIcon name="refresh" size={14} />
+      {t('Régénérer les propositions', 'Regenerate the proposals')}
+    </button>
+  );
+  // The week's last Strategist run had no objective: one exists now (regenerate), or the month still has none.
+  const objectiveLate = canRepropose && week.objective_id === null && week.month_objective_set;
+  const month = monthName(week.starts_on.slice(0, 7), lang);
+  const objectiveNotice = !canRepropose || week.objective_id !== null ? null : objectiveLate ? (
+    <Notice tone="warn" action={reproposeButton}>
+      <p>
+        {t(
+          'Ces propositions ont été préparées sans objectif du mois. Un objectif est maintenant fixé : régénérez-les pour en tenir compte.',
+          'These proposals were prepared without a monthly objective. One is set now: regenerate them to take it into account.',
+        )}
+      </p>
+    </Notice>
+  ) : (
+    <Notice
+      tone="info"
+      action={
+        canEditSettings ? (
+          <Link className="btn secondary sm" href="/admin/communication/reglages">
+            {t('Fixer l’objectif', 'Set the objective')}
+          </Link>
+        ) : undefined
+      }
+    >
+      <p>
+        {t(`Aucun objectif n’est fixé pour ${month} : les propositions ne visent rien de précis.`, `No objective is set for ${month}: the proposals aim at nothing in particular.`)}
+      </p>
+    </Notice>
+  );
+  /** The step's header: where it stands, and (unless the notice already offers it) the regenerate button. */
+  const stepHead = (status: string, offerRepropose: boolean) => (
+    <div className="studio-step-head">
+      <Stepper status={status} lang={lang} />
+      {offerRepropose && canRepropose && !objectiveLate && reproposeButton}
+    </div>
+  );
+  const reproposeParts = (
+    <>
+      {reproposeError && (reproposeError.ended ? <ErrorNotice lang={lang} message={reproposeError.message} /> : <Notice tone="warn">{reproposeError.message}</Notice>)}
+      {confirmRepropose && (
+        <ConfirmDialog
+          lang={lang}
+          title={t('Régénérer les propositions ?', 'Regenerate the proposals?')}
+          body={t(
+            'Gabee repart de zéro : trois nouvelles directions, avec l’objectif et la ligne éditoriale actuels. La direction choisie et les titres de la semaine seront remplacés.',
+            "Gabee starts over: three new directions, with the current objective and editorial line. The chosen direction and the week's titles will be replaced.",
+          )}
+          confirmLabel={t('Régénérer', 'Regenerate')}
+          onConfirm={() => void regenerateProposals()}
+          onClose={() => setConfirmRepropose(false)}
+        />
+      )}
+    </>
+  );
+
   const directionStep = week.status === 'proposals_ready' || week.status === 'direction_set' || changing;
   if (directionStep) {
     // Titles may still be being written (another tab, or a request whose answer was cut off).
     const titlesMayRun = week.status === 'direction_set' && !weekLooksStuck(week) && !opError?.ended && op === null;
     return (
       <>
-        <Stepper status={changing ? 'proposals_ready' : week.status} lang={lang} />
+        {stepHead(changing ? 'proposals_ready' : week.status, !titlesMayRun && op === null)}
+        {!titlesMayRun && op === null && objectiveNotice}
+        {reproposeParts}
         {op === 'direction' && <AiWorking lang={lang} title={t('Gabee rédige les titres de la semaine…', "Gabee is writing the week's titles…")} />}
         {opError && (opError.ended ? <ErrorNotice lang={lang} message={opError.message} /> : <Notice tone="warn">{opError.message}</Notice>)}
         {titlesMayRun ? (
@@ -425,7 +529,9 @@ function WeekView({
   const validated = week.status === 'validated';
   return (
     <>
-      <Stepper status={week.status} lang={lang} />
+      {stepHead(week.status, !validated)}
+      {objectiveNotice}
+      {reproposeParts}
 
       {validated && (
         <Notice
