@@ -69,7 +69,15 @@ tomorrow to Sunday; if none is left, the launch is refused.
 Léger and Conseil posts do not sell. The Strategist must follow the mix (an
 answer that breaks it is refused and retried once). You can change a day's
 pillar in **Modifier**; the line « 2 sur Gabee · 1 léger · 3 conseils » then
-warns if the week breaks the mix, but never blocks validation.
+warns if the week breaks the mix, but never blocks validation. Lines planned
+before pillars existed have none: no chip, and no mix line for their week
+until each line gets one.
+
+Dated light days (an observance day, an event, a piece of news) come only
+from the week's calendar: the Sunday proposals run finds them by web search
+and keeps those a page confirms; the titles run cites only those pages. When
+it found nothing sure, light days are timeless (« Le saviez-vous ? », a game,
+a riddle).
 
 **English**: at least **1 English post per platform per week**. In a week
 started mid-week, only a platform with 2 posts or more left needs one.
@@ -226,6 +234,35 @@ never replaced. Earlier versions stay as history, and a deploy that changes
 no file changes nothing. The `migrate` log names each upgraded agent
 (`Agent strategist: instructions file published as a new version`) before
 `Content Studio defaults ensured`.
+
+**After an image rollback** to a release older than the posting days and
+pillars (v2.13.x or earlier), the agents would keep running the newer instructions,
+which ask for `pillar` and `week_calendar` fields the old code does not
+expect. Point the strategist and the writers back at their v1 (the live
+version is `agents.published_version_id`):
+
+```bash
+docker compose --env-file .env.production exec -T db sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"' <<'SQL'
+UPDATE agents a SET published_version_id = v.id
+FROM agent_versions v
+WHERE v.agent_key = a.key AND v.version = 1
+  AND a.key IN ('strategist', 'writer_linkedin', 'writer_tiktok');
+SQL
+```
+
+When rolling forward again, the seed sees the agents pointed away from their
+latest version and leaves them on v1 (it never moves a pointer it did not
+set). Point them back at their highest seed version:
+
+```bash
+docker compose --env-file .env.production exec -T db sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"' <<'SQL'
+UPDATE agents a SET published_version_id = (
+  SELECT id FROM agent_versions v
+  WHERE v.agent_key = a.key AND v.source = 'seed' AND v.published_at IS NOT NULL
+  ORDER BY v.version DESC LIMIT 1)
+WHERE a.key IN ('strategist', 'writer_linkedin', 'writer_tiktok');
+SQL
+```
 
 ---
 
