@@ -125,3 +125,14 @@ test('every agent file names every field and enum value of its output schema', (
   }
 });
 
+
+test('every seeded publish link passes the Réglages rule, and matches the migration default', async () => {
+  const { publishUrlProblem } = await import('@gabee/types');
+  const migration = fs.readFileSync(new URL('./migrations/20261026150000_studio_publish_links_external_media/migration.sql', import.meta.url), 'utf8');
+  for (const p of PLATFORM_PROFILE_SEED) {
+    assert.ok(p.publishUrl, `${p.platform} has no default publish link`);
+    assert.equal(publishUrlProblem(p.platform, p.publishUrl), null, `${p.platform}: ${p.publishUrl}`);
+    assert.ok(migration.includes(`'${p.publishUrl}'`), `the migration does not set ${p.publishUrl}`);
+  }
+  assert.equal(PLATFORM_PROFILE_SEED.find((p) => p.platform === 'linkedin')?.publishUrl, 'https://www.linkedin.com/company/109660238/admin/page-posts/published/?share=true');
+});

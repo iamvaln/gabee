@@ -269,6 +269,20 @@ export async function seedMediaAsset(opts: MediaOpts = {}) {
 }
 
 /** Empty the scheduler and agent journals. */
+/** The seeded publish links (« Copier et ouvrir »), as the migration and the seed set them. */
+export const PUBLISH_LINKS = {
+  linkedin: 'https://www.linkedin.com/company/109660238/admin/page-posts/published/?share=true',
+  tiktok: 'https://www.tiktok.com/tiktokstudio/upload',
+} as const;
+
+/** Back to the seeded publish links (`null` removes a platform's link). */
+export async function resetPublishLinks(links: { linkedin?: string | null; tiktok?: string | null } = {}): Promise<void> {
+  for (const platform of ['linkedin', 'tiktok'] as const) {
+    const publishUrl = platform in links ? (links[platform] ?? null) : PUBLISH_LINKS[platform];
+    await prisma.platformProfile.update({ where: { platform }, data: { publishUrl } });
+  }
+}
+
 export async function resetJournal(): Promise<void> {
   await prisma.aiUsage.deleteMany({ where: { task: { not: null } } });
   await prisma.agentRun.deleteMany({});
