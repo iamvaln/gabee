@@ -761,7 +761,7 @@ test.describe('as a plain admin', () => {
     await expect(page.getByLabel('Texte (Markdown)')).not.toBeEditable();
     await expect(page.getByRole('button', { name: /Enregistrer|Publier|Ajouter une cible/ })).toHaveCount(0);
     // The month switch only reads, so it stays usable.
-    const nextMonth = page.getByRole('group', { name: 'Mois' }).getByRole('button').nth(1);
+    const nextMonth = page.getByRole('group', { name: 'Mois' }).getByRole('button').last(); // next month (a straddling week adds its Monday's month first)
     await nextMonth.click();
     await expect(nextMonth).toHaveAttribute('aria-pressed', 'true');
   });

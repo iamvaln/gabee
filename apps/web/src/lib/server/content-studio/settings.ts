@@ -7,7 +7,7 @@ import { localParts } from './clock';
 import { monthSpendUsd } from './budget';
 import { auditContent } from './drafts';
 import { unifiedDiff } from './memory';
-import type { Actor } from './state';
+import { addDaysYmd, type Actor } from './state';
 
 /**
  * Réglages (spec "Concepts and data"): the studio settings singleton, the
@@ -97,10 +97,13 @@ const currentLine = () => prisma.editorialLineVersion.findFirst({ where: { publi
 
 export async function getSettings(now: Date): Promise<StudioSettingsView> {
   const tz = await getStudioTimezone();
-  const month = localParts(now, tz).date.slice(0, 7);
+  const { date: today, weekday } = localParts(now, tz);
+  const month = today.slice(0, 7);
+  // From the month of this week's Monday: a week straddling two months takes its Monday's objective.
+  const since = addDaysYmd(today, -((weekday + 6) % 7)).slice(0, 7);
   const [settings, objectives, line, spent] = await Promise.all([
     prisma.studioSettings.findUnique({ where: { id: SETTINGS_ID } }),
-    prisma.contentObjective.findMany({ where: { month: { gte: month } }, orderBy: { month: 'asc' } }),
+    prisma.contentObjective.findMany({ where: { month: { gte: since } }, orderBy: { month: 'asc' } }),
     currentLine(),
     monthSpendUsd(month, tz),
   ]);
