@@ -65,7 +65,7 @@ const lineOf = async (slotId: string) => {
 };
 
 test('planRhythm previews the change for the future days only and changes nothing', async () => {
-  const { weekId, slots } = await validatedWeek();
+  const { weekId } = await validatedWeek();
   // New rhythm: LinkedIn Mon + Fri, TikTok Thu + Sat.
   await setCadence({ linkedin: [1, 5], tiktok: [4, 6] });
   const before = await prisma.contentSlot.findMany({ orderBy: { date: 'asc' } });
