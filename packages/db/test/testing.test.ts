@@ -176,7 +176,7 @@ test('seedContentStudio never replaces an owner version, published or pointed at
   await prisma.agent.update({ where: { key: 'strategist' }, data: { publishedVersionId: owner.id } });
   // The owner rolled the analyst back to an older seed version: the live pointer is theirs to choose.
   const analystV2 = await prisma.agentVersion.create({
-    data: { agentKey: 'analyst', version: 2, instructions: 'Seed text the owner rolled back from.', publishedAt: new Date() },
+    data: { agentKey: 'analyst', version: 2, instructions: 'Seed text the owner rolled back from.', publishedAt: new Date(), source: 'seed' },
   });
   const analystV1 = await prisma.agentVersion.findUniqueOrThrow({ where: { agentKey_version: { agentKey: 'analyst', version: 1 } } });
   assert.notEqual(analystV2.id, analystV1.id);
@@ -191,6 +191,16 @@ test('seedContentStudio never replaces an owner version, published or pointed at
   assert.equal(await prisma.agentVersion.count({ where: { agentKey: 'analyst' } }), 2);
   // Agents the owner never touched are upgraded.
   assert.equal((await published('writer_linkedin'))?.version, 2);
+});
+
+test('a version written without a source is the owner\'s: the seed never replaces it', async () => {
+  await seedWithOlderFiles();
+  assert.deepEqual([...new Set((await prisma.agentVersion.findMany()).map((v) => v.source))], ['seed'], 'the seed writes its source');
+  const unnamed = await prisma.agentVersion.create({ data: { agentKey: 'strategist', version: 2, instructions: 'Written by hand.', publishedAt: new Date() } });
+  assert.equal(unnamed.source, 'owner');
+  await prisma.agent.update({ where: { key: 'strategist' }, data: { publishedVersionId: unnamed.id } });
+  await seedContentStudio(prisma);
+  assert.equal((await published('strategist'))?.id, unnamed.id);
 });
 
 test('seedContentStudio upgrades above an unpublished owner draft (next free version number)', async () => {

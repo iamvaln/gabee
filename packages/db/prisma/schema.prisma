@@ -1150,8 +1150,9 @@ model ContentSlot {
   topic      String
   angle      String         @default("")
   format     String
-  /// Content pillar ∈ CONTENT_PILLARS: `gabee` | `light` | `value`.
-  pillar     String         @default("value")
+  /// Content pillar ∈ CONTENT_PILLARS: `gabee` | `light` | `value`. NULL on
+  /// lines planned before pillars existed; every titles run sets it.
+  pillar     String?
   platforms  Json
   sources    Json           @default("[]")
   status     String         @default("proposed")
@@ -1330,9 +1331,11 @@ model AgentVersion {
   instructions  String
   settings      Json                  @default("{}")
   publishedAt   DateTime?             @map("published_at")
-  /// `seed` (from `prisma/content-studio/agents/*.md`, upgraded by the seed)
-  /// or `owner` (written by an admin; the seed never replaces it).
-  source        String                @default("seed")
+  /// `seed` (from `prisma/content-studio/agents/*.md`, upgraded by the seed,
+  /// which always writes it) or `owner` (written by an admin; the seed never
+  /// replaces it). Defaults to `owner`: a version written without a source is
+  /// never taken for the seed's.
+  source        String                @default("owner")
   createdById   String?               @map("created_by_id") @db.Uuid
   createdAt     DateTime              @default(now()) @map("created_at")
   agent         Agent                 @relation("AgentVersions", fields: [agentKey], references: [key], onDelete: Cascade)
