@@ -192,8 +192,9 @@ test('a week proposed before the month objective was set is regenerated from the
   // It asks first; cancelling sends nothing.
   await regenerate.click();
   const dialog = page.getByRole('dialog', { name: 'Régénérer les propositions ?' });
+  // Titles are written: the dialog says they and the owner's edits go too.
   await expect(dialog).toContainText(
-    'Gabee repart de zéro : trois nouvelles directions, avec l’objectif et la ligne éditoriale actuels. La direction choisie et les titres de la semaine seront remplacés.',
+    'Gabee repart de zéro : trois nouvelles directions, avec l’objectif et la ligne éditoriale actuels. La direction choisie, les titres de la semaine et vos modifications seront remplacés.',
   );
   await dialog.getByRole('button', { name: 'Annuler' }).click();
   await expect(dialog).toHaveCount(0);
@@ -213,6 +214,54 @@ test('a week proposed before the month objective was set is regenerated from the
   await expect(late).toHaveCount(0);
   await expect(page.getByText(/Aucun objectif/)).toHaveCount(0);
   expect(calls).toBe(1);
+});
+
+test('a failed regenerate, then Relancer: the direction step is clean and a cut-off titles answer still polls', async ({ page }) => {
+  const nextMonday = addDays(mondayOf(studioToday()), 7);
+  const { weekId } = await seedProposalsWeek(nextMonday);
+  await prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'direction_set', chosenIndex: 0 } });
+  await ageWeek(weekId, 21); // its titles run is long over: step 1 offers the choice again
+  await page.clock.install(); // the 20 s wait poll is fast-forwarded below
+
+  // The server reset the week, then the Strategist was unavailable (503: the run is provably over).
+  await page.route('**/api/admin/communication/weeks/*/regenerate-proposals', async (route) => {
+    await prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'proposing', chosenIndex: null } });
+    await route.fulfill({ status: 503, json: { error: { code: 'ai_unavailable', message: "Le service d'IA est indisponible pour le moment." } } });
+  });
+  // "Relancer" succeeds.
+  await page.route('**/api/admin/communication/weeks/*/propose', async (route) => {
+    await prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'proposals_ready', proposals: { proposals: PROPOSALS } } });
+    const response = await page.request.get(`/api/admin/communication/weeks/${weekId}`);
+    await route.fulfill({ response });
+  });
+  // The titles request reaches the server but its answer never arrives.
+  await page.route('**/api/admin/communication/weeks/*/direction', async (route) => {
+    await prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'direction_set', chosenIndex: 1 } });
+    await route.abort('connectionreset');
+  });
+
+  await page.goto('/admin/communication/semaine');
+  await page.getByRole('button', { name: 'Régénérer les propositions' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Régénérer les propositions ?' });
+  await dialog.getByRole('button', { name: 'Régénérer', exact: true }).click();
+  // The studio's error notice (Next's route announcer is a role=alert too).
+  const studioAlert = page.locator('.studio-notice[role="alert"]');
+  await expect(studioAlert).toContainText("Le service d'IA est indisponible pour le moment");
+  await page.getByRole('button', { name: 'Relancer les propositions' }).click();
+
+  // Back on step 1: the old failure is gone.
+  await expect(page.getByRole('radio')).toHaveCount(3);
+  await expect(studioAlert).toHaveCount(0);
+  await expect(page.getByText(/indisponible/)).toHaveCount(0);
+
+  // A titles answer cut off by the proxy: the screen waits and polls, then shows the titles.
+  await page.getByText(PROPOSALS[1].title).click();
+  await page.getByRole('button', { name: 'Arrêter cette direction' }).click();
+  await expect(page.getByText(/La connexion a été coupée/)).toBeVisible();
+  await expect(page.getByText('Gabee rédige les titres de la semaine…')).toBeVisible();
+  await seedTitles(weekId, 1);
+  await page.clock.fastForward(21_000);
+  await expect(page.getByRole('button', { name: 'Valider la semaine' })).toBeVisible();
 });
 
 test('owner approves a draft, copies it and marks it published', async ({ page }) => {
@@ -777,7 +826,9 @@ test.describe('as a plain admin', () => {
     await expect(page).toHaveURL(/\/admin$/);
 
     await page.goto('/admin/communication/semaine');
-    await expect(page.getByText(/^Aucun objectif n’est fixé pour .+ : les propositions ne visent rien de précis\.$/)).toBeVisible();
+    await expect(
+      page.getByText(/^Aucun objectif n’est fixé pour .+ : les propositions ne visent rien de précis\. Un super-admin peut le fixer dans Réglages\.$/),
+    ).toBeVisible();
     await expect(page.getByRole('link', { name: 'Fixer l’objectif' })).toHaveCount(0);
     // Regenerating is an admin action: the button is there.
     await expect(page.getByRole('button', { name: 'Régénérer les propositions' })).toBeVisible();
