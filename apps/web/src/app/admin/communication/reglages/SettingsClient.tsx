@@ -15,9 +15,12 @@ import { useUnsavedGuard } from '../_components/useUnsavedGuard';
 import { usd } from '../../_shell/ai-labels';
 import { ProductFactsForm } from './ProductFactsForm';
 import { buildFacts, factsErrors, factsForm, type FactsForm } from './product-facts';
+import { objectiveMonths } from './objective-months';
+import { PublishLinksCard } from './PublishLinksCard';
+import { SaveBar, SettingsCard, useSave, type OnDirty } from './settings-card';
+import type { PublishLinks } from '@/lib/server/content-studio/publish-links';
 
-type View = StudioSettingsView & { can_edit: boolean };
-type OnDirty = (card: string, dirty: boolean) => void;
+type View = StudioSettingsView & { publish_links: PublishLinks; can_edit: boolean };
 type ObjectiveType = (typeof OBJECTIVE_TYPES)[number];
 
 const OBJECTIVE_LABEL: Record<ObjectiveType, Bi> = {
@@ -30,12 +33,8 @@ const OBJECTIVE_LABEL: Record<ObjectiveType, Bi> = {
 const MAX_TARGETS = 6;
 
 /** Studio-local `YYYY-MM` of now, and the month after. */
-function months(tz: string): [string, string] {
-  const now = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit' }).format(new Date()).slice(0, 7);
-  const [y, m] = now.split('-').map(Number) as [number, number];
-  const next = m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, '0')}`;
-  return [now, next];
-}
+/** Today (`YYYY-MM-DD`) on the studio's calendar. */
+const studioToday = (tz: string) => new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
 function monthLabel(ym: string, lang: Language): string {
   const s = new Intl.DateTimeFormat(lang === 'fr' ? 'fr-FR' : 'en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${ym}-01T00:00:00Z`));
@@ -125,87 +124,9 @@ export function SettingsClient({ lang }: { lang: Language }) {
           spent={view.budget}
           onSaved={(s) => setView((v) => v && { ...v, settings: s })}
         />
+        <PublishLinksCard lang={lang} readOnly={ro} onDirty={onDirty} links={view.publish_links} onSaved={(links) => setView((v) => v && { ...v, publish_links: links })} />
       </div>
       {guard}
-    </>
-  );
-}
-
-// ── Shared card frame ──
-
-type SaveState = { busy: boolean; error: string | null; saved: boolean };
-const IDLE: SaveState = { busy: false, error: null, saved: false };
-
-/** Run a save; `saved` shows "Enregistré" until the next change. */
-function useSave(lang: Language) {
-  const [state, setState] = useState<SaveState>(IDLE);
-  const run = useCallback(
-    async (action: string, fn: () => Promise<void>, overrides: Record<string, Bi> = {}) => {
-      setState({ busy: true, error: null, saved: false });
-      try {
-        await fn();
-        setState({ busy: false, error: null, saved: true });
-      } catch (err) {
-        reportUnexpected(err, { action });
-        setState({ busy: false, error: errorText(err, lang, overrides), saved: false });
-      }
-    },
-    [lang],
-  );
-  const touch = useCallback(() => setState((s) => (s.saved || s.error ? IDLE : s)), []);
-  return { state, run, touch };
-}
-
-function SettingsCard({
-  title,
-  sub,
-  readOnly,
-  children,
-  footer,
-}: {
-  title: string;
-  sub?: React.ReactNode;
-  readOnly: boolean;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-}) {
-  const id = useId();
-  return (
-    <section className="card studio-settings-card" aria-labelledby={id}>
-      <div className="studio-settings-head">
-        <h2 id={id} className="studio-card-title">
-          {title}
-        </h2>
-        {sub && <div className="studio-settings-sub">{sub}</div>}
-      </div>
-      {/* Read-only: text stays selectable (readOnly fields); only choices are disabled. */}
-      <div className="studio-fieldset studio-settings-body">{children}</div>
-      {!readOnly && footer && <div className="studio-settings-foot">{footer}</div>}
-    </section>
-  );
-}
-
-function SaveBar({ lang, state, label, dirty, form, blocked }: { lang: Language; state: SaveState; label: string; dirty: boolean; form: string; blocked?: boolean }) {
-  const L = lang === 'fr';
-  return (
-    <>
-      <span className="studio-save-status" role="status">
-        {state.saved && !dirty && (
-          <>
-            <AIcon name="check" size={14} />
-            {L ? 'Enregistré' : 'Saved'}
-          </>
-        )}
-        {!state.saved && dirty && !state.busy && (L ? 'Modifications non enregistrées' : 'Unsaved changes')}
-      </span>
-      {state.error && (
-        <p className="studio-field-error studio-save-error" role="alert">
-          {state.error}
-        </p>
-      )}
-      <button type="submit" form={form} className="btn" disabled={!dirty || state.busy || blocked}>
-        {state.busy ? (L ? 'Enregistrement…' : 'Saving…') : label}
-      </button>
     </>
   );
 }
@@ -235,7 +156,7 @@ function ObjectiveCard({
   const L = lang === 'fr';
   const t = (fr: string, en: string) => (L ? fr : en);
   const id = useId();
-  const [thisMonth, nextMonth] = useMemo(() => months(tz), [tz]);
+  const { months, thisMonth } = useMemo(() => objectiveMonths(studioToday(tz)), [tz]);
   const [month, setMonth] = useState(thisMonth);
   const current = objectives.find((o) => o.month === month) ?? null;
   const [type, setType] = useState<ObjectiveType | ''>('');
@@ -299,7 +220,7 @@ function ObjectiveCard({
     >
       <form id={`${id}-form`} className="col gap16" onSubmit={save} noValidate>
         <div className="studio-filter" role="group" aria-label={t('Mois', 'Month')}>
-          {[thisMonth, nextMonth].map((m) => (
+          {months.map((m) => (
             <button
               key={m}
               type="button"

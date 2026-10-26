@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { UUID_RE, addDaysYmd, canTransition, daysInWeek, planWeek, weekdayOf } from './state';
+import { UUID_RE, addDaysYmd, canTransition, daysInWeek, planWeek, sourcesOf, weekdayOf } from './state';
 
 test('canTransition forbids published → ready', () => {
   assert.equal(canTransition('draft', 'published', 'ready'), false);
@@ -31,6 +31,10 @@ test('canTransition follows the week and slot graphs', () => {
   assert.equal(canTransition('week', 'titles_ready', 'validated'), true);
   assert.equal(canTransition('week', 'proposals_ready', 'validated'), false);
   assert.equal(canTransition('week', 'validated', 'skipped'), false);
+  // "Régénérer les propositions": back to proposing from any step before validation only.
+  for (const from of ['proposals_ready', 'direction_set', 'titles_ready']) assert.equal(canTransition('week', from, 'proposing'), true, from);
+  for (const from of ['proposing', 'validated', 'skipped']) assert.equal(canTransition('week', from, 'proposing'), false, from);
+  assert.deepEqual(sourcesOf('week', 'proposing'), ['proposals_ready', 'direction_set', 'titles_ready']);
   assert.equal(canTransition('slot', 'proposed', 'validated'), true);
   assert.equal(canTransition('slot', 'validated', 'drafting'), true);
   assert.equal(canTransition('slot', 'drafting', 'drafted'), true);

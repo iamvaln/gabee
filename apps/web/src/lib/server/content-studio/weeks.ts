@@ -11,7 +11,7 @@ import { prisma } from '../db';
 import { HttpError } from '../http';
 import type { AiOrigin } from '../ai/router';
 import { getStudioTimezone, localDay } from '../services/web-visits';
-import { AgentRunInProgressError, runAgent } from './agents';
+import { AgentRunInProgressError, runAgent, weekMonth } from './agents';
 import {
   assertTransition,
   auditContent,
@@ -45,7 +45,10 @@ export type WeekDto = {
   first_day: string;
   days_in_week: number;
   status: string;
+  /** The objective the week's directions were made with (null: proposed without one). */
   objective_id: string | null;
+  /** An objective exists now for the week's month (the month of its Monday). */
+  month_objective_set: boolean;
   proposals: DirectionProposals['proposals'] | null;
   chosen_index: number | null;
   refinement: string | null;
@@ -82,7 +85,14 @@ function quotaOf(slots: ReadonlyArray<{ status: string; platforms: Prisma.JsonVa
   );
 }
 
-function toWeekDto(row: WeekRow, platforms: ContentPlatform[]): WeekDto {
+/** The months (`YYYY-MM`) among the weeks' that have an objective now. */
+async function monthsWithObjective(rows: ReadonlyArray<{ startsOn: Date }>): Promise<Set<string>> {
+  if (rows.length === 0) return new Set();
+  const found = await prisma.contentObjective.findMany({ where: { month: { in: rows.map((r) => weekMonth(r.startsOn)) } }, select: { month: true } });
+  return new Set(found.map((o) => o.month));
+}
+
+function toWeekDto(row: WeekRow, platforms: ContentPlatform[], objectiveMonths: Set<string>): WeekDto {
   const days = daysInWeek(ymdOf(row.startsOn), ymdOf(row.firstDay));
   return {
     id: row.id,
@@ -91,6 +101,7 @@ function toWeekDto(row: WeekRow, platforms: ContentPlatform[]): WeekDto {
     days_in_week: days,
     status: row.status,
     objective_id: row.objectiveId,
+    month_objective_set: objectiveMonths.has(weekMonth(row.startsOn)),
     proposals: parseProposals(row.proposals),
     chosen_index: row.chosenIndex,
     refinement: row.refinement,
@@ -108,7 +119,8 @@ const slotNotFound = () => new HttpError(404, 'slot_not_found', "Ce jour n'exist
 export async function getWeek(weekId: string): Promise<WeekDto> {
   const row = await prisma.contentWeek.findUnique({ where: { id: weekId }, include: weekInclude });
   if (!row) throw weekNotFound();
-  return toWeekDto(row, await enabledPlatforms());
+  const [platforms, objectiveMonths] = await Promise.all([enabledPlatforms(), monthsWithObjective([row])]);
+  return toWeekDto(row, platforms, objectiveMonths);
 }
 
 /**
@@ -125,9 +137,10 @@ export async function findWeeks(now: Date): Promise<{ today: string; current: We
     prisma.contentWeek.findMany({ where: { startsOn: { in: [dateOf(monday), dateOf(nextMonday)] } }, include: weekInclude }),
     enabledPlatforms(),
   ]);
+  const objectiveMonths = await monthsWithObjective(rows);
   const dtoOf = (startsOn: string) => {
     const row = rows.find((w) => ymdOf(w.startsOn) === startsOn);
-    return row ? toWeekDto(row, platforms) : null;
+    return row ? toWeekDto(row, platforms, objectiveMonths) : null;
   };
   return { today, current: dtoOf(monday), next: dtoOf(nextMonday) };
 }
@@ -192,12 +205,33 @@ export async function assertNoLiveWeekRun(weekId: string, now: Date = new Date()
   if (live) throw weekRunInProgress(live.startedAt, now);
 }
 
+/** The id of the objective of the week's month as it is now (null while none is set). */
+async function currentObjectiveId(startsOn: Date): Promise<string | null> {
+  const row = await prisma.contentObjective.findUnique({ where: { month: weekMonth(startsOn) }, select: { id: true } });
+  return row?.id ?? null;
+}
+
 /**
- * Run the Strategist on a week subject. A concurrent run that slipped past
+ * Point the week at its month's current objective: the one the proposals run
+ * about to start reads. Only the proposals run re-links, so `objectiveId`
+ * says what the week's directions were made with; titles, day regenerates and
+ * writers still read the month's objective as it is at their own run.
+ */
+async function relinkObjective(weekId: string): Promise<void> {
+  const week = await prisma.contentWeek.findUnique({ where: { id: weekId }, select: { startsOn: true, objectiveId: true } });
+  if (!week) throw weekNotFound();
+  const objectiveId = await currentObjectiveId(week.startsOn);
+  if (objectiveId !== week.objectiveId) await prisma.contentWeek.updateMany({ where: { id: weekId }, data: { objectiveId } });
+}
+
+/**
+ * Run the Strategist on a week subject (a proposals run first re-links the
+ * week to the objective it reads). A concurrent run that slipped past
  * `assertNoLiveWeekRun` is refused by the database before any AI call and
  * answers the same 409.
  */
 async function runStrategist(kind: 'week_proposals' | 'week_titles', weekId: string, origin: AiOrigin, actorId?: string): Promise<unknown> {
+  if (kind === 'week_proposals') await relinkObjective(weekId);
   try {
     return await runAgent('strategist', { kind, id: weekId }, origin, actorId);
   } catch (err) {
@@ -227,11 +261,10 @@ export async function startWeek(opts: { now: Date; origin: AiOrigin; actor?: Act
   const { startsOn, firstDay } = planWeek(localDay(opts.now, tz));
   if (await prisma.contentWeek.findUnique({ where: { startsOn: dateOf(startsOn) }, select: { id: true } })) throw weekExists(startsOn);
 
-  const objective = await prisma.contentObjective.findUnique({ where: { month: startsOn.slice(0, 7) }, select: { id: true } });
   let weekId: string;
   try {
     const week = await prisma.contentWeek.create({
-      data: { startsOn: dateOf(startsOn), firstDay: dateOf(firstDay), status: 'proposing', objectiveId: objective?.id ?? null },
+      data: { startsOn: dateOf(startsOn), firstDay: dateOf(firstDay), status: 'proposing', objectiveId: await currentObjectiveId(dateOf(startsOn)) },
     });
     weekId = week.id;
   } catch (err) {
@@ -255,6 +288,44 @@ export async function proposeDirections(weekId: string, origin: AiOrigin, actor?
   });
   if (res.count !== 1) throw new HttpError(409, 'invalid_transition', 'La semaine vient de changer. Rechargez la page.');
   return getWeek(weekId);
+}
+
+/**
+ * "Régénérer les propositions": start a week over before validation
+ * (`proposals_ready`, `direction_set` or `titles_ready` → `proposing` →
+ * `proposals_ready`), e.g. when the Sunday run went out before the month's
+ * objective was set. Clears the proposals, the chosen direction, refinement
+ * and per-platform angles, deletes the day lines (refused if any has drafts:
+ * none should before validation), re-links the month's current objective,
+ * then runs the Strategist's proposals like "Relancer" (one paid run, same
+ * single-flight guard). A `proposing` week is "Relancer"'s; a validated week
+ * regenerates day by day. If the run fails the week stays `proposing`.
+ */
+export async function regenerateProposals(weekId: string, actor: Actor): Promise<WeekDto> {
+  const week = await prisma.contentWeek.findUnique({ where: { id: weekId }, select: { status: true, startsOn: true } });
+  if (!week) throw weekNotFound();
+  assertTransition('week', week.status, 'proposing');
+  // Before anything changes: a live run (another tab, the titles still being written) keeps the week as it is.
+  await assertNoLiveWeekRun(weekId);
+
+  const objectiveId = await currentObjectiveId(week.startsOn);
+  const slotsRemoved = await prisma.$transaction(async (tx) => {
+    if ((await tx.contentDraft.count({ where: { slot: { weekId } } })) > 0) {
+      throw new HttpError(
+        409,
+        'invalid_transition',
+        'Des brouillons existent déjà pour cette semaine : ses propositions ne peuvent plus être régénérées. Régénérez plutôt jour par jour.',
+      );
+    }
+    const res = await tx.contentWeek.updateMany({
+      where: { id: weekId, status: week.status },
+      data: { status: 'proposing', proposals: Prisma.DbNull, chosenIndex: null, refinement: null, platformAngles: Prisma.DbNull, objectiveId },
+    });
+    if (res.count !== 1) throw new HttpError(409, 'invalid_transition', 'La semaine vient de changer. Rechargez la page.');
+    return (await tx.contentSlot.deleteMany({ where: { weekId } })).count;
+  });
+  await auditContent(actor, 'content.week.repropose', 'content_week', weekId, { from: week.status, objective_id: objectiveId, slots_removed: slotsRemoved });
+  return proposeDirections(weekId, 'user_action', actor);
 }
 
 /**

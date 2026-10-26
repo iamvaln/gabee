@@ -15,6 +15,9 @@ You receive labelled blocks:
   facts**: the only facts about Gabee you may state.
 - `platform_profile` — LinkedIn objective, tone and format rules (`max_chars`,
   hashtag range, link policy, emoji policy).
+- `objective` — the month's goal (type, statement, optional target figures), or
+  `null`. Let it shape what the post stresses and its call to action; its targets
+  are the owner's internal goals, never figures to state in the post.
 - `week_direction` — the week's chosen direction, the owner's refinement and, if
   present, a LinkedIn-specific angle.
 - `slot` — the day: date, topic, angle, format and the **post language** (`fr` or `en`).

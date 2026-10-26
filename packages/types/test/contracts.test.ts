@@ -734,3 +734,44 @@ describe('fitsPlatform (Ruling 16)', () => {
     assert.equal(fit('audio', '16:9', 'linkedin'), 'media_kind_mismatch');
   });
 });
+
+import { ExternalMediaRequestSchema, PUBLISH_URL_MAX, PublishLinksUpdateSchema, publishUrlProblem } from '../src/content-studio';
+
+describe('publish links (« Copier et ouvrir »)', () => {
+  it('takes an https link on the platform’s own host', () => {
+    assert.equal(publishUrlProblem('linkedin', 'https://www.linkedin.com/company/109660238/admin/page-posts/published/?share=true'), null);
+    assert.equal(publishUrlProblem('linkedin', 'https://linkedin.com/feed/'), null);
+    assert.equal(publishUrlProblem('tiktok', 'https://www.tiktok.com/tiktokstudio/upload'), null);
+    assert.equal(publishUrlProblem('tiktok', 'https://tiktok.com/upload'), null);
+    assert.equal(publishUrlProblem('linkedin', 'https://WWW.LinkedIn.com/feed/'), null, 'host case does not matter');
+  });
+  it('refuses anything else, saying why', () => {
+    assert.equal(publishUrlProblem('linkedin', 'pas un lien'), 'not_url');
+    assert.equal(publishUrlProblem('linkedin', 'http://www.linkedin.com/feed/'), 'not_https');
+    assert.equal(publishUrlProblem('linkedin', 'javascript:alert(1)'), 'not_https');
+    assert.equal(publishUrlProblem('linkedin', 'https://www.tiktok.com/upload'), 'wrong_host');
+    assert.equal(publishUrlProblem('tiktok', 'https://www.linkedin.com/feed/'), 'wrong_host');
+    assert.equal(publishUrlProblem('linkedin', 'https://evil.com/?https://www.linkedin.com'), 'wrong_host');
+    assert.equal(publishUrlProblem('linkedin', 'https://www.linkedin.com.evil.com/'), 'wrong_host');
+    assert.equal(publishUrlProblem('linkedin', 'https://fr.linkedin.com/'), 'wrong_host');
+    assert.equal(publishUrlProblem('linkedin', 'https://user:pw@www.linkedin.com/'), 'wrong_host');
+    assert.equal(publishUrlProblem('linkedin', 'https://www.linkedin.com:8443/'), 'wrong_host');
+    assert.equal(publishUrlProblem('linkedin', `https://www.linkedin.com/${'a'.repeat(PUBLISH_URL_MAX)}`), 'too_long');
+  });
+  it('the PATCH body names at least one platform; null clears its link', () => {
+    const p = (o: unknown) => PublishLinksUpdateSchema.safeParse(o).success;
+    assert.equal(p({ linkedin: 'https://www.linkedin.com/feed/' }), true);
+    assert.equal(p({ tiktok: null }), true);
+    assert.equal(p({}), false);
+    assert.equal(p({ linkedin: 42 }), false);
+    assert.equal(p({ instagram: 'https://instagram.com' }), false);
+  });
+  it('the external-media toggle carries an optional note of 200 characters at most', () => {
+    const p = (o: unknown) => ExternalMediaRequestSchema.safeParse(o).success;
+    assert.equal(p({ enabled: true }), true);
+    assert.equal(p({ enabled: true, note: 'tournage-ecole.mp4' }), true);
+    assert.equal(p({ enabled: false, note: null }), true);
+    assert.equal(p({ enabled: true, note: 'x'.repeat(201) }), false);
+    assert.equal(p({ note: 'x' }), false);
+  });
+});

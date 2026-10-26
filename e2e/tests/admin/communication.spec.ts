@@ -1,18 +1,20 @@
 import { randomUUID } from 'node:crypto';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { prisma, FIXTURES, pollUntil } from '../../helpers/db';
 import {
   LINKEDIN_BODY,
   LINKEDIN_URL,
   PROPOSALS,
+  PUBLISH_LINKS,
   addDays,
   ageWeek,
   mondayOf,
   resetAudience,
   resetContentStudio,
   resetJournal,
+  resetPublishLinks,
   resetStudioSettings,
   seedAudience,
   seedFailedJournal,
@@ -58,6 +60,7 @@ test.beforeEach(async () => {
   await resetJournal();
   await resetAudience();
   await resetStudioSettings();
+  await resetPublishLinks();
 });
 
 const card = (page: Page, platform: 'LinkedIn' | 'TikTok') => page.getByRole('article', { name: new RegExp(`^${platform}`) });
@@ -144,6 +147,124 @@ test('owner chooses a direction and validates the week', async ({ page }) => {
   expect(week.slots.every((s) => s.status === 'validated')).toBe(true);
   const audit = await prisma.auditLog.findFirst({ where: { kind: 'content.week.validate', targetId: weekId } });
   expect(audit).not.toBeNull();
+});
+
+test('a week proposed before the month objective was set is regenerated from the Semaine screen', async ({ page }) => {
+  const nextMonday = addDays(mondayOf(studioToday()), 7);
+  const month = nextMonday.slice(0, 7);
+  const { weekId } = await seedProposalsWeek(nextMonday); // proposed without an objective
+  await seedTitles(weekId, 1);
+
+  // No objective for the month yet: the screen says so, and a super-admin gets the way to Réglages.
+  await page.goto('/admin/communication/semaine');
+  await expect(page.getByText(/^Aucun objectif n’est fixé pour .+ : les propositions ne visent rien de précis\.$/)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Fixer l’objectif' })).toHaveAttribute('href', '/admin/communication/reglages');
+  await expect(page.getByRole('button', { name: 'Régénérer les propositions' })).toBeVisible();
+
+  // The owner sets the objective afterwards.
+  await prisma.contentObjective.create({ data: { month, type: 'signups', statement: 'Cinquante familles inscrites' } });
+
+  // The Strategist (AI) stands behind the route: do what the server does (new directions,
+  // direction and titles cleared, the week re-linked to the objective), held until the
+  // working state has been checked.
+  const fresh = PROPOSALS.map((p, i) => ({ ...p, title: `Nouvelle direction ${i + 1}` }));
+  let calls = 0;
+  let release!: () => void;
+  const held = new Promise<void>((r) => (release = r));
+  await page.route('**/api/admin/communication/weeks/*/regenerate-proposals', async (route) => {
+    calls++;
+    await held;
+    const objective = await prisma.contentObjective.findUniqueOrThrow({ where: { month } });
+    await prisma.$transaction([
+      prisma.contentSlot.deleteMany({ where: { weekId } }),
+      prisma.contentWeek.update({
+        where: { id: weekId },
+        data: { status: 'proposals_ready', proposals: { proposals: fresh }, chosenIndex: null, refinement: null, objectiveId: objective.id },
+      }),
+    ]);
+    const response = await page.request.get(`/api/admin/communication/weeks/${weekId}`);
+    await route.fulfill({ response });
+  });
+
+  await page.reload();
+  const late = page.getByText('Ces propositions ont été préparées sans objectif du mois. Un objectif est maintenant fixé : régénérez-les pour en tenir compte.');
+  await expect(late).toBeVisible();
+  const regenerate = page.getByRole('button', { name: 'Régénérer les propositions' });
+  await expect(regenerate).toHaveCount(1); // offered by the notice, not twice
+
+  // It asks first; cancelling sends nothing.
+  await regenerate.click();
+  const dialog = page.getByRole('dialog', { name: 'Régénérer les propositions ?' });
+  // Titles are written: the dialog says they and the owner's edits go too.
+  await expect(dialog).toContainText(
+    'Gabee repart de zéro : trois nouvelles directions, avec l’objectif et la ligne éditoriale actuels. La direction choisie, les titres de la semaine et vos modifications seront remplacés.',
+  );
+  await dialog.getByRole('button', { name: 'Annuler' }).click();
+  await expect(dialog).toHaveCount(0);
+  expect(calls).toBe(0);
+
+  await regenerate.click();
+  await dialog.getByRole('button', { name: 'Régénérer', exact: true }).click();
+  await expect(page.getByText('Gabee prépare 3 nouvelles directions pour la semaine…')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Valider la semaine' })).toHaveCount(0);
+  release();
+
+  // Back to step 1 with the new directions; nothing left to warn about.
+  await expect(page.getByRole('radio')).toHaveCount(3);
+  await expect(page.getByText('Nouvelle direction 2')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Arrêter cette direction' })).toBeDisabled();
+  await expect(page.locator('.studio-stepper [aria-current="step"]')).toContainText('Direction');
+  await expect(late).toHaveCount(0);
+  await expect(page.getByText(/Aucun objectif/)).toHaveCount(0);
+  expect(calls).toBe(1);
+});
+
+test('a failed regenerate, then Relancer: the direction step is clean and a cut-off titles answer still polls', async ({ page }) => {
+  const nextMonday = addDays(mondayOf(studioToday()), 7);
+  const { weekId } = await seedProposalsWeek(nextMonday);
+  await prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'direction_set', chosenIndex: 0 } });
+  await ageWeek(weekId, 21); // its titles run is long over: step 1 offers the choice again
+  await page.clock.install(); // the 20 s wait poll is fast-forwarded below
+
+  // The server reset the week, then the Strategist was unavailable (503: the run is provably over).
+  await page.route('**/api/admin/communication/weeks/*/regenerate-proposals', async (route) => {
+    await prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'proposing', chosenIndex: null } });
+    await route.fulfill({ status: 503, json: { error: { code: 'ai_unavailable', message: "Le service d'IA est indisponible pour le moment." } } });
+  });
+  // "Relancer" succeeds.
+  await page.route('**/api/admin/communication/weeks/*/propose', async (route) => {
+    await prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'proposals_ready', proposals: { proposals: PROPOSALS } } });
+    const response = await page.request.get(`/api/admin/communication/weeks/${weekId}`);
+    await route.fulfill({ response });
+  });
+  // The titles request reaches the server but its answer never arrives.
+  await page.route('**/api/admin/communication/weeks/*/direction', async (route) => {
+    await prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'direction_set', chosenIndex: 1 } });
+    await route.abort('connectionreset');
+  });
+
+  await page.goto('/admin/communication/semaine');
+  await page.getByRole('button', { name: 'Régénérer les propositions' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Régénérer les propositions ?' });
+  await dialog.getByRole('button', { name: 'Régénérer', exact: true }).click();
+  // The studio's error notice (Next's route announcer is a role=alert too).
+  const studioAlert = page.locator('.studio-notice[role="alert"]');
+  await expect(studioAlert).toContainText("Le service d'IA est indisponible pour le moment");
+  await page.getByRole('button', { name: 'Relancer les propositions' }).click();
+
+  // Back on step 1: the old failure is gone.
+  await expect(page.getByRole('radio')).toHaveCount(3);
+  await expect(studioAlert).toHaveCount(0);
+  await expect(page.getByText(/indisponible/)).toHaveCount(0);
+
+  // A titles answer cut off by the proxy: the screen waits and polls, then shows the titles.
+  await page.getByText(PROPOSALS[1].title).click();
+  await page.getByRole('button', { name: 'Arrêter cette direction' }).click();
+  await expect(page.getByText(/La connexion a été coupée/)).toBeVisible();
+  await expect(page.getByText('Gabee rédige les titres de la semaine…')).toBeVisible();
+  await seedTitles(weekId, 1);
+  await page.clock.fastForward(21_000);
+  await expect(page.getByRole('button', { name: 'Valider la semaine' })).toBeVisible();
 });
 
 test('owner approves a draft, copies it and marks it published', async ({ page }) => {
@@ -692,9 +813,28 @@ test.describe('as a plain admin', () => {
     await expect(page.getByLabel('Texte (Markdown)')).not.toBeEditable();
     await expect(page.getByRole('button', { name: /Enregistrer|Publier|Ajouter une cible/ })).toHaveCount(0);
     // The month switch only reads, so it stays usable.
-    const nextMonth = page.getByRole('group', { name: 'Mois' }).getByRole('button').nth(1);
+    const nextMonth = page.getByRole('group', { name: 'Mois' }).getByRole('button').last(); // next month (a straddling week adds its Monday's month first)
     await nextMonth.click();
     await expect(nextMonth).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('admin (not super) is told the month has no objective, without the Réglages link', async ({ page }) => {
+    const nextMonday = addDays(mondayOf(studioToday()), 7);
+    const { weekId } = await seedProposalsWeek(nextMonday);
+    await seedTitles(weekId, 0);
+    await page.goto('/admin/login');
+    await page.locator('#ae').fill(FIXTURES.adminOnlyEmail);
+    await page.locator('#ap').fill(FIXTURES.adminOnlyPassword);
+    await page.getByRole('button', { name: 'Se connecter' }).click();
+    await expect(page).toHaveURL(/\/admin$/);
+
+    await page.goto('/admin/communication/semaine');
+    await expect(
+      page.getByText(/^Aucun objectif n’est fixé pour .+ : les propositions ne visent rien de précis\. Un super-admin peut le fixer dans Réglages\.$/),
+    ).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Fixer l’objectif' })).toHaveCount(0);
+    // Regenerating is an admin action: the button is there.
+    await expect(page.getByRole('button', { name: 'Régénérer les propositions' })).toBeVisible();
   });
 });
 
@@ -765,4 +905,124 @@ test('an upload can be cancelled, and a failed transfer says what to do', async 
   ).toBeVisible();
   await expect(send).toBeEnabled();
   expect(puts).toBe(2);
+});
+
+// ── « Copier et ouvrir » and the owner's own media ──
+
+/** No request leaves the test: the platforms' pages answer with a stub. */
+async function stubPlatforms(context: BrowserContext): Promise<void> {
+  for (const host of ['https://www.linkedin.com/**', 'https://www.tiktok.com/**']) {
+    await context.route(host, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>stub</title>' }));
+  }
+}
+
+test('« Copier et ouvrir LinkedIn » copies the post and opens the page composer, then points to Marquer comme publié', async ({ page, context }) => {
+  await stubPlatforms(context);
+  await seedTodayBoard();
+  await page.goto('/admin/communication');
+  const li = card(page, 'LinkedIn');
+  await li.getByRole('button', { name: 'Valider', exact: true }).click();
+  await expect(li.getByText('Validé', { exact: true })).toBeVisible();
+
+  const [tab] = await Promise.all([context.waitForEvent('page'), li.getByRole('link', { name: 'Copier et ouvrir LinkedIn' }).click()]);
+  await expect.poll(() => tab.url()).toBe(PUBLISH_LINKS.linkedin);
+  await tab.close();
+  await page.bringToFront();
+  await expect(li.getByText('Texte copié — collez-le dans LinkedIn')).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain(LINKEDIN_BODY);
+  expect(copied).toContain(LINKEDIN_URL);
+  // Back from LinkedIn: the next step is said, and « Marquer comme publié » is right there.
+  await expect(li.getByText(/revenez ici : « Marquer comme publié »/)).toBeVisible();
+  await expect(li.getByRole('button', { name: 'Marquer comme publié' })).toBeVisible();
+  // « Copier le texte » stays for other uses.
+  await expect(li.getByRole('button', { name: 'Copier le texte' })).toBeVisible();
+});
+
+test('a TikTok post with the owner’s own video: approve it, copy the caption and open TikTok, mark it published', async ({ page, context }) => {
+  await stubPlatforms(context);
+  const { tiktokDraftId } = await seedTodayBoard();
+  await page.goto('/admin/communication');
+  const tt = card(page, 'TikTok');
+  await expect(tt.getByRole('button', { name: 'Valider', exact: true })).toBeDisabled();
+
+  await tt.getByRole('button', { name: 'J’utilise ma propre vidéo' }).click();
+  const dialog = page.getByRole('dialog', { name: 'J’utilise ma propre vidéo' });
+  await dialog.getByLabel(/Nom du fichier ou note/).fill('tournage-cuisine.mp4');
+  await dialog.getByRole('button', { name: 'Utiliser ma vidéo' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(tt.getByText('Vidéo hors Médiathèque')).toBeVisible();
+  await expect(tt.getByText(/tournage-cuisine\.mp4/)).toBeVisible();
+  await expect(tt.getByText('Publiez avec votre vidéo, puis collez la légende')).toBeVisible();
+  await expect(tt.getByRole('button', { name: 'Choisir une vidéo' })).toBeVisible();
+
+  await tt.getByRole('button', { name: 'Valider', exact: true }).click();
+  await expect(tt.getByText('Validé', { exact: true })).toBeVisible();
+  const [tab] = await Promise.all([context.waitForEvent('page'), tt.getByRole('link', { name: 'Copier la légende et ouvrir TikTok' }).click()]);
+  await expect.poll(() => tab.url()).toBe(PUBLISH_LINKS.tiktok);
+  await tab.close();
+  await page.bringToFront();
+  await expect(tt.getByText('Légende copiée — collez-la dans TikTok')).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('Ten minutes of reading a day, the Gabee way.');
+
+  await tt.getByRole('button', { name: 'Marquer comme publié' }).click();
+  const publish = page.getByRole('dialog', { name: 'Marquer comme publié' });
+  await publish.getByLabel('Lien du post publié').fill('https://www.tiktok.com/@gabee/video/1');
+  await publish.getByRole('button', { name: 'Enregistrer la publication' }).click();
+  await expect(publish).toHaveCount(0);
+  await expect(tt.getByText('Publié', { exact: true })).toBeVisible();
+
+  const draft = await prisma.contentDraft.findUniqueOrThrow({ where: { id: tiktokDraftId } });
+  expect([draft.status, draft.externalMedia, draft.externalMediaNote, draft.mediaAssetId]).toEqual(['published', true, 'tournage-cuisine.mp4', null]);
+  expect(await prisma.auditLog.count({ where: { kind: 'content.draft.external_media', targetId: tiktokDraftId } })).toBe(1);
+});
+
+test('LinkedIn takes the owner’s own media too, and turning it off brings back the text-only notice', async ({ page }) => {
+  const { linkedinDraftId } = await seedTodayBoard();
+  await page.goto('/admin/communication');
+  const li = card(page, 'LinkedIn');
+  await expect(li.getByText('Aucun média autorisé — le post partira en texte seul')).toBeVisible();
+
+  await li.getByRole('button', { name: 'J’utilise mon propre média (image ou vidéo)' }).click();
+  const dialog = page.getByRole('dialog', { name: 'J’utilise mon propre média (image ou vidéo)' });
+  await dialog.getByRole('button', { name: 'Utiliser mon média' }).click();
+  await expect(li.getByText('Média hors Médiathèque')).toBeVisible();
+  await expect(li.getByText('Aucun média autorisé — le post partira en texte seul')).toHaveCount(0);
+  expect((await prisma.contentDraft.findUniqueOrThrow({ where: { id: linkedinDraftId } })).externalMedia).toBe(true);
+
+  await li.getByRole('button', { name: 'Ne plus utiliser mon média' }).click();
+  await expect(li.getByText('Aucun média autorisé — le post partira en texte seul')).toBeVisible();
+  await expect(li.getByText('Média hors Médiathèque')).toHaveCount(0);
+});
+
+test('without a LinkedIn page link, the card points to Réglages, where the owner sets it', async ({ page, context }) => {
+  await stubPlatforms(context);
+  await resetPublishLinks({ linkedin: null });
+  await seedTodayBoard();
+  await page.goto('/admin/communication');
+  const li = card(page, 'LinkedIn');
+  await expect(li.getByRole('link', { name: 'Copier et ouvrir LinkedIn' })).toHaveCount(0);
+  await li.getByRole('link', { name: 'Ajoutez le lien de votre page dans Réglages' }).click();
+  await expect(page).toHaveURL(/\/admin\/communication\/reglages$/);
+
+  const links = page.getByRole('region', { name: 'Liens de publication' });
+  await expect(links.getByText(/Ouvrez votre page Gabee en tant qu’admin, cliquez sur « Créer un post », copiez l’adresse\./)).toBeVisible();
+  const field = links.getByLabel('Page LinkedIn (créer un post)');
+  await expect(field).toHaveValue('');
+  await expect(links.getByLabel('TikTok (envoyer une vidéo)')).toHaveValue(PUBLISH_LINKS.tiktok);
+  await field.fill('https://www.tiktok.com/upload');
+  await expect(links.getByText('L’adresse doit ouvrir www.linkedin.com.')).toBeVisible();
+  await expect(links.getByRole('button', { name: 'Enregistrer les liens' })).toBeEnabled();
+  await links.getByRole('button', { name: 'Enregistrer les liens' }).click();
+  expect((await prisma.platformProfile.findUniqueOrThrow({ where: { platform: 'linkedin' } })).publishUrl).toBeNull();
+
+  const mine = 'https://www.linkedin.com/company/109660238/admin/page-posts/published/?share=true';
+  await field.fill(mine);
+  await links.getByRole('button', { name: 'Enregistrer les liens' }).click();
+  await expect(links.getByText('Enregistré')).toBeVisible();
+  expect((await prisma.platformProfile.findUniqueOrThrow({ where: { platform: 'linkedin' } })).publishUrl).toBe(mine);
+
+  await page.goto('/admin/communication');
+  const [tab] = await Promise.all([context.waitForEvent('page'), card(page, 'LinkedIn').getByRole('link', { name: 'Copier et ouvrir LinkedIn' }).click()]);
+  await expect.poll(() => tab.url()).toBe(mine);
 });

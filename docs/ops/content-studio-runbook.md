@@ -207,7 +207,8 @@ on Monday morning. All times below are Douala time.
    and the timezone (`Africa/Douala`).
 4. **Réglages → Objectif du mois**: the **October 2026** objective. A week
    takes the objective of the month of its **Monday**, so the week of Mon 26
-   Oct uses October.
+   Oct uses October. Every AI run reads the objective as it is at that moment,
+   so one set late still counts from the next run on (see 4.1).
 5. **Réglages → Ligne éditoriale**: reread the text and the **Faits produit**
    (ages, free offer, **paid offer**). Agents state only these facts. As long
    as "Une offre payante existe" is off, they never mention a paid offer.
@@ -270,10 +271,9 @@ the setup was complete), open it in **Semaine**:
 
 - still preparing proposals and nothing moves for 20 minutes, or it failed:
   **Relancer les propositions**;
-- proposals ready but made before the objective or the editorial line was
-  set: pick the closest direction and steer it with **Votre précision** before
-  **Arrêter cette direction**. The titles are written with the settings as
-  they are at that moment.
+- proposals ready (or titles written, not yet validated) but made before the
+  objective or the editorial line was set: **Régénérer les propositions**
+  (section 4.1).
 
 ### 3.4 After launch
 
@@ -307,6 +307,35 @@ the setup was complete), open it in **Semaine**:
 Reminders stop once everything is approved and marked published. To skip a
 day, click **Sauter** on its line in Semaine and give a reason. That day then
 gets no drafts and no reminders.
+
+### 4.1 Regenerate the week's proposals
+
+**When**: the week's directions are not right, typically because the Sunday
+06:00 run went out before the month's objective (or a new editorial line) was
+set. Semaine then says "Ces propositions ont été préparées sans objectif du
+mois" once the objective exists, and the Sunday email says no objective was
+set. Set the objective first (**Réglages → Objectif du mois**, super-admin),
+then in **Semaine** click **Régénérer les propositions** (steps 1 and 2) and
+confirm.
+
+**What it replaces**: the 3 directions, the chosen direction, your precision,
+the per-platform angles and every day line (with your edits to them). Gabee
+proposes 3 new directions with the objective and editorial line as they are
+now, and the week goes back to step 1. It is offered only **before
+validation**; on a validated week, regenerate day by day (**Régénérer** on a
+line), which also reads the current objective. While a proposals or titles run
+is going on the week, it is refused (5.4). If the run fails, the week waits in
+step 1 with **Relancer les propositions**.
+
+**Cost**: one Strategist proposals run (`content_strategy`, with web search),
+the same as the Sunday run. Choosing a direction afterwards costs one titles
+run, as usual.
+
+**Emails meanwhile**: while the week waits for its new directions (during a
+regenerate, or after one that failed), the Sunday reminders are skipped and
+the Sunday email is held until directions exist (it is due until Sunday
+23:59). After a failed regenerate, **Relancer les propositions** so the email
+can go out.
 
 ---
 
@@ -373,8 +402,8 @@ SQL
 
 ### 5.4 "Gabee travaille déjà dessus" (`generation_in_progress`)
 
-A week-level AI operation (proposals, direction → titles, regenerating a day)
-on that week started less than **20 minutes** ago and is still running. Wait,
+A week-level AI operation (proposals, regenerating the proposals, direction →
+titles, regenerating a day) on that week started less than **20 minutes** ago and is still running. Wait,
 then reload. If that run crashed, the same action works again once the 20
 minutes are up: the crashed run then shows in the Journal as failed
 (`abandoned`). The database holds at most one running Strategist run per

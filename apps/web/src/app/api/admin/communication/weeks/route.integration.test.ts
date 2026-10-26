@@ -14,6 +14,7 @@ import { addDaysYmd } from '@/lib/server/content-studio/state';
 import { GET as listWeeks, POST as startNow } from './route';
 import { GET as getWeek } from './[id]/route';
 import { POST as propose } from './[id]/propose/route';
+import { POST as regenerateProposals } from './[id]/regenerate-proposals/route';
 import { POST as direction } from './[id]/direction/route';
 import { POST as validate } from './[id]/validate/route';
 import { PATCH as patchSlot } from '../slots/[id]/route';
@@ -104,6 +105,7 @@ test('studio routes need an admin: no session → 401, parent → 403', async ()
     ['POST weeks', (c) => startNow(webRequest(`${U}/weeks`, { cookie: c }), undefined)],
     ['GET week', (c) => getWeek(webRequest(`${U}/weeks/${week.id}`, { method: 'GET', cookie: c }), ctx(week.id))],
     ['POST propose', (c) => propose(webRequest(`${U}/weeks/${week.id}/propose`, { cookie: c }), ctx(week.id))],
+    ['POST regenerate-proposals', (c) => regenerateProposals(webRequest(`${U}/weeks/${week.id}/regenerate-proposals`, { cookie: c }), ctx(week.id))],
     ['GET today', (c) => today(webRequest(`${U}/today`, { method: 'GET', cookie: c }), undefined)],
     ['GET pending', (c) => pending(webRequest(`${U}/pending`, { method: 'GET', cookie: c }), undefined)],
   ];
@@ -238,6 +240,60 @@ test('slot regenerate on a validated day due today writes its drafts, audited as
   assert.equal(generated.actorRole, 'admin');
   assert.equal(generated.targetId, slot.id);
   assert.deepEqual(generated.diff, { day: p.date, created: 2, failed: 0 });
+});
+
+test('regenerate-proposals starts a titled week over with the current objective, audited as the acting admin', async () => {
+  const week = await createContentWeek(prisma, { status: 'titles_ready', proposals, chosenIndex: 2, refinement: 'Plus concret' });
+  await createContentSlot(prisma, week.id, { status: 'proposed' });
+  const objective = await prisma.contentObjective.create({
+    data: { month: week.startsOn.toISOString().slice(0, 7), type: 'signups', statement: 'Cinquante familles' },
+  });
+  const fresh = { proposals: proposals.proposals.map((p) => ({ ...p, title: `Nouvelle ${p.title}` })) };
+  const adapter = fake([{ json: fresh }]);
+
+  const res = await regenerateProposals(post(`/weeks/${week.id}/regenerate-proposals`), ctx(week.id));
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.week.status, 'proposals_ready');
+  assert.equal(body.week.proposals[0].title, 'Nouvelle Direction 0');
+  assert.equal(body.week.chosen_index, null);
+  assert.deepEqual(body.week.slots, []);
+  assert.equal(body.week.objective_id, objective.id);
+  assert.equal(body.week.month_objective_set, true);
+  assert.equal(adapter.calls.length, 1);
+
+  const audit = await prisma.auditLog.findFirstOrThrow({ where: { kind: 'content.week.repropose' } });
+  assert.equal(audit.actorId, adminId);
+  assert.equal(audit.actorRole, 'admin');
+  assert.equal(audit.targetId, week.id);
+
+  // A week still proposing belongs to "Relancer"; a validated one is regenerated day by day.
+  for (const status of ['proposing', 'validated']) {
+    const other = await createContentWeek(prisma, { status });
+    const refused = await regenerateProposals(post(`/weeks/${other.id}/regenerate-proposals`), ctx(other.id));
+    assert.equal(refused.status, 409, status);
+    assert.equal((await refused.json()).error.code, 'invalid_transition');
+  }
+  const bad = await regenerateProposals(post('/weeks/nope/regenerate-proposals'), ctx('nope'));
+  assert.equal(bad.status, 404);
+});
+
+test('regenerate-proposals maps a live run to 409 and an unavailable AI to 503', async () => {
+  const week = await createContentWeek(prisma, { status: 'proposals_ready', proposals });
+  const agent = await prisma.agent.findUniqueOrThrow({ where: { key: 'strategist' } });
+  const run = await prisma.agentRun.create({
+    data: { agentKey: 'strategist', agentVersionId: agent.publishedVersionId!, origin: 'user_action', subjectKind: 'week_proposals', subjectId: week.id, inputHash: 'h', input: {}, status: 'running' },
+  });
+  const busy = await regenerateProposals(post(`/weeks/${week.id}/regenerate-proposals`), ctx(week.id));
+  assert.equal(busy.status, 409);
+  assert.equal((await busy.json()).error.code, 'generation_in_progress');
+
+  await prisma.agentRun.update({ where: { id: run.id }, data: { status: 'failed' } });
+  fake([{ error: 'outage' }, { error: 'outage' }, { error: 'outage' }]);
+  const down = await regenerateProposals(post(`/weeks/${week.id}/regenerate-proposals`), ctx(week.id));
+  assert.equal(down.status, 503);
+  assert.equal((await down.json()).error.code, 'ai_unavailable');
+  assert.equal((await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id } })).status, 'proposing', 'left for "Relancer"');
 });
 
 test('invalid ids answer 404, unknown ids 404 week_not_found', async () => {
