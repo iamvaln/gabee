@@ -112,11 +112,13 @@ export function weekProposalsEmail(input: {
       lines: proposals.map((p, i) => `${i + 1}. ${p.title} — ${p.rationale}`),
     },
   ];
-  // Proposed before the owner set the month's objective (the week's month is its Monday's).
+  // Proposed without the month's objective (the week's month is its Monday's): set it, or it was set since.
   if (!week.objective_id) {
     blocks.push({
       lines: [
-        `Aucun objectif n’était fixé pour ${monthName(week.starts_on.slice(0, 7))} : fixe-le dans Réglages, puis régénère les propositions depuis l’écran Semaine.`,
+        week.month_objective_set
+          ? 'Les propositions ont été préparées sans objectif ; un objectif est maintenant fixé : régénérez-les depuis l’écran Semaine pour en tenir compte.'
+          : `Aucun objectif n’était fixé pour ${monthName(week.starts_on.slice(0, 7))} : fixez-le dans Réglages, puis régénérez les propositions depuis l’écran Semaine.`,
       ],
     });
   }
