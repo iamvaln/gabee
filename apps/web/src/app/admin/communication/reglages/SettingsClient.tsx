@@ -2,15 +2,18 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { OBJECTIVE_TYPES, StudioSettingsUpdateSchema, type Language } from '@gabee/types';
+import { CONTENT_PLATFORMS, OBJECTIVE_TYPES, StudioSettingsUpdateSchema, type ContentPlatform, type Language, type PostingDays } from '@gabee/types';
+import type { RhythmPlan } from '@/lib/server/content-studio/rhythm';
 import type { EditorialLineDto, ObjectiveDto, StudioSettingsDto, StudioSettingsView } from '@/lib/server/content-studio/settings';
+import type { WeekDto } from '@/lib/server/content-studio/weeks';
 import { PageHead } from '../../_shell/primitives';
 import { AIcon } from '../../_shell/icons';
 import { api, reportUnexpected } from '../_components/api';
+import { ApplyRhythmButton } from '../_components/ApplyRhythm';
 import { ConfirmDialog } from '../_components/Dialog';
 import { ErrorNotice, Notice } from '../_components/ErrorNotice';
 import { errorText } from '../_components/errors';
-import { dateTime, type Bi } from '../_components/format';
+import { PLATFORM_LABEL, WEEKDAYS, dateTime, type Bi } from '../_components/format';
 import { useUnsavedGuard } from '../_components/useUnsavedGuard';
 import { usd } from '../../_shell/ai-labels';
 import { ProductFactsForm } from './ProductFactsForm';
@@ -43,9 +46,10 @@ function monthLabel(ym: string, lang: Language): string {
 }
 
 /**
- * Réglages (minimal, Phase 1a): objective of the month, editorial line and
- * product facts, email recipients and time zone, AI budget. Each card saves
- * on its own. Admins see everything read-only; a super-admin edits.
+ * Réglages (minimal, Phase 1a): objective of the month, posting days,
+ * editorial line and product facts, email recipients and time zone, AI
+ * budget. Each card saves on its own. Admins see everything read-only; a
+ * super-admin edits.
  */
 export function SettingsClient({ lang }: { lang: Language }) {
   const L = lang === 'fr';
@@ -115,6 +119,7 @@ export function SettingsClient({ lang }: { lang: Language }) {
           objectives={view.objectives}
           onSaved={(o) => setView((v) => v && { ...v, objectives: [...v.objectives.filter((x) => x.month !== o.month), o].sort((a, b) => a.month.localeCompare(b.month)) })}
         />
+        <PostingDaysCard lang={lang} readOnly={ro} onDirty={onDirty} settings={view.settings} onSaved={(s) => setView((v) => v && { ...v, settings: s })} />
         <EditorialCard lang={lang} readOnly={ro} onDirty={onDirty} line={view.editorial_line} onPublished={(line) => setView((v) => v && { ...v, editorial_line: line })} />
         <NotificationsCard lang={lang} readOnly={ro} onDirty={onDirty} settings={view.settings} onSaved={(s) => setView((v) => v && { ...v, settings: s })} />
         <BudgetCard
@@ -421,6 +426,177 @@ function ObjectiveCard({
           }}
           onClose={() => setSwitchTo(null)}
         />
+      )}
+    </SettingsCard>
+  );
+}
+
+// ── Posting days ──
+
+const sameDays = (a: PostingDays, b: PostingDays) => CONTENT_PLATFORMS.every((p) => [...a[p]].sort().join() === [...b[p]].sort().join());
+
+function PostingDaysCard({
+  lang,
+  readOnly,
+  onDirty,
+  settings,
+  onSaved,
+}: {
+  lang: Language;
+  readOnly: boolean;
+  onDirty: OnDirty;
+  settings: StudioSettingsDto;
+  onSaved: (s: StudioSettingsDto) => void;
+}) {
+  const L = lang === 'fr';
+  const t = (fr: string, en: string) => (L ? fr : en);
+  const id = useId();
+  const [days, setDays] = useState<PostingDays>(settings.posting_days);
+  const [touched, setTouched] = useState(false);
+  /** After a save: a validated week whose upcoming days could follow the new rhythm. */
+  const [offer, setOffer] = useState<{ week: WeekDto; current: boolean; plan: RhythmPlan } | null>(null);
+  const [applied, setApplied] = useState<string | null>(null);
+  const { state, run, touch } = useSave(lang);
+
+  const enabled = CONTENT_PLATFORMS.filter((p) => settings.enabled_platforms.includes(p));
+  const dirty = !sameDays(days, settings.posting_days);
+  const empty = enabled.filter((p) => days[p].length === 0);
+  const problem = empty.length
+    ? t(`Choisissez au moins un jour pour ${empty.map((p) => PLATFORM_LABEL[p]).join(' et ')}.`, `Pick at least one day for ${empty.map((p) => PLATFORM_LABEL[p]).join(' and ')}.`)
+    : null;
+  useEffect(() => onDirty('posting-days', dirty), [dirty, onDirty]);
+
+  const toggle = (platform: ContentPlatform, day: number) => {
+    setDays((d) => ({ ...d, [platform]: d[platform].includes(day) ? d[platform].filter((x) => x !== day) : [...d[platform], day].sort((a, b) => a - b) }));
+    touch();
+  };
+
+  /** The validated week (this one, else next) whose upcoming days the new rhythm would change. */
+  async function findOffer(): Promise<void> {
+    const weeks = await api<{ today: string; current: WeekDto | null; next: WeekDto | null }>('/weeks');
+    for (const [week, current] of [
+      [weeks.current, true],
+      [weeks.next, false],
+    ] as const) {
+      if (!week || week.status !== 'validated' || !week.slots.some((s) => s.date > weeks.today)) continue;
+      const { plan } = await api<{ plan: RhythmPlan }>(`/weeks/${week.id}/apply-rhythm`);
+      if (plan.changes.length > 0) return setOffer({ week, current, plan });
+    }
+    setOffer(null);
+  }
+
+  const save = (e: React.FormEvent) => {
+    e.preventDefault();
+    setTouched(true);
+    if (problem || !dirty) return;
+    void run('settings-posting-days', async () => {
+      const res = await api<{ settings: StudioSettingsDto }>('/settings', { method: 'PATCH', body: { posting_days: days } });
+      onSaved(res.settings);
+      setDays(res.settings.posting_days);
+      setTouched(false);
+      setApplied(null);
+      // Saved either way; the offer is a follow-up, its failure only means no offer.
+      await findOffer().catch((err: unknown) => reportUnexpected(err, { action: 'rhythm-offer' }));
+    });
+  };
+
+  return (
+    <SettingsCard
+      title={t('Jours de publication', 'Posting days')}
+      sub={
+        <>
+          <p>
+            {t(
+              'Les jours où chaque plateforme publie (heure du studio). Un jour où aucune plateforme ne publie n’a pas de post.',
+              'The days each platform posts on (studio time). A day no platform posts on has no post.',
+            )}
+          </p>
+          <p>
+            {t(
+              'Vaut pour les semaines planifiées ensuite ; une semaine déjà validée peut suivre le nouveau rythme pour ses jours à venir.',
+              'Applies to the weeks planned afterwards; an already validated week can follow the new rhythm for its upcoming days.',
+            )}
+          </p>
+        </>
+      }
+      readOnly={readOnly}
+      footer={<SaveBar lang={lang} state={state} label={t('Enregistrer les jours', 'Save the days')} dirty={dirty} form={`${id}-form`} />}
+    >
+      <form id={`${id}-form`} className="studio-weekdays" onSubmit={save} noValidate>
+        {CONTENT_PLATFORMS.map((platform) => {
+          const on = enabled.includes(platform);
+          return (
+            <fieldset key={platform} className="studio-weekday-row">
+              <legend>
+                {PLATFORM_LABEL[platform]}
+                {!on && <span className="studio-muted-text">{t(' (désactivée)', ' (disabled)')}</span>}
+              </legend>
+              {WEEKDAYS.map((d) => {
+                const pressed = days[platform].includes(d.day);
+                return (
+                  <button
+                    key={d.day}
+                    type="button"
+                    className={'chip' + (pressed ? ' on' : '')}
+                    aria-pressed={pressed}
+                    aria-label={L ? `${PLATFORM_LABEL[platform]} le ${d.long.fr}` : `${PLATFORM_LABEL[platform]} on ${d.long.en}`}
+                    onClick={() => toggle(platform, d.day)}
+                    disabled={readOnly}
+                  >
+                    {d.short[lang]}
+                  </button>
+                );
+              })}
+            </fieldset>
+          );
+        })}
+        {problem && (dirty || touched) && (
+          <p className="studio-field-error" role="alert">
+            {problem}
+          </p>
+        )}
+        {!problem && (
+          <p className="help">
+            {t(
+              `${enabled.map((p) => `${PLATFORM_LABEL[p]} : ${days[p].length} post${days[p].length > 1 ? 's' : ''}`).join(' · ')} par semaine.`,
+              `${enabled.map((p) => `${PLATFORM_LABEL[p]}: ${days[p].length} post${days[p].length > 1 ? 's' : ''}`).join(' · ')} a week.`,
+            )}
+          </p>
+        )}
+      </form>
+      {applied && (
+        <Notice tone="ok">
+          <p>{t(`Rythme appliqué : ${applied}.`, `Rhythm applied: ${applied}.`)}</p>
+        </Notice>
+      )}
+      {offer && !readOnly && (
+        <Notice
+          tone="info"
+          action={
+            <ApplyRhythmButton
+              weekId={offer.week.id}
+              current={offer.current}
+              lang={lang}
+              plan={offer.plan}
+              onApplied={(_week, plan) => {
+                setOffer(null);
+                setApplied(plan.summary);
+              }}
+            />
+          }
+        >
+          <p>
+            {offer.current
+              ? t(
+                  `La semaine en cours est déjà validée : ses jours à venir suivent encore l’ancien rythme (${offer.plan.summary.toLowerCase()} pour suivre le nouveau).`,
+                  `This week is already validated: its upcoming days still follow the old rhythm (${offer.plan.summary} to follow the new one).`,
+                )
+              : t(
+                  `La semaine prochaine est déjà validée : ses jours suivent encore l’ancien rythme (${offer.plan.summary.toLowerCase()} pour suivre le nouveau).`,
+                  `Next week is already validated: its days still follow the old rhythm (${offer.plan.summary} to follow the new one).`,
+                )}
+          </p>
+        </Notice>
       )}
     </SettingsCard>
   );

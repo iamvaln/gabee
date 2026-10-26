@@ -1,4 +1,4 @@
-import type { BilingualText, ContentLanguage, ContentPlatform, Language, LinkedInPost, SlotFormat, TikTokPost } from '@gabee/types';
+import type { BilingualText, ContentLanguage, ContentPillar, ContentPlatform, Language, LinkedInPost, PillarMix, SlotFormat, TikTokPost } from '@gabee/types';
 import type { DraftDto } from '@/lib/server/content-studio/drafts';
 
 /** Labels and formatting shared by the Aujourd'hui and Semaine screens. */
@@ -20,6 +20,42 @@ export const FORMAT_LABEL: Record<SlotFormat, Bi> = {
   presentation_video: { fr: 'Vidéo de présentation', en: 'Presentation video' },
   story: { fr: 'Story', en: 'Story' },
 };
+
+/** The day's content pillar, as the chip on its line says it. */
+export const PILLAR_LABEL: Record<ContentPillar, Bi> = {
+  gabee: { fr: 'Gabee', en: 'Gabee' },
+  light: { fr: 'Léger', en: 'Light' },
+  value: { fr: 'Conseil', en: 'Advice' },
+};
+
+/** What each pillar is for (the editor's hint). */
+export const PILLAR_HINT: Record<ContentPillar, Bi> = {
+  gabee: { fr: 'Sur Gabee : le produit, un module, l’offre.', en: 'About Gabee: the product, a module, the offer.' },
+  light: {
+    fr: 'Pour animer : actualité, « Le saviez-vous ? », jeu, événement, journée mondiale. Sans vendre.',
+    en: 'To liven things up: news, “Did you know?”, a game, an event, an observance day. No selling.',
+  },
+  value: { fr: 'Utile aux parents : écrans, apprentissage, routines. Sans vendre.', en: 'Useful for parents: screens, learning, routines. No selling.' },
+};
+
+/** « 2 sur Gabee · 1 léger · 3 conseils » */
+export function mixLine(mix: Pick<PillarMix, 'gabee' | 'light' | 'value'>, lang: Language): string {
+  const s = (n: number) => (n > 1 ? 's' : '');
+  return lang === 'fr'
+    ? `${mix.gabee} sur Gabee · ${mix.light} léger${s(mix.light)} · ${mix.value} conseil${s(mix.value)}`
+    : `${mix.gabee} about Gabee · ${mix.light} light · ${mix.value} advice`;
+}
+
+/** Weekdays Monday first (0 = Sunday … 6 = Saturday, as the cadence stores them). */
+export const WEEKDAYS: ReadonlyArray<{ day: number; short: Bi; long: Bi }> = [
+  { day: 1, short: { fr: 'Lun', en: 'Mon' }, long: { fr: 'lundi', en: 'Monday' } },
+  { day: 2, short: { fr: 'Mar', en: 'Tue' }, long: { fr: 'mardi', en: 'Tuesday' } },
+  { day: 3, short: { fr: 'Mer', en: 'Wed' }, long: { fr: 'mercredi', en: 'Wednesday' } },
+  { day: 4, short: { fr: 'Jeu', en: 'Thu' }, long: { fr: 'jeudi', en: 'Thursday' } },
+  { day: 5, short: { fr: 'Ven', en: 'Fri' }, long: { fr: 'vendredi', en: 'Friday' } },
+  { day: 6, short: { fr: 'Sam', en: 'Sat' }, long: { fr: 'samedi', en: 'Saturday' } },
+  { day: 0, short: { fr: 'Dim', en: 'Sun' }, long: { fr: 'dimanche', en: 'Sunday' } },
+];
 
 /** Badge tone + words for a draft status (the badge always carries text, never colour alone). */
 export const DRAFT_STATUS: Record<string, { tone: string; label: Bi }> = {

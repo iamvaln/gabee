@@ -2,9 +2,11 @@
 
 import { useEffect, useId, useState } from 'react';
 import {
+  CONTENT_PILLARS,
   CONTENT_PLATFORMS,
   SLOT_FORMATS,
   type ContentLanguage,
+  type ContentPillar,
   type ContentPlatform,
   type Language,
   type SlotFormat,
@@ -18,15 +20,15 @@ import { ConfirmDialog, Dialog } from './Dialog';
 import { AiWorking, ErrorNotice } from './ErrorNotice';
 import { errorText } from './errors';
 import { failureOf } from './StartWeek';
-import { FORMAT_LABEL, LANGUAGE_LABEL, PLATFORM_LABEL, SLOT_STATUS, dayParts, longDay } from './format';
+import { FORMAT_LABEL, LANGUAGE_LABEL, PILLAR_HINT, PILLAR_LABEL, PLATFORM_LABEL, SLOT_STATUS, dayParts, longDay } from './format';
 
 type Op = { slotId: string; kind: 'save' | 'regenerate' | 'skip'; long: boolean };
 type SlotResult = { slot: SlotDto; warning?: QuotaWarning | null };
 
 /**
- * Step 2 of the Semaine screen: one line per day (topic, angle, format, one
- * FR/EN switch per platform) with Marquer comme relu · Modifier · Régénérer ·
- * Sauter. One change runs at a time (a regeneration re-runs the Strategist:
+ * Step 2 of the Semaine screen: one line per posting day (topic, angle, its
+ * pillar, format, one FR/EN switch per platform) with Marquer comme relu ·
+ * Modifier · Régénérer · Sauter. One change runs at a time (a regeneration re-runs the Strategist:
  * never two at once). After each change the caller re-reads the week (quota).
  */
 export function DayLines({
@@ -193,6 +195,10 @@ export function DayLines({
                       </p>
                     )}
                     <div className="studio-dayline-meta">
+                      <span className={`chip static studio-pillar ${slot.pillar}`} title={PILLAR_HINT[slot.pillar][lang]}>
+                        <span className="sr-only">{t('Pilier : ', 'Pillar: ')}</span>
+                        {PILLAR_LABEL[slot.pillar][lang]}
+                      </span>
                       <span className="chip static">{FORMAT_LABEL[slot.format][lang]}</span>
                       {slot.platforms.map((p) => (
                         <LanguageSwitch
@@ -392,7 +398,7 @@ function LanguageSwitch({
   );
 }
 
-/** "Modifier" a day line: topic, angle, format, platforms and their language. */
+/** "Modifier" a day line: topic, angle, pillar, format, platforms and their language. */
 function SlotEditor({
   slot,
   lang,
@@ -414,12 +420,14 @@ function SlotEditor({
   const [topic, setTopic] = useState(slot.topic);
   const [angle, setAngle] = useState(slot.angle);
   const [format, setFormat] = useState<SlotFormat>(slot.format);
+  const [pillar, setPillar] = useState<ContentPillar>(slot.pillar);
   const [platforms, setPlatforms] = useState<SlotPlatform[]>(slot.platforms);
 
   const body: UpdateSlotRequest = {
     ...(topic.trim() !== slot.topic ? { topic: topic.trim() } : {}),
     ...(angle.trim() !== slot.angle ? { angle: angle.trim() } : {}),
     ...(format !== slot.format ? { format } : {}),
+    ...(pillar !== slot.pillar ? { pillar } : {}),
     ...(JSON.stringify(platforms) !== JSON.stringify(slot.platforms) ? { platforms } : {}),
   };
   const changed = Object.keys(body).length > 0;
@@ -452,6 +460,21 @@ function SlotEditor({
           {t('Angle', 'Angle')}
         </label>
         <textarea id={`${id}-angle`} className="ta" rows={2} maxLength={500} value={angle} onChange={(e) => setAngle(e.target.value)} />
+      </div>
+      <div>
+        <label className="field-label" htmlFor={`${id}-pillar`}>
+          {t('Pilier', 'Pillar')}
+        </label>
+        <select id={`${id}-pillar`} className="inp" value={pillar} onChange={(e) => setPillar(e.target.value as ContentPillar)} aria-describedby={`${id}-pillar-help`}>
+          {CONTENT_PILLARS.map((p) => (
+            <option key={p} value={p}>
+              {PILLAR_LABEL[p][lang]}
+            </option>
+          ))}
+        </select>
+        <p id={`${id}-pillar-help`} className="help">
+          {PILLAR_HINT[pillar][lang]}
+        </p>
       </div>
       <div className="studio-editor-row">
         <div>

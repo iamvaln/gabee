@@ -123,6 +123,14 @@ const COPY: Record<string, Bi> = {
     fr: 'Chaque plateforme ne peut apparaître qu’une fois, et doit être activée. Corrigez la liste puis enregistrez.',
     en: 'Each platform may appear once and must be enabled. Fix the list, then save.',
   },
+  invalid_posting_days: {
+    fr: 'Chaque plateforme activée publie au moins un jour. Choisissez ses jours puis enregistrez.',
+    en: 'Each enabled platform posts on at least one day. Pick its days, then save.',
+  },
+  no_posting_days: {
+    fr: 'Aucune plateforme ne publie d’ici dimanche : rien à préparer cette semaine. Lancez la semaine prochaine dimanche, ou ajoutez des jours dans Réglages.',
+    en: 'No platform posts before Sunday: nothing to plan this week. Start next week on Sunday, or add days in Settings.',
+  },
   platform_not_planned: {
     fr: "Cette plateforme n'est plus prévue ce jour-là. Ajoutez-la au jour dans l'écran Semaine.",
     en: 'This platform is no longer planned that day. Add it back to the day on the Week screen.',
@@ -150,6 +158,9 @@ const SERVER_FR = new Set([
   'not_found',
   'no_media',
   'platform_not_planned',
+  // Names the platform left without a day.
+  'invalid_posting_days',
+  'no_posting_days',
   // The platform rule says which format to pick (Ruling 16).
   'media_kind_mismatch',
   'media_aspect_mismatch',
