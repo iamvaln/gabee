@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { OBJECTIVE_TYPES, StudioSettingsUpdateSchema, type Language } from '@gabee/types';
 import type { EditorialLineDto, ObjectiveDto, StudioSettingsDto, StudioSettingsView } from '@/lib/server/content-studio/settings';
-import type { PublishLinks } from '@/lib/server/content-studio/publish-links';
 import { PageHead } from '../../_shell/primitives';
 import { AIcon } from '../../_shell/icons';
 import { api, reportUnexpected } from '../_components/api';
@@ -19,6 +18,7 @@ import { buildFacts, factsErrors, factsForm, type FactsForm } from './product-fa
 import { objectiveMonths } from './objective-months';
 import { PublishLinksCard } from './PublishLinksCard';
 import { SaveBar, SettingsCard, useSave, type OnDirty } from './settings-card';
+import type { PublishLinks } from '@/lib/server/content-studio/publish-links';
 
 type View = StudioSettingsView & { publish_links: PublishLinks; can_edit: boolean };
 type ObjectiveType = (typeof OBJECTIVE_TYPES)[number];
