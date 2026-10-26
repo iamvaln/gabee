@@ -325,7 +325,69 @@ test('an owner pillar edit is saved, marks the drafts stale, and the week flags 
   const draft = await createContentDraft(prisma, day.id, { platform: day.platforms[0]!.platform, status: 'approved' });
   await updateSlot(day.id, { pillar: 'light' }, actor);
   assert.equal((await prisma.contentDraft.findUniqueOrThrow({ where: { id: draft.id } })).status, 'stale');
-  assert.equal((await getWeek(week.id)).mix.ok, true);
+  assert.equal((await getWeek(week.id)).mix?.ok, true);
+});
+
+test('a week holding a line planned before pillars has no mix to judge', async () => {
+  const week = await createContentWeek(prisma, { startsOn: new Date('2026-10-26'), status: 'validated' });
+  await createContentSlot(prisma, week.id, { pillar: 'gabee' });
+  const old = await createContentSlot(prisma, week.id);
+  assert.equal(old.pillar, null, 'existing lines have no pillar');
+  const dto = await getWeek(week.id);
+  assert.equal(dto.mix, null);
+  assert.deepEqual(dto.slots.map((s) => s.pillar), ['gabee', null]);
+  await updateSlot(old.id, { pillar: 'light' }, actor);
+  assert.deepEqual((await getWeek(week.id)).mix, { gabee: 1, light: 1, value: 0, ok: true, problems: [] });
+});
+
+test('the proposals run keeps a week calendar inside the week; the titles run receives it fenced and cites only its pages', async () => {
+  const plan = cadence('2026-10-26');
+  const salon = { date: '2026-10-28', name: 'Salon du jeu éducatif', kind: 'event', source_url: 'https://example.org/salon' };
+  const outside = { ...salon, date: '2026-11-03' };
+  const withCalendar = (week_calendar: object[]) => ({ ...proposals, week_calendar });
+  const cited = titlesFor(plan);
+  cited.days[2] = { ...cited.days[2]!, sources: [{ title: 'Salon', url: 'https://example.org/salon' }] } as (typeof cited.days)[number];
+  const invented = titlesFor(plan);
+  invented.days[2] = { ...invented.days[2]!, sources: [{ title: 'Salon', url: 'https://invented.example/salon' }] } as (typeof invented.days)[number];
+  const adapter = fake([{ json: withCalendar([outside]) }, { json: withCalendar([salon]) }, { json: invented }, { json: cited }]);
+
+  const started = await startWeek({ now: new Date('2026-10-25T06:00:00Z'), origin: 'scheduled_job' });
+  const feedback = (call: number) => {
+    const b = adapter.calls[call]!.req.blocks.find((x) => x.kind === 'text' && x.label === 'retry_feedback');
+    return b && b.kind === 'text' ? b.text : '';
+  };
+  assert.match(feedback(1), /week_calendar: 2026-11-03 is outside the week 2026-10-26 to 2026-11-01/);
+  const stored = await prisma.contentWeek.findUniqueOrThrow({ where: { id: started.id } });
+  assert.deepEqual((stored.proposals as { week_calendar: unknown }).week_calendar, [salon], 'stored with the proposals');
+
+  const week = await chooseDirection(started.id, { proposal_index: 0, refinement: '', platform_angles: {} }, actor);
+  const calendar = adapter.calls[2]!.req.blocks.find((b) => b.kind === 'text' && b.label === 'week_calendar');
+  assert.ok(calendar && calendar.kind === 'text');
+  assert.equal(calendar.trusted, false, 'web-derived: fenced as data');
+  assert.deepEqual(JSON.parse(calendar.text), [salon]);
+  assert.match(feedback(3), /source https:\/\/invented.example\/salon is not in week_calendar/);
+  assert.deepEqual(week.slots[2]!.sources, [{ title: 'Salon', url: 'https://example.org/salon' }]);
+});
+
+test('a week proposed without a calendar gives the titles run an empty one', async () => {
+  const plan = cadence('2026-10-26');
+  const adapter = fake([{ json: proposals }, { json: titlesFor(plan) }]);
+  const started = await startWeek({ now: new Date('2026-10-25T06:00:00Z'), origin: 'scheduled_job' });
+  await chooseDirection(started.id, { proposal_index: 0, refinement: '', platform_angles: {} }, actor);
+  const calendar = adapter.calls[1]!.req.blocks.find((b) => b.kind === 'text' && b.label === 'week_calendar');
+  assert.ok(calendar && calendar.kind === 'text' && calendar.text === '[]');
+});
+
+test('chooseDirection refuses a week in which no platform posts any more, before any AI call', async () => {
+  // Proposed on a Wednesday for Thursday to Sunday; the cadence then moved every day to Monday–Wednesday.
+  const week = await createContentWeek(prisma, { startsOn: new Date('2026-10-26'), firstDay: new Date('2026-10-29'), status: 'proposals_ready', proposals });
+  await prisma.studioSettings.update({ where: { id: 'default' }, data: { postingDays: { linkedin: [1, 2], tiktok: [3] } } });
+  const adapter = fake([]);
+  await assert.rejects(chooseDirection(week.id, { proposal_index: 0, refinement: '', platform_angles: {} }, actor), isHttp(409, 'no_posting_days'));
+  assert.equal(adapter.calls.length, 0);
+  const row = await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id } });
+  assert.deepEqual([row.status, row.chosenIndex], ['proposals_ready', null]);
+  assert.equal((await audits('content.week.direction')).length, 0);
 });
 
 test('editing a slot marks its drafts stale', async () => {

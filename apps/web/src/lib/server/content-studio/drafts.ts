@@ -78,8 +78,8 @@ export type SlotDto = {
   topic: string;
   angle: string;
   format: SlotFormat;
-  /** Content pillar: about Gabee, a light post, or useful content for parents. */
-  pillar: ContentPillar;
+  /** Content pillar: about Gabee, a light post, or useful content for parents. Null on lines planned before pillars. */
+  pillar: ContentPillar | null;
   platforms: SlotPlatform[];
   sources: { title: string; url: string }[];
   status: string;
@@ -116,9 +116,9 @@ function asFormat(value: string): SlotFormat {
   throw new Error(`Unknown slot format "${value}".`);
 }
 
-/** A stored pillar; an unknown value reads as `value` (the column default). */
-export function asPillar(value: string): ContentPillar {
-  return (CONTENT_PILLARS as readonly string[]).includes(value) ? (value as ContentPillar) : 'value';
+/** A stored pillar; null on lines planned before pillars existed (or an unknown value). */
+export function asPillar(value: string | null): ContentPillar | null {
+  return value !== null && (CONTENT_PILLARS as readonly string[]).includes(value) ? (value as ContentPillar) : null;
 }
 
 /** `ContentSlot.platforms` (`[{ platform, language }]`). */
@@ -262,7 +262,7 @@ async function nextVersionN(tx: Prisma.TransactionClient, draftId: string): Prom
 }
 
 /** What a draft is written from: the day's line (its pillar sets the tone). Status changes do not count. */
-function slotContent(s: { topic: string; angle: string; format: string; pillar: string; platforms: unknown; sources: unknown }): string {
+function slotContent(s: { topic: string; angle: string; format: string; pillar: string | null; platforms: unknown; sources: unknown }): string {
   return JSON.stringify([s.topic, s.angle, s.format, s.pillar, s.platforms, s.sources]);
 }
 
@@ -274,7 +274,7 @@ function slotContent(s: { topic: string; angle: string; format: string; pillar: 
  * `markDraftsStale` then moves our `ready` draft to `stale`).
  */
 async function lockSlotContent(tx: Prisma.TransactionClient, slotId: string): Promise<string> {
-  const rows = await tx.$queryRaw<Array<{ topic: string; angle: string; format: string; pillar: string; platforms: unknown; sources: unknown }>>`
+  const rows = await tx.$queryRaw<Array<{ topic: string; angle: string; format: string; pillar: string | null; platforms: unknown; sources: unknown }>>`
     SELECT topic, angle, format, pillar, platforms, sources FROM content_slots WHERE id = ${slotId}::uuid FOR UPDATE`;
   const row = rows[0];
   if (!row) throw new Error(`Slot ${slotId} disappeared while its draft was being written.`);

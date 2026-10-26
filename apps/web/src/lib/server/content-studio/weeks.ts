@@ -64,8 +64,12 @@ export type WeekDto = {
   updated_at: string;
   /** English minimum per enabled platform over the non-skipped days. */
   language_quota: LanguageQuotaResult[];
-  /** The pillars of the non-skipped days, and whether the owner's edits broke the mix (a warning, never a block). */
-  mix: PillarMix;
+  /**
+   * The pillars of the non-skipped days, and whether the owner's edits broke
+   * the mix (a warning, never a block). Null when a line of the week has no
+   * pillar (planned before pillars existed): there is no mix to judge.
+   */
+  mix: PillarMix | null;
   slots: SlotDto[];
 };
 
@@ -96,6 +100,12 @@ function quotaOf(slots: ReadonlyArray<{ status: string; platforms: Prisma.JsonVa
   );
 }
 
+function mixOf(slots: ReadonlyArray<{ status: string; pillar: string | null }>): PillarMix | null {
+  const pillars = slots.map((s) => asPillar(s.pillar));
+  if (pillars.some((p) => p === null)) return null;
+  return pillarMix(slots.filter((s) => s.status !== 'skipped').map((s) => asPillar(s.pillar)!));
+}
+
 /** The months (`YYYY-MM`) among the weeks' that have an objective now. */
 async function monthsWithObjective(rows: ReadonlyArray<{ startsOn: Date }>): Promise<Set<string>> {
   if (rows.length === 0) return new Set();
@@ -120,7 +130,7 @@ function toWeekDto(row: WeekRow, platforms: ContentPlatform[], objectiveMonths: 
     validated_at: row.validatedAt?.toISOString() ?? null,
     updated_at: row.updatedAt.toISOString(),
     language_quota: quotaOf(row.slots, isPartial(row), platforms),
-    mix: pillarMix(row.slots.filter((s) => s.status !== 'skipped').map((s) => asPillar(s.pillar))),
+    mix: mixOf(row.slots),
     slots: row.slots.map(toSlotDto),
   };
 }
@@ -364,6 +374,9 @@ export async function chooseDirection(weekId: string, req: ChooseDirectionReques
   if (week.status !== 'direction_set') assertTransition('week', week.status, 'direction_set');
   const proposals = parseProposals(week.proposals);
   if (!proposals?.[req.proposal_index]) throw new HttpError(409, 'invalid_transition', "Cette direction n'existe pas. Rechargez la page.");
+  // The titles are planned on the cadence as it is now: nothing to pay for if no platform posts in the window any more.
+  const [postingDays, enabled] = await Promise.all([getPostingDays(), enabledPlatforms()]);
+  if (plannedDays(ymdOf(week.startsOn), ymdOf(week.firstDay), postingDays, enabled).length === 0) throw noPostingDays();
   await assertNoLiveWeekRun(weekId);
 
   const angles = Object.fromEntries(Object.entries(req.platform_angles).flatMap(([k, v]) => (v && v.trim() ? [[k, v.trim()]] : [])));
