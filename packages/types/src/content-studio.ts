@@ -90,7 +90,24 @@ export const JOB_KEYS = ['week.propose', 'week.email', 'week.remind', 'day.gener
 const ContentPlatformSchema = z.enum(CONTENT_PLATFORMS);
 const ContentLanguageSchema = z.enum(CONTENT_LANGUAGES);
 
+/**
+ * What the week holds outside Gabee, found by the proposals run's web search
+ * and verified on a page it read: observance days, events in the world of
+ * kids' games and education, news. The titles run (no web search) anchors
+ * light days only in it.
+ */
+export const WEEK_CALENDAR_KINDS = ['observance', 'event', 'news'] as const;
+export const WEEK_CALENDAR_MAX = 8;
+export const WeekCalendarItemSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  name: z.string().min(1).max(200),
+  kind: z.enum(WEEK_CALENDAR_KINDS),
+  source_url: z.url(),
+});
+export type WeekCalendarItem = z.infer<typeof WeekCalendarItemSchema>;
+
 export const DirectionProposalsSchema = z.object({
+  week_calendar: z.array(WeekCalendarItemSchema).max(WEEK_CALENDAR_MAX).optional(),
   proposals: z
     .array(
       z.object({

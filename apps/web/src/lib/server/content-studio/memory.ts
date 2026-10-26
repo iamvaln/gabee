@@ -1,4 +1,4 @@
-import { PILLAR_MIX, type ContentLanguage, type ContentPillar, type ContentPlatform, type LinkedInPost, type TikTokPost } from '@gabee/types';
+import { PILLAR_MIX, type ContentLanguage, type ContentPillar, type ContentPlatform, type LinkedInPost, type TikTokPost, type WeekCalendarItem } from '@gabee/types';
 import type { AiInputBlock } from '../ai/router';
 import type { PlannedDay } from './cadence';
 
@@ -52,7 +52,7 @@ export interface RecentWeek {
   startsOn: string;
   status: string;
   direction: { title: string; refinement: string | null } | null;
-  slots: { date: string; topic: string; format: string; pillar: string; status: string; posts: RecentPost[] }[];
+  slots: { date: string; topic: string; format: string; pillar: string | null; status: string; posts: RecentPost[] }[];
 }
 
 export interface AudienceSummary {
@@ -100,6 +100,8 @@ export interface TitlesContext extends StrategistContext {
   days: PlannedDay[];
   /** English posts each platform needs over the planned days. */
   englishMin: Partial<Record<ContentPlatform, number>>;
+  /** Observances, events and news of the week the proposals run verified by web search (may be empty). */
+  weekCalendar: WeekCalendarItem[];
   direction: { proposal: Proposal; refinement: string; platformAngles: Record<string, string> };
 }
 
@@ -108,8 +110,8 @@ export interface SlotData {
   topic: string;
   angle: string;
   format: string;
-  /** The day's content pillar: sets the tone (gabee = product, light = playful, value = helpful). */
-  pillar: ContentPillar;
+  /** The day's content pillar: sets the tone (gabee = product, light = playful, value = helpful). Null on lines planned before pillars. */
+  pillar: ContentPillar | null;
   /** The post language for this platform on this day. */
   language: ContentLanguage;
   sources: { title: string; url: string }[];
@@ -290,6 +292,11 @@ export function titlesMemory(ctx: TitlesContext): AiInputBlock[] {
         owner_refinement: ctx.direction.refinement,
         platform_angles: ctx.direction.platformAngles,
       }),
+    ),
+    // Web-derived (names and pages from third-party sites): data, fenced like the other outside content.
+    untrustedBlock(
+      'week_calendar',
+      json(ctx.weekCalendar.map((c) => ({ date: c.date, name: c.name, kind: c.kind, source_url: c.source_url }))),
     ),
   ];
 }

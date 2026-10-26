@@ -23,6 +23,7 @@ import {
   type LinkedInPost,
   type ReportNarrative,
   type TikTokPost,
+  type WeekCalendarItem,
   type WeekTitles,
 } from '@gabee/types';
 import { prisma } from '../db';
@@ -64,7 +65,7 @@ import {
   type TitlesContext,
   type WriterContext,
 } from './memory';
-import { checkArtDirection, checkPostRules, checkTikTokMode, checkWeekTitles } from './post-rules';
+import { checkArtDirection, checkPostRules, checkTikTokMode, checkWeekCalendar, checkWeekTitles } from './post-rules';
 
 /**
  * Agents runtime (spec "Agents"). An agent is a role stored in the DB: its
@@ -150,7 +151,9 @@ function asLanguage(value: string): ContentLanguage {
   throw new Error(`Unknown content language "${value}".`);
 }
 
-function asPillar(value: string): ContentPillar {
+/** A stored pillar; null on lines planned before pillars existed. */
+function asPillar(value: string | null): ContentPillar | null {
+  if (value === null) return null;
   if ((CONTENT_PILLARS as readonly string[]).includes(value)) return value as ContentPillar;
   throw new Error(`Unknown content pillar "${value}".`);
 }
@@ -234,6 +237,16 @@ async function loadObjective(month: string): Promise<ObjectiveData | null> {
 
 /** A week's objective month: the month of its Monday (`YYYY-MM`). */
 export const weekMonth = (startsOn: Date) => ymd(startsOn).slice(0, 7);
+
+/** The week's observances, events and news the proposals run verified (none when it found none). */
+function weekCalendar(week: { proposals: Prisma.JsonValue; startsOn: Date }): WeekCalendarItem[] {
+  if (week.proposals === null) return [];
+  const parsed = DirectionProposalsSchema.safeParse(week.proposals);
+  if (!parsed.success) throw new Error('The week holds malformed direction proposals.');
+  const from = ymd(week.startsOn);
+  const to = ymd(addDays(week.startsOn, 6));
+  return (parsed.data.week_calendar ?? []).filter((c) => c.date >= from && c.date <= to);
+}
 
 function chosenProposal(week: { proposals: Prisma.JsonValue; chosenIndex: number | null }) {
   if (week.proposals === null || week.chosenIndex === null) return null;
@@ -358,6 +371,7 @@ export async function loadTitlesContext(weekId: string, now: Date = new Date()):
     ...base,
     days,
     englishMin,
+    weekCalendar: weekCalendar(week),
     direction: { proposal, refinement: week.refinement ?? '', platformAngles: (week.platformAngles ?? {}) as Record<string, string> },
   };
 }
@@ -547,7 +561,7 @@ async function prepare(key: AgentKey, subject: AgentSubject, opts: RunAgentOptio
           schema: DirectionProposalsSchema,
           blocks: strategistMemory(ctx),
           webSearch: { maxUses: WEB_SEARCH_MAX_USES },
-          check: noCheck,
+          check: (out) => checkWeekCalendar((out as DirectionProposals).week_calendar, ctx.weekStart),
         };
       }
       const ctx = await loadTitlesContext(subject.id);
@@ -555,7 +569,7 @@ async function prepare(key: AgentKey, subject: AgentSubject, opts: RunAgentOptio
         task: 'content_titles',
         schema: WeekTitlesSchema,
         blocks: titlesMemory(ctx),
-        check: (out) => checkWeekTitles(out as WeekTitles, ctx.days),
+        check: (out) => checkWeekTitles(out as WeekTitles, ctx.days, ctx.weekCalendar),
       };
     }
     case 'writer_linkedin':
@@ -568,7 +582,7 @@ async function prepare(key: AgentKey, subject: AgentSubject, opts: RunAgentOptio
         schema: platform === 'linkedin' ? LinkedInPostSchema : TikTokPostSchema,
         blocks: writerMemory(platform, ctx),
         check: (out) => [
-          ...checkPostRules(platform, out as LinkedInPost | TikTokPost, ctx.profile),
+          ...checkPostRules(platform, out as LinkedInPost | TikTokPost, ctx.profile, ctx.slot.pillar),
           ...(platform === 'tiktok' ? checkTikTokMode(out as TikTokPost, ctx.media?.length ?? 0) : []),
         ],
       };

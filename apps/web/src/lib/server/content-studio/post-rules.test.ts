@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { LinkedInPost, TikTokPost } from '@gabee/types';
-import { checkArtDirection, checkPostRules, checkTikTokMode, checkWeekTitles, findUrls, LINK_RESERVE_CHARS } from './post-rules';
+import { checkArtDirection, checkPostRules, checkTikTokMode, checkWeekCalendar, checkWeekTitles, findUrls, LINK_RESERVE_CHARS } from './post-rules';
 
 const linkedin = { rules: { max_chars: 3000, hashtags_min: 3, hashtags_max: 5, link_policy: 'in_body', emoji_policy: '≤ 2' } };
 const tiktok = { rules: { max_chars: 2200, hashtags_min: 3, hashtags_max: 6, link_policy: 'bio_only', emoji_policy: '≤ 3' } };
@@ -19,6 +19,18 @@ const tt = (over: Partial<TikTokPost> = {}): TikTokPost => ({
   mode: 'filming_plan',
   filming_plan: { hook: "L'écran du jeu", shots: ['Écran du module Nombres', 'Gabee qui applaudit'], duration_s: 20 },
   ...over,
+});
+
+test('a light or useful LinkedIn day links to the landing page, never the sign-up', () => {
+  assert.deepEqual(checkPostRules('linkedin', li({ link_target: 'signup' }), linkedin, 'gabee'), [], 'a Gabee day may ask to sign up');
+  assert.deepEqual(checkPostRules('linkedin', li({ link_target: 'landing' }), linkedin, 'light'), []);
+  for (const pillar of ['light', 'value'] as const) {
+    const out = checkPostRules('linkedin', li({ link_target: 'signup' }), linkedin, pillar);
+    assert.equal(out.length, 1, pillar);
+    assert.match(out[0]!, /link_target must be "landing" on a "(light|value)" day/);
+  }
+  assert.deepEqual(checkPostRules('linkedin', li({ link_target: 'signup' }), linkedin, null), [], 'a line planned before pillars is not judged');
+  assert.deepEqual(checkPostRules('linkedin', li({ link_target: 'signup' }), linkedin), [], 'owner edits keep their link');
 });
 
 test('valid posts have no violations', () => {
@@ -168,4 +180,26 @@ test('checkWeekTitles enforces the mix: at most 3 days on Gabee, at least one li
   assert.equal(noLight.length, 1);
   assert.match(noLight[0]!, /No day has pillar "light"/);
   assert.equal(checkWeekTitles(plan('gabee', 'gabee', 'gabee', 'gabee', 'value'), planned).length, 2);
+});
+
+test('checkWeekCalendar keeps the calendar inside the planned week', () => {
+  const item = (date: string) => ({ date, name: 'Journée', kind: 'observance' as const, source_url: 'https://example.org/j' });
+  assert.deepEqual(checkWeekCalendar([item('2026-11-02'), item('2026-11-08')], '2026-11-02'), []);
+  assert.deepEqual(checkWeekCalendar(undefined, '2026-11-02'), []);
+  const out = checkWeekCalendar([item('2026-11-01'), item('2026-11-09')], '2026-11-02');
+  assert.equal(out.length, 2);
+  assert.match(out[0]!, /week_calendar: 2026-11-01 is outside the week 2026-11-02 to 2026-11-08/);
+});
+
+test('checkWeekTitles only takes sources from the week calendar', () => {
+  const planned = [{ date: '2026-11-04', platforms: ['tiktok' as const] }];
+  const calendar = [{ date: '2026-11-04', name: 'Journée', kind: 'observance' as const, source_url: 'https://example.org/journee' }];
+  const plan = (url: string) => ({
+    days: [{ date: '2026-11-04', topic: 't', angle: 'a', format: 'story' as const, pillar: 'light' as const, platforms: [{ platform: 'tiktok' as const, language: 'fr' as const }], sources: [{ title: 'Journée', url }] }],
+  });
+  assert.deepEqual(checkWeekTitles(plan('https://example.org/journee'), planned, calendar), []);
+  const out = checkWeekTitles(plan('https://invented.example/page'), planned, calendar);
+  assert.equal(out.length, 1);
+  assert.match(out[0]!, /2026-11-04: source https:\/\/invented.example\/page is not in week_calendar/);
+  assert.equal(checkWeekTitles(plan('https://example.org/journee'), planned, []).length, 1, 'an empty calendar allows no source');
 });

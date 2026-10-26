@@ -54,7 +54,7 @@ const tiktokPlan = {
   filming_plan: { hook: "L'écran du jeu", shots: ['Écran du module Nombres'], duration_s: 20 },
 };
 
-async function draftFixture(platform: 'linkedin' | 'tiktok' = 'linkedin') {
+async function draftFixture(platform: 'linkedin' | 'tiktok' = 'linkedin', pillar: 'gabee' | 'light' | 'value' = 'gabee') {
   const week = await createContentWeek(prisma, {
     startsOn: new Date('2026-10-26'),
     firstDay: new Date('2026-10-26'),
@@ -69,7 +69,7 @@ async function draftFixture(platform: 'linkedin' | 'tiktok' = 'linkedin') {
     topic: 'Compter les courses',
     angle: 'Les maths au marché',
     format: 'gameplay_video',
-    pillar: 'light',
+    pillar,
     platforms: [
       { platform: 'linkedin', language: 'en' },
       { platform: 'tiktok', language: 'fr' },
@@ -191,8 +191,19 @@ test('runAgent succeeds on the retry after one invalid output', async () => {
   assert.match(text('week_direction').text, /Plus concret/);
   assert.doesNotMatch(text('week_direction').text, /Montrer le jeu/); // TikTok-only angle
   assert.match(text('slot').text, /"language": "en"/);
-  assert.match(text('slot').text, /"pillar": "light"/, 'the writer knows the day is a light post');
+  assert.match(text('slot').text, /"pillar": "gabee"/, 'the writer knows the day is about Gabee');
   assert.equal(text('sources').trusted, false);
+});
+
+test('a LinkedIn post asking to sign up on a light day is invalid: retried with feedback', async () => {
+  const { draft } = await draftFixture('linkedin', 'light');
+  const adapter = fake([{ json: linkedinPost }, { json: { ...linkedinPost, link_target: 'landing' } }]);
+  const out = await runAgent('writer_linkedin', { kind: 'draft', id: draft.id }, 'scheduled_job');
+  assert.equal(out.link_target, 'landing');
+  const slot = adapter.calls[0]!.req.blocks.find((b) => b.kind === 'text' && b.label === 'slot');
+  assert.ok(slot && slot.kind === 'text' && /"pillar": "light"/.test(slot.text));
+  const feedback = adapter.calls[1]!.req.blocks.find((b) => b.kind === 'text' && b.label === 'retry_feedback');
+  assert.ok(feedback && feedback.kind === 'text' && /link_target must be "landing" on a "light" day/.test(feedback.text));
 });
 
 test('writers read the month objective as it is now, not the one the week was created with', async () => {
@@ -342,7 +353,7 @@ test('strategist titles run plans exactly the posting days without web search', 
   assert.equal(req.task, 'content_titles');
   assert.equal(req.webSearch, undefined);
   assert.equal(req.actorId, '00000000-0000-4000-8000-000000000001');
-  assert.equal(labelsOf(req.blocks).at(-1), 'week_direction');
+  assert.deepEqual(labelsOf(req.blocks).slice(-2), ['week_direction', 'week_calendar']);
   const task = req.blocks.find((b) => b.kind === 'text' && b.label === 'task');
   assert.ok(task && task.kind === 'text' && dates.every((d) => task.text.includes(d)));
   assert.doesNotMatch(task.text, /2026-10-31/, 'nothing posts on Saturday');

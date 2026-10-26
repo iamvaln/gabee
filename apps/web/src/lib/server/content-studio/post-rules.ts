@@ -1,5 +1,17 @@
 import { z } from 'zod';
-import { PILLAR_MIX, fitsPlatform, pillarMix, type ArtDirection, type ContentPlatform, type LinkedInPost, type TikTokPost, type WeekTitles } from '@gabee/types';
+import {
+  PILLAR_MIX,
+  fitsPlatform,
+  pillarMix,
+  type ArtDirection,
+  type ContentPillar,
+  type ContentPlatform,
+  type LinkedInPost,
+  type TikTokPost,
+  type WeekCalendarItem,
+  type WeekTitles,
+} from '@gabee/types';
+import { addDaysYmd } from './state';
 import type { PlannedDay } from './cadence';
 
 /**
@@ -87,12 +99,21 @@ const hashtagChars = (hashtags: string[]) => (hashtags.length > 0 ? 2 + hashtags
  * (Ruling 5 — Gabee or not), and a usable filming plan in `filming_plan` mode.
  * `library_video` without a chosen file is the Art director's job.
  */
-export function checkPostRules(platform: ContentPlatform, post: LinkedInPost | TikTokPost, profile: { rules: unknown }): string[] {
+export function checkPostRules(
+  platform: ContentPlatform,
+  post: LinkedInPost | TikTokPost,
+  profile: { rules: unknown },
+  /** The day's pillar (writer runs): a light or useful day never asks to sign up. */
+  pillar?: ContentPillar | null,
+): string[] {
   const rules = parsePlatformRules(profile.rules);
   const out: string[] = [];
 
   if (platform === 'linkedin') {
     const p = post as LinkedInPost;
+    if ((pillar === 'light' || pillar === 'value') && p.link_target !== 'landing') {
+      out.push(`link_target must be "landing" on a "${pillar}" day: light and useful posts do not ask to sign up.`);
+    }
     const total = p.body.length + hashtagChars(p.hashtags) + LINK_RESERVE_CHARS;
     if (total > rules.max_chars) {
       out.push(
@@ -162,12 +183,21 @@ export function checkArtDirection(
   return out;
 }
 
+/** The proposals run's calendar holds only days of the week it plans (Monday `weekStart` … Sunday). */
+export function checkWeekCalendar(calendar: readonly WeekCalendarItem[] | undefined, weekStart: string): string[] {
+  const end = addDaysYmd(weekStart, 6);
+  return (calendar ?? [])
+    .filter((c) => c.date < weekStart || c.date > end)
+    .map((c) => `week_calendar: ${c.date} is outside the week ${weekStart} to ${end}; list only that week's days.`);
+}
+
 /**
  * The titles run must plan exactly the planned days, in order, each with
  * exactly the platforms posting that day (the cadence), and keep the weekly
- * mix: at most 3 days about Gabee, at least one light day.
+ * mix: at most 3 days about Gabee, at least one light day. With a `calendar`,
+ * every source must be one of its verified pages.
  */
-export function checkWeekTitles(output: WeekTitles, days: readonly PlannedDay[]): string[] {
+export function checkWeekTitles(output: WeekTitles, days: readonly PlannedDay[], calendar?: readonly WeekCalendarItem[]): string[] {
   const out: string[] = [];
   const dates = days.map((d) => d.date);
   const got = output.days.map((d) => d.date);
@@ -180,6 +210,15 @@ export function checkWeekTitles(output: WeekTitles, days: readonly PlannedDay[])
     const want = [...planned.platforms].sort().join(',');
     const have = day.platforms.map((p) => p.platform).sort().join(',');
     if (have !== want) out.push(`${day.date}: platforms must be exactly ${want}; got ${have || 'none'}.`);
+  }
+  // The titles run has no web search: a source is only a page the proposals run verified.
+  if (calendar) {
+    const known = new Set(calendar.map((c) => c.source_url));
+    for (const day of output.days) {
+      for (const src of day.sources) {
+        if (!known.has(src.url)) out.push(`${day.date}: source ${src.url} is not in week_calendar; cite only week_calendar pages, or leave sources empty.`);
+      }
+    }
   }
   const mix = pillarMix(output.days.map((d) => d.pillar));
   if (mix.problems.includes('too_much_gabee')) {

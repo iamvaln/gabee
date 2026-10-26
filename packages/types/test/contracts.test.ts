@@ -38,6 +38,9 @@ import {
   PILLAR_MIX,
   PostingDaysSchema,
   pillarMix,
+  WEEK_CALENDAR_KINDS,
+  WEEK_CALENDAR_MAX,
+  WeekCalendarItemSchema,
 } from '../src/index';
 import assert from 'node:assert/strict';
 import {
@@ -686,6 +689,21 @@ describe('content studio', () => {
     assert.equal(ArtDirectionSchema.safeParse({ media_asset_id: null, visual_brief: 'v' }).success, true);
     assert.equal(ArtDirectionSchema.safeParse({ media_asset_id: 'nope', visual_brief: 'v' }).success, false);
     assert.equal(ReportNarrativeSchema.safeParse({ headline: 'h', highlights: [], watch_outs: [] }).success, true);
+  });
+
+  it('DirectionProposalsSchema takes an optional week_calendar of at most 8 verified items', () => {
+    const three = [proposal, proposal, proposal];
+    const item = { date: '2026-11-04', name: 'Journée mondiale des mathématiques', kind: 'observance', source_url: 'https://example.org/journee' };
+    assert.equal(WEEK_CALENDAR_MAX, 8);
+    assert.deepEqual([...WEEK_CALENDAR_KINDS], ['observance', 'event', 'news']);
+    assert.equal(DirectionProposalsSchema.safeParse({ proposals: three }).success, true, 'optional');
+    assert.equal(DirectionProposalsSchema.safeParse({ proposals: three, week_calendar: [] }).success, true);
+    assert.equal(DirectionProposalsSchema.safeParse({ proposals: three, week_calendar: Array(8).fill(item) }).success, true);
+    assert.equal(DirectionProposalsSchema.safeParse({ proposals: three, week_calendar: Array(9).fill(item) }).success, false, 'capped at 8');
+    for (const bad of [{ kind: 'holiday' }, { date: '4 nov.' }, { source_url: 'example.org' }, { name: '' }]) {
+      assert.equal(DirectionProposalsSchema.safeParse({ proposals: three, week_calendar: [{ ...item, ...bad }] }).success, false, JSON.stringify(bad));
+    }
+    assert.equal(WeekCalendarItemSchema.safeParse(item).success, true);
   });
 
   it('WeekTitlesSchema requires a pillar per day, among CONTENT_PILLARS', () => {

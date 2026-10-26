@@ -125,3 +125,15 @@ test('every agent file names every field and enum value of its output schema', (
   }
 });
 
+
+test('the strategist anchors dated content only in the verified week calendar, and keeps the objective out of topics', () => {
+  const body = loadAgentInstructions('strategist');
+  assert.match(body, /Anchor observances, events and news ONLY in `week_calendar`/);
+  assert.match(body, /never state a date or a day you have not been given/);
+  assert.match(body, /If\s+`week_calendar` is empty, make light days timeless/);
+  assert.match(body, /Leave `sources` empty unless\s+the page is taken from `week_calendar`/);
+  assert.match(body, /`topic` and `angle` never quote, paraphrase or\s+allude to it/);
+  for (const key of ['writer_linkedin', 'writer_tiktok'] as const) {
+    assert.match(loadAgentInstructions(key), /The objective is internal: never quote, paraphrase or allude to it/, key);
+  }
+});
