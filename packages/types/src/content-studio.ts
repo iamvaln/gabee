@@ -269,3 +269,44 @@ export const SignupAttributionSchema = z.object({
   referrer_host: z.string().max(200).optional(),
 });
 export type SignupAttribution = z.infer<typeof SignupAttributionSchema>;
+
+// ── Publishing (« Copier et ouvrir », own media) ──
+
+/**
+ * Where the owner posts each platform from the Aujourd'hui card (Réglages,
+ * super-admin): an https link on that platform's own host. One rule for the
+ * Réglages form and the API.
+ */
+export const PUBLISH_URL_HOSTS: Record<ContentPlatform, readonly string[]> = {
+  linkedin: ['linkedin.com', 'www.linkedin.com'],
+  tiktok: ['tiktok.com', 'www.tiktok.com'],
+};
+export const PUBLISH_URL_MAX = 500;
+
+export type PublishUrlProblem = 'not_url' | 'not_https' | 'wrong_host' | 'too_long';
+
+/** Why `value` cannot be `platform`'s publish link, or null when it can. */
+export function publishUrlProblem(platform: ContentPlatform, value: string): PublishUrlProblem | null {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return 'not_url';
+  }
+  if (url.protocol !== 'https:') return 'not_https';
+  // No credentials or odd port: the link must open the platform itself.
+  if (!PUBLISH_URL_HOSTS[platform].includes(url.hostname) || url.username || url.password || url.port) return 'wrong_host';
+  if (value.length > PUBLISH_URL_MAX) return 'too_long';
+  return null;
+}
+
+/** `{ <platform>: link | null }`: null clears the link. The link rule is checked by the API (French 422). */
+export const PublishLinksUpdateSchema = z
+  .object({ linkedin: z.string().max(2000).nullable().optional(), tiktok: z.string().max(2000).nullable().optional() })
+  .strict()
+  .refine((v) => Object.values(v).some((x) => x !== undefined), { message: 'At least one platform is required' });
+export type PublishLinksUpdate = z.infer<typeof PublishLinksUpdateSchema>;
+
+/** « J'utilise ma propre vidéo / mon propre média »: the owner posts with a file outside the library. */
+export const ExternalMediaRequestSchema = z.object({ enabled: z.boolean(), note: z.string().max(200).nullable().optional() });
+export type ExternalMediaRequest = z.infer<typeof ExternalMediaRequestSchema>;

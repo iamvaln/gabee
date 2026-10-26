@@ -47,6 +47,13 @@ export const AI_ROUTE_SEED: readonly {
 // ── Platform profiles ──
 export const TIKTOK_BIO_LINK = 'https://gabee.app/fr?utm_source=tiktok&utm_medium=social&utm_content=bio';
 
+/** Where the owner posts (« Copier et ouvrir »), changeable in Réglages. LinkedIn:
+ *  the Gabee company page's post composer (owner, 2026-10-26); TikTok: TikTok
+ *  Studio's upload page (no caption prefill exists). Same values as the
+ *  migration that added the column. */
+export const LINKEDIN_PUBLISH_URL = 'https://www.linkedin.com/company/109660238/admin/page-posts/published/?share=true';
+export const TIKTOK_PUBLISH_URL = 'https://www.tiktok.com/tiktokstudio/upload';
+
 export const PLATFORM_PROFILE_SEED: readonly {
   platform: ContentPlatform;
   objective: string;
@@ -60,6 +67,7 @@ export const PLATFORM_PROFILE_SEED: readonly {
   };
   mediaAspect: '16:9' | '1:1' | '9:16';
   bioLink: string | null;
+  publishUrl: string | null;
 }[] = [
   {
     platform: 'linkedin',
@@ -68,6 +76,7 @@ export const PLATFORM_PROFILE_SEED: readonly {
     rules: { max_chars: 3000, hashtags_min: 3, hashtags_max: 5, link_policy: 'in_body', emoji_policy: 'Au plus 2 emojis, jamais en début de phrase.' },
     mediaAspect: '16:9',
     bioLink: null,
+    publishUrl: LINKEDIN_PUBLISH_URL,
   },
   {
     platform: 'tiktok',
@@ -76,6 +85,7 @@ export const PLATFORM_PROFILE_SEED: readonly {
     rules: { max_chars: 2200, hashtags_min: 3, hashtags_max: 6, link_policy: 'bio_only', emoji_policy: 'Emojis permis avec mesure (3 au plus).' },
     mediaAspect: '9:16',
     bioLink: TIKTOK_BIO_LINK,
+    publishUrl: TIKTOK_PUBLISH_URL,
   },
 ];
 
