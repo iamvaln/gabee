@@ -318,14 +318,14 @@ test('apply-rhythm: super-admin only, previews then applies to the future days, 
   const preview = await previewRhythm(get(`/weeks/${week.id}/apply-rhythm`, superC), ctx(week.id));
   assert.equal(preview.status, 200);
   const { plan } = await preview.json();
-  assert.equal(plan.summary, '1 jour sauté');
+  assert.deepEqual(plan.counts, { adjusted: 0, skipped: 1 });
   assert.deepEqual(plan.changes.map((c: { date: string; kind: string }) => [c.date, c.kind]), [[addDaysYmd(monday, 6), 'skip']]);
   assert.equal(await prisma.contentSlot.count({ where: { weekId: week.id, status: 'skipped' } }), 0, 'the preview changes nothing');
 
   const applied = await applyRhythm(post(`/weeks/${week.id}/apply-rhythm`, undefined, superC), ctx(week.id));
   assert.equal(applied.status, 200);
   const body = await applied.json();
-  assert.equal(body.plan.summary, '1 jour sauté');
+  assert.deepEqual(body.applied, { adjusted: 0, skipped: 1 });
   assert.equal(body.week.slots.find((s: { date: string }) => s.date === addDaysYmd(monday, 6)).skip_reason, 'Nouveau rythme');
   const audit = await prisma.auditLog.findFirstOrThrow({ where: { kind: 'content.week.apply_rhythm' } });
   assert.equal(audit.actorId, owner.id);

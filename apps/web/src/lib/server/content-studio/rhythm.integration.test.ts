@@ -7,7 +7,8 @@ import type { ContentLanguage, ContentPlatform, PostingDays } from '@gabee/types
 import { setErrorReporterForTests } from '../report-error';
 import { HttpError } from '../http';
 import type { Actor } from './state';
-import { applyRhythm, planRhythm } from './rhythm';
+import { applyRhythm, planRhythm, samePosts } from './rhythm';
+import { skipDay, updateSlot } from './weeks';
 
 const prisma = createTestClient();
 const actor: Actor = { id: randomUUID(), role: 'super_admin' };
@@ -86,7 +87,7 @@ test('planRhythm previews the change for the future days only and changes nothin
   assert.deepEqual(plan.days_without_line, ['2026-10-31'], 'Saturday is a new posting day without a line this week');
   assert.deepEqual(plan.kept_with_drafts, []);
   assert.deepEqual(plan.english_missing, []);
-  assert.equal(plan.summary, '2 jours ajustés, 1 jour sauté');
+  assert.deepEqual(plan.counts, { adjusted: 2, skipped: 1 });
   assert.deepEqual(await prisma.contentSlot.findMany({ orderBy: { date: 'asc' } }), before, 'a preview writes nothing');
 });
 
@@ -96,8 +97,9 @@ test('applyRhythm adjusts and skips the future days through the audited slot act
   const todayBefore = await lineOf(slots['2026-10-28']!);
   const pastBefore = await lineOf(slots['2026-10-27']!);
 
-  const { plan, week } = await applyRhythm(weekId, actor, WEDNESDAY);
-  assert.equal(plan.summary, '2 jours ajustés, 1 jour sauté');
+  const { plan, week, applied } = await applyRhythm(weekId, actor, WEDNESDAY);
+  assert.deepEqual(plan.counts, { adjusted: 2, skipped: 1 });
+  assert.deepEqual(applied, { adjusted: 2, skipped: 1 });
   assert.deepEqual(await lineOf(slots['2026-10-29']!), { status: 'validated', platforms: [{ platform: 'tiktok', language: 'en' }], skipReason: null });
   assert.deepEqual(await lineOf(slots['2026-10-30']!), { status: 'validated', platforms: [{ platform: 'linkedin', language: 'fr' }], skipReason: null });
   assert.deepEqual(await lineOf(slots['2026-11-01']!), { status: 'skipped', platforms: [{ platform: 'tiktok', language: 'fr' }], skipReason: 'Nouveau rythme' });
@@ -129,7 +131,7 @@ test('applyRhythm is idempotent: a second run has nothing to do', async () => {
 
   const again = await applyRhythm(weekId, actor, WEDNESDAY);
   assert.deepEqual(again.plan.changes, []);
-  assert.equal(again.plan.summary, 'Rien à ajuster : la semaine suit déjà ce rythme.');
+  assert.deepEqual(again.plan.counts, { adjusted: 0, skipped: 0 });
   assert.deepEqual(await prisma.contentSlot.findMany({ orderBy: { date: 'asc' } }), rows);
   assert.equal(await prisma.auditLog.count(), audits, 'no change, no audit row');
 });
@@ -162,7 +164,7 @@ test('the English post moves to a remaining future post of the platform when the
       ['2026-11-01', 'adjust', [{ platform: 'tiktok', language: 'en' }], ['tiktok']],
     ],
   );
-  assert.equal(plan.summary, '1 jour ajusté, 1 jour sauté');
+  assert.deepEqual(plan.counts, { adjusted: 1, skipped: 1 });
   assert.deepEqual(await lineOf(slots['2026-11-01']!), { status: 'validated', platforms: [{ platform: 'tiktok', language: 'en' }], skipReason: null });
 });
 
@@ -171,4 +173,52 @@ test('planRhythm refuses a week that is not validated, or unknown', async () => 
   await assert.rejects(planRhythm(week.id, WEDNESDAY), isHttp(409, 'invalid_transition'));
   await assert.rejects(applyRhythm(week.id, actor, WEDNESDAY), isHttp(409, 'invalid_transition'));
   await assert.rejects(planRhythm(randomUUID(), WEDNESDAY), isHttp(404, 'week_not_found'));
+});
+
+test('a line listing its platforms in another order already follows the rhythm', async () => {
+  assert.equal(samePosts([{ platform: 'tiktok', language: 'fr' }, { platform: 'linkedin', language: 'en' }], [{ platform: 'linkedin', language: 'en' }, { platform: 'tiktok', language: 'fr' }]), true);
+  assert.equal(samePosts([{ platform: 'linkedin', language: 'fr' }], [{ platform: 'linkedin', language: 'en' }]), false, 'the language counts');
+  // Wednesday is stored [tiktok, linkedin]; the cadence plans [linkedin, tiktok]: nothing to adjust.
+  const lines: Line[] = DEFAULT_LINES.map(([date, posts]): Line => [date, date === '2026-10-28' ? [...posts].reverse() : posts]);
+  const { weekId } = await validatedWeek(lines);
+  // Planned on Tuesday 27: Wednesday is still to come.
+  assert.deepEqual((await planRhythm(weekId, new Date('2026-10-27T09:00:00Z'))).changes, []);
+});
+
+test('the English minimum is restored even when the week was already below it', async () => {
+  // Validated with an override: TikTok has no English post at all.
+  const lines: Line[] = DEFAULT_LINES.map(([date, posts]) => [date, posts.map(([p, l]): [ContentPlatform, ContentLanguage] => [p, p === 'tiktok' ? 'fr' : l])]);
+  const { weekId, slots } = await validatedWeek(lines);
+  const { plan } = await applyRhythm(weekId, actor, WEDNESDAY);
+  assert.deepEqual(
+    plan.changes.map((c) => [c.date, c.after, c.english_switched]),
+    [['2026-10-30', [{ platform: 'tiktok', language: 'en' }], ['tiktok']]],
+  );
+  assert.deepEqual(plan.english_missing, []);
+  assert.deepEqual((await lineOf(slots['2026-10-30']!)).platforms, [{ platform: 'tiktok', language: 'en' }]);
+  assert.deepEqual((await planRhythm(weekId, WEDNESDAY)).changes, [], 'then nothing is left to do');
+});
+
+test('a day that fails mid-way: the applied days stay, the week audit says what failed, a re-run finishes', async () => {
+  const { weekId, slots } = await validatedWeek();
+  await setCadence({ linkedin: [1, 5], tiktok: [4, 6] });
+  // Thursday and Friday adjust, then Sunday's skip fails (as if it changed meanwhile).
+  const failingSkip: typeof skipDay = async () => {
+    throw new HttpError(409, 'invalid_transition', 'Ce jour vient de changer. Rechargez la page.');
+  };
+  await assert.rejects(applyRhythm(weekId, actor, WEDNESDAY, { updateSlot, skipDay: failingSkip }), isHttp(409, 'invalid_transition'));
+  assert.equal((await lineOf(slots['2026-10-29']!)).status, 'validated');
+  assert.deepEqual((await lineOf(slots['2026-10-30']!)).platforms, [{ platform: 'linkedin', language: 'fr' }]);
+  assert.equal((await lineOf(slots['2026-11-01']!)).status, 'validated', 'the failed day is unchanged');
+  const first = await prisma.auditLog.findFirstOrThrow({ where: { kind: 'content.week.apply_rhythm' } });
+  const diff = first.diff as { adjusted: number; skipped: number; planned: object; failed: { date: string; error: string } };
+  assert.deepEqual([diff.adjusted, diff.skipped], [2, 0]);
+  assert.deepEqual(diff.planned, { adjusted: 2, skipped: 1 });
+  assert.equal(diff.failed.date, '2026-11-01');
+
+  const rerun = await applyRhythm(weekId, actor, WEDNESDAY);
+  assert.deepEqual(rerun.applied, { adjusted: 0, skipped: 1 });
+  assert.equal((await lineOf(slots['2026-11-01']!)).skipReason, 'Nouveau rythme');
+  assert.equal(await prisma.auditLog.count({ where: { kind: 'content.week.apply_rhythm' } }), 2);
+  assert.deepEqual((await planRhythm(weekId, WEDNESDAY)).changes, []);
 });

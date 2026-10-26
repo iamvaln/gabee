@@ -51,25 +51,24 @@ export type RhythmPlan = {
   kept_with_drafts: string[];
   /** Future days the new rhythm posts on that have no line in this week (they stay without a post). */
   days_without_line: string[];
-  /** Platforms the change leaves below their English minimum, with no future post left to switch. */
+  /** Platforms the plan leaves below their English minimum, with no future post left to switch. */
   english_missing: ContentPlatform[];
-  /** « 3 jours ajustés, 1 jour sauté ». */
-  summary: string;
+  /** Days adjusted and days skipped (the screens word the summary, « 3 jours ajustés, 1 jour sauté »). */
+  counts: RhythmCounts;
 };
+
+export type RhythmCounts = { adjusted: number; skipped: number };
 
 const OPEN = (status: string) => status !== 'done' && status !== 'skipped';
 
-function summaryOf(changes: RhythmChange[]): string {
+const countsOf = (changes: readonly RhythmChange[]): RhythmCounts => {
   const adjusted = changes.filter((c) => c.kind === 'adjust').length;
-  const skipped = changes.length - adjusted;
-  if (changes.length === 0) return 'Rien à ajuster : la semaine suit déjà ce rythme.';
-  const parts = [];
-  if (adjusted > 0) parts.push(`${adjusted} jour${adjusted > 1 ? 's' : ''} ajusté${adjusted > 1 ? 's' : ''}`);
-  if (skipped > 0) parts.push(`${skipped} jour${skipped > 1 ? 's' : ''} sauté${skipped > 1 ? 's' : ''}`);
-  return parts.join(', ');
-}
+  return { adjusted, skipped: changes.length - adjusted };
+};
 
-const same = (a: SlotPlatform[], b: SlotPlatform[]) => JSON.stringify(a) === JSON.stringify(b);
+/** Same posts, whatever their order: a line stored `[tiktok, linkedin]` already matches `[linkedin, tiktok]`. */
+const key = (list: SlotPlatform[]) => list.map((p) => `${p.platform}:${p.language}`).sort().join(',');
+export const samePosts = (a: SlotPlatform[], b: SlotPlatform[]) => key(a) === key(b);
 
 /** What applying the current cadence to the week would change (writes nothing). */
 export async function planRhythm(weekId: string, now: Date = new Date()): Promise<RhythmPlan> {
@@ -98,7 +97,7 @@ export async function planRhythm(weekId: string, now: Date = new Date()): Promis
       continue;
     }
     const after = want.map((platform) => line.platforms.find((p) => p.platform === platform) ?? { platform, language: 'fr' as const });
-    if (!same(after, line.platforms)) changes.set(line.id, { slot_id: line.id, date: line.date, kind: 'adjust', before: line.platforms, after, english_switched: [] });
+    if (!samePosts(after, line.platforms)) changes.set(line.id, { slot_id: line.id, date: line.date, kind: 'adjust', before: line.platforms, after, english_switched: [] });
   }
 
   // The week's posts as they would be: skipped days drop out, adjusted days take their new platforms.
@@ -113,14 +112,14 @@ export async function planRhythm(weekId: string, now: Date = new Date()): Promis
     if (!c) return l.platforms;
     return c.kind === 'skip' ? null : c.after;
   };
+  // The plan leaves a platform below its English minimum (lost to the change, or missing already):
+  // its first upcoming post that can change switches to English.
   const partial = week.firstDay.getTime() > week.startsOn.getTime();
-  const before = checkLanguageQuota(posted((l) => (l.status === 'skipped' ? null : l.platforms)), partial, enabled);
   const englishMissing: ContentPlatform[] = [];
   for (const platform of enabled) {
     const next = checkLanguageQuota(posted(afterOf), partial, [platform])[0]!;
-    if (!before.find((q) => q.platform === platform)?.ok || next.ok) continue;
-    // Switch the first remaining future post of this platform to English.
-    const candidate = editable.find((l) => afterOf(l)?.some((p) => p.platform === platform));
+    if (next.ok) continue;
+    const candidate = editable.find((l) => afterOf(l)?.some((p) => p.platform === platform && p.language !== 'en'));
     if (!candidate) {
       englishMissing.push(platform);
       continue;
@@ -154,24 +153,49 @@ export async function planRhythm(weekId: string, now: Date = new Date()): Promis
     kept_with_drafts: keptWithDrafts,
     days_without_line: daysWithoutLine,
     english_missing: englishMissing,
-    summary: summaryOf(ordered),
+    counts: countsOf(ordered),
   };
 }
 
-/** Apply the current cadence to the week's future days (see `planRhythm`). Idempotent. */
-export async function applyRhythm(weekId: string, actor: Actor, now: Date = new Date()): Promise<{ plan: RhythmPlan; week: WeekDto }> {
+/** The day actions `applyRhythm` goes through (a seam for tests that make one fail). */
+export type RhythmSteps = { skipDay: typeof skipDay; updateSlot: typeof updateSlot };
+const STEPS: RhythmSteps = { skipDay, updateSlot };
+
+/**
+ * Apply the current cadence to the week's future days (see `planRhythm`).
+ * Idempotent. Each day changes on its own (with its audit row); if one fails
+ * (it changed meanwhile), the days already changed stay changed, the week-level
+ * audit row still records what was applied and what failed, and the error is
+ * rethrown — running it again finishes the work.
+ */
+export async function applyRhythm(
+  weekId: string,
+  actor: Actor,
+  now: Date = new Date(),
+  steps: RhythmSteps = STEPS,
+): Promise<{ plan: RhythmPlan; week: WeekDto; applied: RhythmCounts }> {
   const plan = await planRhythm(weekId, now);
-  for (const change of plan.changes) {
-    if (change.kind === 'skip') await skipDay(change.slot_id, 'Nouveau rythme', actor);
-    else await updateSlot(change.slot_id, { platforms: change.after }, actor);
+  const done: RhythmChange[] = [];
+  let failed: { date: string; error: string } | null = null;
+  try {
+    for (const change of plan.changes) {
+      if (change.kind === 'skip') await steps.skipDay(change.slot_id, 'Nouveau rythme', actor);
+      else await steps.updateSlot(change.slot_id, { platforms: change.after }, actor);
+      done.push(change);
+    }
+  } catch (err) {
+    failed = { date: plan.changes[done.length]!.date, error: err instanceof Error ? err.message : String(err) };
+    throw err;
+  } finally {
+    if (plan.changes.length > 0) {
+      await auditContent(actor, 'content.week.apply_rhythm', 'content_week', weekId, {
+        ...countsOf(done),
+        planned: plan.counts,
+        changes: done.map((c) => ({ date: c.date, kind: c.kind, after: c.after, english_switched: c.english_switched })),
+        english_missing: plan.english_missing,
+        failed,
+      });
+    }
   }
-  if (plan.changes.length > 0) {
-    await auditContent(actor, 'content.week.apply_rhythm', 'content_week', weekId, {
-      adjusted: plan.changes.filter((c) => c.kind === 'adjust').length,
-      skipped: plan.changes.filter((c) => c.kind === 'skip').length,
-      changes: plan.changes.map((c) => ({ date: c.date, kind: c.kind, after: c.after, english_switched: c.english_switched })),
-      english_missing: plan.english_missing,
-    });
-  }
-  return { plan, week: await getWeek(weekId) };
+  return { plan, week: await getWeek(weekId), applied: countsOf(done) };
 }
