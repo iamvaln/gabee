@@ -14,6 +14,8 @@ import {
   createMediaAsset,
   seedContentStudio,
 } from '../src/testing';
+import { AGENT_KEYS } from '@gabee/types';
+import { loadAgentInstructions } from '../prisma/seed-content-studio';
 
 const prisma = createTestClient();
 
@@ -104,7 +106,7 @@ test('seedContentStudio is idempotent and never overwrites admin edits', async (
     data: { modelKey: 'claude-sonnet-5-5' },
   });
   const v2 = await prisma.agentVersion.create({
-    data: { agentKey: 'strategist', version: 2, instructions: 'edited', publishedAt: new Date() },
+    data: { agentKey: 'strategist', version: 2, instructions: 'edited', publishedAt: new Date(), source: 'owner' },
   });
   await prisma.agent.update({ where: { key: 'strategist' }, data: { publishedVersionId: v2.id } });
 
@@ -122,6 +124,87 @@ test('seedContentStudio is idempotent and never overwrites admin edits', async (
   });
   assert.equal(writer.publishedVersion?.version, 1);
   assert.match(writer.publishedVersion?.instructions ?? '', /TikTok/);
+});
+
+// ── Seed upgrade path: the only way changed agent instruction files reach prod ──
+
+/** What prod holds before an instruction file changes: every agent at a seed v1 written from an older file. */
+async function seedWithOlderFiles(): Promise<void> {
+  await seedContentStudio(prisma);
+  await prisma.agentVersion.updateMany({ where: { version: 1 }, data: { instructions: 'Instructions from an older file.' } });
+}
+
+const published = (key: string) =>
+  prisma.agent.findUniqueOrThrow({ where: { key }, include: { publishedVersion: true } }).then((a) => a.publishedVersion);
+
+test('seedContentStudio publishes v2 from the file for a seed version that differs, keeping v1 as history', async () => {
+  await seedWithOlderFiles();
+  await seedContentStudio(prisma);
+
+  for (const key of AGENT_KEYS) {
+    const live = await published(key);
+    assert.equal(live?.version, 2, key);
+    assert.equal(live?.source, 'seed', key);
+    assert.equal(live?.instructions, loadAgentInstructions(key), key);
+    assert.ok(live?.publishedAt, key);
+    const v1 = await prisma.agentVersion.findUniqueOrThrow({ where: { agentKey_version: { agentKey: key, version: 1 } } });
+    assert.equal(v1.instructions, 'Instructions from an older file.', `${key} v1 is kept as it was`);
+  }
+  assert.equal(await prisma.agentVersion.count(), AGENT_KEYS.length * 2);
+});
+
+test('seedContentStudio upgrades idempotently: a second run changes nothing', async () => {
+  await seedWithOlderFiles();
+  await seedContentStudio(prisma);
+  const snapshot = async () =>
+    (await prisma.agentVersion.findMany({ orderBy: [{ agentKey: 'asc' }, { version: 'asc' }] })).map((v) => [v.id, v.agentKey, v.version, v.publishedAt?.toISOString()]);
+  const before = await snapshot();
+  const pointers = await prisma.agent.findMany({ orderBy: { key: 'asc' }, select: { key: true, publishedVersionId: true } });
+
+  await seedContentStudio(prisma);
+  await seedContentStudio(prisma);
+  assert.deepEqual(await snapshot(), before);
+  assert.deepEqual(await prisma.agent.findMany({ orderBy: { key: 'asc' }, select: { key: true, publishedVersionId: true } }), pointers);
+});
+
+test('seedContentStudio never replaces an owner version, published or pointed at', async () => {
+  await seedWithOlderFiles();
+  // The owner published their own strategist v2.
+  const owner = await prisma.agentVersion.create({
+    data: { agentKey: 'strategist', version: 2, instructions: 'Owner instructions.', publishedAt: new Date(), source: 'owner' },
+  });
+  await prisma.agent.update({ where: { key: 'strategist' }, data: { publishedVersionId: owner.id } });
+  // The owner rolled the analyst back to an older seed version: the live pointer is theirs to choose.
+  const analystV2 = await prisma.agentVersion.create({
+    data: { agentKey: 'analyst', version: 2, instructions: 'Seed text the owner rolled back from.', publishedAt: new Date() },
+  });
+  const analystV1 = await prisma.agentVersion.findUniqueOrThrow({ where: { agentKey_version: { agentKey: 'analyst', version: 1 } } });
+  assert.notEqual(analystV2.id, analystV1.id);
+
+  await seedContentStudio(prisma);
+
+  const strategist = await published('strategist');
+  assert.equal(strategist?.id, owner.id);
+  assert.equal(await prisma.agentVersion.count({ where: { agentKey: 'strategist' } }), 2, 'no seed version above the owner one');
+  const analyst = await published('analyst');
+  assert.equal(analyst?.id, analystV1.id, 'the rollback stands');
+  assert.equal(await prisma.agentVersion.count({ where: { agentKey: 'analyst' } }), 2);
+  // Agents the owner never touched are upgraded.
+  assert.equal((await published('writer_linkedin'))?.version, 2);
+});
+
+test('seedContentStudio upgrades above an unpublished owner draft (next free version number)', async () => {
+  await seedWithOlderFiles();
+  await prisma.agentVersion.create({ data: { agentKey: 'writer_tiktok', version: 2, instructions: 'Owner draft, not published.', source: 'owner' } });
+
+  await seedContentStudio(prisma);
+
+  const live = await published('writer_tiktok');
+  assert.equal(live?.version, 3);
+  assert.equal(live?.source, 'seed');
+  assert.equal(live?.instructions, loadAgentInstructions('writer_tiktok'));
+  const draft = await prisma.agentVersion.findUniqueOrThrow({ where: { agentKey_version: { agentKey: 'writer_tiktok', version: 2 } } });
+  assert.equal(draft.publishedAt, null, 'the owner draft stays a draft');
 });
 
 test('content studio factories build a week → slot → draft with media', async () => {
