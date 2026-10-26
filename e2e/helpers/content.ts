@@ -84,35 +84,58 @@ export async function seedProposalsWeek(startsOn: string): Promise<{ weekId: str
   return { weekId: week.id };
 }
 
+/** The default posting cadence (LinkedIn Tue–Thu, TikTok Mon/Wed/Fri/Sun): weekday → platforms. */
+const CADENCE: Record<number, Array<'linkedin' | 'tiktok'>> = {
+  1: ['tiktok'],
+  2: ['linkedin'],
+  3: ['linkedin', 'tiktok'],
+  4: ['linkedin'],
+  5: ['tiktok'],
+  0: ['tiktok'],
+};
+
 /**
- * What the Strategist's titles run would store: one `proposed` line per day
- * and the week `titles_ready`. Only the first day is in English, so each
- * platform starts one English post short of the full-week minimum (2).
+ * What the Strategist's titles run would store: one `proposed` line per
+ * posting day of the default cadence (Mon–Fri and Sunday; nothing posts on
+ * Saturday) and the week `titles_ready`. Every post is in French, so each
+ * platform starts one English post short; the mix is 2 on Gabee, 1 light,
+ * 3 useful.
  */
 export async function seedTitles(weekId: string, chosenIndex: number): Promise<void> {
   const week = await prisma.contentWeek.findUniqueOrThrow({ where: { id: weekId } });
   const startsOn = week.startsOn.toISOString().slice(0, 10);
-  const topics = ['Lire 10 minutes', 'Un mot anglais', 'Compter en cuisine', 'Le clavier en douceur', 'Le stylo qui dessine', 'Raconter sa journée', 'Bilan de la semaine'];
+  const lines = [
+    { topic: 'Le saviez-vous ? Les mots en anglais', pillar: 'light' },
+    { topic: 'Lire 10 minutes', pillar: 'value' },
+    { topic: 'Le module Nombres', pillar: 'gabee' },
+    { topic: 'Le clavier en douceur', pillar: 'value' },
+    { topic: 'Le stylo qui dessine', pillar: 'gabee' },
+    { topic: 'Raconter sa journée', pillar: 'value' },
+  ];
+  const dates = [0, 1, 2, 3, 4, 6].map((i) => addDays(startsOn, i));
   await prisma.$transaction([
     prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'titles_ready', chosenIndex, refinement: '' } }),
     prisma.contentSlot.createMany({
-      data: topics.map((topic, i) => {
-        const language = i === 0 ? 'en' : 'fr';
-        return {
-          weekId,
-          date: dateOf(addDays(startsOn, i)),
-          topic,
-          angle: `Angle du jour ${i + 1}`,
-          format: i % 2 === 0 ? 'text' : 'visual',
-          platforms: [
-            { platform: 'linkedin', language },
-            { platform: 'tiktok', language },
-          ],
-          sources: [],
-          status: 'proposed',
-        };
-      }),
+      data: lines.map(({ topic, pillar }, i) => ({
+        weekId,
+        date: dateOf(dates[i]!),
+        topic,
+        angle: `Angle du jour ${i + 1}`,
+        format: i % 2 === 0 ? 'text' : 'visual',
+        pillar,
+        platforms: CADENCE[new Date(`${dates[i]}T00:00:00Z`).getUTCDay()]!.map((platform) => ({ platform, language: 'fr' })),
+        sources: [],
+        status: 'proposed',
+      })),
     }),
+  ]);
+}
+
+/** Validate a seeded week: the week and its lines. */
+export async function validateSeededWeek(weekId: string): Promise<void> {
+  await prisma.$transaction([
+    prisma.contentWeek.update({ where: { id: weekId }, data: { status: 'validated', validatedAt: new Date() } }),
+    prisma.contentSlot.updateMany({ where: { weekId }, data: { status: 'validated' } }),
   ]);
 }
 
@@ -348,12 +371,12 @@ export async function resetAudience(): Promise<void> {
   await prisma.parentAccount.deleteMany({ where: { email: AUDIENCE_SIGNUP_EMAIL } });
 }
 
-/** Back to the seeded Réglages: editorial line v1 only, default settings, no objective. */
+/** Back to the seeded Réglages: editorial line v1 only, default settings and cadence, no objective. */
 export async function resetStudioSettings(): Promise<void> {
   await prisma.editorialLineVersion.deleteMany({ where: { version: { gt: 1 } } });
   await prisma.contentObjective.deleteMany({});
   await prisma.studioSettings.update({
     where: { id: 'default' },
-    data: { timezone: STUDIO_TZ, monthlyBudgetUsd: 50, budgetAlertRatio: 0.8 },
+    data: { timezone: STUDIO_TZ, monthlyBudgetUsd: 50, budgetAlertRatio: 0.8, postingDays: { linkedin: [2, 3, 4], tiktok: [0, 1, 3, 5] } },
   });
 }
