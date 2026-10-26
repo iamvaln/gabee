@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { OBJECTIVE_TYPES, StudioSettingsUpdateSchema, type Language } from '@gabee/types';
 import type { EditorialLineDto, ObjectiveDto, StudioSettingsDto, StudioSettingsView } from '@/lib/server/content-studio/settings';
+import type { PublishLinks } from '@/lib/server/content-studio/publish-links';
 import { PageHead } from '../../_shell/primitives';
 import { AIcon } from '../../_shell/icons';
 import { api, reportUnexpected } from '../_components/api';
@@ -16,9 +17,10 @@ import { usd } from '../../_shell/ai-labels';
 import { ProductFactsForm } from './ProductFactsForm';
 import { buildFacts, factsErrors, factsForm, type FactsForm } from './product-facts';
 import { objectiveMonths } from './objective-months';
+import { PublishLinksCard } from './PublishLinksCard';
+import { SaveBar, SettingsCard, useSave, type OnDirty } from './settings-card';
 
-type View = StudioSettingsView & { can_edit: boolean };
-type OnDirty = (card: string, dirty: boolean) => void;
+type View = StudioSettingsView & { publish_links: PublishLinks; can_edit: boolean };
 type ObjectiveType = (typeof OBJECTIVE_TYPES)[number];
 
 const OBJECTIVE_LABEL: Record<ObjectiveType, Bi> = {
@@ -122,87 +124,9 @@ export function SettingsClient({ lang }: { lang: Language }) {
           spent={view.budget}
           onSaved={(s) => setView((v) => v && { ...v, settings: s })}
         />
+        <PublishLinksCard lang={lang} readOnly={ro} onDirty={onDirty} links={view.publish_links} onSaved={(links) => setView((v) => v && { ...v, publish_links: links })} />
       </div>
       {guard}
-    </>
-  );
-}
-
-// ── Shared card frame ──
-
-type SaveState = { busy: boolean; error: string | null; saved: boolean };
-const IDLE: SaveState = { busy: false, error: null, saved: false };
-
-/** Run a save; `saved` shows "Enregistré" until the next change. */
-function useSave(lang: Language) {
-  const [state, setState] = useState<SaveState>(IDLE);
-  const run = useCallback(
-    async (action: string, fn: () => Promise<void>, overrides: Record<string, Bi> = {}) => {
-      setState({ busy: true, error: null, saved: false });
-      try {
-        await fn();
-        setState({ busy: false, error: null, saved: true });
-      } catch (err) {
-        reportUnexpected(err, { action });
-        setState({ busy: false, error: errorText(err, lang, overrides), saved: false });
-      }
-    },
-    [lang],
-  );
-  const touch = useCallback(() => setState((s) => (s.saved || s.error ? IDLE : s)), []);
-  return { state, run, touch };
-}
-
-function SettingsCard({
-  title,
-  sub,
-  readOnly,
-  children,
-  footer,
-}: {
-  title: string;
-  sub?: React.ReactNode;
-  readOnly: boolean;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-}) {
-  const id = useId();
-  return (
-    <section className="card studio-settings-card" aria-labelledby={id}>
-      <div className="studio-settings-head">
-        <h2 id={id} className="studio-card-title">
-          {title}
-        </h2>
-        {sub && <div className="studio-settings-sub">{sub}</div>}
-      </div>
-      {/* Read-only: text stays selectable (readOnly fields); only choices are disabled. */}
-      <div className="studio-fieldset studio-settings-body">{children}</div>
-      {!readOnly && footer && <div className="studio-settings-foot">{footer}</div>}
-    </section>
-  );
-}
-
-function SaveBar({ lang, state, label, dirty, form, blocked }: { lang: Language; state: SaveState; label: string; dirty: boolean; form: string; blocked?: boolean }) {
-  const L = lang === 'fr';
-  return (
-    <>
-      <span className="studio-save-status" role="status">
-        {state.saved && !dirty && (
-          <>
-            <AIcon name="check" size={14} />
-            {L ? 'Enregistré' : 'Saved'}
-          </>
-        )}
-        {!state.saved && dirty && !state.busy && (L ? 'Modifications non enregistrées' : 'Unsaved changes')}
-      </span>
-      {state.error && (
-        <p className="studio-field-error studio-save-error" role="alert">
-          {state.error}
-        </p>
-      )}
-      <button type="submit" form={form} className="btn" disabled={!dirty || state.busy || blocked}>
-        {state.busy ? (L ? 'Enregistrement…' : 'Saving…') : label}
-      </button>
     </>
   );
 }
