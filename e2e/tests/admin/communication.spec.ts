@@ -816,6 +816,8 @@ test.describe('as a super-admin', () => {
     // Monday gains LinkedIn; Tuesday and Thursday lose LinkedIn, Friday and Sunday TikTok: no platform left, skipped.
     await expect(dialog).toContainText('1 jour ajusté, 4 jours sautés');
     await expect(dialog).toContainText('sauté (aucune plateforme ne publie ce jour-là)');
+    // The seeded week has no English post: Monday, the first upcoming post of each platform, switches.
+    await expect(dialog).toContainText('passé en anglais pour garder un post en anglais sur LinkedIn et TikTok');
     await dialog.getByRole('button', { name: 'Annuler' }).click();
     expect(await prisma.contentSlot.count({ where: { weekId, status: 'skipped' } })).toBe(0);
 
@@ -826,8 +828,8 @@ test.describe('as a super-admin', () => {
     expect([sunday.status, sunday.skipReason]).toEqual(['skipped', 'Nouveau rythme']);
     const monday = await prisma.contentSlot.findFirstOrThrow({ where: { weekId, date: new Date(`${nextMonday}T00:00:00Z`) } });
     expect(monday.platforms).toEqual([
-      { platform: 'linkedin', language: 'fr' },
-      { platform: 'tiktok', language: 'fr' },
+      { platform: 'linkedin', language: 'en' },
+      { platform: 'tiktok', language: 'en' },
     ]);
 
     // From Semaine the same action finds nothing left to do.
