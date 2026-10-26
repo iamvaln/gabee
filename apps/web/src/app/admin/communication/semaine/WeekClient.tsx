@@ -14,7 +14,7 @@ import { ConfirmDialog } from '../_components/Dialog';
 import { DirectionCards } from '../_components/DirectionCards';
 import { AiWorking, ErrorNotice, Notice } from '../_components/ErrorNotice';
 import { errorText } from '../_components/errors';
-import { PLATFORM_LABEL, addDaysYmd, dateTime, dayMonth, mixLine, monthName, weekdayOf } from '../_components/format';
+import { PLATFORM_LABEL, addDaysYmd, dateTime, dayMonth, mixLine, monthName, rhythmSummary, weekdayOf } from '../_components/format';
 import { RelaunchProposals, StartWeekButton, failureOf, launchTarget, weekLooksStuck, type Failure, type WeeksResponse } from '../_components/StartWeek';
 
 type Which = 'current' | 'next';
@@ -376,6 +376,7 @@ function WeekView({
 
   const proposal = week.chosen_index !== null ? week.proposals?.[week.chosen_index] : null;
   const quotaOk = week.language_quota.every((q) => q.ok);
+  const mix = week.mix;
   const live = week.slots.filter((s) => s.status !== 'skipped' && s.status !== 'done');
   const reviewedCount = live.filter((s) => reviewed.has(s.id)).length;
   const allReviewed = live.length > 0 && reviewedCount === live.length;
@@ -585,8 +586,8 @@ function WeekView({
             lang={lang}
             disabled={busy}
             onBusyChange={setRhythmBusy}
-            onApplied={(w, plan) => {
-              setRhythmDone(plan.summary);
+            onApplied={(w, applied) => {
+              setRhythmDone(rhythmSummary(applied, lang));
               onWeek(w);
             }}
           />
@@ -621,26 +622,29 @@ function WeekView({
         ))}
       </div>
 
-      <div className="studio-quota" role="status" aria-label={t('Équilibre de la semaine', 'Week balance')}>
-        <span className="studio-quota-label">{t('Équilibre', 'Balance')}</span>
-        <span className={'studio-quota-item ' + (week.mix.ok ? 'ok' : 'warn')}>
-          <AIcon name={week.mix.ok ? 'check' : 'alert'} size={14} />
-          {mixLine(week.mix, lang)}
-        </span>
-        {week.mix.problems.includes('too_much_gabee') && (
-          <span className="studio-mix-warn">
-            {t('Plus de 3 jours sur Gabee : la semaine risque de faire trop « vente ».', 'More than 3 days about Gabee: the week may feel too salesy.')}
+      {/* Lines planned before pillars existed: no mix to judge. */}
+      {mix && (
+        <div className="studio-quota" role="status" aria-label={t('Équilibre de la semaine', 'Week balance')}>
+          <span className="studio-quota-label">{t('Équilibre', 'Balance')}</span>
+          <span className={'studio-quota-item ' + (mix.ok ? 'ok' : 'warn')}>
+            <AIcon name={mix.ok ? 'check' : 'alert'} size={14} />
+            {mixLine(mix, lang)}
           </span>
-        )}
-        {week.mix.problems.includes('no_light') && (
-          <span className="studio-mix-warn">
-            {t(
-              'Aucun jour léger : prévoyez au moins un post pour animer (actualité, jeu, journée mondiale…).',
-              'No light day: plan at least one post to liven things up (news, a game, an observance day…).',
-            )}
-          </span>
-        )}
-      </div>
+          {mix.problems.includes('too_much_gabee') && (
+            <span className="studio-mix-warn">
+              {t('Plus de 3 jours sur Gabee : la semaine risque de faire trop « vente ».', 'More than 3 days about Gabee: the week may feel too salesy.')}
+            </span>
+          )}
+          {mix.problems.includes('no_light') && (
+            <span className="studio-mix-warn">
+              {t(
+                'Aucun jour léger : prévoyez au moins un post pour animer (actualité, jeu, journée mondiale…).',
+                'No light day: plan at least one post to liven things up (news, a game, an observance day…).',
+              )}
+            </span>
+          )}
+        </div>
+      )}
 
       {warning && (
         <Notice

@@ -13,7 +13,7 @@ import { ApplyRhythmButton } from '../_components/ApplyRhythm';
 import { ConfirmDialog } from '../_components/Dialog';
 import { ErrorNotice, Notice } from '../_components/ErrorNotice';
 import { errorText } from '../_components/errors';
-import { PLATFORM_LABEL, WEEKDAYS, dateTime, type Bi } from '../_components/format';
+import { PLATFORM_LABEL, WEEKDAYS, dateTime, rhythmSummary, type Bi } from '../_components/format';
 import { useUnsavedGuard } from '../_components/useUnsavedGuard';
 import { usd } from '../../_shell/ai-labels';
 import { ProductFactsForm } from './ProductFactsForm';
@@ -575,9 +575,9 @@ function PostingDaysCard({
               current={offer.current}
               lang={lang}
               plan={offer.plan}
-              onApplied={(_week, plan) => {
+              onApplied={(_week, applied) => {
                 setOffer(null);
-                setApplied(plan.summary);
+                setApplied(rhythmSummary(applied, lang));
               }}
             />
           }
@@ -585,12 +585,12 @@ function PostingDaysCard({
           <p>
             {offer.current
               ? t(
-                  `La semaine en cours est déjà validée : ses jours à venir suivent encore l’ancien rythme (${offer.plan.summary.toLowerCase()} pour suivre le nouveau).`,
-                  `This week is already validated: its upcoming days still follow the old rhythm (${offer.plan.summary} to follow the new one).`,
+                  `La semaine en cours est déjà validée : ses jours à venir suivent encore l’ancien rythme (${rhythmSummary(offer.plan.counts, 'fr')} pour suivre le nouveau).`,
+                  `This week is already validated: its upcoming days still follow the old rhythm (${rhythmSummary(offer.plan.counts, 'en')} to follow the new one).`,
                 )
               : t(
-                  `La semaine prochaine est déjà validée : ses jours suivent encore l’ancien rythme (${offer.plan.summary.toLowerCase()} pour suivre le nouveau).`,
-                  `Next week is already validated: its days still follow the old rhythm (${offer.plan.summary} to follow the new one).`,
+                  `La semaine prochaine est déjà validée : ses jours suivent encore l’ancien rythme (${rhythmSummary(offer.plan.counts, 'fr')} pour suivre le nouveau).`,
+                  `Next week is already validated: its days still follow the old rhythm (${rhythmSummary(offer.plan.counts, 'en')} to follow the new one).`,
                 )}
           </p>
         </Notice>

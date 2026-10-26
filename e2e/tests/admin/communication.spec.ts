@@ -225,9 +225,16 @@ test('Semaine shows each day pillar and the week mix, and warns when an edit bre
   await page.goto('/admin/communication/semaine');
   const days = page.getByRole('listitem').filter({ has: page.getByRole('button', { name: 'Sauter' }) });
   await expect(days).toHaveCount(6);
-  await expect(days.nth(0).locator('.studio-pillar')).toHaveText('Pilier : Léger');
-  await expect(days.nth(1).locator('.studio-pillar')).toHaveText('Pilier : Conseil');
-  await expect(days.nth(2).locator('.studio-pillar')).toHaveText('Pilier : Gabee');
+  const chip = (n: number) => days.nth(n).getByRole('button', { name: /^Pilier : / });
+  await expect(chip(0)).toHaveAccessibleName(/^Pilier : Léger/);
+  await expect(chip(1)).toHaveAccessibleName(/^Pilier : Conseil/);
+  await expect(chip(2)).toHaveAccessibleName(/^Pilier : Gabee/);
+  // What a pillar means is one tap away (no hover on a phone).
+  const hint = days.nth(0).getByText('Pour animer : actualité, « Le saviez-vous ? », jeu, événement, journée mondiale. Sans vendre.');
+  await expect(hint).toBeHidden();
+  await chip(0).click();
+  await expect(chip(0)).toHaveAttribute('aria-expanded', 'true');
+  await expect(hint).toBeVisible();
   const mix = page.getByRole('status', { name: 'Équilibre de la semaine' });
   await expect(mix).toContainText('2 sur Gabee · 1 léger · 3 conseils');
   await expect(mix.getByText(/Aucun jour léger/)).toHaveCount(0);
@@ -239,7 +246,7 @@ test('Semaine shows each day pillar and the week mix, and warns when an edit bre
   await first.getByLabel('Pilier').selectOption({ label: 'Conseil' });
   await expect(first.getByText('Utile aux parents : écrans, apprentissage, routines. Sans vendre.')).toBeVisible();
   await first.getByRole('button', { name: 'Enregistrer' }).click();
-  await expect(first.locator('.studio-pillar')).toHaveText('Pilier : Conseil');
+  await expect(first.getByRole('button', { name: /^Pilier : / })).toHaveAccessibleName(/^Pilier : Conseil/);
   await expect(mix).toContainText('2 sur Gabee · 0 léger · 4 conseils');
   await expect(mix).toContainText('Aucun jour léger : prévoyez au moins un post pour animer');
   const monday = await prisma.contentSlot.findFirstOrThrow({ where: { weekId, date: new Date(`${nextMonday}T00:00:00Z`) } });

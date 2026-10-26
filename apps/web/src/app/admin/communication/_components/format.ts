@@ -46,6 +46,18 @@ export function mixLine(mix: Pick<PillarMix, 'gabee' | 'light' | 'value'>, lang:
     : `${mix.gabee} about Gabee · ${mix.light} light · ${mix.value} advice`;
 }
 
+/** « 2 jours ajustés, 1 jour sauté » / « Rien à ajuster : la semaine suit déjà ce rythme. » */
+export function rhythmSummary(counts: { adjusted: number; skipped: number }, lang: Language): string {
+  const { adjusted, skipped } = counts;
+  if (adjusted + skipped === 0) return lang === 'fr' ? 'Rien à ajuster : la semaine suit déjà ce rythme.' : 'Nothing to adjust: the week already follows this rhythm.';
+  const s = (n: number) => (n > 1 ? 's' : '');
+  const parts =
+    lang === 'fr'
+      ? [adjusted > 0 && `${adjusted} jour${s(adjusted)} ajusté${s(adjusted)}`, skipped > 0 && `${skipped} jour${s(skipped)} sauté${s(skipped)}`]
+      : [adjusted > 0 && `${adjusted} day${s(adjusted)} adjusted`, skipped > 0 && `${skipped} day${s(skipped)} skipped`];
+  return parts.filter(Boolean).join(', ');
+}
+
 /** Weekdays Monday first (0 = Sunday … 6 = Saturday, as the cadence stores them). */
 export const WEEKDAYS: ReadonlyArray<{ day: number; short: Bi; long: Bi }> = [
   { day: 1, short: { fr: 'Lun', en: 'Mon' }, long: { fr: 'lundi', en: 'Monday' } },

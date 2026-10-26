@@ -195,10 +195,7 @@ export function DayLines({
                       </p>
                     )}
                     <div className="studio-dayline-meta">
-                      <span className={`chip static studio-pillar ${slot.pillar}`} title={PILLAR_HINT[slot.pillar][lang]}>
-                        <span className="sr-only">{t('Pilier : ', 'Pillar: ')}</span>
-                        {PILLAR_LABEL[slot.pillar][lang]}
-                      </span>
+                      {slot.pillar && <PillarChip slotId={slot.id} pillar={slot.pillar} lang={lang} />}
                       <span className="chip static">{FORMAT_LABEL[slot.format][lang]}</span>
                       {slot.platforms.map((p) => (
                         <LanguageSwitch
@@ -361,6 +358,35 @@ export function DayLines({
   );
 }
 
+/**
+ * The day's pillar. Its meaning is a tap away (a `title` alone never shows on
+ * a phone): the chip is a button that opens a one-line explanation under it.
+ */
+function PillarChip({ slotId, pillar, lang }: { slotId: string; pillar: ContentPillar; lang: Language }) {
+  const [open, setOpen] = useState(false);
+  const hintId = `pillar-hint-${slotId}`;
+  return (
+    <>
+      <button
+        type="button"
+        className={`chip studio-pillar ${pillar}`}
+        aria-expanded={open}
+        aria-controls={hintId}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="sr-only">{lang === 'fr' ? 'Pilier : ' : 'Pillar: '}</span>
+        {PILLAR_LABEL[pillar][lang]}
+        <span className="studio-pillar-more" aria-hidden>
+          ?
+        </span>
+      </button>
+      <span id={hintId} className="studio-pillar-hint" hidden={!open}>
+        {PILLAR_HINT[pillar][lang]}
+      </span>
+    </>
+  );
+}
+
 /** FR / EN for one platform on one day: a two-option radio group. */
 function LanguageSwitch({
   slot,
@@ -420,14 +446,14 @@ function SlotEditor({
   const [topic, setTopic] = useState(slot.topic);
   const [angle, setAngle] = useState(slot.angle);
   const [format, setFormat] = useState<SlotFormat>(slot.format);
-  const [pillar, setPillar] = useState<ContentPillar>(slot.pillar);
+  const [pillar, setPillar] = useState<ContentPillar | null>(slot.pillar);
   const [platforms, setPlatforms] = useState<SlotPlatform[]>(slot.platforms);
 
   const body: UpdateSlotRequest = {
     ...(topic.trim() !== slot.topic ? { topic: topic.trim() } : {}),
     ...(angle.trim() !== slot.angle ? { angle: angle.trim() } : {}),
     ...(format !== slot.format ? { format } : {}),
-    ...(pillar !== slot.pillar ? { pillar } : {}),
+    ...(pillar !== null && pillar !== slot.pillar ? { pillar } : {}),
     ...(JSON.stringify(platforms) !== JSON.stringify(slot.platforms) ? { platforms } : {}),
   };
   const changed = Object.keys(body).length > 0;
@@ -465,7 +491,12 @@ function SlotEditor({
         <label className="field-label" htmlFor={`${id}-pillar`}>
           {t('Pilier', 'Pillar')}
         </label>
-        <select id={`${id}-pillar`} className="inp" value={pillar} onChange={(e) => setPillar(e.target.value as ContentPillar)} aria-describedby={`${id}-pillar-help`}>
+        <select id={`${id}-pillar`} className="inp" value={pillar ?? ''} onChange={(e) => setPillar(e.target.value as ContentPillar)} aria-describedby={`${id}-pillar-help`}>
+          {pillar === null && (
+            <option value="" disabled>
+              {t('Choisir…', 'Choose…')}
+            </option>
+          )}
           {CONTENT_PILLARS.map((p) => (
             <option key={p} value={p}>
               {PILLAR_LABEL[p][lang]}
@@ -473,7 +504,7 @@ function SlotEditor({
           ))}
         </select>
         <p id={`${id}-pillar-help`} className="help">
-          {PILLAR_HINT[pillar][lang]}
+          {pillar ? PILLAR_HINT[pillar][lang] : t('Ce jour a été planifié avant les piliers.', 'This day was planned before pillars existed.')}
         </p>
       </div>
       <div className="studio-editor-row">

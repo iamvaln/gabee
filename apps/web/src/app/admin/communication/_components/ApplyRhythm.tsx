@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import type { Language } from '@gabee/types';
-import type { RhythmChange, RhythmPlan } from '@/lib/server/content-studio/rhythm';
+import type { RhythmChange, RhythmCounts, RhythmPlan } from '@/lib/server/content-studio/rhythm';
 import type { WeekDto } from '@/lib/server/content-studio/weeks';
 import { AIcon } from '../../_shell/icons';
 import { api, notifyStudioChanged, reportUnexpected } from './api';
 import { Dialog } from './Dialog';
 import { errorText } from './errors';
-import { PLATFORM_LABEL, longDay } from './format';
+import { PLATFORM_LABEL, longDay, rhythmSummary } from './format';
 
 /** « Appliquer le rythme à la semaine en cours » (or « … prochaine »), as the button and dialog title say it. */
 export function rhythmLabel(current: boolean, lang: Language): string {
@@ -41,7 +41,8 @@ export function ApplyRhythmButton({
   /** A preview already fetched (Réglages checks before offering). */
   plan?: RhythmPlan;
   disabled?: boolean;
-  onApplied: (week: WeekDto, plan: RhythmPlan) => void;
+  /** `applied`: the days actually changed (the screen words them with `rhythmSummary`). */
+  onApplied: (week: WeekDto, applied: RhythmCounts) => void;
   onBusyChange?: (busy: boolean) => void;
 }) {
   const L = lang === 'fr';
@@ -73,10 +74,10 @@ export function ApplyRhythmButton({
     setWorking('apply');
     setError(null);
     try {
-      const res = await api<{ plan: RhythmPlan; week: WeekDto }>(`/weeks/${weekId}/apply-rhythm`, { method: 'POST' });
+      const res = await api<{ plan: RhythmPlan; week: WeekDto; applied: RhythmCounts }>(`/weeks/${weekId}/apply-rhythm`, { method: 'POST' });
       setPlan(null);
       notifyStudioChanged();
-      onApplied(res.week, res.plan);
+      onApplied(res.week, res.applied);
     } catch (err) {
       reportUnexpected(err, { action: 'apply-rhythm', weekId });
       setError(errorText(err, lang));
@@ -121,7 +122,7 @@ export function ApplyRhythmButton({
           }
         >
           <p className="studio-dialog-text">
-            <b>{plan.summary}</b>
+            <b>{rhythmSummary(plan.counts, lang)}</b>
           </p>
           {plan.changes.length > 0 && (
             <>
