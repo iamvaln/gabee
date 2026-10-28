@@ -835,3 +835,42 @@ describe('publish links (« Copier et ouvrir »)', () => {
     assert.equal(p({ note: 'x' }), false);
   });
 });
+
+import {
+  DirectionFeedbackRequestSchema,
+  DraftFeedbackRequestSchema,
+  FEEDBACK_NOTE_MAX,
+  REGENERATE_INSTRUCTION_MAX,
+  RegenerateRequestSchema,
+  SlotFeedbackRequestSchema,
+} from '../src/content-studio';
+
+describe('owner feedback to the agents', () => {
+  it('a direction feedback is the card’s state now: absent or null fields clear, both may be empty', () => {
+    const p = (o: unknown) => DirectionFeedbackRequestSchema.safeParse(o).success;
+    assert.equal(p({ proposal_index: 0, sentiment: 'up' }), true);
+    assert.equal(p({ proposal_index: 2, sentiment: 'down', note: 'Trop vendeur' }), true);
+    assert.equal(p({ proposal_index: 1, sentiment: null, note: null }), true, 'clears it');
+    assert.equal(p({ proposal_index: 3, sentiment: 'up' }), false);
+    assert.equal(p({ proposal_index: 0, sentiment: 'meh' }), false);
+    assert.equal(p({ proposal_index: 0, note: 'x'.repeat(FEEDBACK_NOTE_MAX + 1) }), false);
+  });
+  it('a note on a day or a draft says something: a sentiment or a non-blank note', () => {
+    for (const schema of [SlotFeedbackRequestSchema, DraftFeedbackRequestSchema]) {
+      const p = (o: unknown) => schema.safeParse(o).success;
+      assert.equal(p({ note: 'Plus concret' }), true);
+      assert.equal(p({ sentiment: 'down' }), true);
+      assert.equal(p({ note: '   ' }), false);
+      assert.equal(p({}), false);
+      assert.equal(p({ note: 'x'.repeat(FEEDBACK_NOTE_MAX + 1) }), false);
+    }
+    assert.equal(DraftFeedbackRequestSchema.safeParse({ note: 'Une autre vidéo', about: 'media' }).success, true);
+    assert.equal(DraftFeedbackRequestSchema.safeParse({ note: 'x', about: 'title' }).success, false);
+  });
+  it('a regeneration takes an optional instruction of 500 characters at most', () => {
+    const p = (o: unknown) => RegenerateRequestSchema.safeParse(o).success;
+    assert.equal(p({}), true);
+    assert.equal(p({ instruction: 'Plus court, sans emoji' }), true);
+    assert.equal(p({ instruction: 'x'.repeat(REGENERATE_INSTRUCTION_MAX + 1) }), false);
+  });
+});

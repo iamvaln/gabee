@@ -1138,9 +1138,40 @@ model ContentWeek {
   updatedAt      DateTime          @updatedAt @map("updated_at")
   objective      ContentObjective? @relation(fields: [objectiveId], references: [id], onDelete: SetNull)
   slots          ContentSlot[]
+  feedback       OwnerFeedback[]
 
   @@index([status])
   @@map("content_weeks")
+}
+
+/// The owner's feedback to an agent: a 👍/👎 (`sentiment` = `up` | `down`)
+/// and/or a note (at least one), read back into that agent's memory
+/// (`owner_feedback` block). `agentKey` ∈ AGENT_KEYS. `subjectKind` =
+/// `direction` (`subjectId` = the week; `proposalIndex` set while the proposal
+/// is on screen, cleared once « Régénérer les propositions » replaced it) |
+/// `title` (a day line) | `draft`. `subjectSummary` keeps what was judged (the
+/// proposal title, the day's topic) since the subject may change or go. One
+/// direction row per (week, proposal, admin): changing it updates the row;
+/// notes on titles and drafts append (title/draft rows have no index).
+model OwnerFeedback {
+  id             String      @id @default(uuid()) @db.Uuid
+  agentKey       String      @map("agent_key")
+  subjectKind    String      @map("subject_kind")
+  subjectId      String      @map("subject_id") @db.Uuid
+  weekId         String      @map("week_id") @db.Uuid
+  proposalIndex  Int?        @map("proposal_index")
+  subjectSummary String      @map("subject_summary")
+  sentiment      String?
+  note           String?
+  actorId        String      @map("actor_id") @db.Uuid
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  week           ContentWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  @@unique([subjectKind, subjectId, proposalIndex, actorId])
+  @@index([agentKey, createdAt])
+  @@index([weekId])
+  @@map("owner_feedback")
 }
 
 /// One day of a week: the shared topic, and per platform the post language
