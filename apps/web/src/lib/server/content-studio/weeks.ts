@@ -1,9 +1,11 @@
 import { Prisma } from '@gabee/db';
 import {
   DirectionProposalsSchema,
+  pillarMix,
   type ChooseDirectionRequest,
   type ContentPlatform,
   type DirectionProposals,
+  type PillarMix,
   type UpdateSlotRequest,
   type WeekTitles,
 } from '@gabee/types';
@@ -13,6 +15,7 @@ import type { AiOrigin } from '../ai/router';
 import { getStudioTimezone, localDay } from '../services/web-visits';
 import { AgentRunInProgressError, runAgent, weekMonth } from './agents';
 import {
+  asPillar,
   assertTransition,
   auditContent,
   enabledPlatforms,
@@ -23,16 +26,19 @@ import {
   type SlotDto,
   type SlotPlatform,
 } from './drafts';
+import { plannedDays } from './cadence';
 import { localParts } from './clock';
 import { checkLanguageQuota, type LanguageQuotaResult } from './language-quota';
+import { getPostingDays } from './settings';
 import { addDaysYmd, dateOf, daysInWeek, planWeek, ymdOf, type Actor } from './state';
 
 /**
  * The week loop (spec "The weekly rhythm"): start a week and get 3 directions,
- * pick one and get the week's titles (one slot per day from `firstDay` to
- * Sunday), edit / regenerate / skip days, then validate — gated by the English
- * minimum per platform unless the owner overrides it. Scheduling (late
- * validation, notifications) lives in the scheduler, not here.
+ * pick one and get the week's titles (one slot per day some platform posts on,
+ * from `firstDay` to Sunday — the posting cadence), edit / regenerate / skip
+ * days, then validate — gated by the English minimum per platform unless the
+ * owner overrides it. Scheduling (late validation, notifications) lives in the
+ * scheduler, not here.
  */
 
 export type { SlotDto, SlotPlatform } from './drafts';
@@ -58,6 +64,12 @@ export type WeekDto = {
   updated_at: string;
   /** English minimum per enabled platform over the non-skipped days. */
   language_quota: LanguageQuotaResult[];
+  /**
+   * The pillars of the non-skipped days, and whether the owner's edits broke
+   * the mix (a warning, never a block). Null when a line of the week has no
+   * pillar (planned before pillars existed): there is no mix to judge.
+   */
+  mix: PillarMix | null;
   slots: SlotDto[];
 };
 
@@ -76,13 +88,22 @@ function parseAngles(value: Prisma.JsonValue | null): Partial<Record<ContentPlat
   return Object.fromEntries(Object.entries(value).filter((e): e is [string, string] => typeof e[1] === 'string')) as Partial<Record<ContentPlatform, string>>;
 }
 
-function quotaOf(slots: ReadonlyArray<{ status: string; platforms: Prisma.JsonValue }>, days: number, platforms: ContentPlatform[]) {
+/** A week started mid-way (from tomorrow) rather than on its Monday. */
+const isPartial = (week: { startsOn: Date; firstDay: Date }) => week.firstDay.getTime() > week.startsOn.getTime();
+
+function quotaOf(slots: ReadonlyArray<{ status: string; platforms: Prisma.JsonValue }>, partial: boolean, platforms: ContentPlatform[]) {
   // Skipped days are not posted, so their English posts do not count.
   return checkLanguageQuota(
     slots.filter((s) => s.status !== 'skipped').map((s) => ({ platforms: parseSlotPlatforms(s.platforms) })),
-    days,
+    partial,
     platforms,
   );
+}
+
+function mixOf(slots: ReadonlyArray<{ status: string; pillar: string | null }>): PillarMix | null {
+  const pillars = slots.map((s) => asPillar(s.pillar));
+  if (pillars.some((p) => p === null)) return null;
+  return pillarMix(slots.filter((s) => s.status !== 'skipped').map((s) => asPillar(s.pillar)!));
 }
 
 /** The months (`YYYY-MM`) among the weeks' that have an objective now. */
@@ -108,7 +129,8 @@ function toWeekDto(row: WeekRow, platforms: ContentPlatform[], objectiveMonths: 
     platform_angles: parseAngles(row.platformAngles),
     validated_at: row.validatedAt?.toISOString() ?? null,
     updated_at: row.updatedAt.toISOString(),
-    language_quota: quotaOf(row.slots, days, platforms),
+    language_quota: quotaOf(row.slots, isPartial(row), platforms),
+    mix: mixOf(row.slots),
     slots: row.slots.map(toSlotDto),
   };
 }
@@ -246,6 +268,13 @@ async function runStrategist(kind: 'week_proposals' | 'week_titles', weekId: str
   }
 }
 
+const noPostingDays = () =>
+  new HttpError(
+    409,
+    'no_posting_days',
+    "Aucune plateforme ne publie d'ici dimanche : il n'y a rien à préparer cette semaine. Lancez la semaine prochaine dimanche, ou ajoutez des jours dans Réglages.",
+  );
+
 const weekExists = (startsOn: string) =>
   new HttpError(409, 'week_exists', `La semaine du ${startsOn} existe déjà. Ouvrez-la depuis l'écran Semaine.`, { starts_on: startsOn });
 
@@ -254,12 +283,16 @@ const weekExists = (startsOn: string) =>
  * Sunday, next Monday's full week; Monday–Saturday, the current week from
  * tomorrow. Creates it `proposing`, then runs the Strategist (→
  * `proposals_ready`). If the Strategist fails the error is rethrown and the
- * week stays `proposing`; `proposeDirections` retries it.
+ * week stays `proposing`; `proposeDirections` retries it. A partial week in
+ * which no platform posts any more is refused (409 `no_posting_days`) before
+ * anything is paid for.
  */
 export async function startWeek(opts: { now: Date; origin: AiOrigin; actor?: Actor }): Promise<WeekDto> {
   const tz = await getStudioTimezone();
   const { startsOn, firstDay } = planWeek(localDay(opts.now, tz));
   if (await prisma.contentWeek.findUnique({ where: { startsOn: dateOf(startsOn) }, select: { id: true } })) throw weekExists(startsOn);
+  const [postingDays, enabled] = await Promise.all([getPostingDays(), enabledPlatforms()]);
+  if (plannedDays(startsOn, firstDay, postingDays, enabled).length === 0) throw noPostingDays();
 
   let weekId: string;
   try {
@@ -341,6 +374,9 @@ export async function chooseDirection(weekId: string, req: ChooseDirectionReques
   if (week.status !== 'direction_set') assertTransition('week', week.status, 'direction_set');
   const proposals = parseProposals(week.proposals);
   if (!proposals?.[req.proposal_index]) throw new HttpError(409, 'invalid_transition', "Cette direction n'existe pas. Rechargez la page.");
+  // The titles are planned on the cadence as it is now: nothing to pay for if no platform posts in the window any more.
+  const [postingDays, enabled] = await Promise.all([getPostingDays(), enabledPlatforms()]);
+  if (plannedDays(ymdOf(week.startsOn), ymdOf(week.firstDay), postingDays, enabled).length === 0) throw noPostingDays();
   await assertNoLiveWeekRun(weekId);
 
   const angles = Object.fromEntries(Object.entries(req.platform_angles).flatMap(([k, v]) => (v && v.trim() ? [[k, v.trim()]] : [])));
@@ -372,6 +408,7 @@ export async function chooseDirection(weekId: string, req: ChooseDirectionReques
         topic: d.topic,
         angle: d.angle,
         format: d.format,
+        pillar: d.pillar,
         platforms: d.platforms as unknown as Prisma.InputJsonValue,
         sources: d.sources as unknown as Prisma.InputJsonValue,
         status: 'proposed',
@@ -423,6 +460,7 @@ export async function updateSlot(slotId: string, patch: UpdateSlotRequest, actor
     ...(patch.topic !== undefined ? { topic: patch.topic.trim() } : {}),
     ...(patch.angle !== undefined ? { angle: patch.angle.trim() } : {}),
     ...(patch.format !== undefined ? { format: patch.format } : {}),
+    ...(patch.pillar !== undefined ? { pillar: patch.pillar } : {}),
     ...(patch.platforms !== undefined ? { platforms: patch.platforms as unknown as Prisma.InputJsonValue } : {}),
   };
   const stale = await prisma.$transaction(async (tx) => {
@@ -431,7 +469,7 @@ export async function updateSlot(slotId: string, patch: UpdateSlotRequest, actor
     return markDraftsStale(tx, slotId);
   });
   await auditContent(actor, 'content.slot.update', 'content_slot', slotId, {
-    before: { topic: slot.topic, angle: slot.angle, format: slot.format, platforms: slot.platforms },
+    before: { topic: slot.topic, angle: slot.angle, format: slot.format, pillar: slot.pillar, platforms: slot.platforms },
     after: patch,
     drafts_stale: stale,
   });
@@ -456,6 +494,7 @@ export async function regenerateSlot(slotId: string, actor: Actor): Promise<Slot
         topic: day.topic,
         angle: day.angle,
         format: day.format,
+        pillar: day.pillar,
         platforms: day.platforms as unknown as Prisma.InputJsonValue,
         sources: day.sources as unknown as Prisma.InputJsonValue,
       },
@@ -464,8 +503,8 @@ export async function regenerateSlot(slotId: string, actor: Actor): Promise<Slot
     return markDraftsStale(tx, slotId);
   });
   await auditContent(actor, 'content.slot.regenerate', 'content_slot', slotId, {
-    before: { topic: slot.topic, angle: slot.angle, format: slot.format, platforms: slot.platforms },
-    after: { topic: day.topic, angle: day.angle, format: day.format, platforms: day.platforms },
+    before: { topic: slot.topic, angle: slot.angle, format: slot.format, pillar: slot.pillar, platforms: slot.platforms },
+    after: { topic: day.topic, angle: day.angle, format: day.format, pillar: day.pillar, platforms: day.platforms },
     drafts_stale: stale,
   });
   return getSlot(slotId);
@@ -481,7 +520,7 @@ export async function validateWeek(weekId: string, actor: Actor, opts: { overrid
   const week = await prisma.contentWeek.findUnique({ where: { id: weekId }, include: { slots: true } });
   if (!week) throw weekNotFound();
   assertTransition('week', week.status, 'validated');
-  const quota = quotaOf(week.slots, daysInWeek(ymdOf(week.startsOn), ymdOf(week.firstDay)), await enabledPlatforms());
+  const quota = quotaOf(week.slots, isPartial(week), await enabledPlatforms());
   const quotaOk = quota.every((q) => q.ok);
   if (!quotaOk && !opts.overrideQuota) {
     const missing = quota.filter((q) => !q.ok).map((q) => `${q.platform} : ${q.english}/${q.required}`);

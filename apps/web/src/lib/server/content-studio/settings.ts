@@ -1,11 +1,12 @@
 import { Prisma } from '@gabee/db';
-import type { EditorialLineUpdate, ObjectiveUpsert, StudioSettingsUpdate } from '@gabee/types';
+import type { EditorialLineUpdate, ObjectiveUpsert, PostingDays, StudioSettingsUpdate } from '@gabee/types';
 import { prisma } from '../db';
 import { HttpError } from '../http';
 import { getStudioTimezone } from '../services/web-visits';
+import { parsePostingDays } from './cadence';
 import { localParts } from './clock';
 import { monthSpendUsd } from './budget';
-import { auditContent } from './drafts';
+import { auditContent, enabledPlatforms } from './drafts';
 import { unifiedDiff } from './memory';
 import { addDaysYmd, type Actor } from './state';
 
@@ -24,6 +25,8 @@ export type StudioSettingsDto = {
   enabled_platforms: string[];
   monthly_budget_usd: number;
   budget_alert_ratio: number;
+  /** Studio-local weekdays (0 = Sunday … 6 = Saturday) each platform posts on. */
+  posting_days: PostingDays;
   updated_at: string | null;
 };
 
@@ -69,6 +72,7 @@ function toSettingsDto(row: SettingsRow | null): StudioSettingsDto {
     enabled_platforms: row?.enabledPlatforms ?? [],
     monthly_budget_usd: row?.monthlyBudgetUsd ?? 50,
     budget_alert_ratio: row?.budgetAlertRatio ?? 0.8,
+    posting_days: parsePostingDays(row?.postingDays ?? null),
     updated_at: row?.updatedAt.toISOString() ?? null,
   };
 }
@@ -91,6 +95,28 @@ function toEditorialDto(row: EditorialRow): EditorialLineDto {
     published_at: row.publishedAt?.toISOString() ?? null,
     created_by_id: row.createdById,
   };
+}
+
+/** The posting cadence the week planning uses now. */
+export async function getPostingDays(): Promise<PostingDays> {
+  const row = await prisma.studioSettings.findUnique({ where: { id: SETTINGS_ID }, select: { postingDays: true } });
+  return parsePostingDays(row?.postingDays ?? null);
+}
+
+const PLATFORM_NAME = { linkedin: 'LinkedIn', tiktok: 'TikTok' } as const;
+
+/** Every enabled platform keeps at least one day; days are stored sorted. */
+async function checkPostingDays(days: PostingDays): Promise<PostingDays> {
+  const empty = (await enabledPlatforms()).filter((p) => days[p].length === 0);
+  if (empty.length > 0) {
+    throw new HttpError(
+      422,
+      'invalid_posting_days',
+      `Choisissez au moins un jour de publication pour ${empty.map((p) => PLATFORM_NAME[p]).join(' et ')}.`,
+      { platforms: empty },
+    );
+  }
+  return parsePostingDays(days);
 }
 
 const currentLine = () => prisma.editorialLineVersion.findFirst({ where: { publishedAt: { not: null } }, orderBy: { version: 'desc' } });
@@ -130,8 +156,10 @@ export async function updateSettings(patch: StudioSettingsUpdate, actor: Actor):
   if (patch.timezone !== undefined && !isTimeZone(patch.timezone)) {
     throw new HttpError(422, 'invalid_timezone', `Le fuseau horaire « ${patch.timezone} » est inconnu. Choisissez-en un de la liste (ex. Africa/Douala).`);
   }
+  const postingDays = patch.posting_days !== undefined ? await checkPostingDays(patch.posting_days) : undefined;
   const data = {
     ...(patch.timezone !== undefined ? { timezone: patch.timezone } : {}),
+    ...(postingDays !== undefined ? { postingDays: postingDays as unknown as Prisma.InputJsonValue } : {}),
     ...(patch.recipients !== undefined ? { recipients: [...new Set(patch.recipients.map((r) => r.trim()))] } : {}),
     ...(patch.monthly_budget_usd !== undefined ? { monthlyBudgetUsd: patch.monthly_budget_usd } : {}),
     ...(patch.budget_alert_ratio !== undefined ? { budgetAlertRatio: patch.budget_alert_ratio } : {}),
@@ -141,7 +169,7 @@ export async function updateSettings(patch: StudioSettingsUpdate, actor: Actor):
   const row = await prisma.studioSettings.upsert({ where: { id: SETTINGS_ID }, create: { id: SETTINGS_ID, recipients: [], ...data }, update: data });
   const was = toSettingsDto(before);
   const now = toSettingsDto(row);
-  const keys = ['timezone', 'recipients', 'monthly_budget_usd', 'budget_alert_ratio'] as const;
+  const keys = ['timezone', 'recipients', 'monthly_budget_usd', 'budget_alert_ratio', 'posting_days'] as const;
   await auditContent(actor, 'content.settings.update', 'studio_settings', SETTINGS_ID, {
     before: Object.fromEntries(keys.map((k) => [k, was[k]])),
     after: Object.fromEntries(keys.map((k) => [k, now[k]])),

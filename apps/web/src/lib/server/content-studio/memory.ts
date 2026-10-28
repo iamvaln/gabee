@@ -1,5 +1,6 @@
-import type { ContentLanguage, ContentPlatform, LinkedInPost, TikTokPost } from '@gabee/types';
+import { PILLAR_MIX, type ContentLanguage, type ContentPillar, type ContentPlatform, type LinkedInPost, type TikTokPost, type WeekCalendarItem } from '@gabee/types';
 import type { AiInputBlock } from '../ai/router';
+import type { PlannedDay } from './cadence';
 
 /**
  * Memory assembly: the labelled input blocks each agent receives at a run.
@@ -51,7 +52,7 @@ export interface RecentWeek {
   startsOn: string;
   status: string;
   direction: { title: string; refinement: string | null } | null;
-  slots: { date: string; topic: string; format: string; status: string; posts: RecentPost[] }[];
+  slots: { date: string; topic: string; format: string; pillar: string | null; status: string; posts: RecentPost[] }[];
 }
 
 export interface AudienceSummary {
@@ -92,8 +93,15 @@ export interface StrategistContext {
 }
 
 export interface TitlesContext extends StrategistContext {
-  /** The days to plan, in order (fewer than 7 for a week started mid-way). */
-  dates: string[];
+  /**
+   * The days to plan, in order, each with the platforms posting that day: the
+   * posting cadence from `firstDay` to Sunday (or the week's existing lines).
+   */
+  days: PlannedDay[];
+  /** English posts each platform needs over the planned days. */
+  englishMin: Partial<Record<ContentPlatform, number>>;
+  /** Observances, events and news of the week the proposals run verified by web search (may be empty). */
+  weekCalendar: WeekCalendarItem[];
   direction: { proposal: Proposal; refinement: string; platformAngles: Record<string, string> };
 }
 
@@ -102,6 +110,8 @@ export interface SlotData {
   topic: string;
   angle: string;
   format: string;
+  /** The day's content pillar: sets the tone (gabee = product, light = playful, value = helpful). Null on lines planned before pillars. */
+  pillar: ContentPillar | null;
   /** The post language for this platform on this day. */
   language: ContentLanguage;
   sources: { title: string; url: string }[];
@@ -215,6 +225,7 @@ const recentWeeksJson = (weeks: RecentWeek[]) =>
       date: s.date,
       topic: s.topic,
       format: s.format,
+      pillar: s.pillar,
       status: s.status,
       posts: s.posts.map((p) => ({
         platform: p.platform,
@@ -227,7 +238,7 @@ const recentWeeksJson = (weeks: RecentWeek[]) =>
     })),
   }));
 
-const slotJson = (s: SlotData) => ({ date: s.date, topic: s.topic, angle: s.angle, format: s.format, language: s.language });
+const slotJson = (s: SlotData) => ({ date: s.date, topic: s.topic, angle: s.angle, format: s.format, pillar: s.pillar, language: s.language });
 
 const mediaJson = (media: MediaIndexEntry[]) =>
   media.map((m) => ({
@@ -240,10 +251,8 @@ const mediaJson = (media: MediaIndexEntry[]) =>
     file_name: m.fileName,
   }));
 
-/** Each platform needs this many English days (Global Constraints). */
-export function englishMinimum(days: number): number {
-  return days <= 4 ? 1 : 2;
-}
+const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+const weekdayName = (ymd: string) => WEEKDAYS[new Date(`${ymd}T00:00:00Z`).getUTCDay()]!;
 
 // ── Builders ──
 
@@ -271,8 +280,10 @@ export function titlesMemory(ctx: TitlesContext): AiInputBlock[] {
       run: 'titles',
       week_monday: ctx.weekStart,
       today: ctx.today,
-      dates: ctx.dates,
-      english_min_per_platform: englishMinimum(ctx.dates.length),
+      dates: ctx.days.map((d) => d.date),
+      days: ctx.days.map((d) => ({ date: d.date, weekday: weekdayName(d.date), platforms: d.platforms })),
+      english_min_per_platform: ctx.englishMin,
+      pillar_mix: PILLAR_MIX,
     }),
     trustedBlock(
       'week_direction',
@@ -281,6 +292,11 @@ export function titlesMemory(ctx: TitlesContext): AiInputBlock[] {
         owner_refinement: ctx.direction.refinement,
         platform_angles: ctx.direction.platformAngles,
       }),
+    ),
+    // Web-derived (names and pages from third-party sites): data, fenced like the other outside content.
+    untrustedBlock(
+      'week_calendar',
+      json(ctx.weekCalendar.map((c) => ({ date: c.date, name: c.name, kind: c.kind, source_url: c.source_url }))),
     ),
   ];
 }

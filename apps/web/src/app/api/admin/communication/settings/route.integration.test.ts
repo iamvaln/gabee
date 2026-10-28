@@ -61,6 +61,43 @@ test('settings PATCH requires super_admin', async () => {
   assert.equal(row.timezone, 'Europe/Paris');
 });
 
+test('settings PATCH posting_days: super-admin only, at least one day per enabled platform, audited', async () => {
+  const read = await (await getSettings(req('GET', '/settings', adminC), undefined)).json();
+  assert.deepEqual(read.settings.posting_days, { linkedin: [2, 3, 4], tiktok: [0, 1, 3, 5] }, 'the default cadence');
+
+  const days = { linkedin: [4, 1], tiktok: [6, 0, 3] };
+  assert.equal((await patchSettings(req('PATCH', '/settings', adminC, { posting_days: days }), undefined)).status, 403);
+
+  const ok = await patchSettings(req('PATCH', '/settings', superC, { posting_days: days }), undefined);
+  assert.equal(ok.status, 200);
+  assert.deepEqual((await ok.json()).settings.posting_days, { linkedin: [1, 4], tiktok: [0, 3, 6] }, 'stored sorted');
+  const again = await (await getSettings(req('GET', '/settings', adminC), undefined)).json();
+  assert.deepEqual(again.settings.posting_days, { linkedin: [1, 4], tiktok: [0, 3, 6] });
+  const [audit] = await prisma.auditLog.findMany({ where: { kind: 'content.settings.update' } });
+  const diff = audit!.diff as { before: { posting_days: unknown }; after: { posting_days: unknown } };
+  assert.deepEqual(diff.before.posting_days, { linkedin: [2, 3, 4], tiktok: [0, 1, 3, 5] });
+  assert.deepEqual(diff.after.posting_days, { linkedin: [1, 4], tiktok: [0, 3, 6] });
+  assert.equal(audit!.actorId, superId);
+
+  // An enabled platform without a day is refused; nothing changes.
+  const empty = await patchSettings(req('PATCH', '/settings', superC, { posting_days: { linkedin: [], tiktok: [1] } }), undefined);
+  assert.equal(empty.status, 422);
+  const { error } = await empty.json();
+  assert.equal(error.code, 'invalid_posting_days');
+  assert.match(error.message, /au moins un jour de publication pour LinkedIn/);
+  // Malformed lists fail the contract.
+  for (const bad of [{ linkedin: [7], tiktok: [1] }, { linkedin: [1, 1], tiktok: [1] }, { linkedin: [1] }]) {
+    assert.equal((await patchSettings(req('PATCH', '/settings', superC, { posting_days: bad }), undefined)).status, 422, JSON.stringify(bad));
+  }
+  const row = await prisma.studioSettings.findUniqueOrThrow({ where: { id: 'default' } });
+  assert.deepEqual(row.postingDays, { linkedin: [1, 4], tiktok: [0, 3, 6] });
+
+  // A disabled platform may keep no day.
+  await prisma.studioSettings.update({ where: { id: 'default' }, data: { enabledPlatforms: ['tiktok'] } });
+  const tiktokOnly = await patchSettings(req('PATCH', '/settings', superC, { posting_days: { linkedin: [], tiktok: [1] } }), undefined);
+  assert.equal(tiktokOnly.status, 200);
+});
+
 test('objective PUT: a first-time race on the same month replaces instead of failing', async () => {
   const body = { month: month(), type: 'signups', statement: 'Faire connaître Gabee aux parents' };
   let put!: Promise<Response>;

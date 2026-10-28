@@ -8,12 +8,13 @@ import type { QuotaWarning, WeekDto } from '@/lib/server/content-studio/weeks';
 import { EmptyState, PageHead } from '../../_shell/primitives';
 import { AIcon } from '../../_shell/icons';
 import { api, notifyStudioChanged, reportUnexpected } from '../_components/api';
+import { ApplyRhythmButton } from '../_components/ApplyRhythm';
 import { DayLines } from '../_components/DayLines';
 import { ConfirmDialog } from '../_components/Dialog';
 import { DirectionCards } from '../_components/DirectionCards';
 import { AiWorking, ErrorNotice, Notice } from '../_components/ErrorNotice';
 import { errorText } from '../_components/errors';
-import { PLATFORM_LABEL, addDaysYmd, dateTime, dayMonth, monthName, weekdayOf } from '../_components/format';
+import { PLATFORM_LABEL, addDaysYmd, dateTime, dayMonth, mixLine, monthName, rhythmSummary, weekdayOf } from '../_components/format';
 import { RelaunchProposals, StartWeekButton, failureOf, launchTarget, weekLooksStuck, type Failure, type WeeksResponse } from '../_components/StartWeek';
 
 type Which = 'current' | 'next';
@@ -212,7 +213,7 @@ function Stepper({ status, lang }: { status: string; lang: Language }) {
 // ── One week ──
 
 const REVIEW_KEY = (weekId: string) => `gabee.studio.reviewed.${weekId}`;
-const fingerprint = (s: SlotDto) => JSON.stringify([s.topic, s.angle, s.format, s.platforms]);
+const fingerprint = (s: SlotDto) => JSON.stringify([s.topic, s.angle, s.format, s.pillar, s.platforms]);
 
 /** Lines marked "relu" in this browser, kept until the line changes (a per-viewer checklist, not server state). */
 function useReviewed(week: WeekDto) {
@@ -253,7 +254,7 @@ function WeekView({
   week: WeekDto;
   today: string;
   lang: Language;
-  /** A super-admin: the objective notice links to Réglages. */
+  /** A super-admin: the objective notice links to Réglages, and the posting rhythm can be applied to a validated week. */
   canEditSettings: boolean;
   /** A launch from this screen that failed, leaving this week behind. */
   failure: Failure | null;
@@ -271,6 +272,9 @@ function WeekView({
   const [reproposeError, setReproposeError] = useState<Failure | null>(null);
   const [warning, setWarning] = useState<QuotaWarning | null>(null);
   const [linesBusy, setLinesBusy] = useState(false);
+  const [rhythmBusy, setRhythmBusy] = useState(false);
+  /** « 2 jours ajustés, 1 jour sauté » after « Appliquer le rythme ». */
+  const [rhythmDone, setRhythmDone] = useState<string | null>(null);
   const [override, setOverride] = useState(false);
   const [changing, setChanging] = useState(false);
   const [pending, setPending] = useState<ChooseDirectionRequest | null>(null);
@@ -291,7 +295,7 @@ function WeekView({
   }
 
   // Lock the whole screen (week switch, launch) while anything here runs.
-  const busy = op !== null || linesBusy;
+  const busy = op !== null || linesBusy || rhythmBusy;
   useEffect(() => onBusyChange(busy), [busy, onBusyChange]);
   useEffect(() => () => onBusyChange(false), [onBusyChange]);
 
@@ -372,6 +376,7 @@ function WeekView({
 
   const proposal = week.chosen_index !== null ? week.proposals?.[week.chosen_index] : null;
   const quotaOk = week.language_quota.every((q) => q.ok);
+  const mix = week.mix;
   const live = week.slots.filter((s) => s.status !== 'skipped' && s.status !== 'done');
   const reviewedCount = live.filter((s) => reviewed.has(s.id)).length;
   const allReviewed = live.length > 0 && reviewedCount === live.length;
@@ -565,6 +570,30 @@ function WeekView({
         </Notice>
       )}
 
+      {validated && canEditSettings && week.slots.some((s) => s.date > today) && (
+        <div className="studio-rhythm-row">
+          <p className="studio-muted-text">
+            {rhythmDone
+              ? t(`Rythme appliqué : ${rhythmDone}.`, `Rhythm applied: ${rhythmDone}.`)
+              : t(
+                  'Le rythme de publication a changé dans Réglages ? Les jours à venir de cette semaine peuvent le suivre.',
+                  'The posting rhythm changed in Settings? This week’s upcoming days can follow it.',
+                )}
+          </p>
+          <ApplyRhythmButton
+            weekId={week.id}
+            current={week.starts_on <= today}
+            lang={lang}
+            disabled={busy}
+            onBusyChange={setRhythmBusy}
+            onApplied={(w, applied) => {
+              setRhythmDone(rhythmSummary(applied, lang));
+              onWeek(w);
+            }}
+          />
+        </div>
+      )}
+
       {proposal && (
         <div className="card card-pad studio-chosen">
           <div className="grow">
@@ -592,6 +621,30 @@ function WeekView({
           </span>
         ))}
       </div>
+
+      {/* Lines planned before pillars existed: no mix to judge. */}
+      {mix && (
+        <div className="studio-quota" role="status" aria-label={t('Équilibre de la semaine', 'Week balance')}>
+          <span className="studio-quota-label">{t('Équilibre', 'Balance')}</span>
+          <span className={'studio-quota-item ' + (mix.ok ? 'ok' : 'warn')}>
+            <AIcon name={mix.ok ? 'check' : 'alert'} size={14} />
+            {mixLine(mix, lang)}
+          </span>
+          {mix.problems.includes('too_much_gabee') && (
+            <span className="studio-mix-warn">
+              {t('Plus de 3 jours sur Gabee : la semaine risque de faire trop « vente ».', 'More than 3 days about Gabee: the week may feel too salesy.')}
+            </span>
+          )}
+          {mix.problems.includes('no_light') && (
+            <span className="studio-mix-warn">
+              {t(
+                'Aucun jour léger : prévoyez au moins un post pour animer (actualité, jeu, journée mondiale…).',
+                'No light day: plan at least one post to liven things up (news, a game, an observance day…).',
+              )}
+            </span>
+          )}
+        </div>
+      )}
 
       {warning && (
         <Notice
