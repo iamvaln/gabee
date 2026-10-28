@@ -22,7 +22,8 @@ import { HttpError } from '../http';
 import { writeAudit } from '../audit';
 import { reportError } from '../report-error';
 import { AiInvalidOutputError, AiRefusedError, AiUnavailableError, type AiOrigin } from '../ai/router';
-import { runAgent } from './agents';
+import { runAgent, type RunAgentOptions } from './agents';
+import { recordFeedback } from './feedback';
 import { trackedUrl } from './links';
 import { downloadUrl, draftMediaFileName } from './media';
 import { unifiedDiff } from './memory';
@@ -303,7 +304,7 @@ function failureReason(err: unknown): string {
  * An unavailable AI was already reported by the router, and runAgent reports
  * its own runtime failures; anything failing while storing is reported here.
  */
-async function generateLocked(draftId: string, origin: AiOrigin, actor?: Actor): Promise<boolean> {
+async function generateLocked(draftId: string, origin: AiOrigin, actor?: Actor, instruction?: RunAgentOptions['instruction']): Promise<boolean> {
   let phase: 'load' | 'agent' | 'store' = 'load';
   try {
     const draft = await prisma.contentDraft.findUniqueOrThrow({ where: { id: draftId }, include: { slot: { include: { week: true } } } });
@@ -314,8 +315,10 @@ async function generateLocked(draftId: string, origin: AiOrigin, actor?: Actor):
     const writtenFrom = slotContent(draft.slot);
 
     phase = 'agent';
-    const post = (await runAgent(writer, { kind: 'draft', id: draftId }, origin, actor?.id)) as LinkedInPost | TikTokPost;
-    const art = await runAgent('art_director', { kind: 'draft', id: draftId }, origin, actor?.id, { post });
+    // An owner instruction is for the whole regeneration: the text and the media choice.
+    const withInstruction = instruction ? { instruction } : {};
+    const post = (await runAgent(writer, { kind: 'draft', id: draftId }, origin, actor?.id, withInstruction)) as LinkedInPost | TikTokPost;
+    const art = await runAgent('art_director', { kind: 'draft', id: draftId }, origin, actor?.id, { post, ...withInstruction });
 
     phase = 'store';
     const run = await prisma.agentRun.findFirst({
@@ -457,8 +460,11 @@ const lockHeld = (d: { generationLockUntil: Date | null }, now: Date) => d.gener
 /**
  * Write a draft again (the UI confirms first when it would replace an owner
  * edit). 409 `generation_in_progress` while a generation holds it.
+ * « Régénérer avec une consigne »: once the regeneration is allowed, the
+ * owner's instruction is stored as feedback to its writer (kept even if the
+ * run fails) and given to the writer and the Art director for this run.
  */
-export async function regenerateDraft(draftId: string, actor: Actor): Promise<DraftDto> {
+export async function regenerateDraft(draftId: string, actor: Actor, opts: { instruction?: string } = {}): Promise<DraftDto> {
   const draft = await loadDraft(draftId);
   const now = new Date();
   if (lockHeld(draft, now)) throw inProgress();
@@ -470,14 +476,21 @@ export async function regenerateDraft(draftId: string, actor: Actor): Promise<Dr
   if (!planned) {
     throw new HttpError(409, 'platform_not_planned', "Cette plateforme n'est plus prévue ce jour-là. Ajoutez-la au jour ou ignorez ce brouillon.");
   }
+  // Stored once the regeneration is allowed, before the paid run: kept even if the run fails.
+  const instruction = opts.instruction?.trim() || null;
+  const feedbackId = instruction ? (await recordFeedback({ kind: 'draft', draftId, note: instruction }, actor))?.id : undefined;
   if (!(await acquireLock(draftId, REGENERATE_FROM, now, planned.language))) {
     const fresh = await prisma.contentDraft.findUniqueOrThrow({ where: { id: draftId } });
     if (lockHeld(fresh, new Date())) throw inProgress();
     assertTransition('draft', fresh.status, 'generating');
     throw inProgress();
   }
-  const ok = await generateLocked(draftId, 'user_action', actor);
-  await auditContent(actor, 'content.draft.regenerate', 'content_draft', draftId, { from: draft.status, outcome: ok ? 'ready' : 'failed' });
+  const ok = await generateLocked(draftId, 'user_action', actor, instruction ? { text: instruction, feedbackId } : undefined);
+  await auditContent(actor, 'content.draft.regenerate', 'content_draft', draftId, {
+    from: draft.status,
+    outcome: ok ? 'ready' : 'failed',
+    ...(instruction ? { instruction } : {}),
+  });
   return getDraft(draftId);
 }
 

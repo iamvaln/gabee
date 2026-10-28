@@ -19,6 +19,7 @@ import { api, notifyStudioChanged, reportUnexpected } from './api';
 import { ConfirmDialog, Dialog } from './Dialog';
 import { AiWorking, ErrorNotice } from './ErrorNotice';
 import { errorText } from './errors';
+import { InstructionDialog, NoteDialog } from './FeedbackDialogs';
 import { failureOf } from './StartWeek';
 import { FORMAT_LABEL, LANGUAGE_LABEL, PILLAR_HINT, PILLAR_LABEL, PLATFORM_LABEL, SLOT_STATUS, dayParts, longDay } from './format';
 
@@ -28,8 +29,9 @@ type SlotResult = { slot: SlotDto; warning?: QuotaWarning | null };
 /**
  * Step 2 of the Semaine screen: one line per posting day (topic, angle, its
  * pillar, format, one FR/EN switch per platform) with Marquer comme relu ·
- * Modifier · Régénérer · Sauter. One change runs at a time (a regeneration re-runs the Strategist:
- * never two at once). After each change the caller re-reads the week (quota).
+ * Modifier · Commenter · Régénérer (or with an instruction) · Sauter. One change runs at a time
+ * (a regeneration re-runs the Strategist: never two at once). After each change the caller
+ * re-reads the week (quota). « Commenter » is a note kept for the Strategist's next runs.
  */
 export function DayLines({
   week,
@@ -58,6 +60,11 @@ export function DayLines({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<string | null>(null);
   const [confirmRegen, setConfirmRegen] = useState<SlotDto | null>(null);
+  /** « Régénérer avec une consigne » asks for the instruction first. */
+  const [instructing, setInstructing] = useState<SlotDto | null>(null);
+  const [commenting, setCommenting] = useState<SlotDto | null>(null);
+  /** The line whose comment was just saved (says so under it). */
+  const [commented, setCommented] = useState<string | null>(null);
   const [skipping, setSkipping] = useState<SlotDto | null>(null);
   const [confirmLang, setConfirmLang] = useState<{ slot: SlotDto; platform: ContentPlatform; language: ContentLanguage } | null>(null);
   const [editorDirty, setEditorDirty] = useState(false);
@@ -74,6 +81,7 @@ export function DayLines({
     const long = kind === 'regenerate' || rewritesDrafts(slot);
     setOp({ slotId: slot.id, kind, long });
     onBusyChange(true);
+    setCommented(null);
     setErrors(({ [slot.id]: _drop, ...rest }) => rest);
     let res: SlotResult;
     try {
@@ -128,10 +136,25 @@ export function DayLines({
   const setLanguage = (slot: SlotDto, platform: ContentPlatform, language: ContentLanguage) =>
     rewritesDrafts(slot) ? setConfirmLang({ slot, platform, language }) : void applyLanguage(slot, platform, language);
 
-  const regenerate = (slot: SlotDto) => {
+  const regenerate = (slot: SlotDto, instruction?: string) => {
     setConfirmRegen(null);
-    void mutate(slot, 'regenerate', () => api<SlotResult>(`/slots/${slot.id}/regenerate`, { method: 'POST' }));
+    setInstructing(null);
+    void mutate(slot, 'regenerate', () =>
+      api<SlotResult>(`/slots/${slot.id}/regenerate`, { method: 'POST', ...(instruction ? { body: { instruction } } : {}) }),
+    );
   };
+
+  /** What a regeneration of `slot` replaces (said before it runs). */
+  const regenWarning = (slot: SlotDto) =>
+    rewritesDrafts(slot)
+      ? t(
+          'Gabee écrit un nouveau titre pour ce jour, puis réécrit ses brouillons. Le titre actuel et vos modifications seront remplacés.',
+          'Gabee writes a new title for this day, then rewrites its drafts. The current title and your edits will be replaced.',
+        )
+      : t(
+          'Gabee écrit un nouveau titre pour ce jour. Le titre actuel et vos modifications seront remplacés.',
+          'Gabee writes a new title for this day. The current title and your edits will be replaced.',
+        );
 
   return (
     <>
@@ -240,6 +263,11 @@ export function DayLines({
                   </p>
                 )}
                 {errors[slot.id] && skipping?.id !== slot.id && <ErrorNotice lang={lang} message={errors[slot.id]!} />}
+                {commented === slot.id && (
+                  <p className="studio-muted-text" role="status">
+                    {t('Commentaire enregistré : Gabee en tiendra compte pour les prochains titres.', 'Comment saved: Gabee will take it into account for the next titles.')}
+                  </p>
+                )}
 
                 {open && editing !== slot.id && (
                   <div className="studio-actions" role="group" aria-label={t(`Actions du ${longDay(slot.date, lang)}`, `Actions for ${longDay(slot.date, lang)}`)}>
@@ -267,10 +295,25 @@ export function DayLines({
                       <AIcon name="edit" />
                       {t('Modifier', 'Edit')}
                     </button>
-                    <button type="button" className="btn secondary" onClick={() => setConfirmRegen(slot)} disabled={busy}>
-                      <AIcon name="refresh" />
-                      {t('Régénérer', 'Regenerate')}
+                    <button type="button" className="btn secondary" onClick={() => setCommenting(slot)} disabled={busy}>
+                      <AIcon name="feedback" />
+                      {t('Commenter', 'Comment')}
                     </button>
+                    <span className="studio-split" role="group" aria-label={t('Régénérer ce jour', 'Regenerate this day')}>
+                      <button type="button" className="btn secondary" onClick={() => setConfirmRegen(slot)} disabled={busy}>
+                        <AIcon name="refresh" />
+                        {t('Régénérer', 'Regenerate')}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn secondary"
+                        onClick={() => setInstructing(slot)}
+                        disabled={busy}
+                        aria-label={t('Régénérer avec une consigne', 'Regenerate with an instruction')}
+                      >
+                        {t('Avec une consigne', 'With an instruction')}
+                      </button>
+                    </span>
                     <button type="button" className="btn secondary" onClick={() => setSkipping(slot)} disabled={busy}>
                       <AIcon name="pause-circle" />
                       {t('Sauter', 'Skip')}
@@ -287,20 +330,35 @@ export function DayLines({
         <ConfirmDialog
           lang={lang}
           title={t('Régénérer ce jour ?', 'Regenerate this day?')}
-          body={
-            rewritesDrafts(confirmRegen)
-              ? t(
-                  'Gabee écrit un nouveau titre pour ce jour, puis réécrit ses brouillons. Le titre actuel et vos modifications seront remplacés.',
-                  'Gabee writes a new title for this day, then rewrites its drafts. The current title and your edits will be replaced.',
-                )
-              : t(
-                  'Gabee écrit un nouveau titre pour ce jour. Le titre actuel et vos modifications seront remplacés.',
-                  'Gabee writes a new title for this day. The current title and your edits will be replaced.',
-                )
-          }
+          body={regenWarning(confirmRegen)}
           confirmLabel={t('Régénérer', 'Regenerate')}
           onConfirm={() => regenerate(confirmRegen)}
           onClose={() => setConfirmRegen(null)}
+        />
+      )}
+      {instructing && (
+        <InstructionDialog
+          lang={lang}
+          title={t(`Régénérer le ${longDay(instructing.date, lang)} avec une consigne`, `Regenerate ${longDay(instructing.date, lang)} with an instruction`)}
+          warning={regenWarning(instructing)}
+          onConfirm={(instruction) => regenerate(instructing, instruction)}
+          onClose={() => setInstructing(null)}
+        />
+      )}
+      {commenting && (
+        <NoteDialog
+          lang={lang}
+          title={t(`Commenter le titre du ${longDay(commenting.date, lang)}`, `Comment on the title of ${longDay(commenting.date, lang)}`)}
+          intro={t(
+            `« ${commenting.topic} » — Gabee garde votre commentaire en mémoire pour écrire les prochains titres. Le titre ne change pas.`,
+            `“${commenting.topic}” — Gabee keeps your comment in mind to write the next titles. The title does not change.`,
+          )}
+          path={`/slots/${commenting.id}/feedback`}
+          onSaved={() => {
+            setCommented(commenting.id);
+            setCommenting(null);
+          }}
+          onClose={() => setCommenting(null)}
         />
       )}
       {confirmLang && (

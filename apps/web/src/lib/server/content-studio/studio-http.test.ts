@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 // The route kit imports the Prisma singleton, which validates env at import: load it after DATABASE_URL is set.
 const { HttpError } = await import('../http');
 const { setErrorReporterForTests } = await import('../report-error');
-const { resetStorageUnavailableReportForTests, toHttpError } = await import('./studio-http');
+const { assertSameOrigin, readOptionalJson, resetStorageUnavailableReportForTests, toHttpError } = await import('./studio-http');
+const { RegenerateRequestSchema } = await import('@gabee/types');
 
 afterEach(() => {
   setErrorReporterForTests(null);
@@ -38,4 +39,52 @@ test('other HttpErrors pass through unreported', () => {
   const err = new HttpError(409, 'invalid_transition', 'x');
   assert.equal(toHttpError(err), err);
   assert.equal(reported.length, 0);
+});
+
+test('an optional JSON body: empty is {}, a body must be declared JSON, bad JSON or shape is refused', async () => {
+  const req = (body?: string, type?: string) =>
+    new Request('http://x/api', { method: 'POST', body, headers: type ? { 'content-type': type } : undefined });
+  assert.deepEqual(await readOptionalJson(req(), RegenerateRequestSchema), {});
+  assert.deepEqual(await readOptionalJson(req('  '), RegenerateRequestSchema), {});
+  assert.deepEqual(await readOptionalJson(req('  ', 'text/plain'), RegenerateRequestSchema), {});
+  assert.deepEqual(await readOptionalJson(req('{"instruction":"Plus court"}', 'application/json'), RegenerateRequestSchema), { instruction: 'Plus court' });
+  await assert.rejects(
+    readOptionalJson(req('{"instruction":"Plus court"}', 'text/plain'), RegenerateRequestSchema),
+    (e: unknown) => e instanceof HttpError && e.status === 415 && e.code === 'unsupported_media_type',
+  );
+  await assert.rejects(
+    readOptionalJson(req('{"instruction":"Plus court"}'), RegenerateRequestSchema),
+    (e: unknown) => e instanceof HttpError && e.status === 415,
+  );
+  await assert.rejects(readOptionalJson(req('{', 'application/json'), RegenerateRequestSchema), (e: unknown) => e instanceof HttpError && e.code === 'invalid_json');
+  await assert.rejects(
+    readOptionalJson(req(JSON.stringify({ instruction: 'x'.repeat(501) }), 'application/json'), RegenerateRequestSchema),
+    (e: unknown) => e instanceof HttpError && e.status === 422 && e.code === 'validation_error',
+  );
+});
+
+test('studio mutations refuse a request another site sent, by the browser\'s Sec-Fetch-Site', () => {
+  const req = (method: string, site?: string) =>
+    new Request('http://x/api', { method, headers: site ? { 'sec-fetch-site': site } : undefined });
+  for (const site of ['same-site', 'cross-site']) {
+    assert.throws(() => assertSameOrigin(req('POST', site)), (e: unknown) => e instanceof HttpError && e.status === 403 && e.code === 'forbidden_origin');
+    assert.throws(() => assertSameOrigin(req('PATCH', site)), (e: unknown) => e instanceof HttpError && e.status === 403);
+  }
+  assert.doesNotThrow(() => assertSameOrigin(req('POST', 'same-origin')));
+  assert.doesNotThrow(() => assertSameOrigin(req('POST', 'none')));
+  assert.doesNotThrow(() => assertSameOrigin(req('POST')));
+  assert.doesNotThrow(() => assertSameOrigin(req('GET', 'cross-site')));
+});
+
+test('without Sec-Fetch-Site (older browsers), the Origin must be the host the request reached', () => {
+  const req = (origin?: string, host = 'admin.gabee.app') =>
+    new Request(`https://${host}/api/admin/communication/x`, {
+      method: 'POST',
+      headers: { host, ...(origin ? { origin } : {}) },
+    });
+  assert.doesNotThrow(() => assertSameOrigin(req('https://admin.gabee.app')));
+  for (const origin of ['https://kids.gabee.app', 'https://evil.example', 'null', 'not a url']) {
+    assert.throws(() => assertSameOrigin(req(origin)), (e: unknown) => e instanceof HttpError && e.code === 'forbidden_origin', origin);
+  }
+  assert.doesNotThrow(() => assertSameOrigin(req()), 'no Origin: a non-browser client');
 });

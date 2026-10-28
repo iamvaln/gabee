@@ -93,7 +93,7 @@ test('runAgent journals model, tokens, cost and latency', async () => {
   assert.deepEqual(req.webSearch, { maxUses: 5 });
   const agent = await prisma.agent.findUniqueOrThrow({ where: { key: 'strategist' }, include: { publishedVersion: true } });
   assert.equal(req.system, agent.publishedVersion!.instructions);
-  assert.deepEqual(labelsOf(req.blocks), ['task', 'objective', 'editorial_line', 'platform_profiles', 'recent_weeks', 'audience', 'metrics']);
+  assert.deepEqual(labelsOf(req.blocks), ['task', 'objective', 'editorial_line', 'platform_profiles', 'recent_weeks', 'audience', 'metrics', 'owner_feedback']);
 
   const run = await prisma.agentRun.findFirstOrThrow({ include: { aiUsage: true } });
   assert.equal(run.agentKey, 'strategist');
@@ -182,7 +182,7 @@ test('runAgent succeeds on the retry after one invalid output', async () => {
   const req = adapter.calls[0]!.req;
   assert.equal(req.task, 'post_linkedin');
   assert.equal(req.webSearch, undefined);
-  assert.deepEqual(labelsOf(req.blocks), ['editorial_line', 'platform_profile', 'objective', 'week_direction', 'slot', 'sources', 'past_publications', 'owner_edits']);
+  assert.deepEqual(labelsOf(req.blocks), ['editorial_line', 'platform_profile', 'objective', 'week_direction', 'slot', 'sources', 'past_publications', 'owner_edits', 'owner_feedback']);
   const text = (label: string) => {
     const b = req.blocks.find((x) => x.kind === 'text' && x.label === label);
     return b && b.kind === 'text' ? b : assert.fail(`missing ${label}`);
@@ -279,7 +279,7 @@ test('tiktok writer sees only cleared vertical videos; library_video needs one',
   await runAgent('writer_tiktok', { kind: 'draft', id: draft.id }, 'scheduled_job');
   const req = adapter.calls[0]!.req;
   assert.equal(req.task, 'post_tiktok');
-  assert.equal(labelsOf(req.blocks).at(-1), 'media_library');
+  assert.deepEqual(labelsOf(req.blocks).slice(-2), ['media_library', 'owner_feedback']);
   const lib = req.blocks.find((b) => b.kind === 'text' && b.label === 'media_library');
   assert.ok(lib && lib.kind === 'text' && !lib.trusted);
   assert.match(lib.text, new RegExp(good.id));
@@ -307,7 +307,7 @@ test('art director picks from the cleared library and refuses invented ids', asy
   assert.deepEqual(out, chosen);
   const req = adapter.calls[0]!.req;
   assert.equal(req.task, 'art_direction');
-  assert.deepEqual(labelsOf(req.blocks), ['editorial_line', 'slot', 'platform_profile', 'draft', 'media_library']);
+  assert.deepEqual(labelsOf(req.blocks), ['editorial_line', 'slot', 'platform_profile', 'draft', 'media_library', 'owner_feedback']);
   const lib = req.blocks.find((b) => b.kind === 'text' && b.label === 'media_library');
   assert.ok(lib && lib.kind === 'text' && lib.text.includes('hero.png') && !lib.text.includes('secret.png'));
   const draftBlock = req.blocks.find((b) => b.kind === 'text' && b.label === 'draft');
@@ -353,7 +353,7 @@ test('strategist titles run plans exactly the posting days without web search', 
   assert.equal(req.task, 'content_titles');
   assert.equal(req.webSearch, undefined);
   assert.equal(req.actorId, '00000000-0000-4000-8000-000000000001');
-  assert.deepEqual(labelsOf(req.blocks).slice(-2), ['week_direction', 'week_calendar']);
+  assert.deepEqual(labelsOf(req.blocks).slice(-3), ['week_direction', 'week_calendar', 'owner_feedback']);
   const task = req.blocks.find((b) => b.kind === 'text' && b.label === 'task');
   assert.ok(task && task.kind === 'text' && dates.every((d) => task.text.includes(d)));
   assert.doesNotMatch(task.text, /2026-10-31/, 'nothing posts on Saturday');

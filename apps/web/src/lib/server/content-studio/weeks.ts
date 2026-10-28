@@ -13,7 +13,7 @@ import { prisma } from '../db';
 import { HttpError } from '../http';
 import type { AiOrigin } from '../ai/router';
 import { getStudioTimezone, localDay } from '../services/web-visits';
-import { AgentRunInProgressError, runAgent, weekMonth } from './agents';
+import { AgentRunInProgressError, runAgent, weekMonth, type RunAgentOptions } from './agents';
 import {
   asPillar,
   assertTransition,
@@ -27,6 +27,7 @@ import {
   type SlotPlatform,
 } from './drafts';
 import { plannedDays } from './cadence';
+import { detachDirectionFeedback, recordFeedback, replacedProposals, weekDirectionFeedback, type DirectionFeedbackDto } from './feedback';
 import { localParts } from './clock';
 import { checkLanguageQuota, type LanguageQuotaResult } from './language-quota';
 import { getPostingDays } from './settings';
@@ -70,6 +71,8 @@ export type WeekDto = {
    * pillar (planned before pillars existed): there is no mix to judge.
    */
   mix: PillarMix | null;
+  /** The viewer's 👍/👎 and note on each direction on screen (empty when the week is read without a viewer). */
+  direction_feedback: DirectionFeedbackDto[];
   slots: SlotDto[];
 };
 
@@ -113,7 +116,7 @@ async function monthsWithObjective(rows: ReadonlyArray<{ startsOn: Date }>): Pro
   return new Set(found.map((o) => o.month));
 }
 
-function toWeekDto(row: WeekRow, platforms: ContentPlatform[], objectiveMonths: Set<string>): WeekDto {
+function toWeekDto(row: WeekRow, platforms: ContentPlatform[], objectiveMonths: Set<string>, feedback: DirectionFeedbackDto[]): WeekDto {
   const days = daysInWeek(ymdOf(row.startsOn), ymdOf(row.firstDay));
   return {
     id: row.id,
@@ -131,6 +134,7 @@ function toWeekDto(row: WeekRow, platforms: ContentPlatform[], objectiveMonths: 
     updated_at: row.updatedAt.toISOString(),
     language_quota: quotaOf(row.slots, isPartial(row), platforms),
     mix: mixOf(row.slots),
+    direction_feedback: feedback,
     slots: row.slots.map(toSlotDto),
   };
 }
@@ -138,11 +142,16 @@ function toWeekDto(row: WeekRow, platforms: ContentPlatform[], objectiveMonths: 
 const weekNotFound = () => new HttpError(404, 'week_not_found', "Cette semaine n'existe pas (ou plus). Rechargez la page.");
 const slotNotFound = () => new HttpError(404, 'slot_not_found', "Ce jour n'existe pas (ou plus). Rechargez la page.");
 
-export async function getWeek(weekId: string): Promise<WeekDto> {
+/** The viewer's direction feedback per week (none without a viewer: a scheduled run, an email). */
+const directionFeedbackOf = async (weekIds: string[], viewerId?: string) =>
+  viewerId ? weekDirectionFeedback(weekIds, viewerId) : new Map<string, DirectionFeedbackDto[]>();
+
+/** `viewerId`: the admin looking, whose 👍/👎 and notes the direction cards show. */
+export async function getWeek(weekId: string, viewerId?: string): Promise<WeekDto> {
   const row = await prisma.contentWeek.findUnique({ where: { id: weekId }, include: weekInclude });
   if (!row) throw weekNotFound();
-  const [platforms, objectiveMonths] = await Promise.all([enabledPlatforms(), monthsWithObjective([row])]);
-  return toWeekDto(row, platforms, objectiveMonths);
+  const [platforms, objectiveMonths, feedback] = await Promise.all([enabledPlatforms(), monthsWithObjective([row]), directionFeedbackOf([row.id], viewerId)]);
+  return toWeekDto(row, platforms, objectiveMonths, feedback.get(row.id) ?? []);
 }
 
 /**
@@ -151,7 +160,7 @@ export async function getWeek(weekId: string): Promise<WeekDto> {
  * the Monday six days ago), `next` the Monday after (on a Sunday, tomorrow —
  * the week the Sunday loop plans).
  */
-export async function findWeeks(now: Date): Promise<{ today: string; current: WeekDto | null; next: WeekDto | null }> {
+export async function findWeeks(now: Date, viewerId?: string): Promise<{ today: string; current: WeekDto | null; next: WeekDto | null }> {
   const { date: today, weekday } = localParts(now, await getStudioTimezone());
   const monday = addDaysYmd(today, -((weekday + 6) % 7));
   const nextMonday = addDaysYmd(monday, 7);
@@ -159,10 +168,10 @@ export async function findWeeks(now: Date): Promise<{ today: string; current: We
     prisma.contentWeek.findMany({ where: { startsOn: { in: [dateOf(monday), dateOf(nextMonday)] } }, include: weekInclude }),
     enabledPlatforms(),
   ]);
-  const objectiveMonths = await monthsWithObjective(rows);
+  const [objectiveMonths, feedback] = await Promise.all([monthsWithObjective(rows), directionFeedbackOf(rows.map((r) => r.id), viewerId)]);
   const dtoOf = (startsOn: string) => {
     const row = rows.find((w) => ymdOf(w.startsOn) === startsOn);
-    return row ? toWeekDto(row, platforms, objectiveMonths) : null;
+    return row ? toWeekDto(row, platforms, objectiveMonths, feedback.get(row.id) ?? []) : null;
   };
   return { today, current: dtoOf(monday), next: dtoOf(nextMonday) };
 }
@@ -252,10 +261,16 @@ async function relinkObjective(weekId: string): Promise<void> {
  * `assertNoLiveWeekRun` is refused by the database before any AI call and
  * answers the same 409.
  */
-async function runStrategist(kind: 'week_proposals' | 'week_titles', weekId: string, origin: AiOrigin, actorId?: string): Promise<unknown> {
+async function runStrategist(
+  kind: 'week_proposals' | 'week_titles',
+  weekId: string,
+  origin: AiOrigin,
+  actorId?: string,
+  opts: RunAgentOptions = {},
+): Promise<unknown> {
   if (kind === 'week_proposals') await relinkObjective(weekId);
   try {
-    return await runAgent('strategist', { kind, id: weekId }, origin, actorId);
+    return await runAgent('strategist', { kind, id: weekId }, origin, actorId, opts);
   } catch (err) {
     if (err instanceof AgentRunInProgressError) {
       const live = await prisma.agentRun.findFirst({
@@ -308,19 +323,27 @@ export async function startWeek(opts: { now: Date; origin: AiOrigin; actor?: Act
   return proposeDirections(weekId, opts.origin, opts.actor);
 }
 
-/** Run the Strategist's 3 directions on a `proposing` week (→ `proposals_ready`). Rethrows AI failures. */
-export async function proposeDirections(weekId: string, origin: AiOrigin, actor?: Actor): Promise<WeekDto> {
+/**
+ * Run the Strategist's 3 directions on a `proposing` week (→ `proposals_ready`). Rethrows AI failures.
+ * `replaced`: from « Régénérer les propositions », the proposals it replaces with the owner's feedback.
+ */
+export async function proposeDirections(
+  weekId: string,
+  origin: AiOrigin,
+  actor?: Actor,
+  opts: { replaced?: RunAgentOptions['replacedProposals'] } = {},
+): Promise<WeekDto> {
   const week = await prisma.contentWeek.findUnique({ where: { id: weekId }, select: { status: true } });
   if (!week) throw weekNotFound();
   assertTransition('week', week.status, 'proposals_ready');
   await assertNoLiveWeekRun(weekId);
-  const out = (await runStrategist('week_proposals', weekId, origin, actor?.id)) as DirectionProposals;
+  const out = (await runStrategist('week_proposals', weekId, origin, actor?.id, opts.replaced ? { replacedProposals: opts.replaced } : {})) as DirectionProposals;
   const res = await prisma.contentWeek.updateMany({
     where: { id: weekId, status: week.status },
     data: { status: 'proposals_ready', proposals: out as unknown as Prisma.InputJsonValue },
   });
   if (res.count !== 1) throw new HttpError(409, 'invalid_transition', 'La semaine vient de changer. Rechargez la page.');
-  return getWeek(weekId);
+  return getWeek(weekId, actor?.id);
 }
 
 /**
@@ -331,17 +354,21 @@ export async function proposeDirections(weekId: string, origin: AiOrigin, actor?
  * and per-platform angles, deletes the day lines (refused if any has drafts:
  * none should before validation), re-links the month's current objective,
  * then runs the Strategist's proposals like "Relancer" (one paid run, same
- * single-flight guard). A `proposing` week is "Relancer"'s; a validated week
- * regenerates day by day. If the run fails the week stays `proposing`.
+ * single-flight guard). That run gets the proposals it replaces with the
+ * owner's 👍/👎 and notes on each, to avoid what was disliked and build on
+ * what was liked; the feedback stays in memory, detached from the cards. A
+ * `proposing` week is "Relancer"'s; a validated week regenerates day by day.
+ * If the run fails the week stays `proposing`.
  */
 export async function regenerateProposals(weekId: string, actor: Actor): Promise<WeekDto> {
-  const week = await prisma.contentWeek.findUnique({ where: { id: weekId }, select: { status: true, startsOn: true } });
+  const week = await prisma.contentWeek.findUnique({ where: { id: weekId }, select: { status: true, startsOn: true, proposals: true } });
   if (!week) throw weekNotFound();
   assertTransition('week', week.status, 'proposing');
   // Before anything changes: a live run (another tab, the titles still being written) keeps the week as it is.
   await assertNoLiveWeekRun(weekId);
 
   const objectiveId = await currentObjectiveId(week.startsOn);
+  const replaced = await replacedProposals(weekId, parseProposals(week.proposals) ?? []);
   const slotsRemoved = await prisma.$transaction(async (tx) => {
     if ((await tx.contentDraft.count({ where: { slot: { weekId } } })) > 0) {
       throw new HttpError(
@@ -355,10 +382,17 @@ export async function regenerateProposals(weekId: string, actor: Actor): Promise
       data: { status: 'proposing', proposals: Prisma.DbNull, chosenIndex: null, refinement: null, platformAngles: Prisma.DbNull, objectiveId },
     });
     if (res.count !== 1) throw new HttpError(409, 'invalid_transition', 'La semaine vient de changer. Rechargez la page.');
+    await detachDirectionFeedback(tx, weekId);
     return (await tx.contentSlot.deleteMany({ where: { weekId } })).count;
   });
-  await auditContent(actor, 'content.week.repropose', 'content_week', weekId, { from: week.status, objective_id: objectiveId, slots_removed: slotsRemoved });
-  return proposeDirections(weekId, 'user_action', actor);
+  const feedbackCount = replaced.reduce((n, p) => n + p.feedback.length, 0);
+  await auditContent(actor, 'content.week.repropose', 'content_week', weekId, {
+    from: week.status,
+    objective_id: objectiveId,
+    slots_removed: slotsRemoved,
+    direction_feedback: feedbackCount,
+  });
+  return proposeDirections(weekId, 'user_action', actor, replaced.length > 0 ? { replaced } : {});
 }
 
 /**
@@ -415,7 +449,7 @@ export async function chooseDirection(weekId: string, req: ChooseDirectionReques
       })),
     });
   });
-  return getWeek(weekId);
+  return getWeek(weekId, actor.id);
 }
 
 /** Days that can still change: their week has titles and they are neither done nor skipped. */
@@ -480,11 +514,21 @@ export async function updateSlot(slotId: string, patch: UpdateSlotRequest, actor
  * Ask the Strategist for this day again. Its titles run plans the whole week
  * (the output contract covers every date), so only this day's line is kept;
  * the other days are untouched. Drafts already written become `stale`.
+ * « Régénérer avec une consigne »: the owner's instruction is stored as
+ * feedback on the day (kept even if the run fails) and given to this run.
  */
-export async function regenerateSlot(slotId: string, actor: Actor): Promise<SlotDto> {
+export async function regenerateSlot(slotId: string, actor: Actor, opts: { instruction?: string } = {}): Promise<SlotDto> {
   const slot = await loadEditableSlot(slotId);
   await assertNoLiveWeekRun(slot.weekId);
-  const titles = (await runStrategist('week_titles', slot.weekId, 'user_action', actor.id)) as WeekTitles;
+  const instruction = opts.instruction?.trim() || null;
+  const feedback = instruction ? await recordFeedback({ kind: 'title', slotId, note: instruction }, actor) : null;
+  const titles = (await runStrategist(
+    'week_titles',
+    slot.weekId,
+    'user_action',
+    actor.id,
+    instruction ? { instruction: { text: instruction, date: ymdOf(slot.date), feedbackId: feedback?.id } } : {},
+  )) as WeekTitles;
   const day = titles.days.find((d) => d.date === ymdOf(slot.date));
   if (!day) throw new Error(`The titles run did not plan ${ymdOf(slot.date)}.`);
   const stale = await prisma.$transaction(async (tx) => {
@@ -506,6 +550,7 @@ export async function regenerateSlot(slotId: string, actor: Actor): Promise<Slot
     before: { topic: slot.topic, angle: slot.angle, format: slot.format, pillar: slot.pillar, platforms: slot.platforms },
     after: { topic: day.topic, angle: day.angle, format: day.format, pillar: day.pillar, platforms: day.platforms },
     drafts_stale: stale,
+    ...(instruction ? { instruction } : {}),
   });
   return getSlot(slotId);
 }
@@ -541,7 +586,7 @@ export async function validateWeek(weekId: string, actor: Actor, opts: { overrid
     await tx.contentSlot.updateMany({ where: { weekId, status: 'proposed' }, data: { status: 'validated' } });
   });
   await auditContent(actor, 'content.week.validate', 'content_week', weekId, { override_quota: !quotaOk, quota });
-  return getWeek(weekId);
+  return getWeek(weekId, actor.id);
 }
 
 export type QuotaWarning = { code: 'language_quota'; message: string; details: LanguageQuotaResult[] };

@@ -12,7 +12,10 @@ import type { PlannedDay } from './cadence';
  * chosen direction, the slot) are trusted. Anything an outsider or free text
  * can shape — third-party sources, owner comments, past post text, visitor
  * utm values, file names, a draft's text — goes in an untrusted block, which
- * the adapter fences as data, never instructions.
+ * the adapter fences as data, never instructions. The owner's feedback to the
+ * agents (`owner_feedback`) and a regeneration instruction (`owner_instruction`)
+ * are written by an admin for the agents to follow: trusted, in their own
+ * labelled blocks, length-capped.
  */
 
 // ── Context shapes ──
@@ -159,6 +162,40 @@ export interface AnalystContext {
   publications: { platform: string; language: string; topic: string; publishedAt: string; rating: number | null; comment: string | null }[];
 }
 
+/** One piece of the owner's recent feedback to the agent being run. */
+export interface OwnerFeedbackEntry {
+  /** When the owner gave (or last changed) it, `YYYY-MM-DD`. */
+  date: string;
+  /** What it is on: a proposed direction, a day title, a draft's text or its media. */
+  on: 'direction' | 'day_title' | 'draft_text' | 'draft_media';
+  /** What was judged, as it was then (the proposal title, the day's topic…). */
+  subject: string;
+  sentiment: 'up' | 'down' | null;
+  note: string | null;
+}
+
+/** « Régénérer avec une consigne »: the owner's instruction for this run only. */
+export interface OwnerInstruction {
+  text: string;
+  /** A titles run plans the whole week: the day the instruction is about (only its line is kept). */
+  date?: string;
+}
+
+/** A direction « Régénérer les propositions » replaced, with what the owner thought of it. */
+export interface ReplacedProposal {
+  title: string;
+  rationale: string;
+  feedback: { sentiment: 'up' | 'down' | null; note: string | null }[];
+}
+
+/** What the owner tells an agent: its recent feedback (always sent), and for one run an instruction. */
+export interface OwnerInput {
+  feedback: OwnerFeedbackEntry[];
+  instruction?: OwnerInstruction | null;
+  /** Proposals run started by « Régénérer les propositions »: the three it replaces. */
+  replacedProposals?: ReplacedProposal[];
+}
+
 // ── Block helpers ──
 
 const json = (value: unknown) => JSON.stringify(value, null, 2);
@@ -251,6 +288,62 @@ const mediaJson = (media: MediaIndexEntry[]) =>
     file_name: m.fileName,
   }));
 
+// Owner text is capped here too (the API caps it at write): a block stays bounded whatever is stored.
+const SUBJECT_CAP = 200;
+const NOTE_CAP = 1000;
+const INSTRUCTION_CAP = 500;
+const REPLACED_TITLE_CAP = 200;
+const REPLACED_RATIONALE_CAP = 800;
+const cap = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
+const verdict = (s: 'up' | 'down' | null) => (s === 'up' ? 'liked' : s === 'down' ? 'disliked' : null);
+
+/** The owner's recent feedback to this agent, newest first (the caller's order: deterministic). */
+function ownerFeedbackBlock(entries: OwnerFeedbackEntry[]): AiInputBlock {
+  if (entries.length === 0) return trustedBlock('owner_feedback', 'No feedback from the owner yet.');
+  return trustedBlock(
+    'owner_feedback',
+    json(
+      entries.map((e) => ({
+        date: e.date,
+        on: e.on,
+        subject: cap(e.subject, SUBJECT_CAP),
+        verdict: verdict(e.sentiment),
+        note: e.note ? cap(e.note, NOTE_CAP) : null,
+      })),
+    ),
+  );
+}
+
+/** `owner_feedback`, then the run's one-off `owner_instruction` when the owner gave one. */
+function ownerBlocks(owner: OwnerInput): AiInputBlock[] {
+  const blocks = [ownerFeedbackBlock(owner.feedback)];
+  const text = owner.instruction?.text.trim();
+  if (text) {
+    const day = owner.instruction?.date ? ` (jour du ${owner.instruction.date} : seule la ligne de ce jour est gardée)` : '';
+    blocks.push(trustedBlock('owner_instruction', `Consigne du propriétaire pour cette régénération${day} :\n${cap(text, INSTRUCTION_CAP)}`));
+  }
+  return blocks;
+}
+
+/**
+ * The replaced proposals were written by an earlier, web-search-fed run and
+ * never vetted by the owner: fenced as untrusted data, lengths capped. The
+ * owner's own verdicts and notes on them also reach the run, trusted, through
+ * `owner_feedback`.
+ */
+function replacedProposalsBlock(list: ReplacedProposal[]): AiInputBlock {
+  return untrustedBlock(
+    'replaced_proposals',
+    json(
+      list.map((p) => ({
+        title: cap(p.title, REPLACED_TITLE_CAP),
+        rationale: cap(p.rationale, REPLACED_RATIONALE_CAP),
+        owner_feedback: p.feedback.map((f) => ({ verdict: verdict(f.sentiment), note: f.note ? cap(f.note, NOTE_CAP) : null })),
+      })),
+    ),
+  );
+}
+
 const WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 const weekdayName = (ymd: string) => WEEKDAYS[new Date(`${ymd}T00:00:00Z`).getUTCDay()]!;
 
@@ -268,13 +361,21 @@ function strategistBlocks(ctx: StrategistContext, task: Record<string, unknown>)
   ];
 }
 
-/** Strategist run 1: three direction proposals for the coming week. */
-export function strategistMemory(ctx: StrategistContext): AiInputBlock[] {
-  return strategistBlocks(ctx, { run: 'proposals', week_monday: ctx.weekStart, today: ctx.today });
+/**
+ * Strategist run 1: three direction proposals for the coming week. Started by
+ * « Régénérer les propositions », it also gets the proposals it replaces with
+ * the owner's 👍/👎 and notes.
+ */
+export function strategistMemory(ctx: StrategistContext, owner: OwnerInput): AiInputBlock[] {
+  return [
+    ...strategistBlocks(ctx, { run: 'proposals', week_monday: ctx.weekStart, today: ctx.today }),
+    ...(owner.replacedProposals?.length ? [replacedProposalsBlock(owner.replacedProposals)] : []),
+    ...ownerBlocks(owner),
+  ];
 }
 
 /** Strategist run 2: one topic per planned day for the chosen direction. */
-export function titlesMemory(ctx: TitlesContext): AiInputBlock[] {
+export function titlesMemory(ctx: TitlesContext, owner: OwnerInput): AiInputBlock[] {
   return [
     ...strategistBlocks(ctx, {
       run: 'titles',
@@ -298,6 +399,7 @@ export function titlesMemory(ctx: TitlesContext): AiInputBlock[] {
       'week_calendar',
       json(ctx.weekCalendar.map((c) => ({ date: c.date, name: c.name, kind: c.kind, source_url: c.source_url }))),
     ),
+    ...ownerBlocks(owner),
   ];
 }
 
@@ -307,7 +409,7 @@ function ownerEditsText(edits: WriterContext['ownerEdits']): string {
 }
 
 /** A writer's memory for one slot on its platform. */
-export function writerMemory(platform: ContentPlatform, ctx: WriterContext): AiInputBlock[] {
+export function writerMemory(platform: ContentPlatform, ctx: WriterContext, owner: OwnerInput): AiInputBlock[] {
   const blocks: AiInputBlock[] = [
     editorialLineBlock(ctx.editorialLine),
     trustedBlock('platform_profile', json(profileJson(ctx.profile))),
@@ -343,17 +445,19 @@ export function writerMemory(platform: ContentPlatform, ctx: WriterContext): AiI
     untrustedBlock('owner_edits', ownerEditsText(ctx.ownerEdits)),
   );
   if (platform === 'tiktok') blocks.push(untrustedBlock('media_library', json(mediaJson(ctx.media ?? []))));
+  blocks.push(...ownerBlocks(owner));
   return blocks;
 }
 
 /** The Art director's memory for one draft. */
-export function artDirectorMemory(ctx: ArtDirectorContext): AiInputBlock[] {
+export function artDirectorMemory(ctx: ArtDirectorContext, owner: OwnerInput): AiInputBlock[] {
   return [
     editorialLineBlock(ctx.editorialLine),
     trustedBlock('slot', json(slotJson(ctx.slot))),
     trustedBlock('platform_profile', json({ platform: ctx.profile.platform, media_aspect: ctx.profile.mediaAspect })),
     untrustedBlock('draft', json(ctx.post)),
     untrustedBlock('media_library', json(mediaJson(ctx.media))),
+    ...ownerBlocks(owner),
   ];
 }
 

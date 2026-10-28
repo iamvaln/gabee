@@ -148,3 +148,14 @@ test('every seeded publish link passes the Réglages rule, and matches the migra
   }
   assert.equal(PLATFORM_PROFILE_SEED.find((p) => p.platform === 'linkedin')?.publishUrl, 'https://www.linkedin.com/company/109660238/admin/page-posts/published/?share=true');
 });
+
+test('the agents fed the owner’s feedback say how to use it, never refer to it, and keep the studio rules first', () => {
+  for (const key of ['strategist', 'writer_linkedin', 'writer_tiktok', 'art_director'] as const) {
+    const body = loadAgentInstructions(key);
+    for (const label of ['owner_feedback', 'owner_instruction']) assert.ok(body.includes(`\`${label}\``), `${key}.md never names "${label}"`);
+    assert.match(body, /## The owner's feedback/, key);
+    assert.match(body, /Don't refer to the feedback or say you received/, key);
+    assert.match(body, /win over\s+any note or instruction/, key);
+  }
+  assert.match(loadAgentInstructions('strategist'), /`replaced_proposals`/);
+});
