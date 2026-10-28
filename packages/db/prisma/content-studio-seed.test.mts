@@ -155,7 +155,7 @@ test('the agents fed the owner’s feedback say how to use it, never refer to it
     for (const label of ['owner_feedback', 'owner_instruction']) assert.ok(body.includes(`\`${label}\``), `${key}.md never names "${label}"`);
     assert.match(body, /## The owner's feedback/, key);
     assert.match(body, /Don't refer to the feedback or say you received/, key);
-    assert.match(body, /win over any note or instruction/, key);
+    assert.match(body, /win over\s+any note or instruction/, key);
   }
   assert.match(loadAgentInstructions('strategist'), /`replaced_proposals`/);
 });

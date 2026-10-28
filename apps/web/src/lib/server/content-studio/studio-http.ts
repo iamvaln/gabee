@@ -79,9 +79,28 @@ export function toHttpError(err: unknown, context: Record<string, unknown> = {},
 type Handler<Ctx> = (req: NextRequest, ctx: Ctx) => Promise<NextResponse>;
 
 /** `route()` with the studio error mapping applied to whatever the handler throws. */
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+/**
+ * CSRF guard for studio mutations. The admin session cookie is SameSite=Lax,
+ * which still lets another gabee.app subdomain ("same-site") send it, body or
+ * not. Browsers set `Sec-Fetch-Site` themselves (a page cannot forge it): a
+ * mutation is refused unless it is `same-origin` (the admin UI) or `none`
+ * (typed by the user). Requests without the header (non-browser clients, the
+ * test harness) carry no ambient cookie risk and pass.
+ */
+export function assertSameOrigin(req: Request): void {
+  if (SAFE_METHODS.has(req.method)) return;
+  const site = req.headers.get('sec-fetch-site');
+  if (site && site !== 'same-origin' && site !== 'none') {
+    throw new HttpError(403, 'forbidden_origin', "Cette action doit venir de l'admin Gabee. Rechargez la page depuis admin.gabee.app puis réessayez.");
+  }
+}
+
 export function studioRoute<Ctx = unknown>(fn: Handler<Ctx>, opts: StudioRouteOptions = {}) {
   return route<Ctx>(async (req, ctx) => {
     try {
+      assertSameOrigin(req);
       return await fn(req, ctx);
     } catch (err) {
       throw toHttpError(err, { method: req.method, path: req.nextUrl.pathname }, opts);

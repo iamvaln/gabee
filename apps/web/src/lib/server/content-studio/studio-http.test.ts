@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 // The route kit imports the Prisma singleton, which validates env at import: load it after DATABASE_URL is set.
 const { HttpError } = await import('../http');
 const { setErrorReporterForTests } = await import('../report-error');
-const { readOptionalJson, resetStorageUnavailableReportForTests, toHttpError } = await import('./studio-http');
+const { assertSameOrigin, readOptionalJson, resetStorageUnavailableReportForTests, toHttpError } = await import('./studio-http');
 const { RegenerateRequestSchema } = await import('@gabee/types');
 
 afterEach(() => {
@@ -61,4 +61,17 @@ test('an optional JSON body: empty is {}, a body must be declared JSON, bad JSON
     readOptionalJson(req(JSON.stringify({ instruction: 'x'.repeat(501) }), 'application/json'), RegenerateRequestSchema),
     (e: unknown) => e instanceof HttpError && e.status === 422 && e.code === 'validation_error',
   );
+});
+
+test('studio mutations refuse a request another site sent, by the browser\'s Sec-Fetch-Site', () => {
+  const req = (method: string, site?: string) =>
+    new Request('http://x/api', { method, headers: site ? { 'sec-fetch-site': site } : undefined });
+  for (const site of ['same-site', 'cross-site']) {
+    assert.throws(() => assertSameOrigin(req('POST', site)), (e: unknown) => e instanceof HttpError && e.status === 403 && e.code === 'forbidden_origin');
+    assert.throws(() => assertSameOrigin(req('PATCH', site)), (e: unknown) => e instanceof HttpError && e.status === 403);
+  }
+  assert.doesNotThrow(() => assertSameOrigin(req('POST', 'same-origin')));
+  assert.doesNotThrow(() => assertSameOrigin(req('POST', 'none')));
+  assert.doesNotThrow(() => assertSameOrigin(req('POST')));
+  assert.doesNotThrow(() => assertSameOrigin(req('GET', 'cross-site')));
 });
