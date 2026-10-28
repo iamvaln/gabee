@@ -22,3 +22,11 @@ reason = "extract-zip has no fix; dev-only via @lhci/cli (Lighthouse CI), not sh
 id = "GHSA-mrhx-c7xc-m3w5"
 ignoreUntil = 2027-01-31
 reason = "zod 3 fix only in v4; dev-only via @lhci/cli (Lighthouse CI) → chromium-bidi, not shipped; app zod is >= 4.6.7"
+
+# deepmerge 4.3.1 — latest release, no fixed version exists. Reached only through
+# @gabee/kid devDependency vite-plugin-pwa → workbox-build → @rollup/plugin-node-resolve,
+# at build time (service-worker generation); not part of the shipped kid bundle.
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+ignoreUntil = 2027-01-31
+reason = "deepmerge has no fix (4.3.1 is latest); build-time only via vite-plugin-pwa/workbox-build, not shipped"
