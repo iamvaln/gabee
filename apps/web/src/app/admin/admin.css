@@ -1313,12 +1313,26 @@ ol.studio-list { list-style: decimal; }
 .studio-directions legend { margin-bottom: 10px; }
 .studio-direction-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .studio-direction {
-  display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 12px; padding: 16px 18px;
   transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
 }
+.studio-direction-pick { display: flex; flex-direction: column; gap: 8px; flex: 1; cursor: pointer; }
 .studio-direction:hover { border-color: var(--border-strong); }
 .studio-direction.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink), var(--sh-md); }
-.studio-directions:disabled .studio-direction { cursor: default; opacity: .7; }
+.studio-directions:disabled .studio-direction { opacity: .7; }
+.studio-directions:disabled .studio-direction-pick { cursor: default; }
+/* The owner's 👍/👎 and a word on a direction (saved at once). */
+.studio-feedback { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--border); }
+.studio-feedback-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.studio-thumb.on { background: var(--surface-3); border-color: var(--ink); color: var(--ink); }
+.studio-feedback-note { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.studio-feedback-note .ta { width: 100%; }
+.studio-feedback-status { margin: 0; color: var(--text-3); font-size: 12px; font-weight: 700; }
+.studio-feedback-status:empty { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } /* stays in the a11y tree so aria-live announces */
+/* « Régénérer » | « Avec une consigne »: one control in two parts. */
+.studio-split { display: inline-flex; }
+.studio-split > .btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.studio-split > .btn + .btn { margin-left: -1px; border-top-left-radius: 0; border-bottom-left-radius: 0; }
 .studio-direction-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .studio-direction-n { color: var(--text-3); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .studio-direction-title { color: var(--ink); font-size: 16px; font-weight: 800; letter-spacing: -0.01em; overflow-wrap: anywhere; }
@@ -1421,6 +1435,9 @@ ol.studio-list { list-style: decimal; }
   .studio-dayline-date b { font-size: 17px; }
   .studio-langswitch-opt { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 12px; }
   .studio-dayline .studio-actions .btn { min-height: 44px; font-size: 13px; }
+  .studio-actions .studio-split { grid-column: 1 / -1; }
+  .studio-split > .btn { flex: 1; }
+  .studio-feedback-row .btn { flex: 1 1 auto; }
   .studio-preview.tt:has(.studio-tt-frame.is-empty) { grid-template-columns: 1fr; }
   .studio-tt-frame.is-empty { aspect-ratio: auto; flex-direction: row; min-height: 48px; }
   .studio-submit-row .btn { width: 100%; }

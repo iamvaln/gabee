@@ -488,7 +488,11 @@ function WeekView({
               : t(
                   ' La direction choisie, les titres de la semaine et vos modifications seront remplacés.',
                   " The chosen direction, the week's titles and your edits will be replaced.",
-                ))
+                )) +
+            t(
+              ' Gabee tiendra compte de vos 👍/👎 et de vos mots sur les propositions actuelles.',
+              ' Gabee will take your 👍/👎 and words on the current proposals into account.',
+            )
           }
           confirmLabel={t('Régénérer', 'Regenerate')}
           onConfirm={() => void regenerateProposals()}

@@ -197,5 +197,5 @@ export async function applyRhythm(
       });
     }
   }
-  return { plan, week: await getWeek(weekId), applied: countsOf(done) };
+  return { plan, week: await getWeek(weekId, actor.id), applied: countsOf(done) };
 }

@@ -1,4 +1,5 @@
 import type { NextRequest, NextResponse } from 'next/server';
+import type { z } from 'zod';
 import { S3ServiceException } from '@aws-sdk/client-s3';
 import { prisma } from '../db';
 import { HttpError, requireAdmin, requireSuperAdmin, route } from '../http';
@@ -78,9 +79,46 @@ export function toHttpError(err: unknown, context: Record<string, unknown> = {},
 type Handler<Ctx> = (req: NextRequest, ctx: Ctx) => Promise<NextResponse>;
 
 /** `route()` with the studio error mapping applied to whatever the handler throws. */
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+/**
+ * CSRF guard for studio mutations. The admin session cookie is SameSite=Lax,
+ * which still lets another gabee.app subdomain ("same-site") send it, body or
+ * not. Browsers set `Sec-Fetch-Site` themselves (a page cannot forge it): a
+ * mutation is refused unless it is `same-origin` (the admin UI) or `none`
+ * (typed by the user). Without the header (older browsers), the Origin must be
+ * this host; requests with neither (non-browser clients, the test harness) carry
+ * no ambient cookie and pass.
+ */
+export function assertSameOrigin(req: Request): void {
+  if (SAFE_METHODS.has(req.method)) return;
+  const forbidden = () =>
+    new HttpError(403, 'forbidden_origin', "Cette action doit venir de l'admin Gabee. Rechargez la page depuis admin.gabee.app puis réessayez.");
+  const site = req.headers.get('sec-fetch-site');
+  if (site) {
+    if (site !== 'same-origin' && site !== 'none') throw forbidden();
+    return;
+  }
+  // Older browsers without Sec-Fetch-*: every browser sends Origin on a POST/PUT/
+  // PATCH/DELETE, so compare it with the host the request reached ("null" = an
+  // opaque, sandboxed or privacy-stripped origin: refused). No Origin at all means
+  // a non-browser client, which carries no ambient session cookie.
+  const origin = req.headers.get('origin');
+  if (origin === null) return;
+  let originHost: string;
+  try {
+    originHost = new URL(origin).host;
+  } catch {
+    throw forbidden();
+  }
+  const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? new URL(req.url).host;
+  if (originHost !== host) throw forbidden();
+}
+
 export function studioRoute<Ctx = unknown>(fn: Handler<Ctx>, opts: StudioRouteOptions = {}) {
   return route<Ctx>(async (req, ctx) => {
     try {
+      assertSameOrigin(req);
       return await fn(req, ctx);
     } catch (err) {
       throw toHttpError(err, { method: req.method, path: req.nextUrl.pathname }, opts);
@@ -105,4 +143,31 @@ export async function idParam(ctx: { params: Promise<{ id: string }> }): Promise
   const { id } = await ctx.params;
   if (!UUID_RE.test(id)) throw new HttpError(404, 'not_found', "Cet élément n'existe pas (ou plus). Rechargez la page.");
   return id;
+}
+
+/**
+ * An optional JSON body, read whatever the content type (a bodiless POST from
+ * an older screen or a script still works): an empty body is `{}`, anything
+ * else must be JSON matching `schema` (400 `invalid_json` / 422 `validation_error`).
+ */
+export async function readOptionalJson<S extends z.ZodType>(req: Request, schema: S): Promise<z.infer<S>> {
+  const text = await req.text();
+  let body: unknown = {};
+  if (text.trim()) {
+    // A body must be declared JSON: a cross-site "simple" request (text/plain,
+    // form encoded) is refused, and a JSON one needs a CORS preflight that other
+    // origins fail — the session cookie (SameSite=Lax) is shared by every gabee.app subdomain.
+    const type = (req.headers.get('content-type') ?? '').toLowerCase();
+    if (!type.startsWith('application/json')) {
+      throw new HttpError(415, 'unsupported_media_type', "La demande n'a pas pu être lue (format inattendu). Rechargez la page puis réessayez.");
+    }
+    try {
+      body = JSON.parse(text);
+    } catch {
+      throw new HttpError(400, 'invalid_json', "La demande n'a pas pu être lue (JSON invalide). Rechargez la page puis réessayez.");
+    }
+  }
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) throw new HttpError(422, 'validation_error', 'Request failed validation', parsed.error.issues);
+  return parsed.data;
 }

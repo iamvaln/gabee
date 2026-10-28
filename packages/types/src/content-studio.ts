@@ -381,3 +381,47 @@ export type PublishLinksUpdate = z.infer<typeof PublishLinksUpdateSchema>;
 /** « J'utilise ma propre vidéo / mon propre média »: the owner posts with a file outside the library. */
 export const ExternalMediaRequestSchema = z.object({ enabled: z.boolean(), note: z.string().max(200).nullable().optional() });
 export type ExternalMediaRequest = z.infer<typeof ExternalMediaRequestSchema>;
+
+// ── Owner feedback to the agents ──
+
+/** 👍 / 👎 on a direction, a day title or a draft. */
+export const FEEDBACK_SENTIMENTS = ['up', 'down'] as const;
+export type FeedbackSentiment = (typeof FEEDBACK_SENTIMENTS)[number];
+/** What the feedback is on: a proposed direction (→ Strategist), a day title (→ Strategist), a draft (→ its writer, or the Art director for its media). */
+export const FEEDBACK_SUBJECT_KINDS = ['direction', 'title', 'draft'] as const;
+export type FeedbackSubjectKind = (typeof FEEDBACK_SUBJECT_KINDS)[number];
+export const FEEDBACK_NOTE_MAX = 1000;
+/** « Régénérer avec une consigne »: the owner's one-off instruction for that run. */
+export const REGENERATE_INSTRUCTION_MAX = 500;
+
+const FeedbackSentimentSchema = z.enum(FEEDBACK_SENTIMENTS);
+const FeedbackNoteSchema = z.string().max(FEEDBACK_NOTE_MAX);
+const saysSomething = (v: { sentiment?: FeedbackSentiment | null; note?: string | null }) => !!v.sentiment || !!v.note?.trim();
+
+/**
+ * The owner's feedback on one proposed direction, as it stands now (it
+ * replaces the previous one): absent fields are null, and both null clears it.
+ */
+export const DirectionFeedbackRequestSchema = z.object({
+  proposal_index: z.union([z.literal(0), z.literal(1), z.literal(2)]),
+  sentiment: FeedbackSentimentSchema.nullable().optional(),
+  note: FeedbackNoteSchema.nullable().optional(),
+});
+export type DirectionFeedbackRequest = z.infer<typeof DirectionFeedbackRequestSchema>;
+
+const SubjectFeedbackShape = { sentiment: FeedbackSentimentSchema.nullable().optional(), note: FeedbackNoteSchema.nullable().optional() };
+const SAYS_SOMETHING = { message: 'A sentiment or a note is required' };
+
+/** « Commenter » a day title: a note (and/or a 👍/👎), appended. */
+export const SlotFeedbackRequestSchema = z.object(SubjectFeedbackShape).refine(saysSomething, SAYS_SOMETHING);
+export type SlotFeedbackRequest = z.infer<typeof SlotFeedbackRequestSchema>;
+
+/** « Commenter » a draft: on its text (→ the writer, default) or on its media (→ the Art director). */
+export const DraftFeedbackRequestSchema = z
+  .object({ ...SubjectFeedbackShape, about: z.enum(['text', 'media']).optional() })
+  .refine(saysSomething, SAYS_SOMETHING);
+export type DraftFeedbackRequest = z.infer<typeof DraftFeedbackRequestSchema>;
+
+/** « Régénérer » / « Régénérer avec une consigne » (a day line or a draft): a blank instruction is none. */
+export const RegenerateRequestSchema = z.object({ instruction: z.string().max(REGENERATE_INSTRUCTION_MAX).optional() });
+export type RegenerateRequest = z.infer<typeof RegenerateRequestSchema>;

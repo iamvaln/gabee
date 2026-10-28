@@ -1131,3 +1131,107 @@ test('without a LinkedIn page link, the card points to Réglages, where the owne
   const [tab] = await Promise.all([context.waitForEvent('page'), card(page, 'LinkedIn').getByRole('link', { name: 'Copier et ouvrir LinkedIn' }).click()]);
   await expect.poll(() => tab.url()).toBe(mine);
 });
+
+// ── Owner feedback to the agents ──
+
+test('the owner likes, dislikes and annotates a direction; it is saved at once and shown again', async ({ page }) => {
+  const nextMonday = addDays(mondayOf(studioToday()), 7);
+  const { weekId } = await seedProposalsWeek(nextMonday);
+  await page.goto('/admin/communication/semaine');
+  await expect(page.getByRole('radio')).toHaveCount(3);
+
+  const first = page.getByRole('group', { name: `Votre avis sur « ${PROPOSALS[0].title} »` });
+  const like = first.getByRole('button', { name: 'Ça me plaît' });
+  const dislike = first.getByRole('button', { name: 'Pas pour nous' });
+  await dislike.click();
+  await expect(dislike).toHaveAttribute('aria-pressed', 'true');
+  await expect(like).toHaveAttribute('aria-pressed', 'false');
+  await expect(first.getByText('Enregistré')).toBeVisible();
+  // Feedback never picks the direction.
+  await expect(page.getByRole('button', { name: 'Arrêter cette direction' })).toBeDisabled();
+
+  await first.getByRole('button', { name: 'Ajouter un mot' }).click();
+  await first.getByLabel('Un mot pour Gabee (facultatif)').fill('Déjà traité le mois dernier.');
+  await first.getByRole('button', { name: 'Enregistrer' }).click();
+  const row = await pollUntil(
+    () => prisma.ownerFeedback.findFirst({ where: { subjectId: weekId, proposalIndex: 0 } }),
+    (r) => r?.note === 'Déjà traité le mois dernier.',
+  );
+  expect(row?.sentiment).toBe('down');
+  expect(row?.agentKey).toBe('strategist');
+
+  // A 👍 on another card is its own feedback.
+  const third = page.getByRole('group', { name: `Votre avis sur « ${PROPOSALS[2].title} »` });
+  await third.getByRole('button', { name: 'Ça me plaît' }).click();
+  await expect(third.getByText('Enregistré')).toBeVisible();
+
+  // Shown again after a reload; the regenerate confirmation says the feedback counts.
+  await page.reload();
+  await expect(first.getByRole('button', { name: 'Pas pour nous' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(first.getByLabel('Un mot pour Gabee (facultatif)')).toHaveValue('Déjà traité le mois dernier.');
+  await expect(third.getByRole('button', { name: 'Ça me plaît' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Régénérer les propositions' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Régénérer les propositions ?' });
+  await expect(dialog).toContainText('Gabee tiendra compte de vos 👍/👎');
+  await dialog.getByRole('button', { name: 'Annuler' }).click();
+
+  // Pressing it again takes the 👎 back; the note stays.
+  await first.getByRole('button', { name: 'Pas pour nous' }).click();
+  await expect(first.getByRole('button', { name: 'Pas pour nous' })).toHaveAttribute('aria-pressed', 'false');
+  await pollUntil(
+    () => prisma.ownerFeedback.findFirst({ where: { subjectId: weekId, proposalIndex: 0 } }),
+    (r) => r?.sentiment === null && r?.note === 'Déjà traité le mois dernier.',
+  );
+  expect(await prisma.auditLog.count({ where: { kind: 'content.feedback.record', targetId: weekId } })).toBe(4);
+
+  // Phone: no sideways scroll, thumb-sized buttons.
+  await page.setViewportSize({ width: 360, height: 740 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+  // (Buttons animate their size: wait for the phone layout to settle.)
+  const thumb = third.getByRole('button', { name: 'Ça me plaît' });
+  await expect.poll(async () => (await thumb.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+});
+
+test('« Régénérer avec une consigne » sends the instruction; « Commenter » saves a note for the writer', async ({ page }) => {
+  const { linkedinDraftId } = await seedTodayBoard();
+
+  // The writer and the Art director (AI) stand behind the route: capture the body, answer with the draft as it is.
+  let body: unknown = 'not called';
+  await page.route('**/api/admin/communication/drafts/*/regenerate', async (route) => {
+    body = route.request().postDataJSON();
+    const board = (await (await page.request.get('/api/admin/communication/today')).json()) as { slot: { drafts: Array<{ id: string }> } };
+    await route.fulfill({ json: { draft: board.slot.drafts.find((d) => d.id === linkedinDraftId) } });
+  });
+
+  await page.goto('/admin/communication');
+  const li = card(page, 'LinkedIn');
+  await li.getByRole('button', { name: 'Régénérer avec une consigne' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Régénérer le post LinkedIn avec une consigne' });
+  const instruction = dialog.getByLabel('Votre consigne pour Gabee');
+  await expect(instruction).toBeFocused();
+  const go = dialog.getByRole('button', { name: 'Régénérer avec cette consigne' });
+  await expect(go).toBeDisabled();
+  await instruction.fill('Plus court, sans emoji.');
+  await go.click();
+  await expect(dialog).toHaveCount(0);
+  await expect.poll(() => body).toEqual({ instruction: 'Plus court, sans emoji.' });
+
+  // « Régénérer » alone sends no instruction (it asks nothing on an agent draft).
+  body = 'not called';
+  await li.getByRole('button', { name: 'Régénérer', exact: true }).click();
+  await expect.poll(() => body).toBeNull();
+
+  // « Commenter »: a note for the next posts; the post itself does not change.
+  await li.getByRole('button', { name: 'Commenter' }).click();
+  const note = page.getByRole('dialog', { name: 'Commenter le post LinkedIn' });
+  await note.getByRole('radio', { name: 'Le média' }).check();
+  await note.getByLabel('Votre commentaire').fill('Une photo plutôt qu’une capture d’écran.');
+  await note.getByRole('button', { name: 'Enregistrer le commentaire' }).click();
+  await expect(note).toHaveCount(0);
+  await expect(li.getByText('Commentaire enregistré')).toBeVisible();
+  const row = await pollUntil(
+    () => prisma.ownerFeedback.findFirst({ where: { subjectId: linkedinDraftId } }),
+    (r) => r !== null,
+  );
+  expect([row?.agentKey, row?.subjectKind, row?.note]).toEqual(['art_director', 'draft', 'Une photo plutôt qu’une capture d’écran.']);
+});
