@@ -1349,6 +1349,23 @@ ol.studio-list { list-style: decimal; }
 .studio-quota-item.ok { color: var(--ok); background: var(--ok-bg); border-color: #BFDCB6; }
 .studio-quota-item.bad { color: var(--bad); background: var(--bad-bg); border-color: #F2C9C5; }
 .studio-quota-state { font-weight: 700; }
+.studio-quota-item.warn { color: var(--warn); background: var(--warn-bg); border-color: #ECD89B; }
+.studio-mix-warn { color: var(--warn); font-size: 12.5px; font-weight: 700; }
+.studio-pillar.gabee { color: var(--ink); background: var(--brand-soft); border-color: #F2DFA0; }
+.studio-pillar.light { color: var(--info); background: var(--info-bg); border-color: transparent; }
+.studio-pillar.value { color: var(--ok); background: var(--ok-bg); border-color: transparent; }
+.studio-pillar-more { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; border: 1px solid currentColor; font-size: 10px; font-weight: 800; opacity: .75; }
+.studio-pillar-hint { flex-basis: 100%; color: var(--text-2); font-size: 12.5px; font-weight: 600; }
+.studio-rhythm-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 0 0 12px; }
+.studio-rhythm-row .studio-muted-text { margin: 0; }
+.studio-rhythm-changes { margin: 0; padding-left: 18px; color: var(--text-2); font-size: 13.5px; font-weight: 600; }
+.studio-rhythm-changes li + li { margin-top: 4px; }
+.studio-rhythm-day { color: var(--ink); font-weight: 800; }
+.studio-weekdays { display: flex; flex-direction: column; gap: 12px; }
+.studio-weekday-row { min-width: 0; margin: 0; padding: 0; border: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.studio-weekday-row legend { float: left; width: 84px; padding: 0; font-size: 13.5px; font-weight: 800; }
+.studio-weekday-row .chip { min-width: 46px; min-height: 36px; justify-content: center; }
+.studio-weekday-row .chip:disabled { cursor: default; opacity: .85; }
 
 .studio-days {
   margin: 0 0 16px; padding: 0; list-style: none;
@@ -1574,6 +1591,10 @@ ol.studio-list { list-style: decimal; }
   .studio-settings-foot { padding: 12px 14px; }
   .studio-settings-foot .btn { flex: 1; }
   .studio-target { grid-template-columns: minmax(0, 1fr) 84px 44px; }
+  .studio-weekday-row legend { float: none; width: 100%; margin-bottom: 4px; }
+  .studio-dayline-meta .studio-pillar { min-height: 44px; }
+  .studio-weekday-row .chip { min-width: 44px; min-height: 44px; padding: 0 8px; }
+  .studio-rhythm-row .btn { width: 100%; }
   .studio-media-choice-actions { width: 100%; }
   .studio-media-choice-actions .btn { flex: 1; }
 }

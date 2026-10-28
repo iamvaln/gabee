@@ -17,8 +17,8 @@ container, which is why they are wrapped in single quotes.
 ## 1. What the studio does
 
 Each week Gabee proposes a direction for the coming week, drafts one post per
-platform for each day (LinkedIn and TikTok), and reminds you when something is
-waiting. You choose, edit, approve and **post by hand**. Then you record the link
+platform on each of that platform's posting days (LinkedIn and TikTok, see
+1.1), and reminds you when something is waiting. You choose, edit, approve and **post by hand**. Then you record the link
 of the post. Every post link carries tracking tags, so the Audience screen shows
 which posts bring visits and sign-ups. A sidecar (`cron-content`) pokes the app
 every 10 minutes, and the app decides which jobs are due.
@@ -30,7 +30,7 @@ which defaults to `Africa/Douala` (UTC+1, no daylight saving).
 |---|---|
 | Sunday 06:00 | Gabee proposes 3 directions for next week (job `week.propose`) |
 | Sunday 07:00 | Sunday email: last week's report + the 3 directions (`week.email`) |
-| Sunday, any time | You pick a direction → titles for each day → **Valider la semaine** |
+| Sunday, any time | You pick a direction → titles for each posting day → **Valider la semaine** |
 | Sunday 15:00 and 20:00 | Reminder if the week is not validated (`week.remind`) |
 | Every day 04:00 | Drafts for the day are written (`day.generate`) |
 | Every day 05:00 | Email with the day's drafts (`day.notify`) |
@@ -40,6 +40,49 @@ which defaults to `Africa/Douala` (UTC+1, no daylight saving).
 If the app was down, a job still runs on the first tick after recovery while its
 window is open (until 23:59 that day). Each job runs at most once per period:
 an extra tick does nothing.
+
+### 1.1 Posting days, editorial mix and English
+
+**Cadence** (Réglages → **Jours de publication**, studio days):
+
+| Platform | Default days | Posts a week |
+|---|---|---|
+| LinkedIn | Tuesday, Wednesday, Thursday | 3 |
+| TikTok | Monday, Wednesday, Friday, Sunday | 4 |
+
+A week has one line per day on which at least one platform posts, with only
+the platforms posting that day: by default Monday to Friday and Sunday, none
+on Saturday. The 04:00 job writes the drafts of the platforms on the day's
+line; a day without a line gets no draft, no email and no reminder. A week
+started mid-week (**Lancer la semaine maintenant**) plans the posting days from
+tomorrow to Sunday; if none is left, the launch is refused.
+
+**Mix** — each day has a pillar, shown as a chip on its line in Semaine:
+
+- **Gabee** (`gabee`): about Gabee itself (product, module, offer), **3 days a
+  week at most**;
+- **Léger** (`light`): to liven up the account (news, « Le saviez-vous ? », a
+  game or riddle, an event in kids' games or education, an observance day),
+  **at least 1 day a week**;
+- **Conseil** (`value`): useful content for parents, the other days.
+
+Léger and Conseil posts do not sell. The Strategist must follow the mix (an
+answer that breaks it is refused and retried once). You can change a day's
+pillar in **Modifier**; the line « 2 sur Gabee · 1 léger · 3 conseils » then
+warns if the week breaks the mix, but never blocks validation. Lines planned
+before pillars existed have none: no chip, and no mix line for their week
+until each line gets one.
+
+Dated light days (an observance day, an event, a piece of news) come only
+from the week's calendar: the Sunday proposals run finds them by web search
+and keeps those a page confirms; the titles run cites only those pages. When
+it found nothing sure, light days are timeless (« Le saviez-vous ? », a game,
+a riddle).
+
+**English**: at least **1 English post per platform per week**. In a week
+started mid-week, only a platform with 2 posts or more left needs one.
+**Valider la semaine** refuses a week below that minimum unless you tick
+« Valider quand même ».
 
 ---
 
@@ -181,8 +224,45 @@ What it creates when missing:
 - `ai_models` and `ai_task_routes`: see section 6;
 - `platform_profiles`: `linkedin`, `tiktok`;
 - editorial line v1 and agent instructions v1 (from
-  `packages/db/prisma/content-studio/agents/*.md`). Editing those files after
-  the seed has no effect, because a new agent version is needed (Phase 1b).
+  `packages/db/prisma/content-studio/agents/*.md`).
+
+**Agent instructions follow the files.** When an instruction file changes in a
+release, the deploy publishes it as the agent's next version, as long as the
+version the agent runs came from these files. A version written by an owner
+(`agent_versions.source = 'owner'`), or a live version the owner chose, is
+never replaced. Earlier versions stay as history, and a deploy that changes
+no file changes nothing. The `migrate` log names each upgraded agent
+(`Agent strategist: instructions file published as a new version`) before
+`Content Studio defaults ensured`.
+
+**After an image rollback** to a release older than the posting days and
+pillars (v2.13.x or earlier), the agents would keep running the newer instructions,
+which ask for `pillar` and `week_calendar` fields the old code does not
+expect. Point the strategist and the writers back at their v1 (the live
+version is `agents.published_version_id`):
+
+```bash
+docker compose --env-file .env.production exec -T db sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"' <<'SQL'
+UPDATE agents a SET published_version_id = v.id
+FROM agent_versions v
+WHERE v.agent_key = a.key AND v.version = 1
+  AND a.key IN ('strategist', 'writer_linkedin', 'writer_tiktok');
+SQL
+```
+
+When rolling forward again, the seed sees the agents pointed away from their
+latest version and leaves them on v1 (it never moves a pointer it did not
+set). Point them back at their highest seed version:
+
+```bash
+docker compose --env-file .env.production exec -T db sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"' <<'SQL'
+UPDATE agents a SET published_version_id = (
+  SELECT id FROM agent_versions v
+  WHERE v.agent_key = a.key AND v.source = 'seed' AND v.published_at IS NOT NULL
+  ORDER BY v.version DESC LIMIT 1)
+WHERE a.key IN ('strategist', 'writer_linkedin', 'writer_tiktok');
+SQL
+```
 
 ---
 
@@ -263,8 +343,8 @@ week **at once**, before you can do the setup of 3.1. To keep the setup first:
 If the deploy happens **on Monday 26 or later**, the Sunday job no longer
 runs: once the setup is done, click **Lancer la semaine maintenant**
 (Aujourd'hui or Semaine). It plans the current week **from tomorrow** (for
-example, launched Tue 27: Wed 28 to Sun 1 Nov, at least 1 English post per
-platform when the week has 4 days or fewer).
+example, launched Tue 27: the posting days from Wed 28 to Sun 1 Nov; see 1.1
+for the English minimum of such a week).
 
 If the week of Mon 26 **already exists** (for example it was proposed before
 the setup was complete), open it in **Semaine**:
@@ -336,6 +416,30 @@ regenerate, or after one that failed), the Sunday reminders are skipped and
 the Sunday email is held until directions exist (it is due until Sunday
 23:59). After a failed regenerate, **Relancer les propositions** so the email
 can go out.
+
+### 4.2 Change the posting days
+
+**Réglages → Jours de publication** (super-admin): one row per platform,
+click the days on or off, then **Enregistrer les jours**. Each active platform
+keeps at least one day. The new days count for every week planned afterwards.
+
+A week already **validated** keeps its lines. If this week (or next week) is
+validated and its days to come would change, Réglages offers **Appliquer le
+rythme à la semaine en cours** (or « … prochaine »); the same button sits on
+the validated week in **Semaine**. It first shows what changes, for example
+« 2 jours ajustés, 1 jour sauté », then on **Appliquer**:
+
+- only the days **after today** change; today, past days and days that already
+  have drafts stay as they are;
+- each changed day takes the platforms that post on that weekday (a kept
+  platform keeps its language, a new one starts in French);
+- a day no platform posts on any more is skipped (reason « Nouveau rythme »);
+- if a platform loses its only English post, another of its upcoming posts
+  switches to English; when none can, the dialog says so;
+- a day the new rhythm adds but that has no line this week stays without a
+  post until next week.
+
+No AI runs: it costs nothing. Running it again changes nothing.
 
 ---
 

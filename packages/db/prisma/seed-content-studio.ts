@@ -9,6 +9,11 @@ import type { Prisma, PrismaClient } from '../src/generated/prisma/client';
  * never overwrites what a super-admin changed (settings, prices, routes,
  * profiles, editorial line, agent versions).
  *
+ * One exception, the upgrade path for agent instructions: when an agent's
+ * instruction file differs from its latest published version and that version
+ * came from the seed, the seed publishes the file as a new version (n + 1).
+ * It never replaces an owner version; see `upgradeAgent`.
+ *
  * Called from `seed.ts` `main()` and re-exported by `@gabee/db/testing`.
  */
 
@@ -182,7 +187,10 @@ function defaultRecipients(): string[] {
     .filter(Boolean);
 }
 
-export async function seedContentStudio(prisma: PrismaClient): Promise<void> {
+/** What the seed did to each agent's instructions (see `upgradeAgent`). */
+export type SeedSummary = { agents: Record<AgentKey, AgentUpgrade> };
+
+export async function seedContentStudio(prisma: PrismaClient): Promise<SeedSummary> {
   const now = new Date();
 
   await prisma.studioSettings.upsert({
@@ -226,13 +234,14 @@ export async function seedContentStudio(prisma: PrismaClient): Promise<void> {
     },
   });
 
+  const agents = {} as Record<AgentKey, AgentUpgrade>;
   for (const key of AGENT_KEYS) {
     const instructions = loadAgentInstructions(key);
     await prisma.agent.upsert({ where: { key }, update: {}, create: { key } });
     const v1 = await prisma.agentVersion.upsert({
       where: { agentKey_version: { agentKey: key, version: 1 } },
       update: {},
-      create: { agentKey: key, version: 1, instructions, settings: {}, publishedAt: now },
+      create: { agentKey: key, version: 1, instructions, settings: {}, publishedAt: now, source: 'seed' },
     });
     // Publish v1 only when nothing is published yet — never replace a version
     // a super-admin published since.
@@ -240,5 +249,66 @@ export async function seedContentStudio(prisma: PrismaClient): Promise<void> {
       where: { key, publishedVersionId: null },
       data: { publishedVersionId: v1.id },
     });
+    agents[key] = await upgradeAgent(prisma, key, instructions, now);
   }
+  return { agents };
 }
+
+export type AgentUpgrade = 'upgraded' | 'current' | 'owner_version' | 'owner_pointer';
+
+/**
+ * Bring an agent's live instructions up to its file — the only way an edit of
+ * `content-studio/agents/<key>.md` reaches a database that already has the
+ * agent. The latest published version (highest number with a publish date)
+ * decides:
+ * - written by the owner (`source = 'owner'`): kept, the file is ignored;
+ * - the agent runs another version (the owner pointed it elsewhere, e.g. a
+ *   rollback): kept, the live pointer is the owner's choice;
+ * - same text as the file: nothing to do (so a re-run changes nothing);
+ * - otherwise: a new seed version (next free number, above any unpublished
+ *   owner draft) is published from the file and becomes the live one. Earlier
+ *   versions stay as history.
+ * The pointer moves only if it still points at that version, so a concurrent
+ * owner publish wins; a concurrent seed run loses on the unique version number
+ * and leaves the work to the one that won.
+ */
+export async function upgradeAgent(prisma: PrismaClient, key: AgentKey, instructions: string, now: Date = new Date()): Promise<AgentUpgrade> {
+  const [agent, latest] = await Promise.all([
+    prisma.agent.findUniqueOrThrow({ where: { key }, select: { publishedVersionId: true } }),
+    prisma.agentVersion.findFirst({ where: { agentKey: key, publishedAt: { not: null } }, orderBy: { version: 'desc' } }),
+  ]);
+  if (!latest) return 'current';
+  if (latest.source !== 'seed') return 'owner_version';
+  if (agent.publishedVersionId !== null && agent.publishedVersionId !== latest.id) return 'owner_pointer';
+  if (latest.instructions === instructions) return 'current';
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const top = await tx.agentVersion.aggregate({ where: { agentKey: key }, _max: { version: true } });
+      const next = await tx.agentVersion.create({
+        data: {
+          agentKey: key,
+          version: (top._max.version ?? 0) + 1,
+          instructions,
+          settings: latest.settings as Prisma.InputJsonValue,
+          publishedAt: now,
+          source: 'seed',
+        },
+      });
+      const moved = await tx.agent.updateMany({
+        where: { key, OR: [{ publishedVersionId: latest.id }, { publishedVersionId: null }] },
+        data: { publishedVersionId: next.id },
+      });
+      // The owner published meanwhile: theirs stays live, and no seed version is left behind.
+      if (moved.count !== 1) throw new OwnerPublishedMeanwhile();
+    });
+  } catch (err) {
+    if (err instanceof OwnerPublishedMeanwhile) return 'owner_pointer';
+    // Another seed run took the version number first: it publishes the same file.
+    if ((err as { code?: string }).code === 'P2002') return 'current';
+    throw err;
+  }
+  return 'upgraded';
+}
+
+class OwnerPublishedMeanwhile extends Error {}

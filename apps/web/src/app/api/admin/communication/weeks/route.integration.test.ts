@@ -3,7 +3,7 @@ import test, { after, afterEach, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { NextRequest } from 'next/server';
 import { createContentDraft, createContentSlot, createContentWeek, createTestClient, resetDb, seedContentStudio } from '@gabee/db/testing';
-import type { AiTask } from '@gabee/types';
+import { DEFAULT_POSTING_DAYS, type AiTask } from '@gabee/types';
 import { createLoginableParent } from '@/test/factories';
 import { adminCookie, parentCookie, parentToken, webRequest } from '@/test/auth';
 import { setErrorReporterForTests } from '@/lib/server/report-error';
@@ -11,12 +11,14 @@ import { resetAiAdapters, setAiAdapters, type AiAdapter } from '@/lib/server/ai/
 import { FakeAiAdapter, type FakeAiStep } from '@/lib/server/ai/router/fake-adapter';
 import { localParts } from '@/lib/server/content-studio/clock';
 import { addDaysYmd } from '@/lib/server/content-studio/state';
+import { plannedDays } from '@/lib/server/content-studio/cadence';
 import { GET as listWeeks, POST as startNow } from './route';
 import { GET as getWeek } from './[id]/route';
 import { POST as propose } from './[id]/propose/route';
 import { POST as regenerateProposals } from './[id]/regenerate-proposals/route';
 import { POST as direction } from './[id]/direction/route';
 import { POST as validate } from './[id]/validate/route';
+import { GET as previewRhythm, POST as applyRhythm } from './[id]/apply-rhythm/route';
 import { PATCH as patchSlot } from '../slots/[id]/route';
 import { POST as regenerateSlot } from '../slots/[id]/regenerate/route';
 import { POST as skipSlot } from '../slots/[id]/skip/route';
@@ -76,6 +78,7 @@ const proposals = {
   proposals: [0, 1, 2].map((i) => ({ title: `Direction ${i}`, rationale: 'r', evidence: ['e'], sample_angles: ['a'] })),
 };
 
+/** A titles answer: each date with both platforms, the first one light. */
 function titlesFor(dates: string[]) {
   return {
     days: dates.map((date, i) => ({
@@ -83,6 +86,7 @@ function titlesFor(dates: string[]) {
       topic: `Sujet ${date}`,
       angle: `Angle ${i}`,
       format: 'text',
+      pillar: i === 0 ? 'light' : 'value',
       platforms: [
         { platform: 'linkedin', language: i < 2 ? 'en' : 'fr' },
         { platform: 'tiktok', language: i < 2 ? 'en' : 'fr' },
@@ -205,12 +209,11 @@ test('slot regenerate on a validated day due today writes its drafts, audited as
   const slot = await createContentSlot(prisma, week.id, {
     date: new Date(p.date),
     topic: 'Compter les courses',
-    platforms: [{ platform: 'linkedin', language: 'fr' }],
     status: 'validated',
   });
-  const dates = Array.from({ length: 7 - ((p.weekday + 6) % 7) }, (_, i) => addDaysYmd(p.date, i));
+  // The week's only line: a day regenerate re-plans the week's existing lines.
   byTask({
-    content_titles: [{ json: titlesFor(dates) }],
+    content_titles: [{ json: titlesFor([p.date]) }],
     post_linkedin: [{ json: { body: 'Votre enfant compte en jouant.', hashtags: ['#Gabee', '#Parents', '#Maths'], link_target: 'landing' } }],
     post_tiktok: [
       {
@@ -296,6 +299,48 @@ test('regenerate-proposals maps a live run to 409 and an unavailable AI to 503',
   assert.equal((await prisma.contentWeek.findUniqueOrThrow({ where: { id: week.id } })).status, 'proposing', 'left for "Relancer"');
 });
 
+test('apply-rhythm: super-admin only, previews then applies to the future days, idempotent', async () => {
+  // Next week, validated on the default cadence: every day is in the future.
+  const monday = addDaysYmd(mondayOf(studioToday()), 7);
+  const week = await createContentWeek(prisma, { startsOn: new Date(monday), firstDay: new Date(monday), status: 'validated' });
+  for (const d of plannedDays(monday, monday, DEFAULT_POSTING_DAYS, ['linkedin', 'tiktok'])) {
+    await createContentSlot(prisma, week.id, { date: new Date(d.date), platforms: d.platforms.map((platform) => ({ platform, language: 'en' })) });
+  }
+  // TikTok stops on Sundays.
+  await prisma.studioSettings.update({ where: { id: 'default' }, data: { postingDays: { linkedin: [2, 3, 4], tiktok: [1, 3, 5] } } });
+
+  // A plain admin may neither preview nor apply.
+  assert.equal((await previewRhythm(get(`/weeks/${week.id}/apply-rhythm`), ctx(week.id))).status, 403);
+  assert.equal((await applyRhythm(post(`/weeks/${week.id}/apply-rhythm`), ctx(week.id))).status, 403);
+
+  const { parent: owner } = await createLoginableParent(prisma, { role: 'super_admin' });
+  const superC = adminCookie(await parentToken(owner.id, owner.email));
+  const preview = await previewRhythm(get(`/weeks/${week.id}/apply-rhythm`, superC), ctx(week.id));
+  assert.equal(preview.status, 200);
+  const { plan } = await preview.json();
+  assert.deepEqual(plan.counts, { adjusted: 0, skipped: 1 });
+  assert.deepEqual(plan.changes.map((c: { date: string; kind: string }) => [c.date, c.kind]), [[addDaysYmd(monday, 6), 'skip']]);
+  assert.equal(await prisma.contentSlot.count({ where: { weekId: week.id, status: 'skipped' } }), 0, 'the preview changes nothing');
+
+  const applied = await applyRhythm(post(`/weeks/${week.id}/apply-rhythm`, undefined, superC), ctx(week.id));
+  assert.equal(applied.status, 200);
+  const body = await applied.json();
+  assert.deepEqual(body.applied, { adjusted: 0, skipped: 1 });
+  assert.equal(body.week.slots.find((s: { date: string }) => s.date === addDaysYmd(monday, 6)).skip_reason, 'Nouveau rythme');
+  const audit = await prisma.auditLog.findFirstOrThrow({ where: { kind: 'content.week.apply_rhythm' } });
+  assert.equal(audit.actorId, owner.id);
+  assert.equal(audit.actorRole, 'super_admin');
+
+  const again = await (await applyRhythm(post(`/weeks/${week.id}/apply-rhythm`, undefined, superC), ctx(week.id))).json();
+  assert.deepEqual(again.plan.changes, []);
+
+  // A week not validated yet is refused.
+  const draft = await createContentWeek(prisma, { status: 'titles_ready' });
+  const refused = await previewRhythm(get(`/weeks/${draft.id}/apply-rhythm`, superC), ctx(draft.id));
+  assert.equal(refused.status, 409);
+  assert.equal((await refused.json()).error.code, 'invalid_transition');
+});
+
 test('invalid ids answer 404, unknown ids 404 week_not_found', async () => {
   const bad = await getWeek(get('/weeks/nope'), ctx('nope'));
   assert.equal(bad.status, 404);
@@ -354,9 +399,10 @@ test('validate reads the body whatever its content type: empty = no override, ba
 
 test('slot PATCH on a validated day due today writes the added platform and warns on the quota', async () => {
   const p = studioToday();
+  // A full week (first day = Monday) whatever today is: the English minimum applies to every platform.
   const week = await createContentWeek(prisma, {
     startsOn: new Date(mondayOf(p)),
-    firstDay: new Date(p.date),
+    firstDay: new Date(mondayOf(p)),
     status: 'validated',
     proposals,
     chosenIndex: 0,
@@ -437,13 +483,25 @@ test('every mutation writes an audit row', async () => {
 
   // A week stuck in proposing, far from today: propose → direction → edit / regenerate / skip a day → validate.
   const week = await createContentWeek(prisma, { status: 'proposing' });
-  const dates = Array.from({ length: 7 }, (_, i) => addDaysYmd(week.startsOn.toISOString().slice(0, 10), i));
-  fake([{ json: proposals }, { json: titlesFor(dates) }, { json: titlesFor(dates) }]);
+  const monday = week.startsOn.toISOString().slice(0, 10);
+  const plan = plannedDays(monday, monday, DEFAULT_POSTING_DAYS, ['linkedin', 'tiktok']);
+  const titles = {
+    days: plan.map((d, i) => ({
+      date: d.date,
+      topic: `Sujet ${d.date}`,
+      angle: `Angle ${i}`,
+      format: 'text',
+      pillar: i === 0 ? 'light' : 'value',
+      platforms: d.platforms.map((platform) => ({ platform, language: i < 2 ? 'en' : 'fr' })),
+      sources: [],
+    })),
+  };
+  fake([{ json: proposals }, { json: titles }, { json: titles }]);
   assert.equal((await propose(post(`/weeks/${week.id}/propose`), ctx(week.id))).status, 200);
   const chosen = await direction(post(`/weeks/${week.id}/direction`, { proposal_index: 0, refinement: 'Plus concret', platform_angles: {} }), ctx(week.id));
   assert.equal(chosen.status, 200);
   const slots = (await chosen.json()).week.slots as Array<{ id: string }>;
-  assert.equal(slots.length, 7);
+  assert.equal(slots.length, 6, 'one line per posting day: nothing posts on Saturday');
   assert.equal((await patchSlot(patch(`/slots/${slots[3]!.id}`, { topic: 'Un autre sujet' }), ctx(slots[3]!.id))).status, 200);
   assert.equal((await regenerateSlot(post(`/slots/${slots[4]!.id}/regenerate`), ctx(slots[4]!.id))).status, 200);
   assert.equal((await skipSlot(post(`/slots/${slots[5]!.id}/skip`, { reason: 'Jour férié' }), ctx(slots[5]!.id))).status, 200);

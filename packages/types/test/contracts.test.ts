@@ -33,6 +33,14 @@ import {
   ObjectiveUpsertSchema,
   EditorialLineUpdateSchema,
   UpdateSlotRequestSchema,
+  CONTENT_PILLARS,
+  DEFAULT_POSTING_DAYS,
+  PILLAR_MIX,
+  PostingDaysSchema,
+  pillarMix,
+  WEEK_CALENDAR_KINDS,
+  WEEK_CALENDAR_MAX,
+  WeekCalendarItemSchema,
 } from '../src/index';
 import assert from 'node:assert/strict';
 import {
@@ -620,7 +628,7 @@ describe('content studio', () => {
 
   it('WeekTitlesSchema rejects a platform outside CONTENT_PLATFORMS', () => {
     const day = (platform: string) => ({
-      days: [{ date: '2026-10-26', topic: 't', angle: 'a', format: 'text', platforms: [{ platform, language: 'fr' }], sources: [{ title: 's', url: 'https://x.co' }] }],
+      days: [{ date: '2026-10-26', topic: 't', angle: 'a', format: 'text', pillar: 'value', platforms: [{ platform, language: 'fr' }], sources: [{ title: 's', url: 'https://x.co' }] }],
     });
     assert.equal(WeekTitlesSchema.safeParse(day('linkedin')).success, true);
     assert.equal(WeekTitlesSchema.safeParse(day('facebook')).success, false);
@@ -681,6 +689,58 @@ describe('content studio', () => {
     assert.equal(ArtDirectionSchema.safeParse({ media_asset_id: null, visual_brief: 'v' }).success, true);
     assert.equal(ArtDirectionSchema.safeParse({ media_asset_id: 'nope', visual_brief: 'v' }).success, false);
     assert.equal(ReportNarrativeSchema.safeParse({ headline: 'h', highlights: [], watch_outs: [] }).success, true);
+  });
+
+  it('DirectionProposalsSchema takes an optional week_calendar of at most 8 verified items', () => {
+    const three = [proposal, proposal, proposal];
+    const item = { date: '2026-11-04', name: 'Journée mondiale des mathématiques', kind: 'observance', source_url: 'https://example.org/journee' };
+    assert.equal(WEEK_CALENDAR_MAX, 8);
+    assert.deepEqual([...WEEK_CALENDAR_KINDS], ['observance', 'event', 'news']);
+    assert.equal(DirectionProposalsSchema.safeParse({ proposals: three }).success, true, 'optional');
+    assert.equal(DirectionProposalsSchema.safeParse({ proposals: three, week_calendar: [] }).success, true);
+    assert.equal(DirectionProposalsSchema.safeParse({ proposals: three, week_calendar: Array(8).fill(item) }).success, true);
+    assert.equal(DirectionProposalsSchema.safeParse({ proposals: three, week_calendar: Array(9).fill(item) }).success, false, 'capped at 8');
+    for (const bad of [{ kind: 'holiday' }, { date: '4 nov.' }, { source_url: 'example.org' }, { name: '' }]) {
+      assert.equal(DirectionProposalsSchema.safeParse({ proposals: three, week_calendar: [{ ...item, ...bad }] }).success, false, JSON.stringify(bad));
+    }
+    assert.equal(WeekCalendarItemSchema.safeParse(item).success, true);
+  });
+
+  it('WeekTitlesSchema requires a pillar per day, among CONTENT_PILLARS', () => {
+    const day = (extra: object) => ({
+      days: [{ date: '2026-10-27', topic: 't', angle: 'a', format: 'text', platforms: [{ platform: 'linkedin', language: 'fr' }], sources: [], ...extra }],
+    });
+    assert.deepEqual([...CONTENT_PILLARS], ['gabee', 'light', 'value']);
+    for (const pillar of CONTENT_PILLARS) assert.equal(WeekTitlesSchema.safeParse(day({ pillar })).success, true, pillar);
+    assert.equal(WeekTitlesSchema.safeParse(day({})).success, false, 'pillar is required');
+    assert.equal(WeekTitlesSchema.safeParse(day({ pillar: 'promo' })).success, false);
+  });
+
+  it('UpdateSlotRequestSchema accepts a pillar alone', () => {
+    assert.equal(UpdateSlotRequestSchema.safeParse({ pillar: 'light' }).success, true);
+    assert.equal(UpdateSlotRequestSchema.safeParse({ pillar: 'sales' }).success, false);
+  });
+
+  it('posting days: weekdays 0–6 per platform, each once; the default cadence', () => {
+    assert.deepEqual(DEFAULT_POSTING_DAYS, { linkedin: [2, 3, 4], tiktok: [0, 1, 3, 5] });
+    assert.equal(PostingDaysSchema.safeParse(DEFAULT_POSTING_DAYS).success, true);
+    assert.equal(PostingDaysSchema.safeParse({ linkedin: [], tiktok: [6] }).success, true, 'an empty day list is checked against the enabled platforms by the server');
+    assert.equal(PostingDaysSchema.safeParse({ linkedin: [7], tiktok: [1] }).success, false);
+    assert.equal(PostingDaysSchema.safeParse({ linkedin: [-1], tiktok: [1] }).success, false);
+    assert.equal(PostingDaysSchema.safeParse({ linkedin: [1.5], tiktok: [1] }).success, false);
+    assert.equal(PostingDaysSchema.safeParse({ linkedin: [2, 2], tiktok: [1] }).success, false, 'a weekday once');
+    assert.equal(PostingDaysSchema.safeParse({ linkedin: [2] }).success, false, 'every platform has its list');
+    assert.equal(StudioSettingsUpdateSchema.safeParse({ posting_days: { linkedin: [1], tiktok: [0, 6] } }).success, true);
+    assert.equal(StudioSettingsUpdateSchema.safeParse({ posting_days: { linkedin: [1, 1], tiktok: [0] } }).success, false);
+  });
+
+  it('pillarMix counts the pillars and flags more than 3 on Gabee or no light post', () => {
+    assert.deepEqual(PILLAR_MIX, { gabee_max: 3, light_min: 1 });
+    assert.deepEqual(pillarMix(['gabee', 'gabee', 'light', 'value', 'value', 'value']), { gabee: 2, light: 1, value: 3, ok: true, problems: [] });
+    assert.deepEqual(pillarMix(['gabee', 'gabee', 'gabee', 'gabee', 'light']), { gabee: 4, light: 1, value: 0, ok: false, problems: ['too_much_gabee'] });
+    assert.deepEqual(pillarMix(['gabee', 'value']), { gabee: 1, light: 0, value: 1, ok: false, problems: ['no_light'] });
+    assert.deepEqual(pillarMix(['gabee', 'gabee', 'gabee', 'gabee']).problems, ['too_much_gabee', 'no_light']);
+    assert.deepEqual(pillarMix([]), { gabee: 0, light: 0, value: 0, ok: true, problems: [] }, 'nothing planned: nothing to balance');
   });
 
   it('MediaUploadInitSchema enforces size caps per kind at the boundary', () => {

@@ -24,6 +24,7 @@ import {
   seedTitles,
   seedTodayBoard,
   studioToday,
+  validateSeededWeek,
 } from '../../helpers/content';
 
 // Communication studio (Aujourd'hui / Semaine). No AI: the database is seeded
@@ -112,12 +113,12 @@ test('owner chooses a direction and validates the week', async ({ page }) => {
     platform_angles: { linkedin: 'Témoignage de parent' },
   });
 
-  // Step 2: seven day lines; each platform is one English post short.
+  // Step 2: one line per posting day (nothing on Saturday); each platform is one English post short.
   const days = page.getByRole('listitem').filter({ has: page.getByRole('button', { name: 'Sauter' }) });
-  await expect(days).toHaveCount(7);
+  await expect(days).toHaveCount(6);
   const quota = page.getByRole('status', { name: 'Posts en anglais' });
-  await expect(quota).toContainText('LinkedIn : 1 / 2');
-  await expect(quota).toContainText('TikTok : 1 / 2');
+  await expect(quota).toContainText('LinkedIn : 0 / 1');
+  await expect(quota).toContainText('TikTok : 0 / 1');
   const override = page.getByLabel('Valider quand même avec moins de posts en anglais');
   await expect(override).toBeVisible();
   const validate = page.getByRole('button', { name: 'Valider la semaine' });
@@ -128,15 +129,15 @@ test('owner chooses a direction and validates the week', async ({ page }) => {
   await day1.getByRole('button', { name: 'Marquer comme relu' }).click();
   await expect(day1.getByText('Relu', { exact: true })).toBeVisible();
   await expect(day1.getByRole('button', { name: /Relu/ })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByText('1 jour sur 7 relu.')).toBeVisible();
+  await expect(page.getByText('1 jour sur 6 relu.')).toBeVisible();
   await expect(page.locator('.studio-days').getByText('Validé')).toHaveCount(0);
 
-  // Switch the second day to English on both platforms (real PATCH, no AI before validation).
-  const day2 = days.nth(1);
-  await day2.getByRole('radio', { name: 'LinkedIn en anglais' }).click();
-  await expect(quota).toContainText('LinkedIn : 2 / 2');
-  await day2.getByRole('radio', { name: 'TikTok en anglais' }).click();
-  await expect(quota).toContainText('TikTok : 2 / 2');
+  // Switch Wednesday (both platforms post) to English (real PATCH, no AI before validation).
+  const wednesday = days.nth(2);
+  await wednesday.getByRole('radio', { name: 'LinkedIn en anglais' }).click();
+  await expect(quota).toContainText('LinkedIn : 1 / 1');
+  await wednesday.getByRole('radio', { name: 'TikTok en anglais' }).click();
+  await expect(quota).toContainText('TikTok : 1 / 1');
   await expect(override).toHaveCount(0);
 
   await validate.click();
@@ -217,6 +218,43 @@ test('a week proposed before the month objective was set is regenerated from the
   await expect(late).toHaveCount(0);
   await expect(page.getByText(/Aucun objectif/)).toHaveCount(0);
   expect(calls).toBe(1);
+});
+
+test('Semaine shows each day pillar and the week mix, and warns when an edit breaks it', async ({ page }) => {
+  const nextMonday = addDays(mondayOf(studioToday()), 7);
+  const { weekId } = await seedProposalsWeek(nextMonday);
+  await seedTitles(weekId, 0);
+
+  await page.goto('/admin/communication/semaine');
+  const days = page.getByRole('listitem').filter({ has: page.getByRole('button', { name: 'Sauter' }) });
+  await expect(days).toHaveCount(6);
+  const chip = (n: number) => days.nth(n).getByRole('button', { name: /^Pilier : / });
+  await expect(chip(0)).toHaveAccessibleName(/^Pilier : Léger/);
+  await expect(chip(1)).toHaveAccessibleName(/^Pilier : Conseil/);
+  await expect(chip(2)).toHaveAccessibleName(/^Pilier : Gabee/);
+  // What a pillar means is one tap away (no hover on a phone).
+  const hint = days.nth(0).getByText('Pour animer : actualité, « Le saviez-vous ? », jeu, événement, journée mondiale. Sans vendre.');
+  await expect(hint).toBeHidden();
+  await chip(0).click();
+  await expect(chip(0)).toHaveAttribute('aria-expanded', 'true');
+  await expect(hint).toBeVisible();
+  const mix = page.getByRole('status', { name: 'Équilibre de la semaine' });
+  await expect(mix).toContainText('2 sur Gabee · 1 léger · 3 conseils');
+  await expect(mix.getByText(/Aucun jour léger/)).toHaveCount(0);
+
+  // The owner turns the only light day into advice: saved, and flagged (never blocked).
+  // (While a line is being edited it has no Sauter button: address it by position in the list.)
+  const first = page.locator('.studio-dayline').first();
+  await first.getByRole('button', { name: 'Modifier' }).click();
+  await first.getByLabel('Pilier').selectOption({ label: 'Conseil' });
+  await expect(first.getByText('Utile aux parents : écrans, apprentissage, routines. Sans vendre.')).toBeVisible();
+  await first.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(first.getByRole('button', { name: /^Pilier : / })).toHaveAccessibleName(/^Pilier : Conseil/);
+  await expect(mix).toContainText('2 sur Gabee · 0 léger · 4 conseils');
+  await expect(mix).toContainText('Aucun jour léger : prévoyez au moins un post pour animer');
+  const monday = await prisma.contentSlot.findFirstOrThrow({ where: { weekId, date: new Date(`${nextMonday}T00:00:00Z`) } });
+  expect(monday.pillar).toBe('value');
+  await expect(page.getByRole('button', { name: 'Valider la semaine' })).toBeVisible();
 });
 
 test('a failed regenerate, then Relancer: the direction step is clean and a cut-off titles answer still polls', async ({ page }) => {
@@ -738,6 +776,73 @@ test.describe('as a super-admin', () => {
     await expect(month).toContainText('1,50');
     await expect(month).toContainText(/sur 80,00\s\$ \(budget du studio\)/);
     await expect(page.getByText('Coût total · depuis le début')).toBeVisible();
+  });
+
+  test('posting days persist, and a validated week follows the new rhythm once applied', async ({ page }) => {
+    // Next week is already validated on the default cadence (every day still to come).
+    const nextMonday = addDays(mondayOf(studioToday()), 7);
+    const nextSunday = addDays(nextMonday, 6);
+    const { weekId } = await seedProposalsWeek(nextMonday);
+    await seedTitles(weekId, 0);
+    await validateSeededWeek(weekId);
+
+    await page.goto('/admin/communication/reglages');
+    const card = page.getByRole('region', { name: 'Jours de publication' });
+    const tiktokSunday = card.getByRole('button', { name: 'TikTok le dimanche' });
+    await expect(tiktokSunday).toHaveAttribute('aria-pressed', 'true');
+    await expect(card.getByRole('button', { name: 'LinkedIn le lundi' })).toHaveAttribute('aria-pressed', 'false');
+    await expect(card.getByText('LinkedIn : 3 posts · TikTok : 4 posts par semaine.')).toBeVisible();
+
+    // An enabled platform keeps at least one day.
+    for (const day of ['mardi', 'mercredi', 'jeudi']) await card.getByRole('button', { name: `LinkedIn le ${day}` }).click();
+    await expect(card.getByText('Choisissez au moins un jour pour LinkedIn.')).toBeVisible();
+    await card.getByRole('button', { name: 'Enregistrer les jours' }).click();
+    expect((await prisma.studioSettings.findUniqueOrThrow({ where: { id: 'default' } })).postingDays).toEqual({ linkedin: [2, 3, 4], tiktok: [0, 1, 3, 5] });
+
+    // LinkedIn on Monday and Wednesday; TikTok no longer on Sunday.
+    await card.getByRole('button', { name: 'LinkedIn le lundi' }).click();
+    await card.getByRole('button', { name: 'LinkedIn le mercredi' }).click();
+    await tiktokSunday.click();
+    await expect(tiktokSunday).toHaveAttribute('aria-pressed', 'false');
+    await card.getByRole('button', { name: 'Enregistrer les jours' }).click();
+    await expect(card.getByText('Enregistré')).toBeVisible();
+    expect((await prisma.studioSettings.findUniqueOrThrow({ where: { id: 'default' } })).postingDays).toEqual({ linkedin: [1, 3], tiktok: [1, 3, 5] });
+    await page.reload();
+    await expect(page.getByRole('region', { name: 'Jours de publication' }).getByRole('button', { name: 'LinkedIn le lundi' })).toHaveAttribute('aria-pressed', 'true');
+
+    // Saving also offered to bring the validated week in line; the dialog says what changes first.
+    await card.getByRole('button', { name: 'TikTok le vendredi' }).click();
+    await card.getByRole('button', { name: 'Enregistrer les jours' }).click();
+    await expect(card.getByText(/La semaine prochaine est déjà validée/)).toBeVisible();
+    await card.getByRole('button', { name: 'Appliquer le rythme à la semaine prochaine' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Appliquer le rythme à la semaine prochaine ?' });
+    // Monday gains LinkedIn; Tuesday and Thursday lose LinkedIn, Friday and Sunday TikTok: no platform left, skipped.
+    await expect(dialog).toContainText('1 jour ajusté, 4 jours sautés');
+    await expect(dialog).toContainText('sauté (aucune plateforme ne publie ce jour-là)');
+    // The seeded week has no English post: Monday, the first upcoming post of each platform, switches.
+    await expect(dialog).toContainText('passé en anglais pour garder un post en anglais sur LinkedIn et TikTok');
+    await dialog.getByRole('button', { name: 'Annuler' }).click();
+    expect(await prisma.contentSlot.count({ where: { weekId, status: 'skipped' } })).toBe(0);
+
+    await card.getByRole('button', { name: 'Appliquer le rythme à la semaine prochaine' }).click();
+    await dialog.getByRole('button', { name: 'Appliquer', exact: true }).click();
+    await expect(card.getByText('Rythme appliqué : 1 jour ajusté, 4 jours sautés.')).toBeVisible();
+    const sunday = await prisma.contentSlot.findFirstOrThrow({ where: { weekId, date: new Date(`${nextSunday}T00:00:00Z`) } });
+    expect([sunday.status, sunday.skipReason]).toEqual(['skipped', 'Nouveau rythme']);
+    const monday = await prisma.contentSlot.findFirstOrThrow({ where: { weekId, date: new Date(`${nextMonday}T00:00:00Z`) } });
+    expect(monday.platforms).toEqual([
+      { platform: 'linkedin', language: 'en' },
+      { platform: 'tiktok', language: 'en' },
+    ]);
+
+    // From Semaine the same action finds nothing left to do.
+    await page.goto('/admin/communication/semaine');
+    await page.getByRole('button', { name: 'Appliquer le rythme à la semaine prochaine' }).click();
+    const again = page.getByRole('dialog', { name: 'Appliquer le rythme à la semaine prochaine ?' });
+    await expect(again).toContainText('Rien à ajuster : la semaine suit déjà ce rythme.');
+    await expect(again.getByRole('button', { name: 'Appliquer', exact: true })).toHaveCount(0);
+    await again.getByRole('button', { name: 'Fermer' }).last().click();
+    await expect(again).toHaveCount(0);
   });
 
   test('emails and schedule: recipient hints, the time-zone confirm, and the leave prompt only while dirty', async ({ page }) => {

@@ -2,11 +2,13 @@ import { randomUUID } from 'node:crypto';
 import { Prisma } from '@gabee/db';
 import {
   CONTENT_LANGUAGES,
+  CONTENT_PILLARS,
   CONTENT_PLATFORMS,
   LinkedInPostSchema,
   SLOT_FORMATS,
   TikTokPostSchema,
   type ContentLanguage,
+  type ContentPillar,
   type ContentPlatform,
   type LinkedInPost,
   type MarkPublishedRequest,
@@ -78,6 +80,8 @@ export type SlotDto = {
   topic: string;
   angle: string;
   format: SlotFormat;
+  /** Content pillar: about Gabee, a light post, or useful content for parents. Null on lines planned before pillars. */
+  pillar: ContentPillar | null;
   platforms: SlotPlatform[];
   sources: { title: string; url: string }[];
   status: string;
@@ -112,6 +116,11 @@ function asLanguage(value: string): ContentLanguage {
 function asFormat(value: string): SlotFormat {
   if ((SLOT_FORMATS as readonly string[]).includes(value)) return value as SlotFormat;
   throw new Error(`Unknown slot format "${value}".`);
+}
+
+/** A stored pillar; null on lines planned before pillars existed (or an unknown value). */
+export function asPillar(value: string | null): ContentPillar | null {
+  return value !== null && (CONTENT_PILLARS as readonly string[]).includes(value) ? (value as ContentPillar) : null;
 }
 
 /** `ContentSlot.platforms` (`[{ platform, language }]`). */
@@ -166,6 +175,7 @@ export function toSlotDto(row: SlotRow): SlotDto {
     topic: row.topic,
     angle: row.angle,
     format: asFormat(row.format),
+    pillar: asPillar(row.pillar),
     platforms: parseSlotPlatforms(row.platforms),
     sources: parseSources(row.sources),
     status: row.status,
@@ -254,9 +264,9 @@ async function nextVersionN(tx: Prisma.TransactionClient, draftId: string): Prom
   return (agg._max.n ?? 0) + 1;
 }
 
-/** What a draft is written from: the day's line. Status changes do not count. */
-function slotContent(s: { topic: string; angle: string; format: string; platforms: unknown; sources: unknown }): string {
-  return JSON.stringify([s.topic, s.angle, s.format, s.platforms, s.sources]);
+/** What a draft is written from: the day's line (its pillar sets the tone). Status changes do not count. */
+function slotContent(s: { topic: string; angle: string; format: string; pillar: string | null; platforms: unknown; sources: unknown }): string {
+  return JSON.stringify([s.topic, s.angle, s.format, s.pillar, s.platforms, s.sources]);
 }
 
 /**
@@ -267,8 +277,8 @@ function slotContent(s: { topic: string; angle: string; format: string; platform
  * `markDraftsStale` then moves our `ready` draft to `stale`).
  */
 async function lockSlotContent(tx: Prisma.TransactionClient, slotId: string): Promise<string> {
-  const rows = await tx.$queryRaw<Array<{ topic: string; angle: string; format: string; platforms: unknown; sources: unknown }>>`
-    SELECT topic, angle, format, platforms, sources FROM content_slots WHERE id = ${slotId}::uuid FOR UPDATE`;
+  const rows = await tx.$queryRaw<Array<{ topic: string; angle: string; format: string; pillar: string | null; platforms: unknown; sources: unknown }>>`
+    SELECT topic, angle, format, pillar, platforms, sources FROM content_slots WHERE id = ${slotId}::uuid FOR UPDATE`;
   const row = rows[0];
   if (!row) throw new Error(`Slot ${slotId} disappeared while its draft was being written.`);
   return slotContent(row);
@@ -285,7 +295,7 @@ function failureReason(err: unknown): string {
  * Run writer then Art director on a locked draft and store version n+1
  * (`ready`), or record the failure (`failed` + plain reason). Never throws for
  * a generation failure; always releases the lock. If the day's line (topic,
- * angle, format, platforms, sources) changed while the agents ran, the draft
+ * angle, format, pillar, platforms, sources) changed while the agents ran, the draft
  * was written from the old line: it lands `stale`, like drafts the edit found.
  *
  * Sentry: runAgent records router errors on its AgentRun and rethrows them
