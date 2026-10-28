@@ -333,7 +333,8 @@ test('the proposals run started by « Régénérer les propositions » sees the 
   });
   assert.deepEqual(labels(blocks).slice(-2), ['replaced_proposals', 'owner_feedback']);
   const replaced = block(blocks, 'replaced_proposals');
-  assert.equal(replaced.trusted, true);
+  // Model-written text from an earlier web-search run: fenced as untrusted data.
+  assert.equal(replaced.trusted, false);
   assert.deepEqual(JSON.parse(unwrap(replaced)), [
     { title: 'La rentrée', rationale: 'r1', owner_feedback: [{ verdict: 'disliked', note: 'Déjà vu' }] },
     { title: 'Les devoirs', rationale: 'r2', owner_feedback: [{ verdict: 'liked', note: null }] },

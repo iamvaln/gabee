@@ -101,6 +101,7 @@ export function DirectionCards({
                 )}
               </label>
               <DirectionFeedback
+                key={`${i}-${p.title}`}
                 weekId={week.id}
                 index={i}
                 title={p.title}

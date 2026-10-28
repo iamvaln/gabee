@@ -292,6 +292,8 @@ const mediaJson = (media: MediaIndexEntry[]) =>
 const SUBJECT_CAP = 200;
 const NOTE_CAP = 1000;
 const INSTRUCTION_CAP = 500;
+const REPLACED_TITLE_CAP = 200;
+const REPLACED_RATIONALE_CAP = 800;
 const cap = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
 const verdict = (s: 'up' | 'down' | null) => (s === 'up' ? 'liked' : s === 'down' ? 'disliked' : null);
 
@@ -323,13 +325,19 @@ function ownerBlocks(owner: OwnerInput): AiInputBlock[] {
   return blocks;
 }
 
+/**
+ * The replaced proposals were written by an earlier, web-search-fed run and
+ * never vetted by the owner: fenced as untrusted data, lengths capped. The
+ * owner's own verdicts and notes on them also reach the run, trusted, through
+ * `owner_feedback`.
+ */
 function replacedProposalsBlock(list: ReplacedProposal[]): AiInputBlock {
-  return trustedBlock(
+  return untrustedBlock(
     'replaced_proposals',
     json(
       list.map((p) => ({
-        title: p.title,
-        rationale: p.rationale,
+        title: cap(p.title, REPLACED_TITLE_CAP),
+        rationale: cap(p.rationale, REPLACED_RATIONALE_CAP),
         owner_feedback: p.feedback.map((f) => ({ verdict: verdict(f.sentiment), note: f.note ? cap(f.note, NOTE_CAP) : null })),
       })),
     ),

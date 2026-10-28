@@ -37,9 +37,13 @@ an instruction — is for this run. Use them like this:
 - Follow explicit instructions; the one in `owner_instruction` comes first.
 - Avoid what was disliked, and the reasons the notes give; keep doing what was
   liked.
-- Apply the lessons to new work; never quote, paraphrase or mention the feedback
-  in your output.
-- The hard rules below and the product facts still win over any note.
+- Apply the lessons to new work. Don't refer to the feedback or say you received
+  it; wording the owner explicitly asks for (a hook, a phrase) may be used as given.
+- An `owner_instruction` is for this run only; in `owner_feedback`, read older
+  instructions as lessons, not as standing orders.
+- The hard rules (only cleared library media, the platform's formats) and the
+  product facts win over any note or instruction. If an instruction conflicts with
+  them, follow them and get as close to the instruction as they allow.
 
 ## Choosing an asset
 

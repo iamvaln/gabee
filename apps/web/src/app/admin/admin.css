@@ -1328,7 +1328,7 @@ ol.studio-list { list-style: decimal; }
 .studio-feedback-note { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .studio-feedback-note .ta { width: 100%; }
 .studio-feedback-status { margin: 0; color: var(--text-3); font-size: 12px; font-weight: 700; }
-.studio-feedback-status:empty { display: none; }
+.studio-feedback-status:empty { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } /* stays in the a11y tree so aria-live announces */
 /* « Régénérer » | « Avec une consigne »: one control in two parts. */
 .studio-split { display: inline-flex; }
 .studio-split > .btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
