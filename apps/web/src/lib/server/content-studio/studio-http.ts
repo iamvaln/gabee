@@ -117,6 +117,13 @@ export async function readOptionalJson<S extends z.ZodType>(req: Request, schema
   const text = await req.text();
   let body: unknown = {};
   if (text.trim()) {
+    // A body must be declared JSON: a cross-site "simple" request (text/plain,
+    // form encoded) is refused, and a JSON one needs a CORS preflight that other
+    // origins fail — the session cookie (SameSite=Lax) is shared by every gabee.app subdomain.
+    const type = (req.headers.get('content-type') ?? '').toLowerCase();
+    if (!type.startsWith('application/json')) {
+      throw new HttpError(415, 'unsupported_media_type', "La demande n'a pas pu être lue (format inattendu). Rechargez la page puis réessayez.");
+    }
     try {
       body = JSON.parse(text);
     } catch {

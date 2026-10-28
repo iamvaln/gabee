@@ -388,11 +388,15 @@ test('validate reads the body whatever its content type: empty = no override, ba
   assert.equal(error.code, 'invalid_json');
   assert.match(error.message, /JSON invalide/);
 
-  const wrongShape = await raw('{"override_quota":"yes"}', 'text/plain');
+  const wrongShape = await raw('{"override_quota":"yes"}', 'application/json');
   assert.equal(wrongShape.status, 422);
 
-  // A JSON body sent as text/plain (no JSON content type) is still honoured.
-  const ok = await raw('{"override_quota":true}', 'text/plain;charset=UTF-8');
+  // A body not declared JSON (a cross-site "simple" request) is refused, even if it parses.
+  const plain = await raw('{"override_quota":true}', 'text/plain;charset=UTF-8');
+  assert.equal(plain.status, 415);
+  assert.equal((await plain.json()).error.code, 'unsupported_media_type');
+
+  const ok = await raw('{"override_quota":true}', 'application/json; charset=utf-8');
   assert.equal(ok.status, 200);
   assert.equal((await ok.json()).week.status, 'validated');
 });

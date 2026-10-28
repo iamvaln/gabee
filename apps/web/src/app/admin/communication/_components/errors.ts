@@ -35,6 +35,10 @@ const COPY: Record<string, Bi> = {
     fr: "La demande n'a pas pu être lue. Rechargez la page puis réessayez.",
     en: 'The request could not be read. Reload the page, then try again.',
   },
+  unsupported_media_type: {
+    fr: "La demande n'a pas pu être lue. Rechargez la page puis réessayez.",
+    en: 'The request could not be read. Reload the page, then try again.',
+  },
   rate_limited: {
     fr: 'Trop de demandes en peu de temps. Patientez une minute puis réessayez.',
     en: 'Too many requests in a short time. Wait a minute, then try again.',

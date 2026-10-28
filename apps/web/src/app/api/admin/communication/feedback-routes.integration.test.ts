@@ -44,8 +44,8 @@ const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
 const post = (path: string, body?: unknown) => webRequest(`${U}${path}`, { cookie, ...(body !== undefined ? { body } : {}) });
 /** As someone else: `c` undefined is no session at all. */
 const postAs = (c: { name: string; value: string } | undefined, path: string, body: unknown) => webRequest(`${U}${path}`, { cookie: c, body });
-/** A raw body under any content type (the regenerate routes read it whatever it is). */
-const raw = (path: string, body: string, type = 'text/plain') =>
+/** A raw body under a given content type (JSON by default; a body must be declared JSON). */
+const raw = (path: string, body: string, type = 'application/json') =>
   new NextRequest(`${U}${path}`, { method: 'POST', headers: { cookie: `${cookie.name}=${cookie.value}`, 'content-type': type }, body });
 
 function byTask(scripts: Partial<Record<AiTask, FakeAiStep[]>>): void {
@@ -163,7 +163,7 @@ test('« Commenter » a day and a draft (text or media) records a note for the r
   );
 });
 
-test('the regenerate routes take an optional instruction, read whatever the content type', async () => {
+test('the regenerate routes take an optional instruction; a body not declared JSON is refused', async () => {
   const { slot, draft } = await fixture('validated');
   byTask({
     content_titles: [
@@ -194,4 +194,7 @@ test('the regenerate routes take an optional instruction, read whatever the cont
   const badJson = await regenerateDraft(raw(`/drafts/${draft.id}/regenerate`, '{', 'application/json'), ctx(draft.id));
   assert.equal(badJson.status, 400);
   assert.equal(await errorCode(badJson), 'invalid_json');
+  const plain = await regenerateDraft(raw(`/drafts/${draft.id}/regenerate`, JSON.stringify({ instruction: 'Plus court' }), 'text/plain'), ctx(draft.id));
+  assert.equal(plain.status, 415);
+  assert.equal(await errorCode(plain), 'unsupported_media_type');
 });

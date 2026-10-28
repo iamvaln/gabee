@@ -41,15 +41,24 @@ test('other HttpErrors pass through unreported', () => {
   assert.equal(reported.length, 0);
 });
 
-test('an optional JSON body: empty is {}, any content type is read, bad JSON or shape is refused', async () => {
+test('an optional JSON body: empty is {}, a body must be declared JSON, bad JSON or shape is refused', async () => {
   const req = (body?: string, type?: string) =>
     new Request('http://x/api', { method: 'POST', body, headers: type ? { 'content-type': type } : undefined });
   assert.deepEqual(await readOptionalJson(req(), RegenerateRequestSchema), {});
   assert.deepEqual(await readOptionalJson(req('  '), RegenerateRequestSchema), {});
-  assert.deepEqual(await readOptionalJson(req('{"instruction":"Plus court"}', 'text/plain'), RegenerateRequestSchema), { instruction: 'Plus court' });
+  assert.deepEqual(await readOptionalJson(req('  ', 'text/plain'), RegenerateRequestSchema), {});
+  assert.deepEqual(await readOptionalJson(req('{"instruction":"Plus court"}', 'application/json'), RegenerateRequestSchema), { instruction: 'Plus court' });
+  await assert.rejects(
+    readOptionalJson(req('{"instruction":"Plus court"}', 'text/plain'), RegenerateRequestSchema),
+    (e: unknown) => e instanceof HttpError && e.status === 415 && e.code === 'unsupported_media_type',
+  );
+  await assert.rejects(
+    readOptionalJson(req('{"instruction":"Plus court"}'), RegenerateRequestSchema),
+    (e: unknown) => e instanceof HttpError && e.status === 415,
+  );
   await assert.rejects(readOptionalJson(req('{', 'application/json'), RegenerateRequestSchema), (e: unknown) => e instanceof HttpError && e.code === 'invalid_json');
   await assert.rejects(
-    readOptionalJson(req(JSON.stringify({ instruction: 'x'.repeat(501) })), RegenerateRequestSchema),
+    readOptionalJson(req(JSON.stringify({ instruction: 'x'.repeat(501) }), 'application/json'), RegenerateRequestSchema),
     (e: unknown) => e instanceof HttpError && e.status === 422 && e.code === 'validation_error',
   );
 });
