@@ -399,9 +399,10 @@ test('validate reads the body whatever its content type: empty = no override, ba
 
 test('slot PATCH on a validated day due today writes the added platform and warns on the quota', async () => {
   const p = studioToday();
+  // A full week (first day = Monday) whatever today is: the English minimum applies to every platform.
   const week = await createContentWeek(prisma, {
     startsOn: new Date(mondayOf(p)),
-    firstDay: new Date(p.date),
+    firstDay: new Date(mondayOf(p)),
     status: 'validated',
     proposals,
     chosenIndex: 0,
