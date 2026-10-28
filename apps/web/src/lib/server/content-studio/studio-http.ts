@@ -1,4 +1,5 @@
 import type { NextRequest, NextResponse } from 'next/server';
+import type { z } from 'zod';
 import { S3ServiceException } from '@aws-sdk/client-s3';
 import { prisma } from '../db';
 import { HttpError, requireAdmin, requireSuperAdmin, route } from '../http';
@@ -105,4 +106,24 @@ export async function idParam(ctx: { params: Promise<{ id: string }> }): Promise
   const { id } = await ctx.params;
   if (!UUID_RE.test(id)) throw new HttpError(404, 'not_found', "Cet élément n'existe pas (ou plus). Rechargez la page.");
   return id;
+}
+
+/**
+ * An optional JSON body, read whatever the content type (a bodiless POST from
+ * an older screen or a script still works): an empty body is `{}`, anything
+ * else must be JSON matching `schema` (400 `invalid_json` / 422 `validation_error`).
+ */
+export async function readOptionalJson<S extends z.ZodType>(req: Request, schema: S): Promise<z.infer<S>> {
+  const text = await req.text();
+  let body: unknown = {};
+  if (text.trim()) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      throw new HttpError(400, 'invalid_json', "La demande n'a pas pu être lue (JSON invalide). Rechargez la page puis réessayez.");
+    }
+  }
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) throw new HttpError(422, 'validation_error', 'Request failed validation', parsed.error.issues);
+  return parsed.data;
 }

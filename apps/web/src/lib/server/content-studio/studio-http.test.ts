@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 // The route kit imports the Prisma singleton, which validates env at import: load it after DATABASE_URL is set.
 const { HttpError } = await import('../http');
 const { setErrorReporterForTests } = await import('../report-error');
-const { resetStorageUnavailableReportForTests, toHttpError } = await import('./studio-http');
+const { readOptionalJson, resetStorageUnavailableReportForTests, toHttpError } = await import('./studio-http');
+const { RegenerateRequestSchema } = await import('@gabee/types');
 
 afterEach(() => {
   setErrorReporterForTests(null);
@@ -38,4 +39,17 @@ test('other HttpErrors pass through unreported', () => {
   const err = new HttpError(409, 'invalid_transition', 'x');
   assert.equal(toHttpError(err), err);
   assert.equal(reported.length, 0);
+});
+
+test('an optional JSON body: empty is {}, any content type is read, bad JSON or shape is refused', async () => {
+  const req = (body?: string, type?: string) =>
+    new Request('http://x/api', { method: 'POST', body, headers: type ? { 'content-type': type } : undefined });
+  assert.deepEqual(await readOptionalJson(req(), RegenerateRequestSchema), {});
+  assert.deepEqual(await readOptionalJson(req('  '), RegenerateRequestSchema), {});
+  assert.deepEqual(await readOptionalJson(req('{"instruction":"Plus court"}', 'text/plain'), RegenerateRequestSchema), { instruction: 'Plus court' });
+  await assert.rejects(readOptionalJson(req('{', 'application/json'), RegenerateRequestSchema), (e: unknown) => e instanceof HttpError && e.code === 'invalid_json');
+  await assert.rejects(
+    readOptionalJson(req(JSON.stringify({ instruction: 'x'.repeat(501) })), RegenerateRequestSchema),
+    (e: unknown) => e instanceof HttpError && e.status === 422 && e.code === 'validation_error',
+  );
 });

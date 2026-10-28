@@ -41,6 +41,7 @@ import {
 import { getDashboard } from '../services/admin-observability';
 import { getAudience, getStudioTimezone, localDay } from '../services/web-visits';
 import { parsePostingDays, plannedDays, type PlannedDay } from './cadence';
+import { recentFeedbackFor } from './feedback';
 import { englishRequired } from './language-quota';
 import { listMedia, type MediaAssetDto } from './media';
 import {
@@ -58,8 +59,11 @@ import {
   type MediaIndexEntry,
   type MetricsSummary,
   type ObjectiveData,
+  type OwnerInput,
+  type OwnerInstruction,
   type ProfileData,
   type RecentWeek,
+  type ReplacedProposal,
   type SlotData,
   type StrategistContext,
   type TitlesContext,
@@ -106,6 +110,14 @@ export type AgentSubject = { kind: string; id: string };
 export interface RunAgentOptions {
   /** Art director: the post just written (before it is stored). Defaults to the draft's current version. */
   post?: LinkedInPost | TikTokPost;
+  /**
+   * « Régénérer avec une consigne »: the owner's instruction for this run
+   * (`owner_instruction` block). `feedbackId`: the feedback row it was stored
+   * as, left out of this run's `owner_feedback` so it is not said twice.
+   */
+  instruction?: OwnerInstruction & { feedbackId?: string };
+  /** Proposals run of « Régénérer les propositions »: the proposals it replaces, with the owner's feedback. */
+  replacedProposals?: ReplacedProposal[];
 }
 
 /** A schema-valid output that breaks a platform or library rule. Counts as invalid output. */
@@ -550,16 +562,30 @@ interface Prepared {
 
 const noCheck = () => [];
 
+/**
+ * What the owner tells this agent: its recent feedback (every run but the
+ * Analyst's), the run's one-off instruction, the proposals being replaced.
+ */
+async function ownerInput(key: AgentKey, opts: RunAgentOptions): Promise<OwnerInput> {
+  const feedback = await recentFeedbackFor(key, { excludeId: opts.instruction?.feedbackId });
+  return {
+    feedback,
+    instruction: opts.instruction ? { text: opts.instruction.text, ...(opts.instruction.date ? { date: opts.instruction.date } : {}) } : null,
+    ...(opts.replacedProposals ? { replacedProposals: opts.replacedProposals } : {}),
+  };
+}
+
 async function prepare(key: AgentKey, subject: AgentSubject, opts: RunAgentOptions): Promise<Prepared> {
   switch (key) {
     case 'strategist': {
+      const owner = await ownerInput(key, opts);
       if (subject.kind === 'week_proposals') {
         const week = await loadWeek(subject.id);
         const ctx = await loadStrategistContext(week.startsOn, new Date());
         return {
           task: AGENT_TASK.strategist,
           schema: DirectionProposalsSchema,
-          blocks: strategistMemory(ctx),
+          blocks: strategistMemory(ctx, owner),
           webSearch: { maxUses: WEB_SEARCH_MAX_USES },
           check: (out) => checkWeekCalendar((out as DirectionProposals).week_calendar, ctx.weekStart),
         };
@@ -568,7 +594,7 @@ async function prepare(key: AgentKey, subject: AgentSubject, opts: RunAgentOptio
       return {
         task: 'content_titles',
         schema: WeekTitlesSchema,
-        blocks: titlesMemory(ctx),
+        blocks: titlesMemory(ctx, owner),
         check: (out) => checkWeekTitles(out as WeekTitles, ctx.days, ctx.weekCalendar),
       };
     }
@@ -580,7 +606,7 @@ async function prepare(key: AgentKey, subject: AgentSubject, opts: RunAgentOptio
       return {
         task: AGENT_TASK[key],
         schema: platform === 'linkedin' ? LinkedInPostSchema : TikTokPostSchema,
-        blocks: writerMemory(platform, ctx),
+        blocks: writerMemory(platform, ctx, await ownerInput(key, opts)),
         check: (out) => [
           ...checkPostRules(platform, out as LinkedInPost | TikTokPost, ctx.profile, ctx.slot.pillar),
           ...(platform === 'tiktok' ? checkTikTokMode(out as TikTokPost, ctx.media?.length ?? 0) : []),
@@ -592,7 +618,7 @@ async function prepare(key: AgentKey, subject: AgentSubject, opts: RunAgentOptio
       return {
         task: AGENT_TASK.art_director,
         schema: ArtDirectionSchema,
-        blocks: artDirectorMemory(ctx),
+        blocks: artDirectorMemory(ctx, await ownerInput(key, opts)),
         check: (out) => checkArtDirection(out as ArtDirection, ctx.profile.platform, ctx.media),
       };
     }

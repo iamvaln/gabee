@@ -646,7 +646,7 @@ test('regenerateProposals starts the week over from each step before validation,
     assert.ok(audit, status);
     assert.equal(audit.actorId, actor.id);
     assert.equal(audit.actorRole, actor.role);
-    assert.deepEqual(audit.diff, { from: status, objective_id: objective.id, slots_removed: status === 'titles_ready' ? 3 : 0 });
+    assert.deepEqual(audit.diff, { from: status, objective_id: objective.id, slots_removed: status === 'titles_ready' ? 3 : 0, direction_feedback: 0 });
   }
   assert.equal(reported.length, 0);
 });

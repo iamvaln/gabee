@@ -8,8 +8,8 @@ export const maxDuration = 300;
 
 // The current and next week (studio-local calendar), so the Semaine screen opens without an id.
 export const GET = studioRoute(async (req) => {
-  await requireAdmin(req);
-  return json(await findWeeks(new Date()));
+  const session = await requireAdmin(req);
+  return json(await findWeeks(new Date(), session.parentId));
 });
 
 // Start the week now (Sunday: next week; otherwise this week from tomorrow) and propose 3 directions.

@@ -7,6 +7,6 @@ export const runtime = 'nodejs';
 type Ctx = { params: Promise<{ id: string }> };
 
 export const GET = studioRoute<Ctx>(async (req, ctx) => {
-  await requireAdmin(req);
-  return json({ week: await getWeek(await idParam(ctx)) });
+  const session = await requireAdmin(req);
+  return json({ week: await getWeek(await idParam(ctx), session.parentId) });
 });
