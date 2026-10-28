@@ -1,32 +1,43 @@
-# Advisories accepted on purpose. Each entry needs a reason and an expiry:
-# when it passes, the release gate fails again and the entry must be re-checked.
+# Advisories accepted on purpose, each scoped to ONE package at ONE version
+# (never a bare advisory id: the same advisory reaching a shipped dependency,
+# or a version bump, must trip the release gate again). Each entry needs a
+# reason and an expiry: when it passes, the gate fails and the entry must be
+# re-checked.
 
 # extract-zip 2.0.1 — no fixed release exists. Reached only through
 # @lhci/cli → lighthouse → puppeteer (root devDependency, CI Lighthouse step);
 # never installed in a production image.
-[[IgnoredVulns]]
-id = "GHSA-7pqw-9j4j-h8q3"
-ignoreUntil = 2027-01-31
-reason = "extract-zip has no fix; dev-only via @lhci/cli (Lighthouse CI), not shipped"
-
-[[IgnoredVulns]]
-id = "GHSA-jmr9-qjv8-65gv"
-ignoreUntil = 2027-01-31
-reason = "extract-zip has no fix; dev-only via @lhci/cli (Lighthouse CI), not shipped"
+[[PackageOverrides]]
+name = "extract-zip"
+version = "2.0.1"
+ecosystem = "npm"
+effectiveUntil = 2027-01-31
+reason = "no fix exists; dev-only via @lhci/cli (Lighthouse CI), not shipped"
+[PackageOverrides.vulnerability]
+ignore = true
 
 # zod 3.25.76 — the fix exists only in zod 4. Reached only through
 # @lhci/cli → lighthouse → puppeteer-core → chromium-bidi (root devDependency,
 # CI Lighthouse step), which needs the v3 API; never installed in a production
-# image. The app's own zod is on the fixed 4.x line.
-[[IgnoredVulns]]
-id = "GHSA-mrhx-c7xc-m3w5"
-ignoreUntil = 2027-01-31
-reason = "zod 3 fix only in v4; dev-only via @lhci/cli (Lighthouse CI) → chromium-bidi, not shipped; app zod is >= 4.6.7"
+# image. The app's own zod is on the fixed 4.x line (and every zod 4 below the
+# fix is forced up by pnpm.overrides).
+[[PackageOverrides]]
+name = "zod"
+version = "3.25.76"
+ecosystem = "npm"
+effectiveUntil = 2027-01-31
+reason = "fix only in zod 4; dev-only via @lhci/cli (Lighthouse CI) → chromium-bidi, not shipped"
+[PackageOverrides.vulnerability]
+ignore = true
 
 # deepmerge 4.3.1 — latest release, no fixed version exists. Reached only through
 # @gabee/kid devDependency vite-plugin-pwa → workbox-build → @rollup/plugin-node-resolve,
 # at build time (service-worker generation); not part of the shipped kid bundle.
-[[IgnoredVulns]]
-id = "GHSA-gcqx-w48m-w2h4"
-ignoreUntil = 2027-01-31
-reason = "deepmerge has no fix (4.3.1 is latest); build-time only via vite-plugin-pwa/workbox-build, not shipped"
+[[PackageOverrides]]
+name = "deepmerge"
+version = "4.3.1"
+ecosystem = "npm"
+effectiveUntil = 2027-01-31
+reason = "no fix exists (4.3.1 is latest); build-time only via vite-plugin-pwa/workbox-build, not shipped"
+[PackageOverrides.vulnerability]
+ignore = true
