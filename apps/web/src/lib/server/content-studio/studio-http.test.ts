@@ -75,3 +75,16 @@ test('studio mutations refuse a request another site sent, by the browser\'s Sec
   assert.doesNotThrow(() => assertSameOrigin(req('POST')));
   assert.doesNotThrow(() => assertSameOrigin(req('GET', 'cross-site')));
 });
+
+test('without Sec-Fetch-Site (older browsers), the Origin must be the host the request reached', () => {
+  const req = (origin?: string, host = 'admin.gabee.app') =>
+    new Request(`https://${host}/api/admin/communication/x`, {
+      method: 'POST',
+      headers: { host, ...(origin ? { origin } : {}) },
+    });
+  assert.doesNotThrow(() => assertSameOrigin(req('https://admin.gabee.app')));
+  for (const origin of ['https://kids.gabee.app', 'https://evil.example', 'null', 'not a url']) {
+    assert.throws(() => assertSameOrigin(req(origin)), (e: unknown) => e instanceof HttpError && e.code === 'forbidden_origin', origin);
+  }
+  assert.doesNotThrow(() => assertSameOrigin(req()), 'no Origin: a non-browser client');
+});

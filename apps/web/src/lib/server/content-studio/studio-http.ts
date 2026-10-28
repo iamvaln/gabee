@@ -86,15 +86,33 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
  * which still lets another gabee.app subdomain ("same-site") send it, body or
  * not. Browsers set `Sec-Fetch-Site` themselves (a page cannot forge it): a
  * mutation is refused unless it is `same-origin` (the admin UI) or `none`
- * (typed by the user). Requests without the header (non-browser clients, the
- * test harness) carry no ambient cookie risk and pass.
+ * (typed by the user). Without the header (older browsers), the Origin must be
+ * this host; requests with neither (non-browser clients, the test harness) carry
+ * no ambient cookie and pass.
  */
 export function assertSameOrigin(req: Request): void {
   if (SAFE_METHODS.has(req.method)) return;
+  const forbidden = () =>
+    new HttpError(403, 'forbidden_origin', "Cette action doit venir de l'admin Gabee. Rechargez la page depuis admin.gabee.app puis réessayez.");
   const site = req.headers.get('sec-fetch-site');
-  if (site && site !== 'same-origin' && site !== 'none') {
-    throw new HttpError(403, 'forbidden_origin', "Cette action doit venir de l'admin Gabee. Rechargez la page depuis admin.gabee.app puis réessayez.");
+  if (site) {
+    if (site !== 'same-origin' && site !== 'none') throw forbidden();
+    return;
   }
+  // Older browsers without Sec-Fetch-*: every browser sends Origin on a POST/PUT/
+  // PATCH/DELETE, so compare it with the host the request reached ("null" = an
+  // opaque, sandboxed or privacy-stripped origin: refused). No Origin at all means
+  // a non-browser client, which carries no ambient session cookie.
+  const origin = req.headers.get('origin');
+  if (origin === null) return;
+  let originHost: string;
+  try {
+    originHost = new URL(origin).host;
+  } catch {
+    throw forbidden();
+  }
+  const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? new URL(req.url).host;
+  if (originHost !== host) throw forbidden();
 }
 
 export function studioRoute<Ctx = unknown>(fn: Handler<Ctx>, opts: StudioRouteOptions = {}) {
