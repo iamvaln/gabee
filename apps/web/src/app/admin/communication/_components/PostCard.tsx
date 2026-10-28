@@ -13,6 +13,7 @@ import { DraftEditor } from './DraftEditor';
 import { AiWorking, ErrorNotice, Notice } from './ErrorNotice';
 import { errorText } from './errors';
 import { ExternalMediaDialog, ownMediaLabel, saveOwnMedia } from './ExternalMediaDialog';
+import { InstructionDialog, NoteDialog } from './FeedbackDialogs';
 import { DRAFT_STATUS, LANGUAGE_LABEL, PLATFORM_LABEL, dateTime, postText } from './format';
 import { Preview } from './PostPreview';
 import { PublishDialog } from './PublishDialog';
@@ -26,7 +27,9 @@ type Busy = null | 'approve' | 'regenerate' | 'save' | 'download' | 'own';
 /**
  * Draft card of the Aujourd'hui screen: preview, status, and the owner's
  * actions on one platform's post. `publish`: the links « Copier et ouvrir »
- * opens (absent: no such button).
+ * opens (absent: no such button). « Commenter » leaves a note for the writer
+ * (or the Art director, on the media); « Régénérer avec une consigne » gives
+ * this regeneration an instruction, kept as a note too.
  */
 export function PostCard({ draft, lang, onChange, publish }: { draft: DraftDto; lang: Language; onChange: (d: DraftDto) => void; publish?: PublishContext }) {
   const L = lang === 'fr';
@@ -38,6 +41,11 @@ export function PostCard({ draft, lang, onChange, publish }: { draft: DraftDto; 
   /** Open the editor straight on "Choisir un média" (from the media notice). */
   const [pickFirst, setPickFirst] = useState(false);
   const [confirmRegen, setConfirmRegen] = useState(false);
+  /** « Régénérer avec une consigne » asks for the instruction (and says what it replaces). */
+  const [instructing, setInstructing] = useState(false);
+  const [commenting, setCommenting] = useState(false);
+  /** A comment was just saved: said in the live region. */
+  const [commented, setCommented] = useState(false);
   const [publishing, setPublishing] = useState(false);
   /** `publish`: copied by « Copier et ouvrir » (says where to paste). */
   const [copied, setCopied] = useState<null | 'ok' | 'fail' | 'publish'>(null);
@@ -45,6 +53,12 @@ export function PostCard({ draft, lang, onChange, publish }: { draft: DraftDto; 
   const [opened, setOpened] = useState(false);
   const [ownDialog, setOwnDialog] = useState(false);
   const [confirmOwnOff, setConfirmOwnOff] = useState(false);
+
+  useEffect(() => {
+    if (!commented) return;
+    const id = window.setTimeout(() => setCommented(false), 6000);
+    return () => window.clearTimeout(id);
+  }, [commented]);
 
   useEffect(() => {
     if (!copied) return;
@@ -88,18 +102,32 @@ export function PostCard({ draft, lang, onChange, publish }: { draft: DraftDto; 
       notifyStudioChanged();
     });
 
-  const regenerate = () => {
+  /** `instruction`: « Régénérer avec une consigne ». */
+  const regenerateWith = (instruction: string | null) => {
     setConfirmRegen(false);
+    setInstructing(false);
     setEditing(false);
     return run('regenerate', async () => {
-      const res = await api<{ draft: DraftDto }>(`/drafts/${draft.id}/regenerate`, { method: 'POST' });
+      const res = await api<{ draft: DraftDto }>(`/drafts/${draft.id}/regenerate`, { method: 'POST', ...(instruction ? { body: { instruction } } : {}) });
       onChange(res.draft);
       notifyStudioChanged();
     });
   };
+  const regenerate = () => regenerateWith(null);
 
   // Replacing an owner edit or an approval asks first (spec: destructive actions confirm).
-  const askRegenerate = () => (draft.version?.source === 'owner' || draft.status === 'approved' ? setConfirmRegen(true) : void regenerate());
+  const replacesWork = draft.version?.source === 'owner' || draft.status === 'approved';
+  const askRegenerate = () => (replacesWork ? setConfirmRegen(true) : void regenerate());
+  const replaceWarning =
+    draft.version?.source === 'owner'
+      ? t(
+          'Vos modifications seront remplacées par un nouveau texte rédigé par Gabee. Les versions précédentes restent dans l’historique.',
+          'Your edits will be replaced by a new text written by Gabee. Earlier versions stay in the history.',
+        )
+      : t(
+          'Ce post est validé. Le régénérer retire la validation : il faudra le relire et le valider à nouveau.',
+          'This post is approved. Regenerating it removes the approval: you will need to review and approve it again.',
+        );
 
   const download = () => run('download', () => downloadDraftMedia(draft.id));
 
@@ -260,11 +288,26 @@ export function PostCard({ draft, lang, onChange, publish }: { draft: DraftDto; 
               {t('Modifier', 'Edit')}
             </button>
           )}
+          <button type="button" className="btn secondary" onClick={() => setCommenting(true)} disabled={locked}>
+            <AIcon name="feedback" />
+            {t('Commenter', 'Comment')}
+          </button>
           {canRegenerate && (
-            <button type="button" className="btn secondary" onClick={askRegenerate} disabled={locked}>
-              <AIcon name="refresh" />
-              {t('Régénérer', 'Regenerate')}
-            </button>
+            <span className="studio-split" role="group" aria-label={t(`Régénérer le post ${platform}`, `Regenerate the ${platform} post`)}>
+              <button type="button" className="btn secondary" onClick={askRegenerate} disabled={locked}>
+                <AIcon name="refresh" />
+                {t('Régénérer', 'Regenerate')}
+              </button>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => setInstructing(true)}
+                disabled={locked}
+                aria-label={t('Régénérer avec une consigne', 'Regenerate with an instruction')}
+              >
+                {t('Avec une consigne', 'With an instruction')}
+              </button>
+            </span>
           )}
           {canOpen &&
             publish &&
@@ -300,6 +343,7 @@ export function PostCard({ draft, lang, onChange, publish }: { draft: DraftDto; 
             {copied === 'publish' &&
               (isTikTok ? t('Légende copiée — collez-la dans TikTok', 'Caption copied — paste it in TikTok') : t('Texte copié — collez-le dans LinkedIn', 'Text copied — paste it in LinkedIn'))}
             {copied === 'fail' && t('Copie impossible : sélectionnez le texte puis copiez-le à la main.', 'Could not copy: select the text and copy it by hand.')}
+            {commented && t('Commentaire enregistré : Gabee en tiendra compte pour les prochains posts.', 'Comment saved: Gabee will take it into account for the next posts.')}
           </span>
         </div>
       )}
@@ -308,17 +352,36 @@ export function PostCard({ draft, lang, onChange, publish }: { draft: DraftDto; 
         <ConfirmDialog
           lang={lang}
           title={t('Régénérer ce post ?', 'Regenerate this post?')}
-          body={
-            draft.version?.source === 'owner'
-              ? t(
-                  'Vos modifications seront remplacées par un nouveau texte rédigé par Gabee. Les versions précédentes restent dans l’historique.',
-                  'Your edits will be replaced by a new text written by Gabee. Earlier versions stay in the history.',
-                )
-              : t('Ce post est validé. Le régénérer retire la validation : il faudra le relire et le valider à nouveau.', 'This post is approved. Regenerating it removes the approval: you will need to review and approve it again.')
-          }
+          body={replaceWarning}
           confirmLabel={t('Régénérer', 'Regenerate')}
           onConfirm={() => void regenerate()}
           onClose={() => setConfirmRegen(false)}
+        />
+      )}
+      {instructing && (
+        <InstructionDialog
+          lang={lang}
+          title={t(`Régénérer le post ${platform} avec une consigne`, `Regenerate the ${platform} post with an instruction`)}
+          warning={replacesWork ? replaceWarning : undefined}
+          onConfirm={(instruction) => void regenerateWith(instruction)}
+          onClose={() => setInstructing(false)}
+        />
+      )}
+      {commenting && (
+        <NoteDialog
+          lang={lang}
+          title={t(`Commenter le post ${platform}`, `Comment on the ${platform} post`)}
+          intro={t(
+            'Gabee garde votre commentaire en mémoire pour rédiger les prochains posts. Ce post ne change pas.',
+            'Gabee keeps your comment in mind to write the next posts. This post does not change.',
+          )}
+          path={`/drafts/${draft.id}/feedback`}
+          media
+          onSaved={() => {
+            setCommenting(false);
+            setCommented(true);
+          }}
+          onClose={() => setCommenting(false)}
         />
       )}
       {confirmOwnOff && (

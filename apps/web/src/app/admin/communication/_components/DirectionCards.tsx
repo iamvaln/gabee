@@ -1,15 +1,26 @@
 'use client';
 
-import { useId, useState } from 'react';
-import { CONTENT_PLATFORMS, type ChooseDirectionRequest, type ContentPlatform, type Language } from '@gabee/types';
+import { useId, useRef, useState } from 'react';
+import {
+  CONTENT_PLATFORMS,
+  FEEDBACK_NOTE_MAX,
+  type ChooseDirectionRequest,
+  type ContentPlatform,
+  type FeedbackSentiment,
+  type Language,
+} from '@gabee/types';
+import type { DirectionFeedbackDto } from '@/lib/server/content-studio/feedback';
 import type { WeekDto } from '@/lib/server/content-studio/weeks';
 import { AIcon } from '../../_shell/icons';
+import { api, reportUnexpected } from './api';
+import { errorText } from './errors';
 import { PLATFORM_LABEL } from './format';
 
 /**
  * Step 1 of the Semaine screen: the Strategist's 3 directions as a radio
  * group, a free-text precision and optional per-platform angles, then
- * "Arrêter cette direction" (the titles run, done by the caller).
+ * "Arrêter cette direction" (the titles run, done by the caller). Each card
+ * takes the owner's 👍/👎 and a word, saved at once for the Strategist.
  */
 export function DirectionCards({
   week,
@@ -50,44 +61,54 @@ export function DirectionCards({
         <legend className="studio-section-title">{t('Choisissez la direction de la semaine', "Pick the week's direction")}</legend>
         <div className="studio-direction-grid">
           {proposals.map((p, i) => (
-            <label key={i} className={'card studio-direction' + (chosen === i ? ' on' : '')}>
-              <span className="studio-direction-top">
-                <span className="studio-direction-n">Direction {i + 1}</span>
-                <input
-                  type="radio"
-                  className="studio-radio"
-                  name={`${id}-direction`}
-                  value={i}
-                  checked={chosen === i}
-                  onChange={() => setChosen(i)}
-                  aria-labelledby={`${id}-title-${i}`}
-                />
-              </span>
-              <span className="studio-direction-title" id={`${id}-title-${i}`}>
-                {p.title}
-              </span>
-              <span className="studio-direction-why">{p.rationale}</span>
-              {p.evidence.length > 0 && (
-                <span className="studio-direction-block">
-                  <span className="section-label">{t('Ce qui la motive', 'Why')}</span>
-                  <ul className="studio-list">
-                    {p.evidence.map((e, j) => (
-                      <li key={j}>{e}</li>
-                    ))}
-                  </ul>
+            <div key={i} className={'card studio-direction' + (chosen === i ? ' on' : '')}>
+              <label className="studio-direction-pick">
+                <span className="studio-direction-top">
+                  <span className="studio-direction-n">Direction {i + 1}</span>
+                  <input
+                    type="radio"
+                    className="studio-radio"
+                    name={`${id}-direction`}
+                    value={i}
+                    checked={chosen === i}
+                    onChange={() => setChosen(i)}
+                    aria-labelledby={`${id}-title-${i}`}
+                  />
                 </span>
-              )}
-              {p.sample_angles.length > 0 && (
-                <span className="studio-direction-block">
-                  <span className="section-label">{t('Exemples d’angles', 'Sample angles')}</span>
-                  <ul className="studio-list">
-                    {p.sample_angles.map((a, j) => (
-                      <li key={j}>{a}</li>
-                    ))}
-                  </ul>
+                <span className="studio-direction-title" id={`${id}-title-${i}`}>
+                  {p.title}
                 </span>
-              )}
-            </label>
+                <span className="studio-direction-why">{p.rationale}</span>
+                {p.evidence.length > 0 && (
+                  <span className="studio-direction-block">
+                    <span className="section-label">{t('Ce qui la motive', 'Why')}</span>
+                    <ul className="studio-list">
+                      {p.evidence.map((e, j) => (
+                        <li key={j}>{e}</li>
+                      ))}
+                    </ul>
+                  </span>
+                )}
+                {p.sample_angles.length > 0 && (
+                  <span className="studio-direction-block">
+                    <span className="section-label">{t('Exemples d’angles', 'Sample angles')}</span>
+                    <ul className="studio-list">
+                      {p.sample_angles.map((a, j) => (
+                        <li key={j}>{a}</li>
+                      ))}
+                    </ul>
+                  </span>
+                )}
+              </label>
+              <DirectionFeedback
+                weekId={week.id}
+                index={i}
+                title={p.title}
+                initial={week.direction_feedback.find((f) => f.proposal_index === i) ?? null}
+                lang={lang}
+                disabled={busy}
+              />
+            </div>
           ))}
         </div>
       </fieldset>
@@ -148,5 +169,167 @@ export function DirectionCards({
         </button>
       </div>
     </form>
+  );
+}
+
+type Saved = { sentiment: FeedbackSentiment | null; note: string };
+
+/**
+ * 👍 « Ça me plaît » / 👎 « Pas pour nous » and « Ajouter un mot » on one
+ * direction: each change is saved at once (the card's whole feedback, in
+ * order), and the Strategist reads it at its next runs — including
+ * « Régénérer les propositions ».
+ */
+function DirectionFeedback({
+  weekId,
+  index,
+  title,
+  initial,
+  lang,
+  disabled,
+}: {
+  weekId: string;
+  index: number;
+  title: string;
+  initial: DirectionFeedbackDto | null;
+  lang: Language;
+  disabled: boolean;
+}) {
+  const L = lang === 'fr';
+  const t = (fr: string, en: string) => (L ? fr : en);
+  const id = useId();
+  const [sentiment, setSentiment] = useState<FeedbackSentiment | null>(initial?.sentiment ?? null);
+  const [note, setNote] = useState(initial?.note ?? '');
+  const [noteOpen, setNoteOpen] = useState(!!initial?.note);
+  const [status, setStatus] = useState<null | 'saving' | 'saved'>(null);
+  const [error, setError] = useState<string | null>(null);
+  const start: Saved = { sentiment: initial?.sentiment ?? null, note: initial?.note ?? '' };
+  /** What the server holds: a failed save goes back to it. */
+  const saved = useRef<Saved>(start);
+  /** The last state sent: the same change (a blur, then the button) is sent once. */
+  const sent = useRef<Saved>(start);
+  const [savedNote, setSavedNote] = useState(start.note);
+  /** Saves run one after the other, so the last change is the one kept. */
+  const queue = useRef<Promise<void>>(Promise.resolve());
+
+  const save = (change: Saved) => {
+    const next = { sentiment: change.sentiment, note: change.note.trim() };
+    if (next.sentiment === sent.current.sentiment && next.note === sent.current.note) return;
+    sent.current = next;
+    setStatus('saving');
+    setError(null);
+    queue.current = queue.current.then(async () => {
+      try {
+        await api(`/weeks/${weekId}/feedback`, {
+          method: 'POST',
+          body: { proposal_index: index, sentiment: next.sentiment, note: next.note || null },
+        });
+        saved.current = next;
+        setSavedNote(next.note);
+        setStatus('saved');
+      } catch (err) {
+        reportUnexpected(err, { action: 'direction-feedback', weekId, index });
+        setError(
+          t(
+            `Votre avis n’a pas été enregistré. ${errorText(err, lang)}`,
+            `Your feedback was not saved. ${errorText(err, lang)}`,
+          ),
+        );
+        sent.current = saved.current;
+        setSentiment(saved.current.sentiment);
+        setNote(saved.current.note);
+        setStatus(null);
+      }
+    });
+  };
+
+  const toggle = (s: FeedbackSentiment) => {
+    const next = sentiment === s ? null : s;
+    setSentiment(next);
+    save({ sentiment: next, note });
+  };
+
+  return (
+    <div
+      className="studio-feedback"
+      role="group"
+      aria-label={t(`Votre avis sur « ${title} »`, `Your feedback on “${title}”`)}
+    >
+      <div className="studio-feedback-row">
+        <button
+          type="button"
+          className={'btn secondary sm studio-thumb' + (sentiment === 'up' ? ' on' : '')}
+          aria-pressed={sentiment === 'up'}
+          onClick={() => toggle('up')}
+          disabled={disabled}
+        >
+          <span aria-hidden>👍</span>
+          {t('Ça me plaît', 'I like it')}
+        </button>
+        <button
+          type="button"
+          className={'btn secondary sm studio-thumb' + (sentiment === 'down' ? ' on' : '')}
+          aria-pressed={sentiment === 'down'}
+          onClick={() => toggle('down')}
+          disabled={disabled}
+        >
+          <span aria-hidden>👎</span>
+          {t('Pas pour nous', 'Not for us')}
+        </button>
+        {!noteOpen && (
+          <button
+            type="button"
+            className="btn ghost sm"
+            onClick={() => setNoteOpen(true)}
+            disabled={disabled}
+          >
+            <AIcon name="edit" size={14} />
+            {t('Ajouter un mot', 'Add a word')}
+          </button>
+        )}
+      </div>
+      {noteOpen && (
+        <div className="studio-feedback-note">
+          <label className="field-label" htmlFor={`${id}-note`}>
+            {t('Un mot pour Gabee (facultatif)', 'A word for Gabee (optional)')}
+          </label>
+          <textarea
+            id={`${id}-note`}
+            className="ta"
+            rows={2}
+            maxLength={FEEDBACK_NOTE_MAX}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            onBlur={() => save({ sentiment, note })}
+            disabled={disabled}
+            autoFocus={!initial?.note}
+            placeholder={t(
+              'Ex. : déjà fait le mois dernier, trop vendeur…',
+              'E.g. done last month already, too salesy…',
+            )}
+          />
+          <button
+            type="button"
+            className="btn secondary sm"
+            onClick={() => save({ sentiment, note })}
+            disabled={disabled || note.trim() === savedNote}
+          >
+            {t('Enregistrer', 'Save')}
+          </button>
+        </div>
+      )}
+      <p className="studio-feedback-status" aria-live="polite">
+        {status === 'saving'
+          ? t('Enregistrement…', 'Saving…')
+          : status === 'saved'
+            ? t('Enregistré', 'Saved')
+            : ''}
+      </p>
+      {error && (
+        <p className="studio-field-error" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
